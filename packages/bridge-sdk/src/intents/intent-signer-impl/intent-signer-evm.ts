@@ -1,0 +1,46 @@
+import { authHandleToIntentsUserId } from "@defuse-protocol/defuse-sdk/dist/utils/authIdentity";
+import { transformERC191Signature } from "@defuse-protocol/defuse-sdk/dist/utils/prepareBroadcastRequest";
+import type { Account } from "viem";
+import type { IIntentSigner } from "../interfaces/intent-signer.ts";
+import type { IntentPayload, MultiPayload } from "../shared-types.ts";
+
+export class IntentSignerEVM implements IIntentSigner {
+	private signer: Account;
+
+	constructor({
+		signer,
+	}: {
+		signer: Account;
+	}) {
+		this.signer = signer;
+	}
+
+	async signIntent(intent: IntentPayload): Promise<MultiPayload> {
+		const payload = JSON.stringify({
+			signer_id:
+				intent.signer_id ??
+				authHandleToIntentsUserId({
+					identifier: this.signer.address,
+					method: "evm",
+				}),
+			verifying_contract: "intents.near",
+			deadline: intent.deadline,
+			nonce: intent.nonce,
+			intents: intent.intents,
+		});
+
+		const signature = await this.signer.signMessage?.({
+			message: payload,
+		});
+		if (signature == null) {
+			throw new Error("No signature is returned");
+		}
+
+		return {
+			standard: "erc191",
+			payload,
+			signature: transformERC191Signature(signature),
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		} as any as MultiPayload;
+	}
+}

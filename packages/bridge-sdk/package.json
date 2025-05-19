@@ -1,0 +1,47 @@
+{
+	"name": "@defuse-protocol/bridge-sdk",
+	"version": "0.1.4",
+	"private": false,
+	"type": "module",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"lint": "biome check .",
+		"format": "biome format --write ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/bun": "latest",
+		"tsup": "^8.5.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@defuse-protocol/contract-types": "workspace:*",
+		"@defuse-protocol/defuse-sdk": "^1.0.0-beta.156",
+		"@hot-labs/omni-sdk": "2.7.0",
+		"@scure/base": "^1.2.5",
+		"borsher": "^4.0.0",
+		"ethers": "6",
+		"near-api-js": "^5.1.1",
+		"valibot": "^1.1.0",
+		"viem": "^2.29.4"
+	},
+	"patchedDependencies": {
+		"@hot-labs/omni-sdk@2.7.0": "patches/@hot-labs%2Fomni-sdk@2.7.0.patch"
+	}
+}
