@@ -53,7 +53,7 @@ const result = await withdrawal.execute();
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.2.13 or later)
+- [Bun](https://bun.sh) (v1.2.16 or later)
 
 ### Setup
 

@@ -44,7 +44,7 @@ This package exports the following TypeScript types:
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.2.13 or later)
+- [Bun](https://bun.sh) (v1.2.16 or later)
 
 ### Build
 

@@ -11,7 +11,7 @@ This is a monorepo for Defuse Protocol packages managed with Turborepo and Chang
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.2.13 or later)
+- [Bun](https://bun.sh) (v1.2.16 or later)
 
 ### Setup
 
