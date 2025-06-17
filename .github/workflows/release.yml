@@ -36,5 +36,5 @@ jobs:
           commit: "chore: version packages and update lock file"
           title: "chore: version packages and update lock file"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_SEMANTIC_RELEASE_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
