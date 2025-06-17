@@ -1,6 +1,6 @@
 # @defuse-protocol/contract-types
 
-This package provides TypeScript type definitions for Defuse Protocol contracts.
+This package provides TypeScript type definitions for Defuse Protocol contracts. It contains automatically generated TypeScript interfaces derived from the Defuse Protocol contract ABI.
 
 ## Installation
 
@@ -21,12 +21,24 @@ bun add @defuse-protocol/contract-types
 ## Usage
 
 ```typescript
-import { greet } from '@defuse-protocol/contract-types';
+import { Intent } from '@defuse-protocol/contract-types';
 
-// Use the types in your application
-const greeting = greet('World');
-console.log(greeting); // "Hello, World!"
+// Use the generated types in your application
+const transferIntent: Intent = {
+  intent: "transfer",
+  receiver_id: "receiver.near",
+  tokens: {
+    "token.near": "1000000000000000000000000"
+  }
+};
 ```
+
+## Available Types
+
+This package exports the following TypeScript types:
+
+- `Intent` - Types for various intent actions (transfer, add_public_key, remove_public_key, etc.)
+- And other contract-related types derived from the Defuse Protocol ABI
 
 ## Development
 
@@ -38,6 +50,18 @@ console.log(greeting); // "Hello, World!"
 
 ```bash
 bun run build
+```
+
+### Generating Types
+
+The types are automatically generated from the Defuse Protocol contract ABI using the script at `scripts/gen-defuse-types.sh`. This script extracts the type definitions from the contract ABI and converts them to TypeScript interfaces.
+
+To regenerate the types:
+
+```bash
+# Run the type generation script
+cd packages/contract-types
+./scripts/gen-defuse-types.sh
 ```
 
 ### Development Mode
