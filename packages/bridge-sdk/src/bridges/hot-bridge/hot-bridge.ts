@@ -61,7 +61,7 @@ export class HotBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 	}): Promise<FeeEstimation> {
-		const { gasPrice: feeAmount } = await this.hotSdk.getWithdrawFee(
+		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
 			toHOTNetwork(args.withdrawalParams.destinationChain),
 			args.withdrawalParams.sourceAddress,
 		);
@@ -92,11 +92,14 @@ export class HotBridge implements Bridge {
 		tx: NearTxInfo;
 		index: number;
 	}): Promise<TxInfo | TxNoInfo> {
-		const nonce = await this.hotSdk.near.parseWithdrawalNonce(
+		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
 			args.tx.hash,
 			args.tx.accountId,
-			args.index,
 		);
+		const nonce = nonces[args.index];
+		if (nonce == null) {
+			throw new Error("Withdrawal with given index is not found");
+		}
 
 		let attempts = 0;
 		while (true) {
@@ -108,7 +111,9 @@ export class HotBridge implements Bridge {
 
 			await wait(2000);
 
-			const status = await this.hotSdk.getGaslessWithdrawStatus(nonce);
+			const status = await this.hotSdk.getGaslessWithdrawStatus(
+				nonce.toString(),
+			);
 
 			if (status === HOT_WITHDRAW_STATUS_STRINGS.Canceled) {
 				throw new Error("Gasless withdrawal was canceled");
