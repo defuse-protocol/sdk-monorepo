@@ -38,6 +38,7 @@ export class DirectBridge implements Bridge {
 			return Object.assign(parsed, {
 				blockchain: CAIP2_NETWORK.Near,
 				bridge: "direct" as const,
+				address: parsed.contractId,
 			});
 		}
 

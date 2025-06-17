@@ -42,7 +42,6 @@ export type BridgeKind = "direct" | "poa" | "hot";
 export interface WithdrawalParams {
 	assetId: string;
 	amount: bigint;
-	sourceAddress: string;
 	destinationAddress: string;
 	destinationMemo: string | undefined;
 	feeInclusive: boolean;
@@ -94,7 +93,7 @@ export interface WithdrawalIdentifier {
 	tx: NearTxInfo;
 }
 
-export type ParsedAssetInfo =
+export type ParsedAssetInfo = (
 	| {
 			blockchain: CAIP2_NETWORK;
 			bridge: BridgeKind;
@@ -107,4 +106,6 @@ export type ParsedAssetInfo =
 			standard: "nep245";
 			contractId: string;
 			tokenId: string;
-	  };
+	  }
+) &
+	({ native: true } | { address: string });

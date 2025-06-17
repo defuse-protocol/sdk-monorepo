@@ -44,13 +44,20 @@ export class HotBridge implements Bridge {
 				parsed.standard === "nep245",
 				"NEP-245 is supported only for HOT bridge",
 			);
-			const [chainId] = parsed.tokenId.split("_");
+			const [chainId, address] = utils.fromOmni(parsed.tokenId).split(":");
 			assert(chainId != null, "Chain ID is not found");
+			assert(address != null, "Address is not found");
 
-			return Object.assign(parsed, {
-				blockchain: networkIdToCaip2(chainId),
-				bridge: "hot" as const,
-			});
+			return Object.assign(
+				parsed,
+				{
+					blockchain: networkIdToCaip2(chainId),
+					bridge: "hot" as const,
+				},
+				(address === "native" ? { native: true } : { address }) as
+					| { native: true }
+					| { address: string },
+			);
 		}
 		return null;
 	}
@@ -84,7 +91,7 @@ export class HotBridge implements Bridge {
 			feeToken: "native",
 			feeAmount,
 			chain: toHOTNetwork(assetInfo.blockchain),
-			token: args.withdrawalParams.sourceAddress,
+			token: "native" in assetInfo ? "native" : assetInfo.address,
 			amount: args.withdrawalParams.amount,
 			receiver: args.withdrawalParams.destinationAddress,
 			intentAccount: "", // it is not used inside the function
@@ -103,7 +110,7 @@ export class HotBridge implements Bridge {
 
 		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
 			toHOTNetwork(assetInfo.blockchain),
-			args.withdrawalParams.sourceAddress,
+			"native" in assetInfo ? "native" : assetInfo.address,
 		);
 
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);

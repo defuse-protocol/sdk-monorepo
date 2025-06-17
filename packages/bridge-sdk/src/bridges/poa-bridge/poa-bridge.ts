@@ -40,6 +40,7 @@ export class PoaBridge implements Bridge {
 			return Object.assign(parsed, {
 				blockchain: contractIdToCaip2(parsed.contractId),
 				bridge: "poa" as const,
+				address: "", // todo: derive address (or native)
 			});
 		}
 		return null;
