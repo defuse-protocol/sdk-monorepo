@@ -1,5 +1,6 @@
 ---
+"@defuse-protocol/bridge-sdk": patch
 "@defuse-protocol/contract-types": patch
 ---
 
-Update README
+Initial release
