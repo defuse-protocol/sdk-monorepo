@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/bridge-sdk",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"private": false,
 	"type": "module",
 	"main": "./dist/index.js",
@@ -13,7 +13,9 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
