@@ -38,8 +38,5 @@
 		"near-api-js": "^5.1.1",
 		"valibot": "^1.1.0",
 		"viem": "^2.29.4"
-	},
-	"patchedDependencies": {
-		"@hot-labs/omni-sdk@2.7.0": "patches/@hot-labs%2Fomni-sdk@2.7.0.patch"
 	}
 }
