@@ -10,7 +10,6 @@ import {
 	IntentSignerEVM,
 	IntentSignerNear,
 } from "./intents/intent-signer-impl";
-import { CAIP2_NETWORK } from "./lib/caip2";
 import { BridgeSDK } from "./sdk";
 
 const nearSignerAccountId = env.SECRET_NEAR_ACCOUNT_ID;
@@ -86,7 +85,6 @@ async function withdrawToBase() {
 				"nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
 			sourceAddress: "",
 			amount: 100000n,
-			destinationChain: CAIP2_NETWORK.Base,
 			destinationAddress: env.SECRET_EVM_ADDRESS,
 			destinationMemo: undefined,
 			feeInclusive: false,
@@ -103,7 +101,6 @@ async function withdrawToNear() {
 			assetId: "nep141:wrap.near",
 			sourceAddress: "",
 			amount: 100000n,
-			destinationChain: CAIP2_NETWORK.Near,
 			destinationAddress:
 				"226a0eceead177138b56937a05f8bdb19b4091a5cdc4419bdea07b3ea0bd9195",
 			destinationMemo: undefined,
@@ -125,7 +122,6 @@ async function withdrawToPolygon() {
 			// assetId: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
 			// sourceAddress: "native",
 			amount: 100_000n,
-			destinationChain: CAIP2_NETWORK.Polygon,
 			destinationAddress: env.SECRET_EVM_ADDRESS,
 			destinationMemo: undefined,
 			feeInclusive: false,
@@ -178,7 +174,6 @@ async function withdrawBatch() {
 				// assetId: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
 				// sourceAddress: "native",
 				amount: 100_000n,
-				destinationChain: CAIP2_NETWORK.Polygon,
 				destinationAddress: env.SECRET_EVM_ADDRESS,
 				destinationMemo: undefined,
 				feeInclusive: false,
@@ -189,7 +184,6 @@ async function withdrawBatch() {
 				assetId: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
 				sourceAddress: "native",
 				amount: 100000000000000000n,
-				destinationChain: CAIP2_NETWORK.Polygon,
 				destinationAddress: env.SECRET_EVM_ADDRESS,
 				destinationMemo: undefined,
 				feeInclusive: false,
@@ -199,7 +193,6 @@ async function withdrawBatch() {
 					"nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
 				sourceAddress: "",
 				amount: 1n,
-				destinationChain: CAIP2_NETWORK.Base,
 				destinationAddress: env.SECRET_EVM_ADDRESS,
 				destinationMemo: undefined,
 				feeInclusive: false,
@@ -208,7 +201,6 @@ async function withdrawBatch() {
 				assetId: "nep141:wrap.near",
 				sourceAddress: "",
 				amount: 100000n,
-				destinationChain: CAIP2_NETWORK.Near,
 				destinationAddress:
 					"226a0eceead177138b56937a05f8bdb19b4091a5cdc4419bdea07b3ea0bd9195",
 				destinationMemo: undefined,
@@ -219,7 +211,6 @@ async function withdrawBatch() {
 			// 		"nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
 			// 	sourceAddress: "",
 			// 	amount: 1n,
-			// 	destinationChain: CAIP2_NETWORK.Base,
 			// 	destinationAddress: env.SECRET_EVM_ADDRESS,
 			// 	destinationMemo: undefined,
 			// },
@@ -228,7 +219,6 @@ async function withdrawBatch() {
 			// 		"nep141:arb-0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9.omft.near",
 			// 	sourceAddress: "",
 			// 	amount: 100000n,
-			// 	destinationChain: CAIP2_NETWORK.Arbitrum,
 			// 	destinationAddress: env.SECRET_EVM_ADDRESS,
 			// 	destinationMemo: undefined,
 			// },

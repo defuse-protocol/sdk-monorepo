@@ -43,7 +43,6 @@ export interface WithdrawalParams {
 	assetId: string;
 	amount: bigint;
 	sourceAddress: string;
-	destinationChain: CAIP2_NETWORK;
 	destinationAddress: string;
 	destinationMemo: string | undefined;
 	feeInclusive: boolean;

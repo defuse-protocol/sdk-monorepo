@@ -5,6 +5,7 @@ import {
 	parseDefuseAssetId,
 } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
 import type { IntentPrimitive } from "../../intents/shared-types.ts";
+import { assert } from "../../lib/assert.ts";
 import type {
 	Bridge,
 	BridgeKind,
@@ -58,11 +59,14 @@ export class PoaBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 	}): Promise<FeeEstimation> {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
 		const estimation = await getWithdrawalEstimate({
 			token: getTokenAccountId(args.withdrawalParams.assetId),
 			address: args.withdrawalParams.destinationAddress,
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			chain: toPoaNetwork(args.withdrawalParams.destinationChain) as any,
+			chain: toPoaNetwork(assetInfo.blockchain) as any,
 		});
 
 		return {

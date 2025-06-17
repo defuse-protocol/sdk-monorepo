@@ -77,10 +77,13 @@ export class HotBridge implements Bridge {
 			});
 		}
 
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
 		const intent = await this.hotSdk.buildGaslessWithdrawIntent({
 			feeToken: "native",
 			feeAmount,
-			chain: toHOTNetwork(args.withdrawalParams.destinationChain),
+			chain: toHOTNetwork(assetInfo.blockchain),
 			token: args.withdrawalParams.sourceAddress,
 			amount: args.withdrawalParams.amount,
 			receiver: args.withdrawalParams.destinationAddress,
@@ -95,14 +98,15 @@ export class HotBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 	}): Promise<FeeEstimation> {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
 		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
-			toHOTNetwork(args.withdrawalParams.destinationChain),
+			toHOTNetwork(assetInfo.blockchain),
 			args.withdrawalParams.sourceAddress,
 		);
 
-		const feeAssetId = getFeeAssetIdForChain(
-			args.withdrawalParams.destinationChain,
-		);
+		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId

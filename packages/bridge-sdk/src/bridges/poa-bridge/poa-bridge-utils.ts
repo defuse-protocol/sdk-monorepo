@@ -4,7 +4,6 @@ import { CAIP2_NETWORK } from "../../lib/caip2.ts";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
-	destinationChain: string;
 	destinationAddress: string;
 	destinationMemo: string | undefined;
 	amount: bigint;
