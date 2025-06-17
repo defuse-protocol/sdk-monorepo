@@ -14,7 +14,7 @@
       "dependencies": {
         "@defuse-protocol/contract-types": "workspace:*",
         "@defuse-protocol/defuse-sdk": "^1.0.0-beta.156",
-        "@hot-labs/omni-sdk": "2.8.2",
+        "@hot-labs/omni-sdk": "2.8.3",
         "@scure/base": "^1.2.5",
         "borsher": "^4.0.0",
         "ethers": "6",
@@ -187,7 +187,7 @@
 
     "@floating-ui/utils": ["@floating-ui/utils@0.2.9", "", {}, "sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg=="],
 
-    "@hot-labs/omni-sdk": ["@hot-labs/omni-sdk@2.8.2", "", { "dependencies": { "@coral-xyz/anchor": "0.29.0", "@creit.tech/stellar-wallets-kit": "1.7.3", "@near-js/utils": "1.0.1", "@solana/spl-token": "0.4.9", "@solana/web3.js": "1.98.0", "@stellar/stellar-sdk": "13.1.0", "@ton-api/client": "0.4.0", "@ton-api/ton-adapter": "0.4.1", "@ton/core": "0.59.1", "@ton/crypto": "3.3.0", "@ton/ton": "15.1.0", "ethers": "6.13.5", "lodash": "4.17.21", "near-api-js": "5.0.1", "rlp": "3.0.0" } }, "sha512-sA3r6r1h07zfWsjffT0TbgVEktNq8fykXw2kK45vdZnC1+2G96krMJZbkX0Dhw9y7svHENLInoQ6VMoAlnf7wg=="],
+    "@hot-labs/omni-sdk": ["@hot-labs/omni-sdk@2.8.3", "", { "dependencies": { "@coral-xyz/anchor": "0.29.0", "@creit.tech/stellar-wallets-kit": "1.7.3", "@near-js/utils": "1.0.1", "@solana/spl-token": "0.4.9", "@solana/web3.js": "1.98.0", "@stellar/stellar-sdk": "13.1.0", "@ton-api/client": "0.4.0", "@ton-api/ton-adapter": "0.4.1", "@ton/core": "0.59.1", "@ton/crypto": "3.3.0", "@ton/ton": "15.1.0", "ethers": "6.13.5", "lodash": "4.17.21", "near-api-js": "5.0.1", "rlp": "3.0.0" } }, "sha512-T5cZ8KNDwQdaHFgiM3lg0N4V+FW00jGMmJAL8c0hlbepDTrV064BqqdCtEtPzfgi99DFhgLv+JgyKoc1h5oZOg=="],
 
     "@hot-wallet/sdk": ["@hot-wallet/sdk@1.0.11", "", { "dependencies": { "@near-js/crypto": "^1.4.0", "@near-js/utils": "^1.0.0", "@near-wallet-selector/core": "^8.9.13", "@solana/wallet-adapter-base": "^0.9.23", "@solana/web3.js": "^1.95.0", "borsh": "^2.0.0", "js-sha256": "^0.11.0", "sha1": "^1.1.1", "uuid4": "^2.0.3" } }, "sha512-qRDH/4yqnRCnk7L/Qd0/LDOKDUKWcFgvf6eRELJkP0OgxIe65i/iXaG+u2lL0mLbTGkiWYk67uAvEerNUv2gzA=="],
 
