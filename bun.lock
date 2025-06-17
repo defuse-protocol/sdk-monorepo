@@ -10,7 +10,7 @@
     },
     "packages/bridge-sdk": {
       "name": "@defuse-protocol/bridge-sdk",
-      "version": "0.1.4",
+      "version": "0.0.0",
       "dependencies": {
         "@defuse-protocol/contract-types": "workspace:*",
         "@defuse-protocol/defuse-sdk": "^1.0.0-beta.156",
@@ -33,7 +33,7 @@
     },
     "packages/contract-types": {
       "name": "@defuse-protocol/contract-types",
-      "version": "0.2.1",
+      "version": "0.0.0",
       "devDependencies": {
         "tsup": "^8.0.2",
         "typescript": "^5.4.2",
