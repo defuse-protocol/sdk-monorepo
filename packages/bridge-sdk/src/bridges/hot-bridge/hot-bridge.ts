@@ -1,24 +1,58 @@
 import { getQuote } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/getQuote";
+import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
+import { utils } from "@hot-labs/omni-sdk";
 import type { IntentPrimitive } from "../../intents/shared-types.ts";
+import { assert } from "../../lib/assert.ts";
 import { wait } from "../../lib/async.ts";
 import type {
 	Bridge,
 	BridgeKind,
 	FeeEstimation,
 	NearTxInfo,
+	ParsedAssetInfo,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types.ts";
 import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants.ts";
-import { getFeeAssetIdForChain, toHOTNetwork } from "./hot-bridge-utils.ts";
+import {
+	getFeeAssetIdForChain,
+	networkIdToCaip2,
+	toHOTNetwork,
+} from "./hot-bridge-utils.ts";
 
 export class HotBridge implements Bridge {
 	constructor(protected hotSdk: HotSdk) {}
 
-	supports(params: { bridge: BridgeKind }): boolean {
-		return params.bridge === "hot";
+	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean {
+		if ("bridge" in params) {
+			return params.bridge === "hot";
+		}
+
+		try {
+			return this.parseAssetId(params.assetId) != null;
+		} catch {
+			return false;
+		}
+	}
+
+	parseAssetId(assetId: string): ParsedAssetInfo | null {
+		const parsed = parseDefuseAssetId(assetId);
+		if (parsed.contractId === utils.OMNI_HOT_V2) {
+			assert(
+				parsed.standard === "nep245",
+				"NEP-245 is supported only for HOT bridge",
+			);
+			const [chainId] = parsed.tokenId.split("_");
+			assert(chainId != null, "Chain ID is not found");
+
+			return Object.assign(parsed, {
+				blockchain: networkIdToCaip2(chainId),
+				bridge: "hot" as const,
+			});
+		}
+		return null;
 	}
 
 	async createWithdrawalIntents(args: {

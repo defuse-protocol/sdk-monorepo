@@ -20,6 +20,8 @@ export interface IBridgeSDK {
 		tx: NearTxInfo;
 		index: number;
 	}): Promise<TxInfo | TxNoInfo>;
+
+	parseAssetId(assetId: string): ParsedAssetInfo;
 }
 
 export interface NearTxInfo {
@@ -38,7 +40,6 @@ export interface TxNoInfo {
 export type BridgeKind = "direct" | "poa" | "hot";
 
 export interface WithdrawalParams {
-	bridge: BridgeKind;
 	assetId: string;
 	amount: bigint;
 	sourceAddress: string;
@@ -54,7 +55,8 @@ export interface FeeEstimation {
 }
 
 export interface Bridge {
-	supports(params: { bridge: BridgeKind }): boolean;
+	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean;
+	parseAssetId(assetId: string): ParsedAssetInfo | null;
 	estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 	}): Promise<FeeEstimation>;
@@ -92,3 +94,18 @@ export interface WithdrawalIdentifier {
 	index: number;
 	tx: NearTxInfo;
 }
+
+export type ParsedAssetInfo =
+	| {
+			blockchain: CAIP2_NETWORK;
+			bridge: BridgeKind;
+			standard: "nep141";
+			contractId: string;
+	  }
+	| {
+			blockchain: CAIP2_NETWORK;
+			bridge: BridgeKind;
+			standard: "nep245";
+			contractId: string;
+			tokenId: string;
+	  };

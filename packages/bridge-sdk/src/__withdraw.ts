@@ -30,7 +30,6 @@ const near = await connect({
 
 const sdk = new BridgeSDK({
 	bridges: [
-		new DirectBridge(),
 		new PoaBridge(),
 		new HotBridge(
 			new HotSdk({
@@ -52,6 +51,7 @@ const sdk = new BridgeSDK({
 				},
 			}),
 		),
+		new DirectBridge(),
 	],
 	intentRelayer: new IntentRelayerPublic(),
 });
@@ -82,7 +82,6 @@ async function main() {
 async function withdrawToBase() {
 	const withdrawal1 = sdk.createWithdrawal({
 		withdrawalParams: {
-			bridge: "poa",
 			assetId:
 				"nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
 			sourceAddress: "",
@@ -101,7 +100,6 @@ async function withdrawToBase() {
 async function withdrawToNear() {
 	const withdrawal = sdk.createWithdrawal({
 		withdrawalParams: {
-			bridge: "direct",
 			assetId: "nep141:wrap.near",
 			sourceAddress: "",
 			amount: 100000n,
@@ -122,7 +120,6 @@ async function withdrawToPolygon() {
 
 	const withdrawal1 = sdk.createWithdrawal({
 		withdrawalParams: {
-			bridge: "hot",
 			assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 			sourceAddress: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
 			// assetId: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
@@ -176,7 +173,6 @@ async function withdrawBatch() {
 	const withdrawal1 = sdk.createBatchWithdrawals({
 		withdrawalParams: [
 			{
-				bridge: "hot",
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				sourceAddress: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
 				// assetId: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
@@ -188,7 +184,6 @@ async function withdrawBatch() {
 				feeInclusive: false,
 			},
 			{
-				bridge: "hot",
 				// assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				// sourceAddress: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
 				assetId: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
@@ -200,7 +195,6 @@ async function withdrawBatch() {
 				feeInclusive: false,
 			},
 			{
-				bridge: "poa",
 				assetId:
 					"nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
 				sourceAddress: "",
@@ -211,7 +205,6 @@ async function withdrawBatch() {
 				feeInclusive: false,
 			},
 			{
-				bridge: "direct",
 				assetId: "nep141:wrap.near",
 				sourceAddress: "",
 				amount: 100000n,
@@ -222,7 +215,6 @@ async function withdrawBatch() {
 				feeInclusive: false,
 			},
 			// {
-			// 	bridge: "poa",
 			// 	assetId:
 			// 		"nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
 			// 	sourceAddress: "",
@@ -232,7 +224,6 @@ async function withdrawBatch() {
 			// 	destinationMemo: undefined,
 			// },
 			// {
-			// 	bridge: "poa",
 			// 	assetId:
 			// 		"nep141:arb-0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9.omft.near",
 			// 	sourceAddress: "",

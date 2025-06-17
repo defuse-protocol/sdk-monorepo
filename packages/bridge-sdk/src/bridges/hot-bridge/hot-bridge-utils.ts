@@ -16,6 +16,7 @@ export function toHOTNetwork(caip2: CAIP2_NETWORK): Network {
 	const mapping = {
 		[CAIP2_NETWORK.BNB]: Network.Bnb,
 		[CAIP2_NETWORK.Polygon]: Network.Polygon,
+		[CAIP2_NETWORK.TON]: Network.Ton,
 	};
 
 	if (mapping[caip2] == null) {
@@ -23,4 +24,19 @@ export function toHOTNetwork(caip2: CAIP2_NETWORK): Network {
 	}
 	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	return mapping[caip2]!;
+}
+
+export function networkIdToCaip2(network: string): CAIP2_NETWORK {
+	const mapping: Record<string, CAIP2_NETWORK> = {
+		[Network.Bnb]: CAIP2_NETWORK.BNB,
+		[Network.Polygon]: CAIP2_NETWORK.Polygon,
+		[Network.Ton]: CAIP2_NETWORK.TON,
+	};
+
+	if (mapping[network] != null) {
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		return mapping[network]!;
+	}
+
+	throw new Error(`Unsupported HOT Bridge network = ${network}`);
 }

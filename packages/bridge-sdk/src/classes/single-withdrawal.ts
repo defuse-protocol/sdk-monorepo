@@ -125,7 +125,7 @@ export class SingleWithdrawalImpl<
 		}
 
 		return {
-			bridge: this.withdrawalParams.bridge,
+			bridge: this.bridgeSDK.parseAssetId(this.withdrawalParams.assetId).bridge,
 			index: 0,
 			tx: intentTx,
 		};

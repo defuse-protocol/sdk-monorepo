@@ -15,6 +15,7 @@ import type {
 	FeeEstimation,
 	IBridgeSDK,
 	NearTxInfo,
+	ParsedAssetInfo,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
@@ -111,7 +112,9 @@ export class BridgeSDK<Ticket> implements IBridgeSDK {
 			}
 		}
 
-		throw new Error(`Unsupported bridge = ${args.withdrawalParams.bridge}`);
+		throw new Error(
+			`Cannot determine bridge for assetId = ${args.withdrawalParams.assetId}`,
+		);
 	}
 
 	async estimateWithdrawalFee(args: {
@@ -136,7 +139,9 @@ export class BridgeSDK<Ticket> implements IBridgeSDK {
 			}
 		}
 
-		throw new Error(`Unsupported bridge = ${args.withdrawalParams.bridge}`);
+		throw new Error(
+			`Cannot determine bridge for assetId = ${args.withdrawalParams.assetId}`,
+		);
 	}
 
 	waitForWithdrawalCompletion(args: {
@@ -154,5 +159,16 @@ export class BridgeSDK<Ticket> implements IBridgeSDK {
 		}
 
 		throw new Error(`Unsupported bridge = ${args.bridge}`);
+	}
+
+	parseAssetId(assetId: string): ParsedAssetInfo {
+		for (const bridge of this.bridges) {
+			const parsed = bridge.parseAssetId(assetId);
+			if (parsed != null) {
+				return parsed;
+			}
+		}
+
+		throw new Error(`Cannot determine bridge for assetId = ${assetId}`);
 	}
 }

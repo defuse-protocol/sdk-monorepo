@@ -204,18 +204,21 @@ export class BatchWithdrawalImpl<
 
 		const indexes = new Map<string, number>(
 			zip(
-				this.withdrawalParams.map((w) => w.bridge),
+				this.withdrawalParams.map(
+					(w) => this.bridgeSDK.parseAssetId(w.assetId).bridge,
+				),
 				Array(this.withdrawalParams.length).fill(0),
 			),
 		);
 
 		return this.withdrawalParams.map((w): WithdrawalIdentifier => {
+			const bridge = this.bridgeSDK.parseAssetId(w.assetId).bridge;
 			// biome-ignore lint/style/noNonNullAssertion: <explanation>
-			const index = indexes.get(w.bridge)!;
-			indexes.set(w.bridge, index + 1);
+			const index = indexes.get(bridge)!;
+			indexes.set(bridge, index + 1);
 
 			return {
-				bridge: w.bridge,
+				bridge: bridge,
 				index,
 				tx: intentTx,
 			};

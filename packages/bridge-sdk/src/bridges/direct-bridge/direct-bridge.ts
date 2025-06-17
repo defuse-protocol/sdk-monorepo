@@ -6,19 +6,42 @@ import {
 import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
 import type { IntentPrimitive } from "../../intents/shared-types.ts";
 import { assert } from "../../lib/assert.ts";
+import { CAIP2_NETWORK } from "../../lib/caip2.ts";
 import type {
 	Bridge,
 	BridgeKind,
 	FeeEstimation,
 	NearTxInfo,
+	ParsedAssetInfo,
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types.ts";
 import { createWithdrawIntentPrimitive } from "./direct-bridge-utils.ts";
 
 export class DirectBridge implements Bridge {
-	supports(params: { bridge: BridgeKind }): boolean {
-		return params.bridge === "direct";
+	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean {
+		if ("bridge" in params) {
+			return params.bridge === "direct";
+		}
+
+		try {
+			return this.parseAssetId(params.assetId) != null;
+		} catch {
+			return false;
+		}
+	}
+
+	parseAssetId(assetId: string): ParsedAssetInfo | null {
+		const parsed = parseDefuseAssetId(assetId);
+
+		if (parsed.standard === "nep141") {
+			return Object.assign(parsed, {
+				blockchain: CAIP2_NETWORK.Near,
+				bridge: "direct" as const,
+			});
+		}
+
+		return null;
 	}
 
 	createWithdrawalIntents(args: {

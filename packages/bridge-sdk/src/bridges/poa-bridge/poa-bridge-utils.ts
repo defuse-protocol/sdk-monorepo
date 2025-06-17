@@ -51,3 +51,30 @@ export function toPoaNetwork(caip2: string) {
 	// biome-ignore lint/style/noNonNullAssertion: <explanation>
 	return mapping[caip2]!;
 }
+
+export function contractIdToCaip2(contractId: string): CAIP2_NETWORK {
+	const mapping = {
+		eth: CAIP2_NETWORK.Ethereum,
+		sol: CAIP2_NETWORK.Solana,
+		base: CAIP2_NETWORK.Base,
+		tron: CAIP2_NETWORK.Tron,
+		gnosis: CAIP2_NETWORK.Gnosis,
+		xrp: CAIP2_NETWORK.XRPL,
+		doge: CAIP2_NETWORK.Dogecoin,
+		arb: CAIP2_NETWORK.Arbitrum,
+		btc: CAIP2_NETWORK.Bitcoin,
+		zec: CAIP2_NETWORK.Zcash,
+		bera: CAIP2_NETWORK.Berachain,
+	};
+
+	for (const [prefix, caip2] of Object.entries(mapping)) {
+		if (
+			contractId.startsWith(`${prefix}.`) ||
+			contractId.startsWith(`${prefix}-`)
+		) {
+			return caip2;
+		}
+	}
+
+	throw new Error(`Unsupported POA Bridge contractId = ${contractId}`);
+}
