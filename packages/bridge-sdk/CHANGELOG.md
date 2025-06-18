@@ -1,5 +1,14 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.3
+
+### Patch Changes
+
+- f842479: Add all supported chains by POA
+- affa4e6: Add TON fee token
+- Updated dependencies [f842479]
+  - @defuse-protocol/internal-utils@0.0.4
+
 ## 0.1.2
 
 ### Patch Changes
