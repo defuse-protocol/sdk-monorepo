@@ -7,14 +7,12 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": []
+		"ignore": ["**/dist/**", "**/node_modules/**"]
 	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
-		"ignore": [
-			"src/types/database-generated.ts"
-		]
+		"ignore": ["**/dist/**", "**/node_modules/**"]
 	},
 	"organizeImports": {
 		"enabled": true

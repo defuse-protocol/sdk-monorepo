@@ -1,0 +1,9 @@
+{
+	"extends": ["../../biome.json"],
+	"files": {
+		"ignore": ["artifacts/defuse_contract_abi.json"]
+	},
+	"formatter": {
+		"ignore": ["artifacts/defuse_contract_abi.json"]
+	}
+}
