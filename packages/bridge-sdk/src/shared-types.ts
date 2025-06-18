@@ -1,4 +1,4 @@
-import type { Quote } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/solverRelayHttpClient/types";
+import type { solverRelay } from "@defuse-protocol/internal-utils";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
 import type { CAIP2_NETWORK } from "./lib/caip2";
@@ -49,7 +49,7 @@ export interface WithdrawalParams {
 
 export interface FeeEstimation {
 	amount: bigint;
-	quote: null | Quote;
+	quote: null | solverRelay.Quote;
 }
 
 export interface Bridge {

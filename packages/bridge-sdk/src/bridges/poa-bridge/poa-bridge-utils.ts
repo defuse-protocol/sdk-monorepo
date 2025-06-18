@@ -1,4 +1,4 @@
-import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
+import { utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { CAIP2_NETWORK } from "../../lib/caip2";
 
@@ -8,7 +8,9 @@ export function createWithdrawIntentPrimitive(params: {
 	destinationMemo: string | undefined;
 	amount: bigint;
 }): Extract<IntentPrimitive, { intent: "ft_withdraw" }> {
-	const { contractId: tokenAccountId } = parseDefuseAssetId(params.assetId);
+	const { contractId: tokenAccountId } = utils.parseDefuseAssetId(
+		params.assetId,
+	);
 	return {
 		intent: "ft_withdraw",
 		token: tokenAccountId,

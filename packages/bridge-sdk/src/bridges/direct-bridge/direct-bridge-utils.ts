@@ -1,4 +1,4 @@
-import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
+import { utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
@@ -17,7 +17,7 @@ export function createWithdrawIntentPrimitive(params: {
 		};
 	}
 
-	const { contractId: tokenAccountId, standard } = parseDefuseAssetId(
+	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
 	);
 	assert(standard === "nep141", "Only NEP-141 is supported");

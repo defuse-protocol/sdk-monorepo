@@ -1,5 +1,4 @@
-import { publishIntents } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/publishIntents";
-import { waitForIntentSettlement } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/waitForIntentSettlement";
+import { solverRelay } from "@defuse-protocol/internal-utils";
 import type { NearTxInfo } from "../../shared-types";
 import type { IIntentRelayer } from "../interfaces/intent-relayer";
 import type { IntentHash, MultiPayload } from "../shared-types";
@@ -29,7 +28,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		multiPayloads: MultiPayload[];
 		quoteHashes: string[];
 	}): Promise<IntentHash[]> {
-		const a = await publishIntents({
+		const a = await solverRelay.publishIntents({
 			quote_hashes: quoteHashes,
 			signed_datas: multiPayloads,
 		});
@@ -41,7 +40,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 	}
 
 	async waitForSettlement(ticket: IntentHash): Promise<{ tx: NearTxInfo }> {
-		const result = await waitForIntentSettlement(
+		const result = await solverRelay.waitForIntentSettlement(
 			AbortSignal.timeout(30000),
 			ticket,
 		);

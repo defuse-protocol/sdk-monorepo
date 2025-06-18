@@ -1,5 +1,4 @@
-import { authHandleToIntentsUserId } from "@defuse-protocol/defuse-sdk/dist/utils/authIdentity";
-import { transformERC191Signature } from "@defuse-protocol/defuse-sdk/dist/utils/prepareBroadcastRequest";
+import { utils } from "@defuse-protocol/internal-utils";
 import type { Account } from "viem";
 import type { IIntentSigner } from "../interfaces/intent-signer";
 import type { IntentPayload, MultiPayload } from "../shared-types";
@@ -19,7 +18,7 @@ export class IntentSignerEVM implements IIntentSigner {
 		const payload = JSON.stringify({
 			signer_id:
 				intent.signer_id ??
-				authHandleToIntentsUserId({
+				utils.authHandleToIntentsUserId({
 					identifier: this.signer.address,
 					method: "evm",
 				}),
@@ -39,7 +38,7 @@ export class IntentSignerEVM implements IIntentSigner {
 		return {
 			standard: "erc191",
 			payload,
-			signature: transformERC191Signature(signature),
+			signature: utils.transformERC191Signature(signature),
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		} as any as MultiPayload;
 	}
