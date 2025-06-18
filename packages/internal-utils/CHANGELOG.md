@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.4
+
+### Patch Changes
+
+- f842479: Export POA bridge chains
+
 ## 0.0.3
 
 ### Patch Changes
