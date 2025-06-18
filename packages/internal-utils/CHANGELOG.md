@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.3
+
+### Patch Changes
+
+- 5684e83: Fix workspace:\* version
+
 ## 0.0.2
 
 ### Patch Changes
