@@ -1,1 +1,1 @@
-export * from "./intent-relayer-public.ts";
+export * from "./intent-relayer-public";

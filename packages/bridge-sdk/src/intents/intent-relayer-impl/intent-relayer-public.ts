@@ -1,8 +1,8 @@
 import { publishIntents } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/publishIntents";
 import { waitForIntentSettlement } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/waitForIntentSettlement";
-import type { NearTxInfo } from "../../shared-types.ts";
-import type { IIntentRelayer } from "../interfaces/intent-relayer.ts";
-import type { IntentHash, MultiPayload } from "../shared-types.ts";
+import type { NearTxInfo } from "../../shared-types";
+import type { IIntentRelayer } from "../interfaces/intent-relayer";
+import type { IntentHash, MultiPayload } from "../shared-types";
 
 export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 	async publishIntent({

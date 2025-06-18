@@ -4,8 +4,8 @@ import {
 	getTokenAccountId,
 	parseDefuseAssetId,
 } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
-import type { IntentPrimitive } from "../../intents/shared-types.ts";
-import { assert } from "../../lib/assert.ts";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import { assert } from "../../lib/assert";
 import type {
 	Bridge,
 	BridgeKind,
@@ -14,12 +14,12 @@ import type {
 	ParsedAssetInfo,
 	TxInfo,
 	WithdrawalParams,
-} from "../../shared-types.ts";
+} from "../../shared-types";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
 	toPoaNetwork,
-} from "./poa-bridge-utils.ts";
+} from "./poa-bridge-utils";
 
 export class PoaBridge implements Bridge {
 	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean {

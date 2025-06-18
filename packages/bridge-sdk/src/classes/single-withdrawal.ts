@@ -1,5 +1,5 @@
-import type { IIntentExecuter } from "../intents/interfaces/intent-executer.ts";
-import type { IntentRelayParamsFactory } from "../intents/shared-types.ts";
+import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
+import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import type {
 	FeeEstimation,
 	IBridgeSDK,
@@ -9,7 +9,7 @@ import type {
 	TxNoInfo,
 	WithdrawalIdentifier,
 	WithdrawalParams,
-} from "../shared-types.ts";
+} from "../shared-types";
 
 export class SingleWithdrawalImpl<
 	Ticket,

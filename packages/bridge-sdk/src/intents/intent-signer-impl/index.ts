@@ -1,3 +1,3 @@
-export * from "./intent-signer-evm.ts";
-export * from "./intent-signer-near.ts";
-export * from "./intent-signer-dummy.ts";
+export * from "./intent-signer-evm";
+export * from "./intent-signer-near";
+export * from "./intent-signer-dummy";

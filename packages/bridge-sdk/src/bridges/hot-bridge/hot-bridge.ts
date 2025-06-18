@@ -2,9 +2,9 @@ import { getQuote } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/getQu
 import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
-import type { IntentPrimitive } from "../../intents/shared-types.ts";
-import { assert } from "../../lib/assert.ts";
-import { wait } from "../../lib/async.ts";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import { assert } from "../../lib/assert";
+import { wait } from "../../lib/async";
 import type {
 	Bridge,
 	BridgeKind,
@@ -14,13 +14,13 @@ import type {
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
-} from "../../shared-types.ts";
-import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants.ts";
+} from "../../shared-types";
+import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants";
 import {
 	getFeeAssetIdForChain,
 	networkIdToCaip2,
 	toHOTNetwork,
-} from "./hot-bridge-utils.ts";
+} from "./hot-bridge-utils";
 
 export class HotBridge implements Bridge {
 	constructor(protected hotSdk: HotSdk) {}

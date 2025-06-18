@@ -1,12 +1,12 @@
-import type { NearTxInfo } from "../../shared-types.ts";
-import { defaultIntentPayloadFactory } from "../intent-payload-factory.ts";
-import type { IIntentExecuter } from "../interfaces/intent-executer.ts";
-import type { IIntentRelayer } from "../interfaces/intent-relayer.ts";
-import type { IIntentSigner } from "../interfaces/intent-signer.ts";
+import type { NearTxInfo } from "../../shared-types";
+import { defaultIntentPayloadFactory } from "../intent-payload-factory";
+import type { IIntentExecuter } from "../interfaces/intent-executer";
+import type { IIntentRelayer } from "../interfaces/intent-relayer";
+import type { IIntentSigner } from "../interfaces/intent-signer";
 import type {
 	IntentPayloadFactory,
 	IntentRelayParamsFactory,
-} from "../shared-types.ts";
+} from "../shared-types";
 
 export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	protected intentPayloadFactory: IntentPayloadFactory | undefined;

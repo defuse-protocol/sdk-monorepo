@@ -1,6 +1,6 @@
 import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
-import type { IntentPrimitive } from "../../intents/shared-types.ts";
-import { assert } from "../../lib/assert.ts";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import { assert } from "../../lib/assert";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;

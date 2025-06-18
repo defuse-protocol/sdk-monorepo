@@ -1,7 +1,7 @@
 import { base58, base64 } from "@scure/base";
-import { hashNEP413Message } from "../../lib/nep413.ts";
-import type { IIntentSigner } from "../interfaces/intent-signer.ts";
-import type { IntentPayload, MultiPayload } from "../shared-types.ts";
+import { hashNEP413Message } from "../../lib/nep413";
+import type { IIntentSigner } from "../interfaces/intent-signer";
+import type { IntentPayload, MultiPayload } from "../shared-types";
 
 export class IntentSignerNear implements IIntentSigner {
 	private signer: import("near-api-js").KeyPair;

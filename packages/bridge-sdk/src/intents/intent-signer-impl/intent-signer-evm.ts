@@ -1,8 +1,8 @@
 import { authHandleToIntentsUserId } from "@defuse-protocol/defuse-sdk/dist/utils/authIdentity";
 import { transformERC191Signature } from "@defuse-protocol/defuse-sdk/dist/utils/prepareBroadcastRequest";
 import type { Account } from "viem";
-import type { IIntentSigner } from "../interfaces/intent-signer.ts";
-import type { IntentPayload, MultiPayload } from "../shared-types.ts";
+import type { IIntentSigner } from "../interfaces/intent-signer";
+import type { IntentPayload, MultiPayload } from "../shared-types";
 
 export class IntentSignerEVM implements IIntentSigner {
 	private signer: Account;

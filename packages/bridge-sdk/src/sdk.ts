@@ -1,20 +1,20 @@
 import { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
-import { DirectBridge } from "./bridges/direct-bridge/direct-bridge.ts";
-import { HotBridge } from "./bridges/hot-bridge/hot-bridge.ts";
-import { PoaBridge } from "./bridges/poa-bridge/poa-bridge.ts";
-import { BatchWithdrawalImpl } from "./classes/batch-withdrawal.ts";
-import { FeeExceedsAmountError } from "./classes/errors.ts";
-import { SingleWithdrawalImpl } from "./classes/single-withdrawal.ts";
-import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer.ts";
+import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
+import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
+import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
+import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
+import { FeeExceedsAmountError } from "./classes/errors";
+import { SingleWithdrawalImpl } from "./classes/single-withdrawal";
+import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
-import type { IIntentRelayer } from "./intents/interfaces/intent-relayer.ts";
-import type { IIntentSigner } from "./intents/interfaces/intent-signer.ts";
+import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
+import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type {
 	IntentHash,
 	IntentPayloadFactory,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
-} from "./intents/shared-types.ts";
+} from "./intents/shared-types";
 import type {
 	Bridge,
 	BridgeKind,
@@ -25,7 +25,7 @@ import type {
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
-} from "./shared-types.ts";
+} from "./shared-types";
 
 export class BridgeSDK implements IBridgeSDK {
 	protected intentRelayer: IIntentRelayer<IntentHash>;

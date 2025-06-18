@@ -1,7 +1,7 @@
 import type { Quote } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/solverRelayHttpClient/types";
-import type { IIntentSigner } from "./intents/interfaces/intent-signer.ts";
-import type { IntentPrimitive } from "./intents/shared-types.ts";
-import type { CAIP2_NETWORK } from "./lib/caip2.ts";
+import type { IIntentSigner } from "./intents/interfaces/intent-signer";
+import type { IntentPrimitive } from "./intents/shared-types";
+import type { CAIP2_NETWORK } from "./lib/caip2";
 
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;

@@ -4,9 +4,9 @@ import {
 	getNearNep141StorageBalance,
 } from "@defuse-protocol/defuse-sdk/dist/services/blockchainBalanceService";
 import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
-import type { IntentPrimitive } from "../../intents/shared-types.ts";
-import { assert } from "../../lib/assert.ts";
-import { CAIP2_NETWORK } from "../../lib/caip2.ts";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import { assert } from "../../lib/assert";
+import { CAIP2_NETWORK } from "../../lib/caip2";
 import type {
 	Bridge,
 	BridgeKind,
@@ -15,8 +15,8 @@ import type {
 	ParsedAssetInfo,
 	TxInfo,
 	WithdrawalParams,
-} from "../../shared-types.ts";
-import { createWithdrawIntentPrimitive } from "./direct-bridge-utils.ts";
+} from "../../shared-types";
+import { createWithdrawIntentPrimitive } from "./direct-bridge-utils";
 
 export class DirectBridge implements Bridge {
 	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean {

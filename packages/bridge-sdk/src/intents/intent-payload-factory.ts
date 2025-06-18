@@ -1,5 +1,5 @@
 import { base64 } from "@scure/base";
-import type { IntentPayload } from "./shared-types.ts";
+import type { IntentPayload } from "./shared-types";
 
 export function defaultIntentPayloadFactory({
 	intents,

@@ -1,9 +1,9 @@
-import type { NearTxInfo } from "../../shared-types.ts";
+import type { NearTxInfo } from "../../shared-types";
 import type {
 	IntentPayloadFactory,
 	IntentRelayParamsFactory,
 	RelayParamsDefault,
-} from "../shared-types.ts";
+} from "../shared-types";
 
 export interface IIntentExecuter<Ticket, RelayParams = RelayParamsDefault> {
 	signAndSendIntent(

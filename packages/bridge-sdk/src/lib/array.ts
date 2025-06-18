@@ -1,4 +1,4 @@
-import { assert } from "./assert.ts";
+import { assert } from "./assert";
 
 export function drop<T>(arr: T[], indexes: number[]): T[] {
 	const result: T[] = [];

@@ -1,6 +1,6 @@
 import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
-import type { IntentPrimitive } from "../../intents/shared-types.ts";
-import { CAIP2_NETWORK } from "../../lib/caip2.ts";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import { CAIP2_NETWORK } from "../../lib/caip2";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;

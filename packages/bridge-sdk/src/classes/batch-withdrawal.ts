@@ -1,7 +1,7 @@
-import type { IIntentExecuter } from "../intents/interfaces/intent-executer.ts";
-import type { IntentRelayParamsFactory } from "../intents/shared-types.ts";
-import { drop, zip } from "../lib/array.ts";
-import { assert } from "../lib/assert.ts";
+import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
+import type { IntentRelayParamsFactory } from "../intents/shared-types";
+import { drop, zip } from "../lib/array";
+import { assert } from "../lib/assert";
 import type {
 	BatchWithdrawal,
 	FeeEstimation,
@@ -11,8 +11,8 @@ import type {
 	TxNoInfo,
 	WithdrawalIdentifier,
 	WithdrawalParams,
-} from "../shared-types.ts";
-import { FeeExceedsAmountError } from "./errors.ts";
+} from "../shared-types";
+import { FeeExceedsAmountError } from "./errors";
 
 export class BatchWithdrawalImpl<
 	Ticket,

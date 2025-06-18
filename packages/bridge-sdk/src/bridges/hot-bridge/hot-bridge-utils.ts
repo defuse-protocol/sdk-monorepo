@@ -1,5 +1,5 @@
 import { Network } from "@hot-labs/omni-sdk";
-import { CAIP2_NETWORK } from "../../lib/caip2.ts";
+import { CAIP2_NETWORK } from "../../lib/caip2";
 
 export function getFeeAssetIdForChain(caip2: CAIP2_NETWORK) {
 	switch (caip2) {

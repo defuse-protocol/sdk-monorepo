@@ -10,7 +10,7 @@
 
 		"moduleResolution": "bundler",
 		"esModuleInterop": true,
-		"allowImportingTsExtensions": true,
+		"allowImportingTsExtensions": false,
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
 
