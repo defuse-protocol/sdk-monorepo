@@ -13,7 +13,7 @@ export function getFeeAssetIdForChain(caip2: CAIP2_NETWORK) {
 }
 
 export function toHOTNetwork(caip2: CAIP2_NETWORK): Network {
-	const mapping = {
+	const mapping: Record<string, Network> = {
 		[CAIP2_NETWORK.BNB]: Network.Bnb,
 		[CAIP2_NETWORK.Polygon]: Network.Polygon,
 		[CAIP2_NETWORK.TON]: Network.Ton,
