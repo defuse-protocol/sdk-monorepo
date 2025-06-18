@@ -1,9 +1,4 @@
-import { getWithdrawalEstimate } from "@defuse-protocol/defuse-sdk/dist/sdk/poaBridge/poaBridgeHttpClient/apis";
-import { waitForWithdrawalCompletion } from "@defuse-protocol/defuse-sdk/dist/sdk/poaBridge/waitForWithdrawalCompletion";
-import {
-	getTokenAccountId,
-	parseDefuseAssetId,
-} from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
+import { poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -35,7 +30,7 @@ export class PoaBridge implements Bridge {
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = parseDefuseAssetId(assetId);
+		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.contractId.endsWith(".omft.near")) {
 			return Object.assign(parsed, {
 				blockchain: contractIdToCaip2(parsed.contractId),
@@ -63,8 +58,8 @@ export class PoaBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
-		const estimation = await getWithdrawalEstimate({
-			token: getTokenAccountId(args.withdrawalParams.assetId),
+		const estimation = await poaBridge.httpClient.getWithdrawalEstimate({
+			token: utils.getTokenAccountId(args.withdrawalParams.assetId),
 			address: args.withdrawalParams.destinationAddress,
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 			chain: toPoaNetwork(assetInfo.blockchain) as any,
@@ -80,7 +75,7 @@ export class PoaBridge implements Bridge {
 		tx: NearTxInfo;
 		index: number;
 	}): Promise<TxInfo> {
-		const withdrawalStatus = await waitForWithdrawalCompletion({
+		const withdrawalStatus = await poaBridge.waitForWithdrawalCompletion({
 			txHash: args.tx.hash,
 			index: args.index,
 			signal: new AbortController().signal,

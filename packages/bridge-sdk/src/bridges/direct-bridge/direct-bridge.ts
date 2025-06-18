@@ -1,9 +1,9 @@
-import { getQuote } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/getQuote";
 import {
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
-} from "@defuse-protocol/defuse-sdk/dist/services/blockchainBalanceService";
-import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
+	solverRelay,
+	utils,
+} from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import { CAIP2_NETWORK } from "../../lib/caip2";
@@ -33,7 +33,7 @@ export class DirectBridge implements Bridge {
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = parseDefuseAssetId(assetId);
+		const parsed = utils.parseDefuseAssetId(assetId);
 
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
@@ -81,7 +81,7 @@ export class DirectBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 	}): Promise<FeeEstimation> {
-		const { contractId: tokenAccountId, standard } = parseDefuseAssetId(
+		const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 			args.withdrawalParams.assetId,
 		);
 		assert(standard === "nep141", "Only NEP-141 is supported");
@@ -117,7 +117,7 @@ export class DirectBridge implements Bridge {
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
 				? null
-				: await getQuote({
+				: await solverRelay.getQuote({
 						quoteParams: {
 							defuse_asset_identifier_in: args.withdrawalParams.assetId,
 							defuse_asset_identifier_out: feeAssetId,

@@ -1,5 +1,7 @@
-import { getQuote } from "@defuse-protocol/defuse-sdk/dist/sdk/solverRelay/getQuote";
-import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
+import {
+	utils as internalUtils,
+	solverRelay,
+} from "@defuse-protocol/internal-utils";
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -38,7 +40,7 @@ export class HotBridge implements Bridge {
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = parseDefuseAssetId(assetId);
+		const parsed = internalUtils.parseDefuseAssetId(assetId);
 		if (parsed.contractId === utils.OMNI_HOT_V2) {
 			assert(
 				parsed.standard === "nep245",
@@ -118,7 +120,7 @@ export class HotBridge implements Bridge {
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
 				? null
-				: await getQuote({
+				: await solverRelay.getQuote({
 						quoteParams: {
 							defuse_asset_identifier_in: args.withdrawalParams.assetId,
 							defuse_asset_identifier_out: feeAssetId,

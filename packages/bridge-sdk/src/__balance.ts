@@ -1,5 +1,5 @@
 import { getDepositedBalances } from "@defuse-protocol/defuse-sdk/dist/services/defuseBalanceService";
-import { authHandleToIntentsUserId } from "@defuse-protocol/defuse-sdk/dist/utils/authIdentity";
+import { utils } from "@defuse-protocol/internal-utils";
 import { HotBridge } from "@hot-labs/omni-sdk";
 import { providers } from "near-api-js";
 import { env } from "./env";
@@ -10,7 +10,7 @@ const hot = new HotBridge({
 	},
 });
 
-const intentsUserId = authHandleToIntentsUserId({
+const intentsUserId = utils.authHandleToIntentsUserId({
 	identifier: env.SECRET_EVM_ADDRESS,
 	method: "evm",
 });
