@@ -1,11 +1,6 @@
-import { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
-import { InMemorySigner, KeyPair, connect } from "near-api-js";
+import { KeyPair } from "near-api-js";
 import { privateKeyToAccount } from "viem/accounts";
-import { DirectBridge } from "./bridges/direct-bridge/direct-bridge.ts";
-import { HotBridge } from "./bridges/hot-bridge/hot-bridge.ts";
-import { PoaBridge } from "./bridges/poa-bridge/poa-bridge.ts";
 import { env } from "./env";
-import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
 import {
 	IntentSignerEVM,
 	IntentSignerNear,
@@ -14,54 +9,18 @@ import { BridgeSDK } from "./sdk";
 
 const nearSignerAccountId = env.SECRET_NEAR_ACCOUNT_ID;
 const keypair = KeyPair.fromString(env.SECRET_NEAR_PRIVATE_KEY);
-const nearSigner = await InMemorySigner.fromKeyPair(
-	"mainnet",
-	nearSignerAccountId,
-	keypair,
-);
-
-const near = await connect({
-	networkId: "mainnet",
-	nodeUrl: "https://rpc.mainnet.near.org",
-	headers: {},
-	signer: nearSigner,
-});
 
 const sdk = new BridgeSDK({
-	bridges: [
-		new PoaBridge(),
-		new HotBridge(
-			new HotSdk({
-				logger: console,
-				evmRpc: {
-					137: ["https://polygon-rpc.com/"],
-				},
-				async executeNearTransaction(tx): Promise<{
-					sender: string;
-					hash: string;
-				}> {
-					const account = await near.account(nearSignerAccountId);
-					const outcome = await account.signAndSendTransaction(tx);
-
-					return {
-						sender: nearSignerAccountId,
-						hash: outcome.transaction.hash,
-					};
-				},
-			}),
-		),
-		new DirectBridge(),
-	],
-	intentRelayer: new IntentRelayerPublic(),
-});
-
-sdk.setIntentSigner(
-	new IntentSignerNear({
+	intentSigner: new IntentSignerNear({
 		accountId: nearSignerAccountId,
 		signer: keypair,
 	}),
-);
+	evmRpc: {
+		137: ["https://polygon-rpc.com/"],
+	},
+});
 
+// or change the intent signer in runtime
 sdk.setIntentSigner(
 	new IntentSignerEVM({
 		signer: privateKeyToAccount(env.SECRET_EVM_PRIVATE_KEY),

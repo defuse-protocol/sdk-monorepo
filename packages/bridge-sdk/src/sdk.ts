@@ -1,10 +1,16 @@
+import { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
+import { DirectBridge } from "./bridges/direct-bridge/direct-bridge.ts";
+import { HotBridge } from "./bridges/hot-bridge/hot-bridge.ts";
+import { PoaBridge } from "./bridges/poa-bridge/poa-bridge.ts";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal.ts";
 import { FeeExceedsAmountError } from "./classes/errors.ts";
 import { SingleWithdrawalImpl } from "./classes/single-withdrawal.ts";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer.ts";
+import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer.ts";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer.ts";
 import type {
+	IntentHash,
 	IntentPayloadFactory,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
@@ -21,18 +27,31 @@ import type {
 	WithdrawalParams,
 } from "./shared-types.ts";
 
-export class BridgeSDK<Ticket> implements IBridgeSDK {
-	protected intentRelayer: IIntentRelayer<Ticket>;
+export class BridgeSDK implements IBridgeSDK {
+	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 
 	constructor(args: {
-		bridges: Bridge[];
-		intentRelayer: IIntentRelayer<Ticket>;
 		intentSigner?: IIntentSigner;
+		evmRpc: Record<number, string[]>;
 	}) {
-		this.bridges = args.bridges;
-		this.intentRelayer = args.intentRelayer;
+		this.bridges = [
+			new PoaBridge(),
+			new HotBridge(
+				new HotSdk({
+					logger: console,
+					evmRpc: args.evmRpc,
+					async executeNearTransaction() {
+						throw new Error("not implemented");
+					},
+				}),
+			),
+			new DirectBridge(),
+		];
+
+		this.intentRelayer = new IntentRelayerPublic();
+
 		this.intentSigner = args.intentSigner;
 	}
 
