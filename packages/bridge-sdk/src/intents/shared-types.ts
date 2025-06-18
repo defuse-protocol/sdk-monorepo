@@ -11,10 +11,8 @@ export interface IntentPayload {
 }
 
 export type IntentPayloadFactory = (
-	intentParams: Partial<Omit<IntentPayload, "intents">> & {
-		intents: IntentPrimitive | IntentPrimitive[];
-	},
-) => Promise<IntentPayload> | IntentPayload;
+	intentParams: IntentPayload,
+) => Promise<Partial<IntentPayload>> | Partial<IntentPayload>;
 
 export type { MultiPayload };
 

@@ -9,7 +9,7 @@ import type {
 } from "../shared-types.ts";
 
 export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
-	protected intentPayloadFactory: IntentPayloadFactory;
+	protected intentPayloadFactory: IntentPayloadFactory | undefined;
 	protected intentSigner: IIntentSigner;
 	protected intentRelayer: IIntentRelayer<Ticket>;
 
@@ -18,8 +18,7 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 		intentRelayer: IIntentRelayer<Ticket>;
 		intentSigner: IIntentSigner;
 	}) {
-		this.intentPayloadFactory =
-			args.intentPayloadFactory ?? defaultIntentPayloadFactory;
+		this.intentPayloadFactory = args.intentPayloadFactory;
 		this.intentRelayer = args.intentRelayer;
 		this.intentSigner = args.intentSigner;
 	}
@@ -30,7 +29,14 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	}: Parameters<IntentPayloadFactory>[0] & {
 		relayParams?: IntentRelayParamsFactory;
 	}): Promise<{ ticket: Ticket }> {
-		const intentPayload = await this.intentPayloadFactory(intentParams);
+		let intentPayload = defaultIntentPayloadFactory(intentParams);
+		intentPayload = this.intentPayloadFactory
+			? // We allow omitting properties, that's why we pass the result through the factory again
+				defaultIntentPayloadFactory(
+					await this.intentPayloadFactory(intentPayload),
+				)
+			: intentPayload;
+
 		const multiPayload = await this.intentSigner.signIntent(intentPayload);
 		const relayParams = relayParamsFactory ? await relayParamsFactory() : {};
 		const ticket = await this.intentRelayer.publishIntent({
