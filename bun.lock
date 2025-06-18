@@ -10,7 +10,7 @@
     },
     "packages/bridge-sdk": {
       "name": "@defuse-protocol/bridge-sdk",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "dependencies": {
         "@defuse-protocol/contract-types": "workspace:*",
         "@defuse-protocol/internal-utils": "workspace:*",
@@ -32,7 +32,7 @@
     },
     "packages/contract-types": {
       "name": "@defuse-protocol/contract-types",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "devDependencies": {
         "tsup": "^8.0.2",
         "typescript": "^5.4.2",
@@ -40,8 +40,9 @@
     },
     "packages/internal-utils": {
       "name": "@defuse-protocol/internal-utils",
-      "version": "0.0.0",
+      "version": "0.0.1",
       "dependencies": {
+        "@defuse-protocol/contract-types": "workspace:*",
         "@hot-labs/omni-sdk": "2.8.3",
         "@lifeomic/attempt": "^3.1.0",
         "@noble/hashes": "^1.7.1",

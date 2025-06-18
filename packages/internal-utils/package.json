@@ -14,9 +14,7 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"scripts": {
 		"test": "vitest --passWithNoTests",
 		"build": "tsup",
@@ -25,6 +23,7 @@
 		"format": "biome format --write ."
 	},
 	"dependencies": {
+		"@defuse-protocol/contract-types": "workspace:*",
 		"@hot-labs/omni-sdk": "2.8.3",
 		"@lifeomic/attempt": "^3.1.0",
 		"@noble/hashes": "^1.7.1",
