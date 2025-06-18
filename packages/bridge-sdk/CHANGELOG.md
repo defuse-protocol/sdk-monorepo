@@ -1,5 +1,13 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.2
+
+### Patch Changes
+
+- 5684e83: Fix workspace:\* version
+- Updated dependencies [5684e83]
+  - @defuse-protocol/internal-utils@0.0.3
+
 ## 0.1.1
 
 ### Patch Changes
