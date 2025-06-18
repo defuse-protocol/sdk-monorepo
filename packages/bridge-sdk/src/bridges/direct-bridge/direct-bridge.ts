@@ -49,16 +49,32 @@ export class DirectBridge implements Bridge {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]> {
-		return Promise.resolve([
-			createWithdrawIntentPrimitive({
-				assetId: args.withdrawalParams.assetId,
-				destinationAddress: args.withdrawalParams.destinationAddress,
-				amount: args.withdrawalParams.amount,
-				storageDeposit: args.feeEstimation.quote
-					? BigInt(args.feeEstimation.quote.amount_out)
-					: args.feeEstimation.amount,
-			}),
-		]);
+		const intents: IntentPrimitive[] = [];
+
+		if (args.feeEstimation.quote != null) {
+			intents.push({
+				intent: "token_diff",
+				diff: {
+					[args.feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${args.feeEstimation.quote.amount_in}`,
+					[args.feeEstimation.quote.defuse_asset_identifier_out]:
+						args.feeEstimation.quote.amount_out,
+				},
+			});
+		}
+
+		const intent = createWithdrawIntentPrimitive({
+			assetId: args.withdrawalParams.assetId,
+			destinationAddress: args.withdrawalParams.destinationAddress,
+			amount: args.withdrawalParams.amount,
+			storageDeposit: args.feeEstimation.quote
+				? BigInt(args.feeEstimation.quote.amount_out)
+				: args.feeEstimation.amount,
+		});
+
+		intents.push(intent);
+
+		return Promise.resolve(intents);
 	}
 
 	async estimateWithdrawalFee(args: {
