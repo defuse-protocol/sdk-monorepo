@@ -1,5 +1,26 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.0
+
+### Minor Changes
+
+- 578992d: Simplify overriding the intent payload
+- b9340e7: Derive bridge for a withdrawn asset from its name
+- 25f8859: Remove `sourceAddress`, derive it from `assetId`
+- 32a47e1: Automatically unwrap wNEAR upon withdrawal
+- 14c9421: Simplify instantiation of the sdk
+- 5c01d58: Remove `destinationChain` field and derive chain information from `assetId`
+
+### Patch Changes
+
+- 60e1a04: Fix withdrawing NEP-141 to account without storage
+- bcba3fc: Mark all packages as side effect free
+- e16e83b: Create internal-utils package instead of defuse-sdk use
+- Updated dependencies [bcba3fc]
+- Updated dependencies [e16e83b]
+  - @defuse-protocol/contract-types@0.0.2
+  - @defuse-protocol/internal-utils@0.0.1
+
 ## 0.0.2
 
 ### Patch Changes

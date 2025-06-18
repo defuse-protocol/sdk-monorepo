@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/contract-types",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -14,7 +14,9 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
