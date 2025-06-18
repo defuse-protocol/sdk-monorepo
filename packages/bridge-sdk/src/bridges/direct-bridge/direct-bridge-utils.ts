@@ -1,6 +1,7 @@
 import { parseDefuseAssetId } from "@defuse-protocol/defuse-sdk/dist/utils/tokenUtils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
+import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -8,6 +9,14 @@ export function createWithdrawIntentPrimitive(params: {
 	amount: bigint;
 	storageDeposit: bigint;
 }): IntentPrimitive {
+	if (params.assetId === NEAR_NATIVE_ASSET_ID) {
+		return {
+			intent: "native_withdraw",
+			receiver_id: params.destinationAddress,
+			amount: params.amount.toString(),
+		};
+	}
+
 	const { contractId: tokenAccountId, standard } = parseDefuseAssetId(
 		params.assetId,
 	);

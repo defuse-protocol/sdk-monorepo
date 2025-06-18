@@ -16,6 +16,7 @@ import type {
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 import { createWithdrawIntentPrimitive } from "./direct-bridge-utils";
 
 export class DirectBridge implements Bridge {
@@ -85,6 +86,14 @@ export class DirectBridge implements Bridge {
 		);
 		assert(standard === "nep141", "Only NEP-141 is supported");
 
+		// We don't directly withdraw `wrap.near`, we unwrap it first, so it doesn't require storage
+		if (tokenAccountId === NEAR_NATIVE_ASSET_ID) {
+			return {
+				amount: 0n,
+				quote: null,
+			};
+		}
+
 		const [minStorageBalance, userStorageBalance] = await Promise.all([
 			getNearNep141MinStorageBalance({
 				contractId: tokenAccountId,
@@ -102,7 +111,7 @@ export class DirectBridge implements Bridge {
 			};
 		}
 
-		const feeAssetId = "nep141:wrap.near";
+		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
 
 		const feeQuote =
