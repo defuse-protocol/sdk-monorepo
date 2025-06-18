@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.4
+
+### Patch Changes
+
+- 59510fb: Export FeeEstimation type
+
 ## 0.1.3
 
 ### Patch Changes
