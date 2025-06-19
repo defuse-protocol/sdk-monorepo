@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.7
+
+### Patch Changes
+
+- 51c9025: Export `FeeExceedsAmountError`
+
 ## 0.1.6
 
 ### Patch Changes
