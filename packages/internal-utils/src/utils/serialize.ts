@@ -6,7 +6,7 @@
  * @returns the reference key
  */
 function getReferenceKey(keys: string[], cutoff: number) {
-  return keys.slice(0, cutoff).join(".") || "."
+	return keys.slice(0, cutoff).join(".") || ".";
 }
 
 /**
@@ -18,20 +18,20 @@ function getReferenceKey(keys: string[], cutoff: number) {
  */
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 function getCutoff(array: any[], value: any) {
-  const { length } = array
+	const { length } = array;
 
-  for (let index = 0; index < length; ++index) {
-    if (array[index] === value) {
-      return index + 1
-    }
-  }
+	for (let index = 0; index < length; ++index) {
+		if (array[index] === value) {
+			return index + 1;
+		}
+	}
 
-  return 0
+	return 0;
 }
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-type StandardReplacer = (key: string, value: any) => any
+type StandardReplacer = (key: string, value: any) => any;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-type CircularReplacer = (key: string, value: any, referenceKey: string) => any
+type CircularReplacer = (key: string, value: any, referenceKey: string) => any;
 
 /**
  * Create a replacer method that handles circular values
@@ -41,51 +41,51 @@ type CircularReplacer = (key: string, value: any, referenceKey: string) => any
  * @returns the value to stringify
  */
 function createReplacer(
-  replacer?: StandardReplacer | null | undefined,
-  circularReplacer?: CircularReplacer | null | undefined
+	replacer?: StandardReplacer | null | undefined,
+	circularReplacer?: CircularReplacer | null | undefined,
 ): StandardReplacer {
-  const hasReplacer = typeof replacer === "function"
-  const hasCircularReplacer = typeof circularReplacer === "function"
+	const hasReplacer = typeof replacer === "function";
+	const hasCircularReplacer = typeof circularReplacer === "function";
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const cache: any[] = []
-  const keys: string[] = []
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	const cache: any[] = [];
+	const keys: string[] = [];
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  return function replace(this: any, key: string, value: any) {
-    if (typeof value === "object") {
-      if (cache.length) {
-        const thisCutoff = getCutoff(cache, this)
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	return function replace(this: any, key: string, value: any) {
+		if (typeof value === "object") {
+			if (cache.length) {
+				const thisCutoff = getCutoff(cache, this);
 
-        if (thisCutoff === 0) {
-          cache[cache.length] = this
-        } else {
-          cache.splice(thisCutoff)
-          keys.splice(thisCutoff)
-        }
+				if (thisCutoff === 0) {
+					cache[cache.length] = this;
+				} else {
+					cache.splice(thisCutoff);
+					keys.splice(thisCutoff);
+				}
 
-        keys[keys.length] = key
+				keys[keys.length] = key;
 
-        const valueCutoff = getCutoff(cache, value)
+				const valueCutoff = getCutoff(cache, value);
 
-        if (valueCutoff !== 0) {
-          return hasCircularReplacer
-            ? circularReplacer.call(
-                this,
-                key,
-                value,
-                getReferenceKey(keys, valueCutoff)
-              )
-            : `[ref=${getReferenceKey(keys, valueCutoff)}]`
-        }
-      } else {
-        cache[0] = value
-        keys[0] = key
-      }
-    }
+				if (valueCutoff !== 0) {
+					return hasCircularReplacer
+						? circularReplacer.call(
+								this,
+								key,
+								value,
+								getReferenceKey(keys, valueCutoff),
+							)
+						: `[ref=${getReferenceKey(keys, valueCutoff)}]`;
+				}
+			} else {
+				cache[0] = value;
+				keys[0] = key;
+			}
+		}
 
-    return hasReplacer ? replacer.call(this, key, value) : value
-  }
+		return hasReplacer ? replacer.call(this, key, value) : value;
+	};
 }
 
 /**
@@ -100,22 +100,22 @@ function createReplacer(
  * @returns the stringified output
  */
 export function serialize(
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  value: any,
-  replacer?: StandardReplacer | null | undefined,
-  indent?: number | null | undefined,
-  circularReplacer?: CircularReplacer | null | undefined
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	value: any,
+	replacer?: StandardReplacer | null | undefined,
+	indent?: number | null | undefined,
+	circularReplacer?: CircularReplacer | null | undefined,
 ) {
-  return JSON.stringify(
-    value,
-    createReplacer((key, value_) => {
-      let value = value_
-      if (typeof value === "bigint")
-        value = { __type: "bigint", value: value_.toString() }
-      if (value instanceof Map)
-        value = { __type: "Map", value: Array.from(value_.entries()) }
-      return replacer?.(key, value) ?? value
-    }, circularReplacer),
-    indent ?? undefined
-  )
+	return JSON.stringify(
+		value,
+		createReplacer((key, value_) => {
+			let value = value_;
+			if (typeof value === "bigint")
+				value = { __type: "bigint", value: value_.toString() };
+			if (value instanceof Map)
+				value = { __type: "Map", value: Array.from(value_.entries()) };
+			return replacer?.(key, value) ?? value;
+		}, circularReplacer),
+		indent ?? undefined,
+	);
 }

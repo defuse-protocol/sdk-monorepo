@@ -1,13 +1,13 @@
-import { keccak_256 } from "@noble/hashes/sha3"
-import { base58, hex } from "@scure/base"
+import { keccak_256 } from "@noble/hashes/sha3";
+import { base58, hex } from "@scure/base";
 import type {
-  AuthHandle,
-  AuthIdentifier,
-  AuthMethod,
-} from "../types/authHandle"
-import type { IntentsUserId } from "../types/intentsUserId"
-import { assert } from "./assert"
-import { parsePublicKey } from "./webAuthn"
+	AuthHandle,
+	AuthIdentifier,
+	AuthMethod,
+} from "../types/authHandle";
+import type { IntentsUserId } from "../types/intentsUserId";
+import { assert } from "./assert";
+import { parsePublicKey } from "./webAuthn";
 
 /**
  * Converts a blockchain address to a standardized Defuse user ID.
@@ -33,74 +33,76 @@ import { parsePublicKey } from "./webAuthn"
  * @returns A standardized Defuse user ID
  */
 export function authHandleToIntentsUserId(
-  authIdentifier: AuthIdentifier,
-  authMethod: AuthMethod
-): IntentsUserId
-export function authHandleToIntentsUserId(authHandle: AuthHandle): IntentsUserId
+	authIdentifier: AuthIdentifier,
+	authMethod: AuthMethod,
+): IntentsUserId;
 export function authHandleToIntentsUserId(
-  authIdentifier: AuthIdentifier | AuthHandle,
-  authMethod?: AuthMethod
+	authHandle: AuthHandle,
+): IntentsUserId;
+export function authHandleToIntentsUserId(
+	authIdentifier: AuthIdentifier | AuthHandle,
+	authMethod?: AuthMethod,
 ): IntentsUserId {
-  let authHandle: AuthHandle
-  if (typeof authIdentifier === "object") {
-    authHandle = authIdentifier
-  } else if (authMethod != null) {
-    authHandle = {
-      identifier: authIdentifier,
-      method: authMethod,
-    }
-  } else {
-    // This should never happen, because of argument types
-    throw new Error("Invalid arguments")
-  }
+	let authHandle: AuthHandle;
+	if (typeof authIdentifier === "object") {
+		authHandle = authIdentifier;
+	} else if (authMethod != null) {
+		authHandle = {
+			identifier: authIdentifier,
+			method: authMethod,
+		};
+	} else {
+		// This should never happen, because of argument types
+		throw new Error("Invalid arguments");
+	}
 
-  const method = authHandle.method
-  switch (method) {
-    case "evm":
-    case "near":
-      return authHandle.identifier.toLowerCase() as IntentsUserId
+	const method = authHandle.method;
+	switch (method) {
+		case "evm":
+		case "near":
+			return authHandle.identifier.toLowerCase() as IntentsUserId;
 
-    case "solana":
-      return hex.encode(base58.decode(authHandle.identifier)) as IntentsUserId
+		case "solana":
+			return hex.encode(base58.decode(authHandle.identifier)) as IntentsUserId;
 
-    case "webauthn": {
-      return webAuthnIdentifierToIntentsUserId(
-        authHandle.identifier
-      ) as IntentsUserId
-    }
+		case "webauthn": {
+			return webAuthnIdentifierToIntentsUserId(
+				authHandle.identifier,
+			) as IntentsUserId;
+		}
 
-    case "ton": {
-      assert(authHandle.identifier.length === 64)
-      hex.decode(authHandle.identifier)
-      return authHandle.identifier.toLowerCase() as IntentsUserId
-    }
+		case "ton": {
+			assert(authHandle.identifier.length === 64);
+			hex.decode(authHandle.identifier);
+			return authHandle.identifier.toLowerCase() as IntentsUserId;
+		}
 
-    default:
-      method satisfies never
-      throw new Error("Unsupported auth method")
-  }
+		default:
+			method satisfies never;
+			throw new Error("Unsupported auth method");
+	}
 }
 
 function webAuthnIdentifierToIntentsUserId(credential: string): string {
-  const { curveType, publicKey } = parsePublicKey(credential)
+	const { curveType, publicKey } = parsePublicKey(credential);
 
-  switch (curveType) {
-    case "p256": {
-      const p256 = new TextEncoder().encode("p256")
-      const addressBytes = keccak_256(
-        new Uint8Array([...p256, ...publicKey])
-      ).slice(-20)
+	switch (curveType) {
+		case "p256": {
+			const p256 = new TextEncoder().encode("p256");
+			const addressBytes = keccak_256(
+				new Uint8Array([...p256, ...publicKey]),
+			).slice(-20);
 
-      // biome-ignore lint/style/useTemplate: it's fine
-      return "0x" + hex.encode(addressBytes)
-    }
+			// biome-ignore lint/style/useTemplate: it's fine
+			return "0x" + hex.encode(addressBytes);
+		}
 
-    case "ed25519": {
-      return hex.encode(publicKey)
-    }
+		case "ed25519": {
+			return hex.encode(publicKey);
+		}
 
-    default:
-      curveType satisfies never
-      throw new Error("Unsupported curve type")
-  }
+		default:
+			curveType satisfies never;
+			throw new Error("Unsupported curve type");
+	}
 }

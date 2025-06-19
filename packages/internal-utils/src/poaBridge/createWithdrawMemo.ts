@@ -1,15 +1,15 @@
 export function createWithdrawMemo({
-  receiverAddress,
-  xrpMemo,
+	receiverAddress,
+	xrpMemo,
 }: {
-  receiverAddress: string
-  xrpMemo?: string | null
+	receiverAddress: string;
+	xrpMemo?: string | null;
 }) {
-  const memo = ["WITHDRAW_TO", receiverAddress]
+	const memo = ["WITHDRAW_TO", receiverAddress];
 
-  if (xrpMemo != null && xrpMemo !== "") {
-    memo.push(xrpMemo)
-  }
+	if (xrpMemo != null && xrpMemo !== "") {
+		memo.push(xrpMemo);
+	}
 
-  return memo.join(":")
+	return memo.join(":");
 }

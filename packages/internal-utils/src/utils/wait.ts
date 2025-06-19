@@ -1,3 +1,3 @@
 export async function wait(time: number) {
-  return new Promise((res) => setTimeout(res, time))
+	return new Promise((res) => setTimeout(res, time));
 }
