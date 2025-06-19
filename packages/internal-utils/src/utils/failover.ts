@@ -1,5 +1,4 @@
 import { providers } from "near-api-js";
-import { FailoverRpcProvider } from "near-api-js/lib/providers";
 
 /**
  * @note This function is specifically designed for NEAR RPC providers and should not be used with other blockchain networks.
@@ -11,7 +10,7 @@ export function nearFailoverRpcProvider({ urls }: { urls: string[] }) {
 }
 
 export function createNearFailoverRpcProvider({
-	providers,
+	providers: list,
 }: { providers: providers.JsonRpcProvider[] }) {
-	return new FailoverRpcProvider(providers);
+	return new providers.FailoverRpcProvider(list);
 }
