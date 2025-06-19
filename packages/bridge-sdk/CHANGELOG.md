@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.9
+
+### Patch Changes
+
+- 3bd9c13: Fix fee asset id for TON
+
 ## 0.1.8
 
 ### Patch Changes
