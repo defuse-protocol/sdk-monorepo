@@ -89,15 +89,27 @@ export class HotBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
+		const isNative = "native" in assetInfo;
+		const amount = args.withdrawalParams.amount + (isNative ? feeAmount : 0n);
+
 		const intent = await this.hotSdk.buildGaslessWithdrawIntent({
 			feeToken: "native",
 			feeAmount,
 			chain: toHOTNetwork(assetInfo.blockchain),
-			token: "native" in assetInfo ? "native" : assetInfo.address,
-			amount: args.withdrawalParams.amount,
+			token: isNative ? "native" : assetInfo.address,
+			amount,
 			receiver: args.withdrawalParams.destinationAddress,
 			intentAccount: "", // it is not used inside the function
 		});
+
+		// Sanity check, in case HOT SDK changes
+		assert(intent.amounts[0] === amount.toString(), "Amount is not correct");
+		if (intent.amounts.length === 2) {
+			assert(
+				intent.amounts[1] === feeAmount.toString(),
+				"Amount is not correct",
+			);
+		}
 
 		intents.push(intent as Extract<IntentPrimitive, { intent: "mt_withdraw" }>);
 
