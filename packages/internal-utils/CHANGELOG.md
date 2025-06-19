@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.6
+
+### Patch Changes
+
+- de91a66: Fix importing FailoverProvider
+
 ## 0.0.5
 
 ### Patch Changes
