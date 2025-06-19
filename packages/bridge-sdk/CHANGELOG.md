@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.10
+
+### Patch Changes
+
+- f3d0b26: Fix withdrawn amount of native token
+
 ## 0.1.9
 
 ### Patch Changes
