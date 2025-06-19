@@ -1,5 +1,13 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.1.5
+
+### Patch Changes
+
+- 2e8417a: Fix importing commonjs packages
+- Updated dependencies [2e8417a]
+  - @defuse-protocol/internal-utils@0.0.5
+
 ## 0.1.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.5
+
+### Patch Changes
+
+- 2e8417a: Fix importing commonjs packages
+
 ## 0.0.4
 
 ### Patch Changes
