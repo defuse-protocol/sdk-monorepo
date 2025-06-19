@@ -2,7 +2,7 @@ import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base58, hex } from "@scure/base";
 import { base64urlnopad } from "@scure/base";
-import { sign } from "tweetnacl";
+import tweetnacl from "tweetnacl";
 import { logger } from "../logger";
 import type { CredentialKey, CurveType } from "../types/webAuthn";
 import { concatUint8Arrays } from "./uint8Array";
@@ -126,7 +126,7 @@ export async function verifyWebAuthnSignature({
 		}
 
 		case "ed25519": {
-			return sign.detached.verify(
+			return tweetnacl.sign.detached.verify(
 				signedBytes,
 				signature,
 				publicKeyWebCryptoAPI,

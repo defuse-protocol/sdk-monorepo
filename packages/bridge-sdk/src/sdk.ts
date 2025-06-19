@@ -1,4 +1,4 @@
-import { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
+import hotOmniSdk from "@hot-labs/omni-sdk";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
@@ -39,7 +39,7 @@ export class BridgeSDK implements IBridgeSDK {
 		this.bridges = [
 			new PoaBridge(),
 			new HotBridge(
-				new HotSdk({
+				new hotOmniSdk.HotBridge({
 					logger: console,
 					evmRpc: args.evmRpc,
 					async executeNearTransaction() {
