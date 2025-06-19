@@ -8,7 +8,7 @@ export function getFeeAssetIdForChain(caip2: CAIP2_NETWORK) {
 		case CAIP2_NETWORK.Polygon:
 			return "nep245:v2_1.omni.hot.tg:137_11111111111111111111";
 		case CAIP2_NETWORK.TON:
-			return "nep245:v2_1.omni.hot.tg:1117_11111111111111111111";
+			return "nep245:v2_1.omni.hot.tg:1117_";
 		default:
 			throw new Error(`Unsupported chain = ${caip2}`);
 	}
