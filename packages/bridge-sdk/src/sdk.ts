@@ -147,10 +147,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 				if (args.withdrawalParams.feeInclusive) {
 					if (args.withdrawalParams.amount < fee.amount) {
-						throw new FeeExceedsAmountError(
-							fee.amount,
-							args.withdrawalParams.amount,
-						);
+						throw new FeeExceedsAmountError(fee, args.withdrawalParams.amount);
 					}
 				}
 
