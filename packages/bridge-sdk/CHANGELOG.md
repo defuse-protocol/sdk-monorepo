@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.3.0
+
+### Minor Changes
+
+- 547f6d6: Format destination tx hash. Update `waitForWithdrawalCompletion` interface.
+
 ## 0.2.0
 
 ### Minor Changes
