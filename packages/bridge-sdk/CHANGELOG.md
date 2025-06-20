@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.2.0
+
+### Minor Changes
+
+- 0a2e898: Add support for AuroraEngine chains
+
 ## 0.1.10
 
 ### Patch Changes
