@@ -2,6 +2,7 @@ import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { drop, zip } from "../lib/array";
 import { assert } from "../lib/assert";
+import { determineBridge } from "../lib/bridge";
 import type {
 	BatchWithdrawal,
 	FeeEstimation,
@@ -204,21 +205,24 @@ export class BatchWithdrawalImpl<
 
 		const indexes = new Map<string, number>(
 			zip(
-				this.withdrawalParams.map(
-					(w) => this.bridgeSDK.parseAssetId(w.assetId).bridge,
-				),
+				this.withdrawalParams.map((w) => {
+					const bridge = determineBridge(this.bridgeSDK, w);
+					return typeof bridge === "string" ? bridge : bridge.bridge;
+				}),
 				Array(this.withdrawalParams.length).fill(0),
 			),
 		);
 
 		return this.withdrawalParams.map((w): WithdrawalIdentifier => {
-			const bridge = this.bridgeSDK.parseAssetId(w.assetId).bridge;
+			const bridge = determineBridge(this.bridgeSDK, w);
+			const bridgeKind = typeof bridge === "string" ? bridge : bridge.bridge;
+
 			// biome-ignore lint/style/noNonNullAssertion: <explanation>
-			const index = indexes.get(bridge)!;
-			indexes.set(bridge, index + 1);
+			const index = indexes.get(bridgeKind)!;
+			indexes.set(bridgeKind, index + 1);
 
 			return {
-				bridge: bridge,
+				bridge,
 				index,
 				tx: intentTx,
 			};

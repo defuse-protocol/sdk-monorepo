@@ -3,7 +3,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
 	Bridge,
-	BridgeKind,
+	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -17,13 +17,21 @@ import {
 } from "./poa-bridge-utils";
 
 export class PoaBridge implements Bridge {
-	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean {
-		if ("bridge" in params) {
-			return params.bridge === "poa";
+	is(bridgeConfig: BridgeConfig) {
+		return bridgeConfig === "poa";
+	}
+
+	supports(
+		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
+	): boolean {
+		let result = true;
+
+		if ("bridgeConfig" in params && params.bridgeConfig != null) {
+			result &&= this.is(params.bridgeConfig);
 		}
 
 		try {
-			return this.parseAssetId(params.assetId) != null;
+			return result && this.parseAssetId(params.assetId) != null;
 		} catch {
 			return false;
 		}

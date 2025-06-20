@@ -6,51 +6,38 @@ import {
 } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
-import { CAIP2_NETWORK } from "../../lib/caip2";
 import type {
 	Bridge,
 	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
-	ParsedAssetInfo,
-	TxInfo,
+	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
-import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
-import { createWithdrawIntentPrimitive } from "./direct-bridge-utils";
+import { NEAR_NATIVE_ASSET_ID } from "./aurora-engine-bridge-constants";
+import {
+	createWithdrawIntentPrimitive,
+	withdrawalParamsInvariant,
+} from "./aurora-engine-bridge-utils";
 
-export class DirectBridge implements Bridge {
-	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig === "direct";
+export class AuroraEngineBridge implements Bridge {
+	is(bridgeConfig: BridgeConfig): boolean {
+		return (
+			typeof bridgeConfig === "object" &&
+			bridgeConfig.bridge === "aurora_engine"
+		);
 	}
 
 	supports(
 		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
 	): boolean {
-		let result = true;
-
 		if ("bridgeConfig" in params && params.bridgeConfig != null) {
-			result &&= this.is(params.bridgeConfig);
+			return this.is(params.bridgeConfig);
 		}
-
-		try {
-			return result && this.parseAssetId(params.assetId) != null;
-		} catch {
-			return false;
-		}
+		return false;
 	}
 
-	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = utils.parseDefuseAssetId(assetId);
-
-		if (parsed.standard === "nep141") {
-			return Object.assign(parsed, {
-				blockchain: CAIP2_NETWORK.Near,
-				bridge: "direct" as const,
-				address: parsed.contractId,
-			});
-		}
-
+	parseAssetId(): null {
 		return null;
 	}
 
@@ -58,6 +45,8 @@ export class DirectBridge implements Bridge {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]> {
+		withdrawalParamsInvariant(args.withdrawalParams);
+
 		const intents: IntentPrimitive[] = [];
 
 		if (args.feeEstimation.quote != null) {
@@ -74,6 +63,8 @@ export class DirectBridge implements Bridge {
 
 		const intent = createWithdrawIntentPrimitive({
 			assetId: args.withdrawalParams.assetId,
+			auroraEngineContractId:
+				args.withdrawalParams.bridgeConfig.auroraEngineContractId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
 			storageDeposit: args.feeEstimation.quote
@@ -89,18 +80,12 @@ export class DirectBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 	}): Promise<FeeEstimation> {
+		withdrawalParamsInvariant(args.withdrawalParams);
+
 		const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 			args.withdrawalParams.assetId,
 		);
 		assert(standard === "nep141", "Only NEP-141 is supported");
-
-		// We don't directly withdraw `wrap.near`, we unwrap it first, so it doesn't require storage
-		if (tokenAccountId === NEAR_NATIVE_ASSET_ID) {
-			return {
-				amount: 0n,
-				quote: null,
-			};
-		}
 
 		const [minStorageBalance, userStorageBalance] = await Promise.all([
 			getNearNep141MinStorageBalance({
@@ -108,7 +93,7 @@ export class DirectBridge implements Bridge {
 			}),
 			getNearNep141StorageBalance({
 				contractId: tokenAccountId,
-				accountId: args.withdrawalParams.destinationAddress,
+				accountId: args.withdrawalParams.bridgeConfig.auroraEngineContractId,
 			}),
 		]);
 
@@ -140,10 +125,10 @@ export class DirectBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(args: {
+	async waitForWithdrawalCompletion(_args: {
 		tx: NearTxInfo;
 		index: number;
-	}): Promise<TxInfo> {
-		return { hash: args.tx.hash };
+	}): Promise<TxNoInfo> {
+		return { hash: null };
 	}
 }

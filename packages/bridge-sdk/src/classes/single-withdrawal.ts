@@ -1,5 +1,6 @@
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
+import { determineBridge } from "../lib/bridge";
 import type {
 	FeeEstimation,
 	IBridgeSDK,
@@ -125,7 +126,7 @@ export class SingleWithdrawalImpl<
 		}
 
 		return {
-			bridge: this.bridgeSDK.parseAssetId(this.withdrawalParams.assetId).bridge,
+			bridge: determineBridge(this.bridgeSDK, this.withdrawalParams),
 			index: 0,
 			tx: intentTx,
 		};

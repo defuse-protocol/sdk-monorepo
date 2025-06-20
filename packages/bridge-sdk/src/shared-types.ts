@@ -16,7 +16,7 @@ export interface IBridgeSDK {
 	}): Promise<FeeEstimation>;
 
 	waitForWithdrawalCompletion(args: {
-		bridge: BridgeKind;
+		bridge: BridgeConfig;
 		tx: NearTxInfo;
 		index: number;
 	}): Promise<TxInfo | TxNoInfo>;
@@ -37,7 +37,7 @@ export interface TxNoInfo {
 	hash: null;
 }
 
-export type BridgeKind = "direct" | "poa" | "hot";
+export type BridgeKind = "direct" | "poa" | "hot" | "aurora_engine";
 
 export interface WithdrawalParams {
 	assetId: string;
@@ -45,7 +45,12 @@ export interface WithdrawalParams {
 	destinationAddress: string;
 	destinationMemo: string | undefined;
 	feeInclusive: boolean;
+	bridgeConfig?: BridgeConfig;
 }
+
+export type BridgeConfig =
+	| Exclude<BridgeKind, "aurora_engine">
+	| { bridge: "aurora_engine"; auroraEngineContractId: string };
 
 export interface FeeEstimation {
 	amount: bigint;
@@ -53,7 +58,8 @@ export interface FeeEstimation {
 }
 
 export interface Bridge {
-	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean;
+	is(bridgeConfig: BridgeConfig): boolean;
+	supports(params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">): boolean;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
 	estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
@@ -88,7 +94,7 @@ export interface BatchWithdrawal<Ticket> {
 }
 
 export interface WithdrawalIdentifier {
-	bridge: BridgeKind;
+	bridge: BridgeConfig;
 	index: number;
 	tx: NearTxInfo;
 }

@@ -9,7 +9,7 @@ import { assert } from "../../lib/assert";
 import { wait } from "../../lib/async";
 import type {
 	Bridge,
-	BridgeKind,
+	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -27,13 +27,21 @@ import {
 export class HotBridge implements Bridge {
 	constructor(protected hotSdk: HotSdk) {}
 
-	supports(params: { assetId: string } | { bridge: BridgeKind }): boolean {
-		if ("bridge" in params) {
-			return params.bridge === "hot";
+	is(bridgeConfig: BridgeConfig): boolean {
+		return bridgeConfig === "hot";
+	}
+
+	supports(
+		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
+	): boolean {
+		let result = true;
+
+		if ("bridgeConfig" in params && params.bridgeConfig != null) {
+			result &&= this.is(params.bridgeConfig);
 		}
 
 		try {
-			return this.parseAssetId(params.assetId) != null;
+			return result && this.parseAssetId(params.assetId) != null;
 		} catch {
 			return false;
 		}

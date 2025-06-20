@@ -1,4 +1,5 @@
 import hotOmniSdk from "@hot-labs/omni-sdk";
+import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
@@ -17,7 +18,7 @@ import type {
 } from "./intents/shared-types";
 import type {
 	Bridge,
-	BridgeKind,
+	BridgeConfig,
 	FeeEstimation,
 	IBridgeSDK,
 	NearTxInfo,
@@ -37,6 +38,7 @@ export class BridgeSDK implements IBridgeSDK {
 		evmRpc: Record<number, string[]>;
 	}) {
 		this.bridges = [
+			new AuroraEngineBridge(),
 			new PoaBridge(),
 			new HotBridge(
 				new hotOmniSdk.HotBridge({
@@ -161,12 +163,12 @@ export class BridgeSDK implements IBridgeSDK {
 	}
 
 	waitForWithdrawalCompletion(args: {
-		bridge: BridgeKind;
+		bridge: BridgeConfig;
 		tx: NearTxInfo;
 		index: number;
 	}): Promise<TxInfo | TxNoInfo> {
 		for (const bridge of this.bridges) {
-			if (bridge.supports(args)) {
+			if (bridge.is(args.bridge)) {
 				return bridge.waitForWithdrawalCompletion({
 					tx: args.tx,
 					index: args.index,
