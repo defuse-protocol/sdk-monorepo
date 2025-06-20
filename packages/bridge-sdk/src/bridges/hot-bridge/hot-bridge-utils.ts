@@ -42,3 +42,13 @@ export function networkIdToCaip2(network: string): CAIP2_NETWORK {
 
 	throw new Error(`Unsupported HOT Bridge network = ${network}`);
 }
+
+/**
+ * HOT returns hexified raw bytes. So we need to return more friendly/common string.
+ */
+export function formatTxHash(txHash: string, caip2: CAIP2_NETWORK) {
+	if (caip2.startsWith("eip155:")) {
+		return `0x${txHash}`;
+	}
+	return txHash;
+}

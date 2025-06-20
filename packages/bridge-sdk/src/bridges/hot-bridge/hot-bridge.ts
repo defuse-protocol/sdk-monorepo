@@ -19,6 +19,7 @@ import type {
 } from "../../shared-types";
 import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants";
 import {
+	formatTxHash,
 	getFeeAssetIdForChain,
 	networkIdToCaip2,
 	toHOTNetwork,
@@ -28,7 +29,7 @@ export class HotBridge implements Bridge {
 	constructor(protected hotSdk: HotSdk) {}
 
 	is(bridgeConfig: BridgeConfig): boolean {
-		return bridgeConfig === "hot";
+		return bridgeConfig.bridge === "hot";
 	}
 
 	supports(
@@ -158,6 +159,7 @@ export class HotBridge implements Bridge {
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
+		bridge: BridgeConfig;
 	}): Promise<TxInfo | TxNoInfo> {
 		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
 			args.tx.hash,
@@ -189,8 +191,12 @@ export class HotBridge implements Bridge {
 				return { hash: null };
 			}
 			if (typeof status === "string") {
-				// todo: 0x is only for EVM, so need to check destination chain
-				return { hash: `0x${status}` };
+				return {
+					hash:
+						"chain" in args.bridge
+							? formatTxHash(status, args.bridge.chain)
+							: status,
+				};
 			}
 
 			attempts += 1;

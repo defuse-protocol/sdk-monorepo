@@ -49,7 +49,7 @@ export interface WithdrawalParams {
 }
 
 export type BridgeConfig =
-	| Exclude<BridgeKind, "aurora_engine">
+	| { bridge: Exclude<BridgeKind, "aurora_engine">; chain: CAIP2_NETWORK }
 	| { bridge: "aurora_engine"; auroraEngineContractId: string };
 
 export interface FeeEstimation {
@@ -71,6 +71,7 @@ export interface Bridge {
 	waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
+		bridge: BridgeConfig;
 	}): Promise<TxInfo | TxNoInfo>;
 }
 

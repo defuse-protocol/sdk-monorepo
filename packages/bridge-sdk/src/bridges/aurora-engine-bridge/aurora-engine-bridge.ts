@@ -22,10 +22,7 @@ import {
 
 export class AuroraEngineBridge implements Bridge {
 	is(bridgeConfig: BridgeConfig): boolean {
-		return (
-			typeof bridgeConfig === "object" &&
-			bridgeConfig.bridge === "aurora_engine"
-		);
+		return bridgeConfig.bridge === "aurora_engine";
 	}
 
 	supports(

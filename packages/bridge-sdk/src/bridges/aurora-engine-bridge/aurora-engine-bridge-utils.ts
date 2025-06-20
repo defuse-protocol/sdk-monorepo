@@ -41,14 +41,10 @@ export function withdrawalParamsInvariant(
 ): asserts params is WithdrawalParams & {
 	bridgeConfig: Exclude<
 		NonNullable<WithdrawalParams["bridgeConfig"]>,
-		Exclude<BridgeKind, "aurora_engine">
+		{ bridge: Exclude<BridgeKind, "aurora_engine"> }
 	>;
 } {
 	assert(params.bridgeConfig != null, "Bridge config is required");
-	assert(
-		typeof params.bridgeConfig === "object",
-		"Bridge config should be an object",
-	);
 	assert(
 		params.bridgeConfig.bridge === "aurora_engine",
 		"Bridge is not aurora_engine",

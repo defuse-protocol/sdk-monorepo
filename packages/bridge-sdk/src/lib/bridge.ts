@@ -13,10 +13,13 @@ export function determineBridge(
 		return withdrawalParams.bridgeConfig;
 	}
 
-	const bridge = sdk.parseAssetId(withdrawalParams.assetId).bridge;
+	const parseAssetId = sdk.parseAssetId(withdrawalParams.assetId);
 	assert(
-		bridge !== "aurora_engine",
+		parseAssetId.bridge !== "aurora_engine",
 		"aurora_engine should be passed as `bridgeConfig`",
 	);
-	return bridge;
+	return {
+		bridge: parseAssetId.bridge,
+		chain: parseAssetId.blockchain,
+	};
 }

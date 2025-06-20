@@ -21,7 +21,7 @@ import { createWithdrawIntentPrimitive } from "./direct-bridge-utils";
 
 export class DirectBridge implements Bridge {
 	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig === "direct";
+		return bridgeConfig.bridge === "direct";
 	}
 
 	supports(

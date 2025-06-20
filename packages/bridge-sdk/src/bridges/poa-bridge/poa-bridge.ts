@@ -18,7 +18,7 @@ import {
 
 export class PoaBridge implements Bridge {
 	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig === "poa";
+		return bridgeConfig.bridge === "poa";
 	}
 
 	supports(

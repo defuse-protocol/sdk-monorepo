@@ -172,6 +172,7 @@ export class BridgeSDK implements IBridgeSDK {
 				return bridge.waitForWithdrawalCompletion({
 					tx: args.tx,
 					index: args.index,
+					bridge: args.bridge,
 				});
 			}
 		}
