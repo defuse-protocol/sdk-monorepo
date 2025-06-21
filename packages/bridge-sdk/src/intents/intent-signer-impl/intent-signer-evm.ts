@@ -39,7 +39,6 @@ export class IntentSignerEVM implements IIntentSigner {
 			standard: "erc191",
 			payload,
 			signature: utils.transformERC191Signature(signature),
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		} as any as MultiPayload;
+		};
 	}
 }

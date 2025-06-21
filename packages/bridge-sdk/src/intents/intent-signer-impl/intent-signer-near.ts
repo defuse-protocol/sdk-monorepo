@@ -42,7 +42,6 @@ export class IntentSignerNear implements IIntentSigner {
 			},
 			public_key: publicKey.toString(),
 			signature: `ed25519:${base58.encode(signature)}`,
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		} as any as MultiPayload;
+		};
 	}
 }
