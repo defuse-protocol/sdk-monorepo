@@ -138,15 +138,17 @@ export class BridgeSDK implements IBridgeSDK {
 		);
 	}
 
-	async estimateWithdrawalFee(args: {
-		withdrawalParams: Pick<
+	async estimateWithdrawalFee<
+		T extends Pick<
 			WithdrawalParams,
 			| "assetId"
 			| "destinationAddress"
 			| "bridgeConfig"
 			| "feeInclusive"
 			| "amount"
-		>;
+		>,
+	>(args: {
+		withdrawalParams: T;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
 			if (bridge.supports(args.withdrawalParams)) {

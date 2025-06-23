@@ -11,15 +11,17 @@ export interface IBridgeSDK {
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]>;
 
-	estimateWithdrawalFee(args: {
-		withdrawalParams: Pick<
+	estimateWithdrawalFee<
+		T extends Pick<
 			WithdrawalParams,
 			| "assetId"
 			| "destinationAddress"
 			| "bridgeConfig"
 			| "feeInclusive"
 			| "amount"
-		>;
+		>,
+	>(args: {
+		withdrawalParams: T;
 	}): Promise<FeeEstimation>;
 
 	waitForWithdrawalCompletion(args: {
@@ -68,11 +70,13 @@ export interface Bridge {
 	is(bridgeConfig: BridgeConfig): boolean;
 	supports(params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">): boolean;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
-	estimateWithdrawalFee(args: {
-		withdrawalParams: Pick<
+	estimateWithdrawalFee<
+		T extends Pick<
 			WithdrawalParams,
 			"assetId" | "destinationAddress" | "bridgeConfig"
-		>;
+		>,
+	>(args: {
+		withdrawalParams: T;
 	}): Promise<FeeEstimation>;
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
