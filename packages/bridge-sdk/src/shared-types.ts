@@ -12,7 +12,14 @@ export interface IBridgeSDK {
 	}): Promise<IntentPrimitive[]>;
 
 	estimateWithdrawalFee(args: {
-		withdrawalParams: WithdrawalParams;
+		withdrawalParams: Pick<
+			WithdrawalParams,
+			| "assetId"
+			| "destinationAddress"
+			| "bridgeConfig"
+			| "feeInclusive"
+			| "amount"
+		>;
 	}): Promise<FeeEstimation>;
 
 	waitForWithdrawalCompletion(args: {
