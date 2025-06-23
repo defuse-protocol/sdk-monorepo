@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.3.2
+
+### Patch Changes
+
+- 982c597: Relax on `sdk.estimateWithdrawalFee` type
+
 ## 0.3.1
 
 ### Patch Changes
