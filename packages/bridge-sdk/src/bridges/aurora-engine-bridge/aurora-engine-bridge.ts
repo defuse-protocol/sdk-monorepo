@@ -75,7 +75,7 @@ export class AuroraEngineBridge implements Bridge {
 	}
 
 	async estimateWithdrawalFee(args: {
-		withdrawalParams: WithdrawalParams;
+		withdrawalParams: Pick<WithdrawalParams, "assetId" | "bridgeConfig">;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
 

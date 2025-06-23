@@ -61,7 +61,7 @@ export class PoaBridge implements Bridge {
 	}
 
 	async estimateWithdrawalFee(args: {
-		withdrawalParams: WithdrawalParams;
+		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");

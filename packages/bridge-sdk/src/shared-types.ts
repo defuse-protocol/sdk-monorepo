@@ -62,7 +62,10 @@ export interface Bridge {
 	supports(params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">): boolean;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
 	estimateWithdrawalFee(args: {
-		withdrawalParams: WithdrawalParams;
+		withdrawalParams: Pick<
+			WithdrawalParams,
+			"assetId" | "destinationAddress" | "bridgeConfig"
+		>;
 	}): Promise<FeeEstimation>;
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;

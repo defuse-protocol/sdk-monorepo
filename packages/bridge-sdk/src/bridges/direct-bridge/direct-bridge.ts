@@ -87,7 +87,7 @@ export class DirectBridge implements Bridge {
 	}
 
 	async estimateWithdrawalFee(args: {
-		withdrawalParams: WithdrawalParams;
+		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
 	}): Promise<FeeEstimation> {
 		const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 			args.withdrawalParams.assetId,

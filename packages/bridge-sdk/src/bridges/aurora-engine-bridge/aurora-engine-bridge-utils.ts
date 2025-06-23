@@ -36,11 +36,13 @@ function makeAuroraEngineDepositMsg(recipientAddress: string): string {
 	return parsedRecipientAddress.slice(2).toLowerCase();
 }
 
-export function withdrawalParamsInvariant(
-	params: WithdrawalParams,
-): asserts params is WithdrawalParams & {
+export function withdrawalParamsInvariant<
+	T extends Pick<WithdrawalParams, "bridgeConfig">,
+>(
+	params: T,
+): asserts params is T & {
 	bridgeConfig: Exclude<
-		NonNullable<WithdrawalParams["bridgeConfig"]>,
+		NonNullable<T["bridgeConfig"]>,
 		{ bridge: Exclude<BridgeKind, "aurora_engine"> }
 	>;
 } {
