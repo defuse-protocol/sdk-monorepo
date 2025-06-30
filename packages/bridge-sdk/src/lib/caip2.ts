@@ -14,6 +14,7 @@ export const CAIP2_NETWORK = {
 	Zcash: "zcash:0",
 	Berachain: "eip155:80085",
 	TON: "tvm:-239",
+	Optimism: "eip155:10",
 } as const;
 
 export type CAIP2_NETWORK = (typeof CAIP2_NETWORK)[keyof typeof CAIP2_NETWORK];
