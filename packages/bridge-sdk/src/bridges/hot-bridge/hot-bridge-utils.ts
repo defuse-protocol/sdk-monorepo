@@ -10,7 +10,7 @@ export function getFeeAssetIdForChain(caip2: CAIP2_NETWORK) {
 		case CAIP2_NETWORK.TON:
 			return "nep245:v2_1.omni.hot.tg:1117_";
 		case CAIP2_NETWORK.Optimism:
-			return "nep245:v2_1.omni.hot.tg:10_vLAiSt9KfUGKpw5cD3vsSyNYBo7";
+			return "nep245:v2_1.omni.hot.tg:10_11111111111111111111";
 		default:
 			throw new Error(`Unsupported chain = ${caip2}`);
 	}
