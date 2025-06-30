@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.5.0
+
+### Minor Changes
+
+- 15d57f2: Add Avalanche network support to HOT bridge
+
 ## 0.4.1
 
 ### Patch Changes
