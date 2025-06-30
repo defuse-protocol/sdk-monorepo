@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.4.0
+
+### Minor Changes
+
+- 7af5822: Add Optimism network support to HOT bridge
+
 ## 0.3.2
 
 ### Patch Changes
