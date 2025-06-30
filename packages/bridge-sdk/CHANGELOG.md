@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.4.1
+
+### Patch Changes
+
+- d6fcfa4: Fix incorrect fee asset ID for Optimism
+
 ## 0.4.0
 
 ### Minor Changes
