@@ -1,5 +1,15 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.5.1
+
+### Patch Changes
+
+- b06d635: Add CommonJS versions of packages
+- 8187ec7: Allow to pass entire withdrawal params object to `estimateWithdrawalFee`
+- Updated dependencies [b06d635]
+  - @defuse-protocol/contract-types@0.0.3
+  - @defuse-protocol/internal-utils@0.0.7
+
 ## 0.5.0
 
 ### Minor Changes
