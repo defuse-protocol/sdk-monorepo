@@ -69,15 +69,17 @@ export class BridgeSDK implements IBridgeSDK {
 		intent?: {
 			payload?: IntentPayloadFactory;
 			relayParams?: IntentRelayParamsFactory;
+			signer?: IIntentSigner;
 		};
 	}) {
-		if (this.intentSigner == null) {
-			throw new Error("Intent signer is not set");
+		const intentSigner = intent?.signer ?? this.intentSigner;
+		if (intentSigner == null) {
+			throw new Error("Intent signer is not provided");
 		}
 
 		return new SingleWithdrawalImpl({
 			intentExecuter: new IntentExecuter({
-				intentSigner: this.intentSigner,
+				intentSigner: intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
 			}),
@@ -96,15 +98,17 @@ export class BridgeSDK implements IBridgeSDK {
 		intent?: {
 			payload?: IntentPayloadFactory;
 			relayParams?: IntentRelayParamsFactory;
+			signer?: IIntentSigner;
 		};
 	}) {
-		if (this.intentSigner == null) {
-			throw new Error("Intent signer is not set");
+		const intentSigner = intent?.signer ?? this.intentSigner;
+		if (intentSigner == null) {
+			throw new Error("Intent signer is not provided");
 		}
 
 		return new BatchWithdrawalImpl({
 			intentExecuter: new IntentExecuter({
-				intentSigner: this.intentSigner,
+				intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
 			}),
