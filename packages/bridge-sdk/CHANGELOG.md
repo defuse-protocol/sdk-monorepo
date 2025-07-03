@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.5.2
+
+### Patch Changes
+
+- 5fb866c: Fix estimating native NEAR withdrawal
+
 ## 0.5.1
 
 ### Patch Changes
