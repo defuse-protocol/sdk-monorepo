@@ -46,7 +46,7 @@ export interface TxNoInfo {
 	hash: null;
 }
 
-export type BridgeKind = "direct" | "poa" | "hot" | "aurora_engine";
+export type BridgeKind = "direct" | "poa" | "hot" | "aurora_engine" | "intents";
 
 export interface WithdrawalParams {
 	assetId: string;
@@ -58,8 +58,12 @@ export interface WithdrawalParams {
 }
 
 export type BridgeConfig =
-	| { bridge: Exclude<BridgeKind, "aurora_engine">; chain: CAIP2_NETWORK }
-	| { bridge: "aurora_engine"; auroraEngineContractId: string };
+	| {
+			bridge: Exclude<BridgeKind, "aurora_engine" | "intents">;
+			chain: CAIP2_NETWORK;
+	  }
+	| { bridge: "aurora_engine"; auroraEngineContractId: string }
+	| { bridge: "intents" };
 
 export interface FeeEstimation {
 	amount: bigint;

@@ -2,6 +2,7 @@ import hotOmniSdk from "@hot-labs/omni-sdk";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
+import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
 import { FeeExceedsAmountError } from "./classes/errors";
@@ -37,7 +38,12 @@ export class BridgeSDK implements IBridgeSDK {
 		intentSigner?: IIntentSigner;
 		evmRpc: Record<number, string[]>;
 	}) {
+		/**
+		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
+		 * More specific bridges should be placed before more generic ones.
+		 */
 		this.bridges = [
+			new IntentsBridge(),
 			new AuroraEngineBridge(),
 			new PoaBridge(),
 			new HotBridge(
