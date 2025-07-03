@@ -68,6 +68,31 @@ export class BatchWithdrawalImpl<
 		console.log("destination tx =", this.destinationTx);
 	}
 
+	addWithdrawal(args: {
+		withdrawalParams: WithdrawalParams;
+		feeEstimation?: FeeEstimation;
+	}): void {
+		if (args.feeEstimation != null) {
+			if (this.feeEstimations == null) {
+				this.feeEstimations = Array(this.withdrawalParams.length).fill({
+					status: "rejected",
+					reason: new Error("Fee is not estimated"),
+				});
+			}
+
+			this.feeEstimations.push({
+				status: "fulfilled",
+				value: args.feeEstimation,
+			});
+		}
+
+		this.withdrawalParams.push(args.withdrawalParams);
+	}
+
+	withdrawalsCount(): number {
+		return this.withdrawalParams.length;
+	}
+
 	async estimateFee(): Promise<PromiseSettledResult<bigint>[]> {
 		this.feeEstimations = await Promise.allSettled(
 			this.withdrawalParams.map((withdrawalParams) => {
