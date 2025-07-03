@@ -95,7 +95,7 @@ export class DirectBridge implements Bridge {
 		assert(standard === "nep141", "Only NEP-141 is supported");
 
 		// We don't directly withdraw `wrap.near`, we unwrap it first, so it doesn't require storage
-		if (tokenAccountId === NEAR_NATIVE_ASSET_ID) {
+		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
 				amount: 0n,
 				quote: null,
