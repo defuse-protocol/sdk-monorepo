@@ -1,5 +1,17 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.6.0
+
+### Minor Changes
+
+- 481cb85: Add Intents bridge for withdrawing within the Intents.
+- 7064be6: Add new method `addWithdrawal()` to `BatchWithdrawalImpl` to allow appending a withdrawal to existing batch.
+  Add new method `withdrawalsCount()` to `BatchWithdrawalImpl` that returns total withdrawals number.
+
+### Patch Changes
+
+- f235808: Allow specifying intent signer per withdrawal
+
 ## 0.5.2
 
 ### Patch Changes
