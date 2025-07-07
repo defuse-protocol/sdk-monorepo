@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.7.0
+
+### Minor Changes
+
+- d5feb37: Add support for withdrawals to virtual chains with non-ETH base token. Change `bridgeConfig` for `aurora_engine`, require to explicitly specify `proxyTokenContractId`.
+
 ## 0.6.0
 
 ### Minor Changes
