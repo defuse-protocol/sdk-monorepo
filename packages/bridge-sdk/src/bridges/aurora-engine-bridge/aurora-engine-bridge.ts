@@ -62,6 +62,8 @@ export class AuroraEngineBridge implements Bridge {
 			assetId: args.withdrawalParams.assetId,
 			auroraEngineContractId:
 				args.withdrawalParams.bridgeConfig.auroraEngineContractId,
+			proxyTokenContractId:
+				args.withdrawalParams.bridgeConfig.proxyTokenContractId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
 			storageDeposit: args.feeEstimation.quote

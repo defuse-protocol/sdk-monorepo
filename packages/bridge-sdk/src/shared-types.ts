@@ -62,7 +62,11 @@ export type BridgeConfig =
 			bridge: Exclude<BridgeKind, "aurora_engine" | "intents">;
 			chain: CAIP2_NETWORK;
 	  }
-	| { bridge: "aurora_engine"; auroraEngineContractId: string }
+	| {
+			bridge: "aurora_engine";
+			auroraEngineContractId: string;
+			proxyTokenContractId: string | null;
+	  }
 	| { bridge: "intents" };
 
 export interface FeeEstimation {
