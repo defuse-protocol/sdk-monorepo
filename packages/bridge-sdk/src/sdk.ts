@@ -1,4 +1,5 @@
 import hotOmniSdk from "@hot-labs/omni-sdk";
+import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
@@ -144,7 +145,7 @@ export class BridgeSDK implements IBridgeSDK {
 		}
 
 		throw new Error(
-			`Cannot determine bridge for assetId = ${args.withdrawalParams.assetId}`,
+			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
 		);
 	}
 
@@ -177,7 +178,7 @@ export class BridgeSDK implements IBridgeSDK {
 		}
 
 		throw new Error(
-			`Cannot determine bridge for assetId = ${args.withdrawalParams.assetId}`,
+			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
 		);
 	}
 
