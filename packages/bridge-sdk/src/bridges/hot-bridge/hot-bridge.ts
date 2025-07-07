@@ -21,6 +21,7 @@ import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants";
 import {
 	formatTxHash,
 	getFeeAssetIdForChain,
+	hotBlockchainInvariant,
 	networkIdToCaip2,
 	toHOTNetwork,
 } from "./hot-bridge-utils";
@@ -130,6 +131,7 @@ export class HotBridge implements Bridge {
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+		hotBlockchainInvariant(assetInfo.blockchain);
 
 		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
 			toHOTNetwork(assetInfo.blockchain),

@@ -1,7 +1,9 @@
 import { Network } from "@hot-labs/omni-sdk";
+import { assert } from "../../lib/assert";
 import { CAIP2_NETWORK } from "../../lib/caip2";
+import { HOT_BRIDGE_CHAINS_CAIP2 } from "./hot-bridge-constants";
 
-export function getFeeAssetIdForChain(caip2: CAIP2_NETWORK) {
+export function getFeeAssetIdForChain(caip2: HOT_BRIDGE_CHAINS_CAIP2) {
 	switch (caip2) {
 		case CAIP2_NETWORK.BNB:
 			return "nep245:v2_1.omni.hot.tg:56_11111111111111111111";
@@ -14,12 +16,13 @@ export function getFeeAssetIdForChain(caip2: CAIP2_NETWORK) {
 		case CAIP2_NETWORK.Avalanche:
 			return "nep245:v2_1.omni.hot.tg:43114_11111111111111111111";
 		default:
+			caip2 satisfies never;
 			throw new Error(`Unsupported chain = ${caip2}`);
 	}
 }
 
 export function toHOTNetwork(caip2: CAIP2_NETWORK): Network {
-	const mapping: Record<string, Network> = {
+	const mapping: Record<HOT_BRIDGE_CHAINS_CAIP2, Network> = {
 		[CAIP2_NETWORK.BNB]: Network.Bnb,
 		[CAIP2_NETWORK.Polygon]: Network.Polygon,
 		[CAIP2_NETWORK.TON]: Network.Ton,
@@ -27,11 +30,11 @@ export function toHOTNetwork(caip2: CAIP2_NETWORK): Network {
 		[CAIP2_NETWORK.Avalanche]: Network.Avalanche,
 	};
 
-	if (mapping[caip2] == null) {
-		throw new Error(`Unsupported HOT Bridge chain = ${caip2}`);
+	if (caip2 in mapping) {
+		return mapping[caip2 as keyof typeof mapping];
 	}
-	// biome-ignore lint/style/noNonNullAssertion: <explanation>
-	return mapping[caip2]!;
+
+	throw new Error(`Unsupported HOT Bridge chain = ${caip2}`);
 }
 
 export function networkIdToCaip2(network: string): CAIP2_NETWORK {
@@ -59,4 +62,13 @@ export function formatTxHash(txHash: string, caip2: CAIP2_NETWORK) {
 		return `0x${txHash}`;
 	}
 	return txHash;
+}
+
+export function hotBlockchainInvariant(
+	blockchain: string,
+): asserts blockchain is HOT_BRIDGE_CHAINS_CAIP2 {
+	assert(
+		(HOT_BRIDGE_CHAINS_CAIP2 as string[]).includes(blockchain),
+		`${blockchain} is not a valid HOT Bridge blockchain. Supported values: ${HOT_BRIDGE_CHAINS_CAIP2.join()}`,
+	);
 }
