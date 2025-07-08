@@ -12,6 +12,7 @@ export type IntentSettlementResult = Awaited<
 export async function waitForIntentSettlement(
 	signal: AbortSignal,
 	intentHash: string,
+	baseURL?: string,
 ) {
 	let attempts = 0;
 	const MAX_INVALID_ATTEMPTS = 3; // ~600 ms of waiting
@@ -24,9 +25,7 @@ export async function waitForIntentSettlement(
 
 		const res = await retry(
 			() =>
-				solverRelayClient.getStatus({
-					intent_hash: intentHash,
-				}),
+				solverRelayClient.getStatus({ intent_hash: intentHash }, { baseURL }),
 			{
 				delay: 1000,
 				factor: 1.5,

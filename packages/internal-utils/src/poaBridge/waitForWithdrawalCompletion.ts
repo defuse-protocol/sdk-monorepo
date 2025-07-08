@@ -16,17 +16,20 @@ export async function waitForWithdrawalCompletion({
 	txHash,
 	index = 0,
 	signal,
+	baseURL,
 }: {
 	txHash: string;
 	index?: number;
 	signal: AbortSignal;
+	baseURL?: string;
 }): Promise<WaitForWithdrawalCompletionOkType> {
 	const DEFAULT_WITHDRAWAL_STATUS_INTERVAL_MS = 500;
 
 	while (!signal.aborted) {
-		const result = await getWithdrawalStatus({
-			withdrawal_hash: txHash,
-		}).catch((err) => {
+		const result = await getWithdrawalStatus(
+			{ withdrawal_hash: txHash },
+			{ baseURL },
+		).catch((err) => {
 			// WITHDRAWALS_NOT_FOUND error is transient, we should keep retrying
 			if (isWithdrawalNotFound(err)) {
 				return null;

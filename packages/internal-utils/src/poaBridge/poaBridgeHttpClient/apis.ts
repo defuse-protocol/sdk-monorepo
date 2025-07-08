@@ -70,10 +70,13 @@ export async function hotOmniWithdraw(
 
 export async function getTokenBalancesRequest(
 	addresses: string[],
+	config: types.RequestConfig = {},
 ): Promise<types.BridgeBalanceResponse> {
+	// Use config.baseURL if provided, otherwise fall back to global config
+	const baseURL = config.baseURL ?? globalConfig.env.poaBridgeBaseURL;
 	const params = addresses.map((address) => `addresses[]=${address}`).join("&");
 	const response = await request({
-		url: `${globalConfig.env.poaBridgeBaseURL}/console/tokenBalances?${params}`,
+		url: `${baseURL}/console/tokenBalances?${params}`,
 		fetchOptions: {
 			method: "GET",
 		},

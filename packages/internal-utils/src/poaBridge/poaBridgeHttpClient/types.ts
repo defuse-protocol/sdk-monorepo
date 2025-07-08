@@ -7,6 +7,7 @@ export type RequestConfig = {
 	requestId?: string | undefined;
 	timeout?: number | undefined;
 	fetchOptions?: Omit<RequestInit, "body"> | undefined;
+	baseURL?: string | undefined;
 };
 
 export type JSONRPCRequest<Method, Params> = {

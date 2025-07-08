@@ -37,7 +37,9 @@ export async function jsonRPCRequest<
 	params: T["params"][0],
 	config?: types.RequestConfig | undefined,
 ) {
-	const url = `${globalConfig.env.poaBridgeBaseURL}/rpc`;
+	// Use config.baseURL if provided, otherwise fall back to global config
+	const baseURL = config?.baseURL ?? globalConfig.env.poaBridgeBaseURL;
+	const url = new URL("/rpc", baseURL);
 
 	const body = {
 		id: config?.requestId ?? "dontcare",
