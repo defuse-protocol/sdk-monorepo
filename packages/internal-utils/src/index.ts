@@ -8,3 +8,4 @@ export {
 	configsByEnvironment,
 	type NearIntentsEnv,
 } from "./config";
+export { type RetryOptions, RETRY_CONFIGS } from "./utils/retry";

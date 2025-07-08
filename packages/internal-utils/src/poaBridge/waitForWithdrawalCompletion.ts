@@ -1,6 +1,19 @@
-import { RpcRequestError } from "../errors/request";
-import { assert, type AssertErrorType } from "../utils/assert";
-import { wait } from "../utils/wait";
+import { retry } from "@lifeomic/attempt";
+import { BaseError } from "../errors/base";
+import {
+	HttpRequestError,
+	RpcRequestError,
+	TimeoutError,
+} from "../errors/request";
+import { RETRY_CONFIGS, type RetryOptions } from "../utils/retry";
+import {
+	PoaWithdrawalInvariantError,
+	type PoaWithdrawalInvariantErrorType,
+	PoaWithdrawalNotFoundError,
+	type PoaWithdrawalNotFoundErrorType,
+	PoaWithdrawalPendingError,
+	type PoaWithdrawalPendingErrorType,
+} from "./errors/withdrawal";
 import { getWithdrawalStatus } from "./poaBridgeHttpClient";
 import type { types } from "./poaBridgeHttpClient";
 
@@ -10,55 +23,95 @@ export type WaitForWithdrawalCompletionOkType = {
 };
 export type WaitForWithdrawalCompletionErrorType =
 	| types.JSONRPCErrorType
-	| AssertErrorType;
+	| PoaWithdrawalInvariantErrorType
+	| PoaWithdrawalNotFoundErrorType
+	| PoaWithdrawalPendingErrorType;
 
 export async function waitForWithdrawalCompletion({
 	txHash,
 	index = 0,
 	signal,
 	baseURL,
+	retryOptions = RETRY_CONFIGS.TWO_MINS_GRADUAL,
 }: {
 	txHash: string;
 	index?: number;
 	signal: AbortSignal;
 	baseURL?: string;
+	retryOptions?: RetryOptions;
 }): Promise<WaitForWithdrawalCompletionOkType> {
-	const DEFAULT_WITHDRAWAL_STATUS_INTERVAL_MS = 500;
+	return retry(
+		async () => {
+			const result = await getWithdrawalStatus(
+				{ withdrawal_hash: txHash },
+				{ baseURL, fetchOptions: { signal } },
+			);
 
-	while (!signal.aborted) {
-		const result = await getWithdrawalStatus(
-			{ withdrawal_hash: txHash },
-			{ baseURL },
-		).catch((err) => {
-			// WITHDRAWALS_NOT_FOUND error is transient, we should keep retrying
-			if (isWithdrawalNotFound(err)) {
-				return null;
-			}
-			throw err;
-		});
-
-		if (result != null) {
 			const withdrawal = result.withdrawals[index];
-			assert(withdrawal, "POA Bridge didn't return withdrawal for given index");
+			if (withdrawal == null) {
+				throw new PoaWithdrawalInvariantError(
+					"POA Bridge didn't return withdrawal for given index",
+					result,
+					txHash,
+					index,
+				);
+			}
 
 			if (withdrawal.status === "COMPLETED") {
-				// COMPLETED should have `transfer_tx_hash` always
-				assert(
-					withdrawal.data.transfer_tx_hash != null,
-					"transfer_tx_hash is null",
-				);
+				if (withdrawal.data.transfer_tx_hash == null) {
+					throw new PoaWithdrawalInvariantError(
+						"POA Bridge didn't return transfer_tx_hash for COMPLETED withdrawal",
+						result,
+						txHash,
+						index,
+					);
+				}
 
 				return {
 					destinationTxHash: withdrawal.data.transfer_tx_hash,
 					chain: withdrawal.data.chain,
 				};
 			}
-		}
 
-		await wait(DEFAULT_WITHDRAWAL_STATUS_INTERVAL_MS);
-	}
+			throw new PoaWithdrawalPendingError(result, txHash, index);
+		},
+		{
+			...retryOptions,
+			handleError: (err, context) => {
+				if (isWithdrawalNotFound(err)) {
+					// WITHDRAWALS_NOT_FOUND error is transient, we should keep retrying
+					if (context.attemptsRemaining > 0) {
+						return;
+					}
 
-	throw signal.reason;
+					throw new PoaWithdrawalNotFoundError(txHash, index, err);
+				}
+
+				// Keep trying PENDING withdrawal
+				if (
+					err instanceof PoaWithdrawalPendingError &&
+					context.attemptsRemaining > 0
+				) {
+					return;
+				}
+
+				// We keep retrying if it is a network error or request timed out
+				if (
+					err instanceof BaseError &&
+					err.walk(
+						(err) =>
+							err instanceof HttpRequestError ||
+							err instanceof TimeoutError ||
+							err instanceof RpcRequestError,
+					)
+				) {
+					return;
+				}
+
+				context.abort();
+			},
+		},
+	);
 }
 
 function isWithdrawalNotFound(err: unknown) {
