@@ -180,6 +180,7 @@ export class HotBridge implements Bridge {
 		tx: NearTxInfo;
 		index: number;
 		bridge: BridgeConfig;
+		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo> {
 		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
@@ -194,6 +195,10 @@ export class HotBridge implements Bridge {
 
 		return retry(
 			async () => {
+				if (args.signal?.aborted) {
+					throw args.signal.reason;
+				}
+
 				const status = await this.hotSdk.getGaslessWithdrawStatus(
 					nonce.toString(),
 				);
@@ -218,7 +223,10 @@ export class HotBridge implements Bridge {
 			{
 				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
 				handleError: (err, ctx) => {
-					if (err instanceof HotWithdrawalCancelledError) {
+					if (
+						err instanceof HotWithdrawalCancelledError ||
+						err === args.signal?.reason
+					) {
 						ctx.abort();
 					}
 				},

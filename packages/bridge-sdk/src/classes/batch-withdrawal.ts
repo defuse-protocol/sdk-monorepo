@@ -1,3 +1,4 @@
+import type { RetryOptions } from "@defuse-protocol/internal-utils";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { drop, zip } from "../lib/array";
@@ -254,12 +255,20 @@ export class BatchWithdrawalImpl<
 		});
 	}
 
-	async waitForWithdrawalCompletion(): Promise<
-		PromiseSettledResult<TxInfo | TxNoInfo>[]
-	> {
+	async waitForWithdrawalCompletion({
+		signal,
+		retryOptions,
+	}: {
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+	} = {}): Promise<PromiseSettledResult<TxInfo | TxNoInfo>[]> {
 		this.destinationTx = await Promise.allSettled(
 			this.getWithdrawalsIdentifiers().map((w) => {
-				return this.bridgeSDK.waitForWithdrawalCompletion(w);
+				return this.bridgeSDK.waitForWithdrawalCompletion({
+					...w,
+					signal,
+					retryOptions,
+				});
 			}),
 		);
 		return this.destinationTx;

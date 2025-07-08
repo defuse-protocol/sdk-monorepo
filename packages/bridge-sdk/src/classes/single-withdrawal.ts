@@ -1,3 +1,4 @@
+import type { RetryOptions } from "@defuse-protocol/internal-utils";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { determineBridge } from "../lib/bridge";
@@ -132,10 +133,18 @@ export class SingleWithdrawalImpl<
 		};
 	}
 
-	async waitForWithdrawalCompletion(): Promise<TxInfo | TxNoInfo> {
-		this.destinationTx = await this.bridgeSDK.waitForWithdrawalCompletion(
-			this.getWithdrawalIdentifier(),
-		);
+	async waitForWithdrawalCompletion({
+		signal,
+		retryOptions,
+	}: {
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+	} = {}): Promise<TxInfo | TxNoInfo> {
+		this.destinationTx = await this.bridgeSDK.waitForWithdrawalCompletion({
+			...this.getWithdrawalIdentifier(),
+			signal,
+			retryOptions,
+		});
 		return this.destinationTx;
 	}
 }

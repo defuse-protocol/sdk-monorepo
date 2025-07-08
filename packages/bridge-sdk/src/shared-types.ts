@@ -31,6 +31,8 @@ export interface IBridgeSDK {
 		bridge: BridgeConfig;
 		tx: NearTxInfo;
 		index: number;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo>;
 
 	parseAssetId(assetId: string): ParsedAssetInfo;
@@ -97,6 +99,7 @@ export interface Bridge {
 		tx: NearTxInfo;
 		index: number;
 		bridge: BridgeConfig;
+		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo>;
 }
@@ -105,7 +108,10 @@ export interface SingleWithdrawal<Ticket> {
 	estimateFee(): Promise<bigint>;
 	signAndSendIntent(): Promise<Ticket>;
 	waitForIntentSettlement(): Promise<NearTxInfo>;
-	waitForWithdrawalCompletion(): Promise<TxInfo | TxNoInfo>;
+	waitForWithdrawalCompletion(args?: {
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+	}): Promise<TxInfo | TxNoInfo>;
 	process(): Promise<void>;
 }
 
@@ -114,9 +120,10 @@ export interface BatchWithdrawal<Ticket> {
 	removeUnprocessableWithdrawals(): void;
 	signAndSendIntent(): Promise<Ticket>;
 	waitForIntentSettlement(): Promise<NearTxInfo>;
-	waitForWithdrawalCompletion(): Promise<
-		PromiseSettledResult<TxInfo | TxNoInfo>[]
-	>;
+	waitForWithdrawalCompletion(args?: {
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+	}): Promise<PromiseSettledResult<TxInfo | TxNoInfo>[]>;
 	process(): Promise<void>;
 }
 

@@ -1,4 +1,7 @@
-import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
+import type {
+	NearIntentsEnv,
+	RetryOptions,
+} from "@defuse-protocol/internal-utils";
 import hotOmniSdk from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
@@ -194,6 +197,8 @@ export class BridgeSDK implements IBridgeSDK {
 		bridge: BridgeConfig;
 		tx: NearTxInfo;
 		index: number;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo> {
 		for (const bridge of this.bridges) {
 			if (bridge.is(args.bridge)) {
@@ -201,6 +206,8 @@ export class BridgeSDK implements IBridgeSDK {
 					tx: args.tx,
 					index: args.index,
 					bridge: args.bridge,
+					signal: args.signal,
+					retryOptions: args.retryOptions,
 				});
 			}
 		}
