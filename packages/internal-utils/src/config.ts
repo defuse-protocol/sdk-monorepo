@@ -10,6 +10,7 @@ interface SDKConfig {
 
 export interface EnvConfig {
 	contractID: string;
+	poaTokenFactoryContractID: string;
 	poaBridgeBaseURL: string;
 	solverRelayBaseURL: string;
 	managerConsoleBaseURL: string;
@@ -18,9 +19,10 @@ export interface EnvConfig {
 
 export type NearIntentsEnv = "production" | "stage";
 
-const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
+export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 	production: {
 		contractID: "intents.near",
+		poaTokenFactoryContractID: "omft.near",
 		poaBridgeBaseURL: "https://bridge.chaindefuser.com",
 		solverRelayBaseURL: "https://solver-relay-v2.chaindefuser.com",
 		managerConsoleBaseURL: "https://api-mng-console.chaindefuser.com/api/",
@@ -28,6 +30,7 @@ const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 	},
 	stage: {
 		contractID: "staging-intents.near",
+		poaTokenFactoryContractID: "stft.near",
 		// todo: update URLs when available
 		poaBridgeBaseURL: "https://bridge.chaindefuser.com",
 		solverRelayBaseURL: "https://solver-relay-v2.chaindefuser.com",
