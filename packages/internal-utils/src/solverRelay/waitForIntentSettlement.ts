@@ -5,6 +5,7 @@ import {
 	RpcRequestError,
 	TimeoutError,
 } from "../errors/request";
+import { RETRY_CONFIGS, type RetryOptions } from "../utils/retry";
 import {
 	IntentSettlementError,
 	type IntentSettlementErrorType,
@@ -25,10 +26,12 @@ export async function waitForIntentSettlement({
 	intentHash,
 	signal,
 	baseURL,
+	retryOptions = RETRY_CONFIGS.TWO_MINS_GRADUAL,
 }: {
 	intentHash: string;
 	signal: AbortSignal;
 	baseURL?: string;
+	retryOptions?: RetryOptions;
 }): Promise<WaitForIntentSettlementReturnType> {
 	return retry(
 		async () => {
@@ -47,11 +50,7 @@ export async function waitForIntentSettlement({
 			throw new IntentSettlementError(res);
 		},
 		{
-			delay: 500,
-			minDelay: 500,
-			factor: 2,
-			maxAttempts: 10,
-			jitter: true,
+			...retryOptions,
 			handleError: (err, context) => {
 				// We keep retrying since we haven't received the necessary status
 				if (err instanceof IntentSettlementError) {
