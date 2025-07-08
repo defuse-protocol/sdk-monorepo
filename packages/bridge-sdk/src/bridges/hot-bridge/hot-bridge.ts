@@ -1,14 +1,16 @@
 import {
 	type NearIntentsEnv,
+	RETRY_CONFIGS,
+	type RetryOptions,
 	configsByEnvironment,
 	utils as internalUtils,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
+import { retry } from "@lifeomic/attempt";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
-import { wait } from "../../lib/async";
 import type {
 	Bridge,
 	BridgeConfig,
@@ -19,6 +21,11 @@ import type {
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import {
+	HotWithdrawalCancelledError,
+	HotWithdrawalNotFoundError,
+	HotWithdrawalPendingError,
+} from "./error";
 import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants";
 import {
 	formatTxHash,
@@ -173,46 +180,49 @@ export class HotBridge implements Bridge {
 		tx: NearTxInfo;
 		index: number;
 		bridge: BridgeConfig;
+		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo> {
 		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
 			args.tx.hash,
 			args.tx.accountId,
 		);
+
 		const nonce = nonces[args.index];
 		if (nonce == null) {
-			throw new Error("Withdrawal with given index is not found");
+			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
-		let attempts = 0;
-		while (true) {
-			if (attempts > 30) {
-				throw new Error(
-					`Gasless withdrawal was not completed, nonce = ${nonce}`,
+		return retry(
+			async () => {
+				const status = await this.hotSdk.getGaslessWithdrawStatus(
+					nonce.toString(),
 				);
-			}
 
-			await wait(2000);
+				if (status === HOT_WITHDRAW_STATUS_STRINGS.Canceled) {
+					throw new HotWithdrawalCancelledError(args.tx.hash, args.index);
+				}
+				if (status === HOT_WITHDRAW_STATUS_STRINGS.Completed) {
+					return { hash: null };
+				}
+				if (typeof status === "string") {
+					return {
+						hash:
+							"chain" in args.bridge
+								? formatTxHash(status, args.bridge.chain)
+								: status,
+					};
+				}
 
-			const status = await this.hotSdk.getGaslessWithdrawStatus(
-				nonce.toString(),
-			);
-
-			if (status === HOT_WITHDRAW_STATUS_STRINGS.Canceled) {
-				throw new Error("Gasless withdrawal was canceled");
-			}
-			if (status === HOT_WITHDRAW_STATUS_STRINGS.Completed) {
-				return { hash: null };
-			}
-			if (typeof status === "string") {
-				return {
-					hash:
-						"chain" in args.bridge
-							? formatTxHash(status, args.bridge.chain)
-							: status,
-				};
-			}
-
-			attempts += 1;
-		}
+				throw new HotWithdrawalPendingError(args.tx.hash, args.index);
+			},
+			{
+				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
+				handleError: (err, ctx) => {
+					if (err instanceof HotWithdrawalCancelledError) {
+						ctx.abort();
+					}
+				},
+			},
+		);
 	}
 }

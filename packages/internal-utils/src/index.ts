@@ -9,3 +9,5 @@ export {
 	type NearIntentsEnv,
 } from "./config";
 export { type RetryOptions, RETRY_CONFIGS } from "./utils/retry";
+export { BaseError } from "./errors/base";
+export { serialize } from "./utils/serialize";

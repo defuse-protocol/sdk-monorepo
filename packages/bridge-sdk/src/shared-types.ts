@@ -1,4 +1,7 @@
-import type { solverRelay } from "@defuse-protocol/internal-utils";
+import type {
+	RetryOptions,
+	solverRelay,
+} from "@defuse-protocol/internal-utils";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
 import type { CAIP2_NETWORK } from "./lib/caip2";
@@ -94,6 +97,7 @@ export interface Bridge {
 		tx: NearTxInfo;
 		index: number;
 		bridge: BridgeConfig;
+		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo>;
 }
 
