@@ -6,7 +6,16 @@ import * as solverRelayClient from "./solverRelayHttpClient";
 import type * as types from "./solverRelayHttpClient/types";
 
 export type IntentSettlementResult = Awaited<
-	ReturnType<typeof waitForIntentSettlement>
+	| {
+			status: "SETTLED";
+			txHash: string;
+			intentHash: string;
+	  }
+	| {
+			status: "NOT_FOUND_OR_NOT_VALID";
+			txHash: string | null;
+			intentHash: string;
+	  }
 >;
 
 export async function waitForIntentSettlement({
@@ -17,7 +26,7 @@ export async function waitForIntentSettlement({
 	intentHash: string;
 	signal: AbortSignal;
 	baseURL?: string;
-}) {
+}): Promise<IntentSettlementResult> {
 	let attempts = 0;
 	const MAX_INVALID_ATTEMPTS = 3; // ~600 ms of waiting
 
