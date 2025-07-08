@@ -1,22 +1,25 @@
 import { retry } from "@lifeomic/attempt";
 import { BaseError } from "../errors/base";
-import { HttpRequestError } from "../errors/request";
-import { wait } from "../utils/wait";
+import {
+	HttpRequestError,
+	RpcRequestError,
+	TimeoutError,
+} from "../errors/request";
+import {
+	IntentSettlementError,
+	type IntentSettlementErrorType,
+} from "./errors/intentSettlement";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import type * as types from "./solverRelayHttpClient/types";
 
-export type IntentSettlementResult = Awaited<
-	| {
-			status: "SETTLED";
-			txHash: string;
-			intentHash: string;
-	  }
-	| {
-			status: "NOT_FOUND_OR_NOT_VALID";
-			txHash: string | null;
-			intentHash: string;
-	  }
->;
+export type WaitForIntentSettlementReturnType = {
+	txHash: string;
+	intentHash: string;
+};
+
+export type WaitForIntentSettlementErrorType =
+	| IntentSettlementErrorType
+	| types.JSONRPCErrorType;
 
 export async function waitForIntentSettlement({
 	intentHash,
@@ -26,77 +29,50 @@ export async function waitForIntentSettlement({
 	intentHash: string;
 	signal: AbortSignal;
 	baseURL?: string;
-}): Promise<IntentSettlementResult> {
-	let attempts = 0;
-	const MAX_INVALID_ATTEMPTS = 3; // ~600 ms of waiting
+}): Promise<WaitForIntentSettlementReturnType> {
+	return retry(
+		async () => {
+			const res = await solverRelayClient.getStatus(
+				{ intent_hash: intentHash },
+				{ baseURL, fetchOptions: { signal } },
+			);
 
-	let lastSeenResult: types.GetStatusResponse["result"] | null = null;
-	let txHash: string | null = null;
-
-	while (true) {
-		signal.throwIfAborted();
-
-		const res = await retry(
-			() =>
-				solverRelayClient.getStatus({ intent_hash: intentHash }, { baseURL }),
-			{
-				delay: 1000,
-				factor: 1.5,
-				maxAttempts: Number.MAX_SAFE_INTEGER,
-				jitter: true,
-				handleError: (err, context) => {
-					if (
-						err instanceof BaseError &&
-						err.walk((err) => err instanceof HttpRequestError)
-					) {
-						return;
-					}
-
-					context.abort();
-				},
-			},
-		);
-
-		const status = res.status;
-		switch (status) {
-			case "PENDING":
-				// Do nothing, just wait
-				break;
-
-			case "TX_BROADCASTED":
-				txHash = res.data.hash;
-				break;
-
-			case "SETTLED":
+			if (res.status === "SETTLED") {
 				return {
-					status: "SETTLED" as const,
 					txHash: res.data.hash,
 					intentHash: res.intent_hash,
 				};
-
-			case "NOT_FOUND_OR_NOT_VALID": {
-				if (
-					// If previous status differs, we're sure new result is final
-					(lastSeenResult != null && lastSeenResult.status !== res.status) ||
-					// If we've seen only NOT_VALID and keep getting it then we should abort
-					MAX_INVALID_ATTEMPTS <= ++attempts
-				) {
-					return {
-						status: "NOT_FOUND_OR_NOT_VALID" as const,
-						txHash: txHash,
-						intentHash: res.intent_hash,
-					};
-				}
-				break;
 			}
 
-			default:
-				status satisfies never;
-		}
+			throw new IntentSettlementError(res);
+		},
+		{
+			delay: 500,
+			minDelay: 500,
+			factor: 2,
+			maxAttempts: 10,
+			jitter: true,
+			handleError: (err, context) => {
+				// We keep retrying since we haven't received the necessary status
+				if (err instanceof IntentSettlementError) {
+					return;
+				}
 
-		lastSeenResult = res;
+				// We keep retrying if it is a network error or requested timed out
+				if (
+					err instanceof BaseError &&
+					err.walk(
+						(err) =>
+							err instanceof HttpRequestError ||
+							err instanceof TimeoutError ||
+							err instanceof RpcRequestError,
+					)
+				) {
+					return;
+				}
 
-		// Wait a bit before polling again
-		await wait(200);
-	}
+				context.abort();
+			},
+		},
+	);
 }
