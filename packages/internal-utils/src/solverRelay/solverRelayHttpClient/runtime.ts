@@ -68,7 +68,7 @@ export async function jsonRPCRequest<
 			maxAttempts: 3,
 			handleError: (err, context) => {
 				if (!requestShouldRetry(err)) {
-					context.abort;
+					context.abort();
 				}
 			},
 		},
