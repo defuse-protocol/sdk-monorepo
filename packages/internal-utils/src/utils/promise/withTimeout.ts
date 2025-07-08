@@ -1,3 +1,4 @@
+import { BaseError } from "../../errors/base";
 import type { ErrorType } from "../../errors/types";
 
 export type WithTimeoutErrorType = ErrorType;
@@ -27,19 +28,29 @@ export function withTimeout<data>(
 				if (timeout > 0) {
 					timeoutId = setTimeout(() => {
 						if (signal) {
-							controller.abort();
+							controller.abort(new SpecialInternalTimeoutError());
 						} else {
 							reject(errorInstance);
 						}
 					}, timeout) as NodeJS.Timeout; // need to cast because bun globals.d.ts overrides @types/node
 				}
-				resolve(await fn({ signal: controller?.signal || null }));
+				resolve(await fn({ signal: signal ? controller.signal : null }));
 			} catch (err) {
-				if ((err as Error)?.name === "AbortError") reject(errorInstance);
+				if (err instanceof SpecialInternalTimeoutError) reject(errorInstance);
 				reject(err);
 			} finally {
 				clearTimeout(timeoutId);
 			}
 		})();
 	});
+}
+
+class SpecialInternalTimeoutError extends BaseError {
+	constructor() {
+		super("Special internal timeout error", {
+			name: "SpecialInternalTimeoutError",
+			details:
+				"This error should be never be caught since another error instance is rethrown.",
+		});
+	}
 }
