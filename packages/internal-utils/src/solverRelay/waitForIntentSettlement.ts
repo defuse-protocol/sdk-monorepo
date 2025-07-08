@@ -9,11 +9,15 @@ export type IntentSettlementResult = Awaited<
 	ReturnType<typeof waitForIntentSettlement>
 >;
 
-export async function waitForIntentSettlement(
-	signal: AbortSignal,
-	intentHash: string,
-	baseURL?: string,
-) {
+export async function waitForIntentSettlement({
+	intentHash,
+	signal,
+	baseURL,
+}: {
+	intentHash: string;
+	signal: AbortSignal;
+	baseURL?: string;
+}) {
 	let attempts = 0;
 	const MAX_INVALID_ATTEMPTS = 3; // ~600 ms of waiting
 

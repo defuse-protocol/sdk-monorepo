@@ -53,11 +53,11 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 	}
 
 	async waitForSettlement(ticket: IntentHash): Promise<{ tx: NearTxInfo }> {
-		const result = await solverRelay.waitForIntentSettlement(
-			AbortSignal.timeout(30000),
-			ticket,
-			configsByEnvironment[this.env].solverRelayBaseURL,
-		);
+		const result = await solverRelay.waitForIntentSettlement({
+			intentHash: ticket,
+			signal: AbortSignal.timeout(30000),
+			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+		});
 		if (result.status === "NOT_FOUND_OR_NOT_VALID") {
 			throw new Error(
 				`Intent not found or not valid intent = ${result.intentHash}`,
