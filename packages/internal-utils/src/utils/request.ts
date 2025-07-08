@@ -1,5 +1,6 @@
 import { HttpRequestError, TimeoutError } from "../errors/request";
 import { isNetworkError } from "../errors/utils/isNetworkError";
+import { mergeAbortSignals } from "./abortSignal";
 import { withTimeout } from "./promise/withTimeout";
 
 export type RequestErrorType = HttpRequestError | TimeoutError;
@@ -28,7 +29,11 @@ export async function request({
 						...headers,
 					},
 					body: JSON.stringify(body),
-					signal: signal_ || (timeout > 0 ? signal : null),
+					signal: mergeAbortSignals(
+						[signal_, timeout > 0 ? signal : null].filter(
+							Boolean,
+						) as AbortSignal[],
+					),
 				});
 			},
 			{
