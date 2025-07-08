@@ -1,4 +1,6 @@
 import {
+	type NearIntentsEnv,
+	configsByEnvironment,
 	utils as internalUtils,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
@@ -27,7 +29,13 @@ import {
 } from "./hot-bridge-utils";
 
 export class HotBridge implements Bridge {
-	constructor(protected hotSdk: HotSdk) {}
+	protected env: NearIntentsEnv;
+	protected hotSdk: HotSdk;
+
+	constructor({ env, hotSdk }: { env: NearIntentsEnv; hotSdk: HotSdk }) {
+		this.env = env;
+		this.hotSdk = hotSdk;
+	}
 
 	is(bridgeConfig: BridgeConfig): boolean {
 		return bridgeConfig.bridge === "hot";
@@ -149,7 +157,10 @@ export class HotBridge implements Bridge {
 							defuse_asset_identifier_out: feeAssetId,
 							exact_amount_out: feeAmount.toString(),
 						},
-						config: { logBalanceSufficient: false },
+						config: {
+							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+							logBalanceSufficient: false,
+						},
 					});
 
 		return {

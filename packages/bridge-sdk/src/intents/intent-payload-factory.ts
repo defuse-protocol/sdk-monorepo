@@ -3,15 +3,17 @@ import type { IntentPayload } from "./shared-types";
 
 export function defaultIntentPayloadFactory({
 	intents,
+	verifying_contract,
 	...params
-}: Partial<IntentPayload>): IntentPayload {
+}: Partial<IntentPayload> &
+	Pick<IntentPayload, "verifying_contract">): IntentPayload {
 	// remove `undefined` properties
 	params = Object.fromEntries(
 		Object.entries(params).filter(([, value]) => value !== undefined),
 	);
 
 	return {
-		verifying_contract: "intents.near",
+		verifying_contract,
 		deadline: new Date(Date.now() + 60 * 1000).toISOString(),
 		nonce: base64.encode(crypto.getRandomValues(new Uint8Array(32))),
 		intents: intents == null ? [] : intents,

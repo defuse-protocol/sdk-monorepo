@@ -1,3 +1,7 @@
+import {
+	type NearIntentsEnv,
+	configsByEnvironment,
+} from "@defuse-protocol/internal-utils";
 import type { NearTxInfo } from "../../shared-types";
 import { defaultIntentPayloadFactory } from "../intent-payload-factory";
 import type { IIntentExecuter } from "../interfaces/intent-executer";
@@ -9,15 +13,18 @@ import type {
 } from "../shared-types";
 
 export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
+	protected env: NearIntentsEnv;
 	protected intentPayloadFactory: IntentPayloadFactory | undefined;
 	protected intentSigner: IIntentSigner;
 	protected intentRelayer: IIntentRelayer<Ticket>;
 
 	constructor(args: {
+		env: NearIntentsEnv;
 		intentPayloadFactory?: IntentPayloadFactory;
 		intentRelayer: IIntentRelayer<Ticket>;
 		intentSigner: IIntentSigner;
 	}) {
+		this.env = args.env;
 		this.intentPayloadFactory = args.intentPayloadFactory;
 		this.intentRelayer = args.intentRelayer;
 		this.intentSigner = args.intentSigner;
@@ -26,15 +33,23 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	async signAndSendIntent({
 		relayParams: relayParamsFactory,
 		...intentParams
-	}: Parameters<IntentPayloadFactory>[0] & {
+	}: {
 		relayParams?: IntentRelayParamsFactory;
-	}): Promise<{ ticket: Ticket }> {
-		let intentPayload = defaultIntentPayloadFactory(intentParams);
+	} & Partial<Parameters<IntentPayloadFactory>[0]>): Promise<{
+		ticket: Ticket;
+	}> {
+		const verifyingContract = configsByEnvironment[this.env].contractID;
+
+		let intentPayload = defaultIntentPayloadFactory({
+			verifying_contract: verifyingContract,
+			...intentParams,
+		});
 		intentPayload = this.intentPayloadFactory
 			? // We allow omitting properties, that's why we pass the result through the factory again
-				defaultIntentPayloadFactory(
-					await this.intentPayloadFactory(intentPayload),
-				)
+				defaultIntentPayloadFactory({
+					verifying_contract: verifyingContract,
+					...(await this.intentPayloadFactory(intentPayload)),
+				})
 			: intentPayload;
 
 		const multiPayload = await this.intentSigner.signIntent(intentPayload);

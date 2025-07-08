@@ -20,7 +20,7 @@ export class IntentSignerNear implements IIntentSigner {
 
 	async signIntent(intent: IntentPayload): Promise<MultiPayload> {
 		const nep413 = {
-			recipient: "intents.near",
+			recipient: intent.verifying_contract,
 			nonce: base64.decode(intent.nonce),
 			message: JSON.stringify({
 				deadline: intent.deadline,

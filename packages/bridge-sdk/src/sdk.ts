@@ -1,3 +1,4 @@
+import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
 import hotOmniSdk from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
@@ -31,35 +32,40 @@ import type {
 } from "./shared-types";
 
 export class BridgeSDK implements IBridgeSDK {
+	protected env: NearIntentsEnv;
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 
 	constructor(args: {
+		env?: NearIntentsEnv;
 		intentSigner?: IIntentSigner;
 		evmRpc: Record<number, string[]>;
 	}) {
+		this.env = args.env ?? "production";
+
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
 		 * More specific bridges should be placed before more generic ones.
 		 */
 		this.bridges = [
 			new IntentsBridge(),
-			new AuroraEngineBridge(),
-			new PoaBridge(),
-			new HotBridge(
-				new hotOmniSdk.HotBridge({
+			new AuroraEngineBridge({ env: this.env }),
+			new PoaBridge({ env: this.env }),
+			new HotBridge({
+				env: this.env,
+				hotSdk: new hotOmniSdk.HotBridge({
 					logger: console,
 					evmRpc: args.evmRpc,
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
 				}),
-			),
-			new DirectBridge(),
+			}),
+			new DirectBridge({ env: this.env }),
 		];
 
-		this.intentRelayer = new IntentRelayerPublic();
+		this.intentRelayer = new IntentRelayerPublic({ env: this.env });
 
 		this.intentSigner = args.intentSigner;
 	}
@@ -86,6 +92,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 		return new SingleWithdrawalImpl({
 			intentExecuter: new IntentExecuter({
+				env: this.env,
 				intentSigner: intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
@@ -115,6 +122,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 		return new BatchWithdrawalImpl({
 			intentExecuter: new IntentExecuter({
+				env: this.env,
 				intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,

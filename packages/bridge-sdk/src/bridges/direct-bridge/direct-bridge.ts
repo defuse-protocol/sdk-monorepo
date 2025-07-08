@@ -1,4 +1,6 @@
 import {
+	type NearIntentsEnv,
+	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	solverRelay,
@@ -20,6 +22,12 @@ import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 import { createWithdrawIntentPrimitive } from "./direct-bridge-utils";
 
 export class DirectBridge implements Bridge {
+	protected env: NearIntentsEnv;
+
+	constructor({ env }: { env: NearIntentsEnv }) {
+		this.env = env;
+	}
+
 	is(bridgeConfig: BridgeConfig) {
 		return bridgeConfig.bridge === "direct";
 	}
@@ -131,7 +139,10 @@ export class DirectBridge implements Bridge {
 							defuse_asset_identifier_out: feeAssetId,
 							exact_amount_out: feeAmount.toString(),
 						},
-						config: { logBalanceSufficient: false },
+						config: {
+							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+							logBalanceSufficient: false,
+						},
 					});
 
 		return {

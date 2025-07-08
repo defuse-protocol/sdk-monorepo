@@ -1,4 +1,6 @@
 import {
+	type NearIntentsEnv,
+	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	solverRelay,
@@ -21,6 +23,12 @@ import {
 } from "./aurora-engine-bridge-utils";
 
 export class AuroraEngineBridge implements Bridge {
+	protected env: NearIntentsEnv;
+
+	constructor({ env }: { env: NearIntentsEnv }) {
+		this.env = env;
+	}
+
 	is(bridgeConfig: BridgeConfig): boolean {
 		return bridgeConfig.bridge === "aurora_engine";
 	}
@@ -115,7 +123,10 @@ export class AuroraEngineBridge implements Bridge {
 							defuse_asset_identifier_out: feeAssetId,
 							exact_amount_out: feeAmount.toString(),
 						},
-						config: { logBalanceSufficient: false },
+						config: {
+							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+							logBalanceSufficient: false,
+						},
 					});
 
 		return {

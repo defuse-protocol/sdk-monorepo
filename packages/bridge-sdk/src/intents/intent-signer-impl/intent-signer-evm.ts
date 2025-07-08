@@ -22,7 +22,7 @@ export class IntentSignerEVM implements IIntentSigner {
 					identifier: this.signer.address,
 					method: "evm",
 				}),
-			verifying_contract: "intents.near",
+			verifying_contract: intent.verifying_contract,
 			deadline: intent.deadline,
 			nonce: intent.nonce,
 			intents: intent.intents,

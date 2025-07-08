@@ -1,4 +1,9 @@
-import { poaBridge, utils } from "@defuse-protocol/internal-utils";
+import {
+	type NearIntentsEnv,
+	configsByEnvironment,
+	poaBridge,
+	utils,
+} from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -17,6 +22,12 @@ import {
 } from "./poa-bridge-utils";
 
 export class PoaBridge implements Bridge {
+	protected env: NearIntentsEnv;
+
+	constructor({ env }: { env: NearIntentsEnv }) {
+		this.env = env;
+	}
+
 	is(bridgeConfig: BridgeConfig) {
 		return bridgeConfig.bridge === "poa";
 	}
@@ -39,7 +50,11 @@ export class PoaBridge implements Bridge {
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = utils.parseDefuseAssetId(assetId);
-		if (parsed.contractId.endsWith(".omft.near")) {
+		if (
+			parsed.contractId.endsWith(
+				`.${configsByEnvironment[this.env].poaTokenFactoryContractID}`,
+			)
+		) {
 			return Object.assign(parsed, {
 				blockchain: contractIdToCaip2(parsed.contractId),
 				bridge: "poa" as const,
@@ -66,12 +81,15 @@ export class PoaBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
-		const estimation = await poaBridge.httpClient.getWithdrawalEstimate({
-			token: utils.getTokenAccountId(args.withdrawalParams.assetId),
-			address: args.withdrawalParams.destinationAddress,
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			chain: toPoaNetwork(assetInfo.blockchain) as any,
-		});
+		const estimation = await poaBridge.httpClient.getWithdrawalEstimate(
+			{
+				token: utils.getTokenAccountId(args.withdrawalParams.assetId),
+				address: args.withdrawalParams.destinationAddress,
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				chain: toPoaNetwork(assetInfo.blockchain) as any,
+			},
+			{ baseURL: configsByEnvironment[this.env].poaBridgeBaseURL },
+		);
 
 		return {
 			amount: BigInt(estimation.withdrawalFee),
@@ -87,6 +105,7 @@ export class PoaBridge implements Bridge {
 			txHash: args.tx.hash,
 			index: args.index,
 			signal: new AbortController().signal,
+			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
