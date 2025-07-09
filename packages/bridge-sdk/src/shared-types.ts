@@ -66,8 +66,12 @@ export interface WithdrawalParams {
 
 export type BridgeConfig =
 	| {
-			bridge: Exclude<BridgeKind, "aurora_engine" | "intents">;
+			bridge: "hot" | "poa";
 			chain: CAIP2_NETWORK;
+	  }
+	| {
+			bridge: "direct";
+			msg?: string;
 	  }
 	| {
 			bridge: "aurora_engine";

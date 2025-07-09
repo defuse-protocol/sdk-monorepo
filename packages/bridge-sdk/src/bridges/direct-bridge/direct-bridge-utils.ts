@@ -1,6 +1,7 @@
 import { utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
+import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 
 export function createWithdrawIntentPrimitive(params: {
@@ -8,6 +9,7 @@ export function createWithdrawIntentPrimitive(params: {
 	destinationAddress: string;
 	amount: bigint;
 	storageDeposit: bigint;
+	msg: string | undefined;
 }): IntentPrimitive {
 	if (params.assetId === NEAR_NATIVE_ASSET_ID) {
 		return {
@@ -28,5 +30,19 @@ export function createWithdrawIntentPrimitive(params: {
 		amount: params.amount.toString(),
 		storage_deposit:
 			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
+		msg: params.msg,
 	};
+}
+
+export function withdrawalParamsInvariant<
+	T extends Pick<WithdrawalParams, "bridgeConfig">,
+>(
+	params: T,
+): asserts params is T & {
+	bridgeConfig?: Extract<NonNullable<T["bridgeConfig"]>, { bridge: "direct" }>;
+} {
+	assert(
+		!params.bridgeConfig ? true : params.bridgeConfig.bridge === "direct",
+		"Bridge is not direct",
+	);
 }

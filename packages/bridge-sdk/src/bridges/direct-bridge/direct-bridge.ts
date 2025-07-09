@@ -19,7 +19,10 @@ import type {
 	WithdrawalParams,
 } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
-import { createWithdrawIntentPrimitive } from "./direct-bridge-utils";
+import {
+	createWithdrawIntentPrimitive,
+	withdrawalParamsInvariant,
+} from "./direct-bridge-utils";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -67,6 +70,8 @@ export class DirectBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
+		withdrawalParamsInvariant(args.withdrawalParams);
+
 		const intents: IntentPrimitive[] = [];
 
 		if (args.feeEstimation.quote != null) {
@@ -89,6 +94,7 @@ export class DirectBridge implements Bridge {
 			storageDeposit: args.feeEstimation.quote
 				? BigInt(args.feeEstimation.quote.amount_out)
 				: args.feeEstimation.amount,
+			msg: args.withdrawalParams.bridgeConfig?.msg,
 		});
 
 		intents.push(intent);
