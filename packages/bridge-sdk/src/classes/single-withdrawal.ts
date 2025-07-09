@@ -19,6 +19,7 @@ export class SingleWithdrawalImpl<
 > implements SingleWithdrawal<Ticket>
 {
 	protected withdrawalParams: WithdrawalParams;
+	protected referral: string | undefined;
 	protected bridgeSDK: IBridgeSDK;
 	protected intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 	protected intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
@@ -30,11 +31,13 @@ export class SingleWithdrawalImpl<
 
 	constructor(args: {
 		withdrawalParams: WithdrawalParams;
+		referral?: string;
 		bridgeSDK: IBridgeSDK;
 		intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 		intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
 	}) {
 		this.withdrawalParams = args.withdrawalParams;
+		this.referral = args.referral;
 		this.bridgeSDK = args.bridgeSDK;
 		this.intentExecuter = args.intentExecuter;
 		this.intentRelayParams = args.intentRelayParams;
@@ -79,6 +82,7 @@ export class SingleWithdrawalImpl<
 		const intents = await this.bridgeSDK.createWithdrawalIntents({
 			withdrawalParams: this.withdrawalParams,
 			feeEstimation: feeEstimation,
+			referral: this.referral,
 		});
 
 		const { ticket } = await this.intentExecuter.signAndSendIntent({

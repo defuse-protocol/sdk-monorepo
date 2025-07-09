@@ -92,6 +92,7 @@ export class HotBridge implements Bridge {
 	async createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
+		referral?: string;
 	}): Promise<IntentPrimitive[]> {
 		const intents: IntentPrimitive[] = [];
 		let feeAmount: bigint;
@@ -108,6 +109,7 @@ export class HotBridge implements Bridge {
 					[args.feeEstimation.quote.defuse_asset_identifier_out]:
 						args.feeEstimation.quote.amount_out,
 				},
+				referral: args.referral,
 			});
 		}
 

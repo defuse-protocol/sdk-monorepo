@@ -49,6 +49,7 @@ export class AuroraEngineBridge implements Bridge {
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
+		referral?: string;
 	}): Promise<IntentPrimitive[]> {
 		withdrawalParamsInvariant(args.withdrawalParams);
 
@@ -63,6 +64,7 @@ export class AuroraEngineBridge implements Bridge {
 					[args.feeEstimation.quote.defuse_asset_identifier_out]:
 						args.feeEstimation.quote.amount_out,
 				},
+				referral: args.referral,
 			});
 		}
 

@@ -36,6 +36,7 @@ import type {
 
 export class BridgeSDK implements IBridgeSDK {
 	protected env: NearIntentsEnv;
+	protected referral: string;
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
@@ -44,8 +45,10 @@ export class BridgeSDK implements IBridgeSDK {
 		env?: NearIntentsEnv;
 		intentSigner?: IIntentSigner;
 		evmRpc: Record<number, string[]>;
+		referral: string;
 	}) {
 		this.env = args.env ?? "production";
+		this.referral = args.referral;
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
@@ -80,6 +83,7 @@ export class BridgeSDK implements IBridgeSDK {
 	createWithdrawal({
 		withdrawalParams,
 		intent,
+		referral,
 	}: {
 		withdrawalParams: WithdrawalParams;
 		intent?: {
@@ -87,6 +91,7 @@ export class BridgeSDK implements IBridgeSDK {
 			relayParams?: IntentRelayParamsFactory;
 			signer?: IIntentSigner;
 		};
+		referral?: string;
 	}) {
 		const intentSigner = intent?.signer ?? this.intentSigner;
 		if (intentSigner == null) {
@@ -103,6 +108,7 @@ export class BridgeSDK implements IBridgeSDK {
 			// @ts-expect-error
 			intentRelayParams: intent?.relayParams,
 			withdrawalParams,
+			referral: referral ?? this.referral,
 			bridgeSDK: this,
 		});
 	}
@@ -110,6 +116,7 @@ export class BridgeSDK implements IBridgeSDK {
 	createBatchWithdrawals({
 		withdrawalParams,
 		intent,
+		referral,
 	}: {
 		withdrawalParams: WithdrawalParams[];
 		intent?: {
@@ -117,6 +124,7 @@ export class BridgeSDK implements IBridgeSDK {
 			relayParams?: IntentRelayParamsFactory;
 			signer?: IIntentSigner;
 		};
+		referral?: string;
 	}) {
 		const intentSigner = intent?.signer ?? this.intentSigner;
 		if (intentSigner == null) {
@@ -133,6 +141,7 @@ export class BridgeSDK implements IBridgeSDK {
 			// @ts-expect-error
 			intentRelayParams: intent?.relayParams,
 			withdrawalParams,
+			referral: referral ?? this.referral,
 			bridgeSDK: this,
 		});
 	}
@@ -140,6 +149,7 @@ export class BridgeSDK implements IBridgeSDK {
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
+		referral?: string;
 	}): Promise<IntentPrimitive[]> {
 		for (const bridge of this.bridges) {
 			if (bridge.supports(args.withdrawalParams)) {
@@ -151,6 +161,7 @@ export class BridgeSDK implements IBridgeSDK {
 							: args.withdrawalParams.amount,
 					},
 					feeEstimation: args.feeEstimation,
+					referral: args.referral ?? this.referral,
 				});
 			}
 		}

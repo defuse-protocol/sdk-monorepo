@@ -22,6 +22,7 @@ export class BatchWithdrawalImpl<
 > implements BatchWithdrawal<Ticket>
 {
 	protected withdrawalParams: WithdrawalParams[];
+	protected referral: string | undefined;
 	protected bridgeSDK: IBridgeSDK;
 	protected intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 	protected intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
@@ -34,11 +35,13 @@ export class BatchWithdrawalImpl<
 
 	constructor(args: {
 		withdrawalParams: WithdrawalParams[];
+		referral?: string;
 		bridgeSDK: IBridgeSDK;
 		intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 		intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
 	}) {
 		this.withdrawalParams = args.withdrawalParams;
+		this.referral = args.referral;
 		this.bridgeSDK = args.bridgeSDK;
 		this.intentExecuter = args.intentExecuter;
 		this.intentRelayParams = args.intentRelayParams;
@@ -176,6 +179,7 @@ export class BatchWithdrawalImpl<
 						return this.bridgeSDK.createWithdrawalIntents({
 							withdrawalParams: withdrawalParams,
 							feeEstimation: feeEstimation.value,
+							referral: this.referral,
 						});
 					},
 				),

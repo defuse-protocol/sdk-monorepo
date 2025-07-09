@@ -65,6 +65,7 @@ export class DirectBridge implements Bridge {
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
+		referral?: string;
 	}): Promise<IntentPrimitive[]> {
 		const intents: IntentPrimitive[] = [];
 
@@ -77,6 +78,7 @@ export class DirectBridge implements Bridge {
 					[args.feeEstimation.quote.defuse_asset_identifier_out]:
 						args.feeEstimation.quote.amount_out,
 				},
+				referral: args.referral,
 			});
 		}
 

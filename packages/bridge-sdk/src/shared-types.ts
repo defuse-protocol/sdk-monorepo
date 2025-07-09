@@ -12,6 +12,7 @@ export interface IBridgeSDK {
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
+		referral?: string;
 	}): Promise<IntentPrimitive[]>;
 
 	estimateWithdrawalFee<
@@ -94,6 +95,7 @@ export interface Bridge {
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
+		referral?: string;
 	}): Promise<IntentPrimitive[]>;
 	waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
