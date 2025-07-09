@@ -19,7 +19,11 @@ export type GetQuoteErrorType = QuoteError | JSONRPCErrorType;
 export async function getQuote(
 	params: GetQuoteParams,
 ): Promise<GetQuoteReturnType> {
-	const result = await quoteWithLog(params.quoteParams, params.config);
+	const result = await quoteWithLog(params.quoteParams, {
+		// If we don't set timeout, then 10s quote will fail, since the default timeout is 10s.
+		timeout: (params.quoteParams?.wait_ms ?? 0) + 10000,
+		...params.config,
+	});
 	return handleQuoteResult(result, params.quoteParams);
 }
 
