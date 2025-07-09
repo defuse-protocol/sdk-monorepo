@@ -26,6 +26,7 @@ export interface IBridgeSDK {
 		>,
 	>(args: {
 		withdrawalParams: T;
+		quoteOptions?: { waitMs: number };
 	}): Promise<FeeEstimation>;
 
 	waitForWithdrawalCompletion(args: {
@@ -91,6 +92,7 @@ export interface Bridge {
 		>,
 	>(args: {
 		withdrawalParams: T;
+		quoteOptions?: { waitMs: number };
 	}): Promise<FeeEstimation>;
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;

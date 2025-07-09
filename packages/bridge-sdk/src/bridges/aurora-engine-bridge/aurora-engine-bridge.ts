@@ -88,6 +88,7 @@ export class AuroraEngineBridge implements Bridge {
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "bridgeConfig">;
+		quoteOptions?: { waitMs: number };
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
 
@@ -124,6 +125,7 @@ export class AuroraEngineBridge implements Bridge {
 							defuse_asset_identifier_in: args.withdrawalParams.assetId,
 							defuse_asset_identifier_out: feeAssetId,
 							exact_amount_out: feeAmount.toString(),
+							wait_ms: args.quoteOptions?.waitMs,
 						},
 						config: {
 							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,

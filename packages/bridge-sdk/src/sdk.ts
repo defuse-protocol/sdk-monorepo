@@ -182,11 +182,13 @@ export class BridgeSDK implements IBridgeSDK {
 		>,
 	>(args: {
 		withdrawalParams: T;
+		quoteOptions?: { waitMs: number };
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
 			if (bridge.supports(args.withdrawalParams)) {
 				const fee = await bridge.estimateWithdrawalFee({
 					withdrawalParams: args.withdrawalParams,
+					quoteOptions: args.quoteOptions,
 				});
 
 				if (args.withdrawalParams.feeInclusive) {

@@ -98,6 +98,7 @@ export class DirectBridge implements Bridge {
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
+		quoteOptions?: { waitMs: number };
 	}): Promise<FeeEstimation> {
 		const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 			args.withdrawalParams.assetId,
@@ -140,6 +141,7 @@ export class DirectBridge implements Bridge {
 							defuse_asset_identifier_in: args.withdrawalParams.assetId,
 							defuse_asset_identifier_out: feeAssetId,
 							exact_amount_out: feeAmount.toString(),
+							wait_ms: args.quoteOptions?.waitMs,
 						},
 						config: {
 							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
