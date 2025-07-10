@@ -1,5 +1,32 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.7.1
+
+### Patch Changes
+
+- 33ff7a1: Add a new optional parameter to SDK `env` ("production" or "stage"). Depending on the passed environment:
+  - will be used the appropriate API servers for POA Bridge and Solver Relay.
+  - POA Bridge will handle only either `omft.near` or `stft.near` tokens.
+- 88ee477: Allow specifying wait_ms parameter for fee quotes.
+- 127041a: Allow to pass `retryOptions` to POA's `waitForWithdrawalCompletion`. By default, it retries for 2 mins.
+- 49ea900: Add mandatory `referral` parameter to SDK. Allow to set `referral` per withdrawal.
+- 78fcfbd: Allow to pass custom `msg` when withdrawing to Near
+- 29579ce: Export config related variables and functions (`config`, `configureSDK`, `configsByEnvironment` and `NearIntentsEnv`) from the package.
+- d13a98a: Export `WithdrawalParams` type.
+- e435f9c: Export new constant `HOT_BRIDGE_CHAINS_CAIP2` which is an array of CAIP2 strings that HOT Bridge suppports.
+- dc89480: Export `CAIP2_NETWORK` enum like object.
+- db52295: Allow specifying POA bridge and Solver API URLs per RPC call.
+- a6ba8c6: Add signal and retryOptions to `waitForWithdrawalCompletion`.
+- Updated dependencies [cdd7633]
+- Updated dependencies [84ce5e1]
+- Updated dependencies [127041a]
+- Updated dependencies [48ac772]
+- Updated dependencies [29579ce]
+- Updated dependencies [ce86177]
+- Updated dependencies [db52295]
+- Updated dependencies [98ad047]
+  - @defuse-protocol/internal-utils@0.0.8
+
 ## 0.7.0
 
 ### Minor Changes
