@@ -93,6 +93,14 @@ export class BatchWithdrawalImpl<
 		this.withdrawalParams.push(args.withdrawalParams);
 	}
 
+	getWithdrawal(index: number): { withdrawalParams: WithdrawalParams } | null {
+		const withdrawalParams = this.withdrawalParams[index];
+		if (withdrawalParams == null) {
+			return null;
+		}
+		return { withdrawalParams };
+	}
+
 	withdrawalsCount(): number {
 		return this.withdrawalParams.length;
 	}
