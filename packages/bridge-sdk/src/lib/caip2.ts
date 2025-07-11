@@ -16,6 +16,8 @@ export const CAIP2_NETWORK = {
 	TON: "tvm:-239",
 	Optimism: "eip155:10",
 	Avalanche: "eip155:43114",
+	Sui: "sui:mainnet",
+	Aptos: "aptos:mainnet",
 } as const;
 
 export type CAIP2_NETWORK = (typeof CAIP2_NETWORK)[keyof typeof CAIP2_NETWORK];
