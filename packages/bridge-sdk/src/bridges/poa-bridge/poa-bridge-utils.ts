@@ -51,6 +51,8 @@ const caip2Mapping = {
 	[CAIP2_NETWORK.Gnosis]: "eth:100",
 	[CAIP2_NETWORK.Berachain]: "eth:80094",
 	[CAIP2_NETWORK.Tron]: "tron:mainnet",
+	[CAIP2_NETWORK.Sui]: "sui:mainnet",
+	[CAIP2_NETWORK.Aptos]: "aptos:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -78,6 +80,8 @@ const tokenPrefixMapping = {
 	gnosis: CAIP2_NETWORK.Gnosis,
 	bera: CAIP2_NETWORK.Berachain,
 	tron: CAIP2_NETWORK.Tron,
+	sui: CAIP2_NETWORK.Sui,
+	aptos: CAIP2_NETWORK.Aptos,
 };
 
 export function contractIdToCaip2(contractId: string): CAIP2_NETWORK {
