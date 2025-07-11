@@ -1,5 +1,12 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.7.2
+
+### Patch Changes
+
+- cb50e56: Add new method `getWithdrawal()` to batch withdrawals.
+- f98bcec: Add support for Sui and Aptos networks in the POA bridge
+
 ## 0.7.1
 
 ### Patch Changes
