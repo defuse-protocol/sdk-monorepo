@@ -11,3 +11,5 @@ export {
 export { type RetryOptions, RETRY_CONFIGS } from "./utils/retry";
 export { BaseError } from "./errors/base";
 export { serialize } from "./utils/serialize";
+export { nearFailoverRpcProvider } from "./utils/failover";
+export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";

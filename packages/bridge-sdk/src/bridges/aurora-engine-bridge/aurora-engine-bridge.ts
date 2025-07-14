@@ -6,6 +6,7 @@ import {
 	solverRelay,
 	utils,
 } from "@defuse-protocol/internal-utils";
+import type { providers } from "near-api-js";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -24,9 +25,14 @@ import {
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
+	protected nearProvider: providers.Provider;
 
-	constructor({ env }: { env: NearIntentsEnv }) {
+	constructor({
+		env,
+		nearProvider,
+	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
 		this.env = env;
+		this.nearProvider = nearProvider;
 	}
 
 	is(bridgeConfig: BridgeConfig): boolean {
@@ -100,10 +106,12 @@ export class AuroraEngineBridge implements Bridge {
 		const [minStorageBalance, userStorageBalance] = await Promise.all([
 			getNearNep141MinStorageBalance({
 				contractId: tokenAccountId,
+				nearProvider: this.nearProvider,
 			}),
 			getNearNep141StorageBalance({
 				contractId: tokenAccountId,
 				accountId: args.withdrawalParams.bridgeConfig.auroraEngineContractId,
+				nearProvider: this.nearProvider,
 			}),
 		]);
 

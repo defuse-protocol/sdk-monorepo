@@ -1,20 +1,22 @@
 import { base64 } from "@scure/base";
+import type { providers } from "near-api-js";
 import * as v from "valibot";
-import { nearClient } from "../nearClient";
 import { decodeQueryResult } from "../utils/near";
 
 export const getNearNep141StorageBalance = async ({
 	contractId,
 	accountId,
+	nearProvider,
 }: {
 	contractId: string;
 	accountId: string;
+	nearProvider: providers.Provider;
 }): Promise<bigint> => {
 	try {
 		const args = { account_id: accountId };
 		const argsBase64 = Buffer.from(JSON.stringify(args)).toString("base64");
 
-		const response = await nearClient.query({
+		const response = await nearProvider.query({
 			request_type: "call_function",
 			method_name: "storage_balance_of",
 			account_id: contractId,
@@ -35,10 +37,12 @@ export const getNearNep141StorageBalance = async ({
 
 export const getNearNep141MinStorageBalance = async ({
 	contractId,
+	nearProvider,
 }: {
 	contractId: string;
+	nearProvider: providers.Provider;
 }): Promise<bigint> => {
-	const response = await nearClient.query({
+	const response = await nearProvider.query({
 		request_type: "call_function",
 		method_name: "storage_balance_bounds",
 		account_id: contractId,

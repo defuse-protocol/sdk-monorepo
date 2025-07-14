@@ -1,6 +1,8 @@
-import type {
-	NearIntentsEnv,
-	RetryOptions,
+import {
+	type NearIntentsEnv,
+	PUBLIC_NEAR_RPC_URLS,
+	type RetryOptions,
+	nearFailoverRpcProvider,
 } from "@defuse-protocol/internal-utils";
 import hotOmniSdk from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -45,10 +47,16 @@ export class BridgeSDK implements IBridgeSDK {
 		env?: NearIntentsEnv;
 		intentSigner?: IIntentSigner;
 		evmRpc: Record<number, string[]>;
+		// Fallback to public RPCs if omitted
+		nearRpc?: string[];
 		referral: string;
 	}) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
+
+		const nearProvider = nearFailoverRpcProvider({
+			urls: args.nearRpc ?? PUBLIC_NEAR_RPC_URLS,
+		});
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
@@ -56,19 +64,26 @@ export class BridgeSDK implements IBridgeSDK {
 		 */
 		this.bridges = [
 			new IntentsBridge(),
-			new AuroraEngineBridge({ env: this.env }),
+			new AuroraEngineBridge({
+				env: this.env,
+				nearProvider,
+			}),
 			new PoaBridge({ env: this.env }),
 			new HotBridge({
 				env: this.env,
 				hotSdk: new hotOmniSdk.HotBridge({
 					logger: console,
 					evmRpc: args.evmRpc,
+					nearRpc: nearProvider.providers[0], // HotBridge from omni-sdk does not support FailoverProvider
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
 				}),
 			}),
-			new DirectBridge({ env: this.env }),
+			new DirectBridge({
+				env: this.env,
+				nearProvider,
+			}),
 		];
 
 		this.intentRelayer = new IntentRelayerPublic({ env: this.env });
