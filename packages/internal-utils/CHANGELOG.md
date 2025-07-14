@@ -1,5 +1,13 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.9
+
+### Patch Changes
+
+- a4624a8: Update version of near-api-js
+- 345b2d8: Update stage POA bridge and relay urls
+- 1d789ed: Add optional `nearRpc` config.
+
 ## 0.0.8
 
 ### Patch Changes
