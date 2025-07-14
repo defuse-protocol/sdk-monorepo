@@ -11,7 +11,11 @@ export function createWithdrawIntentPrimitive(params: {
 	storageDeposit: bigint;
 	msg: string | undefined;
 }): IntentPrimitive {
-	if (params.assetId === NEAR_NATIVE_ASSET_ID) {
+	if (
+		params.assetId === NEAR_NATIVE_ASSET_ID &&
+		// Ensure `msg` is not passed, because `native_withdraw` intent doesn't support `msg`
+		params.msg === undefined
+	) {
 		return {
 			intent: "native_withdraw",
 			receiver_id: params.destinationAddress,

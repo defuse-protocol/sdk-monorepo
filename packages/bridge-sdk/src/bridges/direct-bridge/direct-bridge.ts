@@ -109,21 +109,29 @@ export class DirectBridge implements Bridge {
 	}
 
 	async estimateWithdrawalFee(args: {
-		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
+		withdrawalParams: Pick<
+			WithdrawalParams,
+			"assetId" | "destinationAddress" | "bridgeConfig"
+		>;
 		quoteOptions?: { waitMs: number };
 	}): Promise<FeeEstimation> {
+		withdrawalParamsInvariant(args.withdrawalParams);
+
 		const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 			args.withdrawalParams.assetId,
 		);
 		assert(standard === "nep141", "Only NEP-141 is supported");
 
-		// We don't directly withdraw `wrap.near`, we unwrap it first, so it doesn't require storage
-		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
+		if (
+			// We don't directly withdraw `wrap.near`, we unwrap it first, so it doesn't require storage
+			args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID &&
+			// Ensure `msg` is not passed, because `native_withdraw` intent doesn't support `msg`
+			args.withdrawalParams.bridgeConfig?.msg === undefined
+		)
 			return {
 				amount: 0n,
 				quote: null,
 			};
-		}
 
 		const [minStorageBalance, userStorageBalance] = await Promise.all([
 			getNearNep141MinStorageBalance({
