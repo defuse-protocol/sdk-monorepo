@@ -49,7 +49,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 			return a.unwrap() as IntentHash[];
 		}
 
-		throw new Error(a.unwrapErr().reason);
+		throw a.unwrapErr();
 	}
 
 	async waitForSettlement(ticket: IntentHash): Promise<{ tx: NearTxInfo }> {

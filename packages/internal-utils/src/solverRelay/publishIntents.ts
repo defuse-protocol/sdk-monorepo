@@ -3,13 +3,14 @@ import { Err, Ok, type Result } from "@thames/monads";
 import { logger } from "../logger";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
-	type ParsedPublishErrors,
-	parseFailedPublishError,
+	RelayPublishError,
+	type RelayPublishErrorType,
+	toRelayPublishError,
 } from "./utils/parseFailedPublishError";
 
 export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
-): Promise<Result<PublishIntentsOk, PublishIntentsErr>> {
+): Promise<Result<PublishIntentsReturnType, PublishIntentsErrorType>> {
 	const [params, requestConfig] = args;
 	return retry(
 		() =>
@@ -25,31 +26,38 @@ export async function publishIntents(
 			minDelay: 1000,
 		},
 	)
-		.then(parsePublishIntentsResponse, (err) => {
-			logger.error(new Error("Failed to publish intents", { cause: err }));
-			return Err<PublishIntentsOk, PublishIntentsErr>({
-				reason: "RELAY_PUBLISH_NETWORK_ERROR",
-			});
-		})
+		.then(
+			(response) => {
+				return parsePublishIntentsResponse(params, response);
+			},
+			(err) => {
+				const publishError = new RelayPublishError({
+					reason: "Error occurred during sending a request",
+					code: "NETWORK_ERROR",
+					publishParams: params,
+					cause: err,
+				});
+				return Err<PublishIntentsReturnType, PublishIntentsErrorType>(
+					publishError,
+				);
+			},
+		)
 		.then((result) => {
 			if (result.isErr()) {
 				const err = result.unwrapErr();
-				if (err.reason === "RELAY_PUBLISH_UNKNOWN_ERROR") {
-					logger.error(err.serverReason);
-				}
+				logger.error(err);
 			}
 			return result;
 		});
 }
 
-export type PublishIntentsOk = string[];
-export type PublishIntentsErr =
-	| ParsedPublishErrors
-	| { reason: "RELAY_PUBLISH_NETWORK_ERROR" };
+export type PublishIntentsReturnType = string[];
+export type PublishIntentsErrorType = RelayPublishErrorType;
 
 function parsePublishIntentsResponse(
+	publishParams: Parameters<typeof solverRelayClient.publishIntents>[0],
 	response: Awaited<ReturnType<typeof solverRelayClient.publishIntents>>,
-): Result<PublishIntentsOk, PublishIntentsErr> {
+): Result<PublishIntentsReturnType, PublishIntentsErrorType> {
 	if (response.status === "OK") {
 		return Ok(response.intent_hashes);
 	}
@@ -58,5 +66,5 @@ function parsePublishIntentsResponse(
 		return Ok(response.intent_hashes);
 	}
 
-	return Err(parseFailedPublishError(response));
+	return Err(toRelayPublishError(publishParams, response));
 }

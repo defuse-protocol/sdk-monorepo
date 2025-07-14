@@ -1,50 +1,30 @@
-import { retry } from "@lifeomic/attempt";
+import type { Result } from "@thames/monads";
 import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
+import { assert } from "../utils/assert";
 import { prepareSwapSignedData } from "../utils/prepareBroadcastRequest";
-import * as solverRelayClient from "./solverRelayHttpClient";
-import type * as types from "./solverRelayHttpClient/types";
 import {
-	type ParsedPublishErrors,
-	parseFailedPublishError,
-} from "./utils/parseFailedPublishError";
+	type PublishIntentsErrorType,
+	type PublishIntentsReturnType,
+	publishIntents,
+} from "./publishIntents";
 
-export type PublishIntentResult =
-	| { tag: "ok"; value: string }
-	| {
-			tag: "err";
-			value: ParsedPublishErrors;
-	  };
+export type PublishIntentReturnType = PublishIntentsReturnType[number];
+export type PublishIntentErrorType = PublishIntentsErrorType;
 
-export async function publishIntent(
+export function publishIntent(
 	signatureData: WalletSignatureResult,
 	userInfo: { userAddress: string; userChainType: AuthMethod },
 	quoteHashes: string[],
-): Promise<PublishIntentResult> {
-	const result = await retry<types.PublishIntentResponse["result"]>(
-		() =>
-			solverRelayClient.publishIntent(
-				{
-					signed_data: prepareSwapSignedData(signatureData, userInfo),
-					quote_hashes: quoteHashes,
-				},
-				{ timeout: 30000 },
-			),
-		{
-			delay: 1000,
-			factor: 1.5,
-			maxAttempts: 7,
-			jitter: true,
-			minDelay: 1000,
-		},
-	);
-	if (result.status === "OK") {
-		return { tag: "ok", value: result.intent_hash };
-	}
-
-	if (result.status === "FAILED" && result.reason === "already processed") {
-		return { tag: "ok", value: result.intent_hash };
-	}
-
-	return { tag: "err", value: parseFailedPublishError(result) };
+): Promise<Result<PublishIntentReturnType, PublishIntentErrorType>> {
+	return publishIntents({
+		signed_datas: [prepareSwapSignedData(signatureData, userInfo)],
+		quote_hashes: quoteHashes,
+	}).then((result) => {
+		return result.map((intentHashes) => {
+			const intentHash = intentHashes[0];
+			assert(intentHash != null, "Should include at least one intent hash");
+			return intentHash;
+		});
+	});
 }
