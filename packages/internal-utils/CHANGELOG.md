@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.11
+
+### Patch Changes
+
+- 41986b2: Improve error type returned when intent failed to publish.
+
 ## 0.0.10
 
 ### Patch Changes
