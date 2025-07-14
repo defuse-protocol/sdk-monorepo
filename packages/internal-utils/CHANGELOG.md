@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.10
+
+### Patch Changes
+
+- 8fa7da6: Update stage URLs.
+
 ## 0.0.9
 
 ### Patch Changes
