@@ -31,10 +31,10 @@ export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 	stage: {
 		contractID: "staging-intents.near",
 		poaTokenFactoryContractID: "stft.near",
-		poaBridgeBaseURL: "http://34.105.197.59",
-		solverRelayBaseURL: "http://35.242.147.168",
-		managerConsoleBaseURL: "https://api-mng-console.chaindefuser.com/api/",
-		nearIntentsBaseURL: "https://app.near-intents.org/api/",
+		poaBridgeBaseURL: "https://poa-stage.intents-near.org",
+		solverRelayBaseURL: "https://solver-relay-stage.intents-near.org",
+		managerConsoleBaseURL: "https://mng-console-stage.intents-near.org/api/",
+		nearIntentsBaseURL: "https://stage.near-intents.org/api/",
 	},
 };
 
