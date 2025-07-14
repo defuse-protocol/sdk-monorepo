@@ -1,5 +1,13 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.7.4
+
+### Patch Changes
+
+- c626563: Fix passing `msg` when withdrawing wrap.near
+- Updated dependencies [8fa7da6]
+  - @defuse-protocol/internal-utils@0.0.10
+
 ## 0.7.3
 
 ### Patch Changes
