@@ -1,5 +1,16 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.7.3
+
+### Patch Changes
+
+- a4624a8: Update version of near-api-js
+- 1d789ed: Add optional `nearRpc` config.
+- Updated dependencies [a4624a8]
+- Updated dependencies [345b2d8]
+- Updated dependencies [1d789ed]
+  - @defuse-protocol/internal-utils@0.0.9
+
 ## 0.7.2
 
 ### Patch Changes
