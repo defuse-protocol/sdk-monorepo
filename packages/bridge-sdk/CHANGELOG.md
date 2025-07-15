@@ -1,5 +1,14 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.7.6
+
+### Patch Changes
+
+- ef20268: Allow to pass logger to `createWithdrawal()`, `createBatchWithdrawals()`, `estimateWithdrawalFee()` and `waitForWithdrawalCompletion()`.
+- Updated dependencies [ef20268]
+- Updated dependencies [6394062]
+  - @defuse-protocol/internal-utils@0.0.12
+
 ## 0.7.5
 
 ### Patch Changes
