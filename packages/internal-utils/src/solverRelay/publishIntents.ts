@@ -1,4 +1,3 @@
-import { retry } from "@lifeomic/attempt";
 import { Err, Ok, type Result } from "@thames/monads";
 import { logger } from "../logger";
 import * as solverRelayClient from "./solverRelayHttpClient";
@@ -12,20 +11,18 @@ export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
 ): Promise<Result<PublishIntentsReturnType, PublishIntentsErrorType>> {
 	const [params, requestConfig] = args;
-	return retry(
-		() =>
-			solverRelayClient.publishIntents(params, {
-				timeout: 30000,
-				...requestConfig,
-			}),
-		{
-			delay: 1000,
-			factor: 1.5,
-			maxAttempts: 7,
-			jitter: true,
-			minDelay: 1000,
-		},
-	)
+	return solverRelayClient
+		.publishIntents(params, {
+			timeout: 30000,
+			...requestConfig,
+			retryOptions: {
+				delay: 1000,
+				factor: 1.5,
+				maxAttempts: 7,
+				jitter: true,
+				minDelay: 1000,
+			},
+		})
 		.then(
 			(response) => {
 				return parsePublishIntentsResponse(params, response);

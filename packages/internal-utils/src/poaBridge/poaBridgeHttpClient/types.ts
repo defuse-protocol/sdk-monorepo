@@ -1,6 +1,8 @@
 import type { RpcRequestError } from "../../errors/request";
+import type { ILogger } from "../../logger";
 import type { BaseTokenInfo } from "../../types/base";
 import type { RequestErrorType } from "../../utils/request";
+import type { RetryOptions } from "../../utils/retry";
 import type { BlockchainEnum } from "../constants/blockchains";
 
 export type RequestConfig = {
@@ -8,6 +10,8 @@ export type RequestConfig = {
 	timeout?: number | undefined;
 	fetchOptions?: Omit<RequestInit, "body"> | undefined;
 	baseURL?: string | undefined;
+	retryOptions?: RetryOptions;
+	logger?: ILogger;
 };
 
 export type JSONRPCRequest<Method, Params> = {

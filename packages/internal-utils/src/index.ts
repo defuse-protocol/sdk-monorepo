@@ -13,3 +13,4 @@ export { BaseError } from "./errors/base";
 export { serialize } from "./utils/serialize";
 export { nearFailoverRpcProvider } from "./utils/failover";
 export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";
+export type { ILogger } from "./logger";

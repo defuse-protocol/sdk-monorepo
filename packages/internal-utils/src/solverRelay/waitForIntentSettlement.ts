@@ -5,6 +5,7 @@ import {
 	RpcRequestError,
 	TimeoutError,
 } from "../errors/request";
+import type { ILogger } from "../logger";
 import { RETRY_CONFIGS, type RetryOptions } from "../utils/retry";
 import {
 	IntentSettlementError,
@@ -27,17 +28,19 @@ export async function waitForIntentSettlement({
 	signal,
 	baseURL,
 	retryOptions = RETRY_CONFIGS.TWO_MINS_GRADUAL,
+	logger,
 }: {
 	intentHash: string;
 	signal: AbortSignal;
 	baseURL?: string;
 	retryOptions?: RetryOptions;
+	logger?: ILogger;
 }): Promise<WaitForIntentSettlementReturnType> {
 	return retry(
 		async () => {
 			const res = await solverRelayClient.getStatus(
 				{ intent_hash: intentHash },
-				{ baseURL, fetchOptions: { signal } },
+				{ baseURL, fetchOptions: { signal }, logger },
 			);
 
 			if (res.status === "SETTLED") {

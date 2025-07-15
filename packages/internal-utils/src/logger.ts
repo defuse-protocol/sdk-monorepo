@@ -3,7 +3,10 @@
  */
 
 export type Context = Record<string, unknown>;
-export type Contexts = Record<string, Context | undefined>;
+export type Contexts = Record<
+	string,
+	Context | string | number | boolean | null | undefined
+>;
 
 export interface ILogger {
 	/**
@@ -12,6 +15,7 @@ export interface ILogger {
 	 */
 	verbose: (message: string, data?: Record<string, unknown>) => void;
 
+	debug: (message: string, context?: Contexts) => void;
 	/**
 	 * Use info for significant operations
 	 * Example: info('Transaction sent successfully')
@@ -23,6 +27,7 @@ export interface ILogger {
 
 const noopLogger: ILogger = {
 	verbose: () => {},
+	debug: () => {},
 	info: () => {},
 	warn: () => {},
 	error: () => {},

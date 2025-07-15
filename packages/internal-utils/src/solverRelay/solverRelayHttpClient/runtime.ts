@@ -1,9 +1,8 @@
-import { retry } from "@lifeomic/attempt";
 import * as v from "valibot";
 import { config as globalConfig } from "../../config";
 import { handleRPCResponse } from "../../utils/handleRPCResponse";
 import { request } from "../../utils/request";
-import { requestShouldRetry } from "../../utils/requestShouldRetry";
+import { RETRY_CONFIGS } from "../../utils/retry";
 import type * as types from "./types";
 
 const rpcResponseSchema = v.union([
@@ -18,11 +17,21 @@ const rpcResponseSchema = v.union([
 		jsonrpc: v.literal("2.0"),
 		id: v.string(),
 		error: v.pipe(
-			v.object({
-				code: v.number(),
-				message: v.string(),
-			}),
+			v.union([
+				v.string(),
+				v.object({
+					code: v.number(),
+					message: v.string(),
+				}),
+			]),
 			v.transform((v) => {
+				if (typeof v === "string") {
+					return {
+						code: -1,
+						data: null,
+						message: v,
+					};
+				}
 				return {
 					code: v.code,
 					data: null,
@@ -51,28 +60,17 @@ export async function jsonRPCRequest<
 		params: params !== undefined ? [params] : undefined,
 	};
 
-	const response = await retry(
-		() => {
-			return request({
-				url,
-				body,
-				...config,
-				fetchOptions: {
-					...config?.fetchOptions,
-					method: "POST",
-				},
-			});
+	const response = await request({
+		url,
+		body,
+		...config,
+		fetchOptions: {
+			...config?.fetchOptions,
+			method: "POST",
 		},
-		{
-			delay: 200,
-			maxAttempts: 3,
-			handleError: (err, context) => {
-				if (!requestShouldRetry(err)) {
-					context.abort();
-				}
-			},
-		},
-	);
+		retryOptions: config?.retryOptions ?? RETRY_CONFIGS.THIRTY_SECS_AGGRESSIVE,
+		logger: config?.logger,
+	});
 
 	return handleRPCResponse(response, body, rpcResponseSchema);
 }

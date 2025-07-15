@@ -1,12 +1,16 @@
 import type { MultiPayload } from "@defuse-protocol/contract-types";
 import type { RpcRequestError } from "../../errors/request";
+import type { ILogger } from "../../logger";
 import type { RequestErrorType } from "../../utils/request";
+import type { RetryOptions } from "../../utils/retry";
 
 export type RequestConfig = {
 	requestId?: string | undefined;
 	timeout?: number | undefined;
 	fetchOptions?: Omit<RequestInit, "body"> | undefined;
 	baseURL?: string | undefined;
+	retryOptions?: RetryOptions;
+	logger?: ILogger;
 };
 
 export type JSONRPCRequest<Method, Params> = {
