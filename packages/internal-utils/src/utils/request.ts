@@ -28,12 +28,10 @@ export async function request({
 			attemptCount = ctx.attemptNum + 1;
 			const attemptStartTime = performance.now();
 
-			logger?.info("Sending HTTP request", {
-				request: {
-					url: params.url.toString(),
-					method: params.fetchOptions?.method || "GET",
-					body: JSON.stringify(params.body),
-				},
+			logger?.debug("Sending HTTP request", {
+				url: params.url.toString(),
+				method: params.fetchOptions?.method || "GET",
+				body: JSON.stringify(params.body),
 				attempt: ctx.attemptNum,
 			});
 
@@ -42,7 +40,7 @@ export async function request({
 			const attemptDuration = performance.now() - attemptStartTime;
 			totalNetworkTime += attemptDuration;
 
-			logger?.info("HTTP request attempt completed", {
+			logger?.debug("HTTP request attempt completed", {
 				attempt: ctx.attemptNum,
 				attemptDuration: Math.floor(attemptDuration),
 				statusCode: response.status,
