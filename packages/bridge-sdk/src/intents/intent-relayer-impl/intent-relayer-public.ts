@@ -1,4 +1,5 @@
 import {
+	type ILogger,
 	type NearIntentsEnv,
 	configsByEnvironment,
 	solverRelay,
@@ -14,36 +15,48 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		this.env = env;
 	}
 
-	async publishIntent({
-		multiPayload,
-		quoteHashes,
-	}: {
-		multiPayload: MultiPayload;
-		quoteHashes?: string[];
-	}): Promise<IntentHash> {
+	async publishIntent(
+		{
+			multiPayload,
+			quoteHashes,
+		}: {
+			multiPayload: MultiPayload;
+			quoteHashes?: string[];
+		},
+		ctx: { logger?: ILogger } = {},
+	): Promise<IntentHash> {
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		return (
-			await this.publishIntents({
-				multiPayloads: [multiPayload],
-				quoteHashes: quoteHashes ?? [],
-			})
+			await this.publishIntents(
+				{
+					multiPayloads: [multiPayload],
+					quoteHashes: quoteHashes ?? [],
+				},
+				ctx,
+			)
 		)[0]!;
 	}
 
 	// как прокидывать доп. параметры, например, quoteHashes (или специфичные параметры для каждого релея?)
-	async publishIntents({
-		multiPayloads,
-		quoteHashes,
-	}: {
-		multiPayloads: MultiPayload[];
-		quoteHashes: string[];
-	}): Promise<IntentHash[]> {
+	async publishIntents(
+		{
+			multiPayloads,
+			quoteHashes,
+		}: {
+			multiPayloads: MultiPayload[];
+			quoteHashes: string[];
+		},
+		ctx: { logger?: ILogger } = {},
+	): Promise<IntentHash[]> {
 		const a = await solverRelay.publishIntents(
 			{
 				quote_hashes: quoteHashes,
 				signed_datas: multiPayloads,
 			},
-			{ baseURL: configsByEnvironment[this.env].solverRelayBaseURL },
+			{
+				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				logger: ctx.logger,
+			},
 		);
 		if (a.isOk()) {
 			return a.unwrap() as IntentHash[];
@@ -52,11 +65,15 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		throw a.unwrapErr();
 	}
 
-	async waitForSettlement(ticket: IntentHash): Promise<{ tx: NearTxInfo }> {
+	async waitForSettlement(
+		ticket: IntentHash,
+		ctx: { logger?: ILogger } = {},
+	): Promise<{ tx: NearTxInfo }> {
 		const result = await solverRelay.waitForIntentSettlement({
 			intentHash: ticket,
 			signal: new AbortController().signal,
 			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+			logger: ctx.logger,
 		});
 		return {
 			tx: {

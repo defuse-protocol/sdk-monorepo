@@ -1,4 +1,5 @@
 import {
+	type ILogger,
 	type NearIntentsEnv,
 	configsByEnvironment,
 } from "@defuse-protocol/internal-utils";
@@ -14,17 +15,20 @@ import type {
 
 export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	protected env: NearIntentsEnv;
+	protected logger: ILogger | undefined;
 	protected intentPayloadFactory: IntentPayloadFactory | undefined;
 	protected intentSigner: IIntentSigner;
 	protected intentRelayer: IIntentRelayer<Ticket>;
 
 	constructor(args: {
 		env: NearIntentsEnv;
+		logger?: ILogger;
 		intentPayloadFactory?: IntentPayloadFactory;
 		intentRelayer: IIntentRelayer<Ticket>;
 		intentSigner: IIntentSigner;
 	}) {
 		this.env = args.env;
+		this.logger = args.logger;
 		this.intentPayloadFactory = args.intentPayloadFactory;
 		this.intentRelayer = args.intentRelayer;
 		this.intentSigner = args.intentSigner;
@@ -54,15 +58,20 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 
 		const multiPayload = await this.intentSigner.signIntent(intentPayload);
 		const relayParams = relayParamsFactory ? await relayParamsFactory() : {};
-		const ticket = await this.intentRelayer.publishIntent({
-			multiPayload,
-			...relayParams,
-		});
+		const ticket = await this.intentRelayer.publishIntent(
+			{
+				multiPayload,
+				...relayParams,
+			},
+			{ logger: this.logger },
+		);
 
 		return { ticket };
 	}
 
 	async waitForSettlement(ticket: Ticket): Promise<{ tx: NearTxInfo }> {
-		return this.intentRelayer.waitForSettlement(ticket);
+		return this.intentRelayer.waitForSettlement(ticket, {
+			logger: this.logger,
+		});
 	}
 }

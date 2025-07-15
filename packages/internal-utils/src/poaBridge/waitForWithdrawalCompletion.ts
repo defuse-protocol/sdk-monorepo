@@ -5,6 +5,7 @@ import {
 	RpcRequestError,
 	TimeoutError,
 } from "../errors/request";
+import type { ILogger } from "../logger";
 import { RETRY_CONFIGS, type RetryOptions } from "../utils/retry";
 import {
 	PoaWithdrawalInvariantError,
@@ -33,18 +34,20 @@ export async function waitForWithdrawalCompletion({
 	signal,
 	baseURL,
 	retryOptions = RETRY_CONFIGS.TWO_MINS_GRADUAL,
+	logger,
 }: {
 	txHash: string;
 	index?: number;
 	signal: AbortSignal;
 	baseURL?: string;
 	retryOptions?: RetryOptions;
+	logger?: ILogger;
 }): Promise<WaitForWithdrawalCompletionOkType> {
 	return retry(
 		async () => {
 			const result = await getWithdrawalStatus(
 				{ withdrawal_hash: txHash },
-				{ baseURL, fetchOptions: { signal } },
+				{ baseURL, fetchOptions: { signal }, logger },
 			);
 
 			const withdrawal = result.withdrawals[index];

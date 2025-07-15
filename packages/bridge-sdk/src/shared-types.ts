@@ -1,4 +1,5 @@
 import type {
+	ILogger,
 	RetryOptions,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
@@ -97,6 +98,7 @@ export interface Bridge {
 	>(args: {
 		withdrawalParams: T;
 		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
 	}): Promise<FeeEstimation>;
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
@@ -109,6 +111,7 @@ export interface Bridge {
 		bridge: BridgeConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
+		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo>;
 }
 

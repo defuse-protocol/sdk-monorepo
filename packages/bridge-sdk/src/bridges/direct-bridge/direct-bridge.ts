@@ -1,4 +1,5 @@
 import {
+	type ILogger,
 	type NearIntentsEnv,
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
@@ -114,6 +115,7 @@ export class DirectBridge implements Bridge {
 			"assetId" | "destinationAddress" | "bridgeConfig"
 		>;
 		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
 
@@ -168,6 +170,7 @@ export class DirectBridge implements Bridge {
 						config: {
 							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 							logBalanceSufficient: false,
+							logger: args.logger,
 						},
 					});
 

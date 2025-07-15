@@ -1,4 +1,5 @@
 import {
+	type ILogger,
 	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
@@ -146,6 +147,7 @@ export class HotBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId">;
 		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
@@ -171,6 +173,7 @@ export class HotBridge implements Bridge {
 						config: {
 							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 							logBalanceSufficient: false,
+							logger: args.logger,
 						},
 					});
 

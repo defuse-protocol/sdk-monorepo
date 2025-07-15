@@ -1,4 +1,5 @@
 import {
+	type ILogger,
 	type NearIntentsEnv,
 	PUBLIC_NEAR_RPC_URLS,
 	type RetryOptions,
@@ -99,6 +100,7 @@ export class BridgeSDK implements IBridgeSDK {
 		withdrawalParams,
 		intent,
 		referral,
+		logger,
 	}: {
 		withdrawalParams: WithdrawalParams;
 		intent?: {
@@ -107,6 +109,7 @@ export class BridgeSDK implements IBridgeSDK {
 			signer?: IIntentSigner;
 		};
 		referral?: string;
+		logger?: ILogger;
 	}) {
 		const intentSigner = intent?.signer ?? this.intentSigner;
 		if (intentSigner == null) {
@@ -116,6 +119,7 @@ export class BridgeSDK implements IBridgeSDK {
 		return new SingleWithdrawalImpl({
 			intentExecuter: new IntentExecuter({
 				env: this.env,
+				logger,
 				intentSigner: intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
@@ -132,6 +136,7 @@ export class BridgeSDK implements IBridgeSDK {
 		withdrawalParams,
 		intent,
 		referral,
+		logger,
 	}: {
 		withdrawalParams: WithdrawalParams[];
 		intent?: {
@@ -140,6 +145,7 @@ export class BridgeSDK implements IBridgeSDK {
 			signer?: IIntentSigner;
 		};
 		referral?: string;
+		logger?: ILogger;
 	}) {
 		const intentSigner = intent?.signer ?? this.intentSigner;
 		if (intentSigner == null) {
@@ -149,6 +155,7 @@ export class BridgeSDK implements IBridgeSDK {
 		return new BatchWithdrawalImpl({
 			intentExecuter: new IntentExecuter({
 				env: this.env,
+				logger,
 				intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
@@ -198,12 +205,14 @@ export class BridgeSDK implements IBridgeSDK {
 	>(args: {
 		withdrawalParams: T;
 		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
 			if (bridge.supports(args.withdrawalParams)) {
 				const fee = await bridge.estimateWithdrawalFee({
 					withdrawalParams: args.withdrawalParams,
 					quoteOptions: args.quoteOptions,
+					logger: args.logger,
 				});
 
 				if (args.withdrawalParams.feeInclusive) {
@@ -227,6 +236,7 @@ export class BridgeSDK implements IBridgeSDK {
 		index: number;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
+		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo> {
 		for (const bridge of this.bridges) {
 			if (bridge.is(args.bridge)) {
@@ -236,6 +246,7 @@ export class BridgeSDK implements IBridgeSDK {
 					bridge: args.bridge,
 					signal: args.signal,
 					retryOptions: args.retryOptions,
+					logger: args.logger,
 				});
 			}
 		}

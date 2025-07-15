@@ -1,4 +1,5 @@
 import {
+	type ILogger,
 	type NearIntentsEnv,
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
@@ -95,6 +96,7 @@ export class AuroraEngineBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "bridgeConfig">;
 		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
 
@@ -138,6 +140,7 @@ export class AuroraEngineBridge implements Bridge {
 						config: {
 							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 							logBalanceSufficient: false,
+							logger: args.logger,
 						},
 					});
 
