@@ -1,5 +1,12 @@
 # @defuse-protocol/internal-utils
 
+## 0.0.12
+
+### Patch Changes
+
+- ef20268: Allow to pass logger to `createWithdrawal()`, `createBatchWithdrawals()`, `estimateWithdrawalFee()` and `waitForWithdrawalCompletion()`.
+- 6394062: Allow to pass logger instance to Relay and POA rpc methods.
+
 ## 0.0.11
 
 ### Patch Changes
