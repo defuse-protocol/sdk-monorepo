@@ -1,5 +1,16 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.8.0
+
+### Minor Changes
+
+- 8e3839b: Reset dependencies versions to avoid conflicts.
+
+### Patch Changes
+
+- Updated dependencies [8e3839b]
+  - @defuse-protocol/internal-utils@0.1.0
+
 ## 0.7.6
 
 ### Patch Changes
