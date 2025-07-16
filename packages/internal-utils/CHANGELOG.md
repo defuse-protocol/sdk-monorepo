@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.1.0
+
+### Minor Changes
+
+- 8e3839b: Reset dependencies versions to avoid conflicts.
+
 ## 0.0.12
 
 ### Patch Changes
