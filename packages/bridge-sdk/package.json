@@ -15,9 +15,7 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
@@ -37,9 +35,9 @@
 		"@defuse-protocol/internal-utils": "workspace:*",
 		"@hot-labs/omni-sdk": "2.8.3",
 		"@lifeomic/attempt": "^3.0.0",
-		"@scure/base": "^1.2.5",
+		"@scure/base": "^1.0.0",
 		"borsher": "^4.0.0",
-		"near-api-js": "^5.0.1",
-		"viem": "^2.29.4"
+		"near-api-js": "^4.0.0 || ^5.0.0",
+		"viem": "^2.0.0"
 	}
 }

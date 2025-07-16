@@ -15,9 +15,7 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"scripts": {
 		"test": "vitest --passWithNoTests",
 		"build": "tsup",
@@ -28,16 +26,16 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@hot-labs/omni-sdk": "2.8.3",
-		"@lifeomic/attempt": "^3.1.0",
+		"@lifeomic/attempt": "^3.0.0",
 		"@noble/hashes": "^1.7.1",
-		"@peculiar/asn1-ecc": "^2.3.15",
-		"@peculiar/asn1-schema": "^2.3.15",
-		"@scure/base": "^1.1.9",
+		"@peculiar/asn1-ecc": "^2.0.0",
+		"@peculiar/asn1-schema": "^2.0.0",
+		"@scure/base": "^1.0.0",
 		"@thames/monads": "^0.7.0",
-		"near-api-js": "^5.0.1",
-		"tweetnacl": "^1.0.3",
-		"valibot": "^1.0.0-rc.1",
-		"viem": "^2.18.1"
+		"near-api-js": "^4.0.0 || ^5.0.0",
+		"tweetnacl": "^1.0.0",
+		"valibot": "^1.0.0",
+		"viem": "^2.0.0"
 	},
 	"devDependencies": {
 		"tsup": "^8.0.2",
