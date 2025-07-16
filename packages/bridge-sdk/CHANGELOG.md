@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.8.1
+
+### Patch Changes
+
+- 8734397: Fix passing Near RPC URLs to omni-sdk.
+
 ## 0.8.0
 
 ### Minor Changes
