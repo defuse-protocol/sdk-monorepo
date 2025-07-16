@@ -55,9 +55,8 @@ export class BridgeSDK implements IBridgeSDK {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
 
-		const nearProvider = nearFailoverRpcProvider({
-			urls: args.nearRpc ?? PUBLIC_NEAR_RPC_URLS,
-		});
+		const nearRpcUrls = args.nearRpc ?? PUBLIC_NEAR_RPC_URLS;
+		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
@@ -75,7 +74,9 @@ export class BridgeSDK implements IBridgeSDK {
 				hotSdk: new hotOmniSdk.HotBridge({
 					logger: console,
 					evmRpc: args.evmRpc,
-					nearRpc: nearProvider.providers[0], // HotBridge from omni-sdk does not support FailoverProvider
+					// 1. HotBridge from omni-sdk does not support FailoverProvider.
+					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
+					nearRpc: nearRpcUrls[0],
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
