@@ -76,7 +76,7 @@ export class BridgeSDK implements IBridgeSDK {
 					evmRpc: args.evmRpc,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
 					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
-					nearRpc: nearRpcUrls[0],
+					nearRpc: nearRpcUrls,
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
