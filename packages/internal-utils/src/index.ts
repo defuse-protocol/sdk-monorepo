@@ -1,6 +1,7 @@
 export * as poaBridge from "./poaBridge";
 export * as solverRelay from "./solverRelay";
 export * as utils from "./utils";
+export * as errors from "./errors";
 export * from "./services/blockchainBalanceService";
 export {
 	configureSDK,
