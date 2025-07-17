@@ -48,19 +48,31 @@ export type GetSupportedTokensResponse = JSONRPCResponse<{
 	}[];
 }>;
 
+export type DepositNetworkMemo = {
+	deposit_mode: "MEMO";
+} | null;
+
 export type GetDepositAddressRequest = JSONRPCRequest<
 	"deposit_address",
 	{
 		account_id: string;
 		/** Chain is joined blockchain and network (e.g. eth:8453) */
 		chain: string;
-	}
+		/** Special parameter for dedicated networks like Stellar */
+	} & Partial<DepositNetworkMemo>
 >;
 
-export type GetDepositAddressResponse = JSONRPCResponse<{
-	address: string;
-	chain: string;
-}>;
+export type GetDepositAddressResponse = JSONRPCResponse<
+	| {
+			address: string;
+			chain: string;
+	  }
+	| {
+			address: string;
+			chain: string;
+			memo: string;
+	  }
+>;
 
 export type DepositStatus = {
 	tx_hash: string;
