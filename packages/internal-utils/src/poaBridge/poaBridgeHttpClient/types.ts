@@ -3,7 +3,7 @@ import type { ILogger } from "../../logger";
 import type { BaseTokenInfo } from "../../types/base";
 import type { RequestErrorType } from "../../utils/request";
 import type { RetryOptions } from "../../utils/retry";
-import type { BlockchainEnum } from "../constants/blockchains";
+import type { BlockchainEnumType } from "../constants/blockchains";
 
 export type RequestConfig = {
 	requestId?: string | undefined;
@@ -156,7 +156,7 @@ export type GetWithdrawalEstimateRequest = JSONRPCRequest<
 	{
 		token: string;
 		address: string;
-		chain: BlockchainEnum;
+		chain: BlockchainEnumType;
 	}
 >;
 export type WithdrawalEstimateResponse = {
