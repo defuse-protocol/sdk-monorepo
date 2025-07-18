@@ -25,12 +25,7 @@ import { KeyPair } from 'near-api-js';
 
 // Initialize the SDK with required configuration
 const sdk = new BridgeSDK({
-  referral: 'your-referral-code', // Mandatory referral code, choose your app name
-  evmRpc: {
-    137: ['https://polygon-rpc.com/'], // Polygon
-    // Add other EVM networks as needed
-  },
-  nearRpc: ['https://nearrpc.aurora.dev'], // Optional, uses public RPCs by default
+    referral: 'your-referral-code', // Only referral is required
 });
 
 // Set up intent signer (for NEAR)
@@ -174,6 +169,22 @@ sdk.setIntentSigner(signer);
 ```
 
 ## Advanced Usage
+
+### Custom RPC URLs
+
+Set NEAR and EVM chains RPC URLs in the constructor: 
+
+```typescript
+const sdk = new BridgeSDK({
+    ...,
+    nearRpc: ['https://rpc.mainnet.near.org'],
+    evmRpc: {
+        137: ['https://polygon-rpc.com/'], // Polygon
+        56: ['https://bsc-dataseed.binance.org/'], // BNB Chain
+        // Add other HOT bridge supported networks: Optimism (10), Avalanche (43114)
+    },
+});
+```
 
 ### Batch Withdrawals
 
