@@ -17,7 +17,11 @@ export const PoaBridgeNetworkReference = {
 	TRON: "tron:mainnet",
 	POLYGON: "eth:137",
 	BSC: "eth:56",
+	TON: "ton:mainnet",
+	OPTIMISM: "eth:10",
+	AVALANCHE: "eth:43114",
 	SUI: "sui:mainnet",
+	STELLAR: "stellar:mainnet",
 	APTOS: "aptos:mainnet",
 } as const;
 
@@ -37,5 +41,5 @@ export const BlockchainEnum = {
 	HYPERLIQUID: "hyperliquid:999",
 } as const;
 
-export type BlockchainEnum =
+export type BlockchainEnumType =
 	(typeof BlockchainEnum)[keyof typeof BlockchainEnum];

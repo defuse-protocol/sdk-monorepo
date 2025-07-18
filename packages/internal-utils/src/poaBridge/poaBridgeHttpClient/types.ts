@@ -3,7 +3,7 @@ import type { ILogger } from "../../logger";
 import type { BaseTokenInfo } from "../../types/base";
 import type { RequestErrorType } from "../../utils/request";
 import type { RetryOptions } from "../../utils/retry";
-import type { BlockchainEnum } from "../constants/blockchains";
+import type { BlockchainEnumType } from "../constants/blockchains";
 
 export type RequestConfig = {
 	requestId?: string | undefined;
@@ -48,18 +48,26 @@ export type GetSupportedTokensResponse = JSONRPCResponse<{
 	}[];
 }>;
 
+export type DepositNetworkMemo = {
+	deposit_mode: "MEMO";
+} | null;
+
 export type GetDepositAddressRequest = JSONRPCRequest<
 	"deposit_address",
 	{
 		account_id: string;
 		/** Chain is joined blockchain and network (e.g. eth:8453) */
 		chain: string;
+		/** Stellar blockchain specific */
+		deposit_mode?: "MEMO" | "SIMPLE";
 	}
 >;
 
 export type GetDepositAddressResponse = JSONRPCResponse<{
 	address: string;
 	chain: string;
+	/** Stellar blockchain specific */
+	memo?: string;
 }>;
 
 export type DepositStatus = {
@@ -148,7 +156,7 @@ export type GetWithdrawalEstimateRequest = JSONRPCRequest<
 	{
 		token: string;
 		address: string;
-		chain: BlockchainEnum;
+		chain: BlockchainEnumType;
 	}
 >;
 export type WithdrawalEstimateResponse = {
