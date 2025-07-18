@@ -1,5 +1,13 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.8.2
+
+### Patch Changes
+
+- 6d588d6: Make `evmRpc` optional, fallback to public URLs.
+- Updated dependencies [6d588d6]
+  - @defuse-protocol/internal-utils@0.1.1
+
 ## 0.8.1
 
 ### Patch Changes
