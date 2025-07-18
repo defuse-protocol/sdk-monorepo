@@ -58,8 +58,8 @@ export class BridgeSDK implements IBridgeSDK {
 		this.referral = args.referral;
 
 		const nearRpcUrls = args.nearRpc ?? PUBLIC_NEAR_RPC_URLS;
-		const evmRpcUrls = Object.assign(args.evmRpc ?? {}, PUBLIC_EVM_RPC_URLS);
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
+		const evmRpcUrls = Object.assign(PUBLIC_EVM_RPC_URLS, args.evmRpc ?? {});
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
