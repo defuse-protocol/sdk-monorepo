@@ -58,8 +58,9 @@ export type GetDepositAddressRequest = JSONRPCRequest<
 		account_id: string;
 		/** Chain is joined blockchain and network (e.g. eth:8453) */
 		chain: string;
-		/** Special parameter for dedicated networks like Stellar */
-	} & Partial<DepositNetworkMemo>
+		/** Stellar blockchain specific */
+		deposit_mode?: "MEMO" | "SIMPLE";
+	}
 >;
 
 export type GetDepositAddressResponse = JSONRPCResponse<
@@ -71,6 +72,12 @@ export type GetDepositAddressResponse = JSONRPCResponse<
 			address: string;
 			chain: string;
 			memo: string;
+	  }
+	| {
+			address: string;
+			chain: string;
+			/** Stellar blockchain specific */
+			memo?: string;
 	  }
 >;
 
