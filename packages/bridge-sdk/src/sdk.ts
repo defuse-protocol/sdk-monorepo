@@ -15,6 +15,7 @@ import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
 import { FeeExceedsAmountError } from "./classes/errors";
 import { SingleWithdrawalImpl } from "./classes/single-withdrawal";
+import { PUBLIC_EVM_RPC_URLS } from "./constants/evm-rpc-urls";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
@@ -47,7 +48,8 @@ export class BridgeSDK implements IBridgeSDK {
 	constructor(args: {
 		env?: NearIntentsEnv;
 		intentSigner?: IIntentSigner;
-		evmRpc: Record<number, string[]>;
+		// Fallback to public RPCs if omitted
+		evmRpc?: Record<number, string[]>;
 		// Fallback to public RPCs if omitted
 		nearRpc?: string[];
 		referral: string;
@@ -57,6 +59,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 		const nearRpcUrls = args.nearRpc ?? PUBLIC_NEAR_RPC_URLS;
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
+		const evmRpcUrls = Object.assign(PUBLIC_EVM_RPC_URLS, args.evmRpc ?? {});
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
@@ -73,7 +76,7 @@ export class BridgeSDK implements IBridgeSDK {
 				env: this.env,
 				hotSdk: new hotOmniSdk.HotBridge({
 					logger: console,
-					evmRpc: args.evmRpc,
+					evmRpc: evmRpcUrls,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
 					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
 					nearRpc: nearRpcUrls,
