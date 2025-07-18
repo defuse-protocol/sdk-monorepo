@@ -63,23 +63,12 @@ export type GetDepositAddressRequest = JSONRPCRequest<
 	}
 >;
 
-export type GetDepositAddressResponse = JSONRPCResponse<
-	| {
-			address: string;
-			chain: string;
-	  }
-	| {
-			address: string;
-			chain: string;
-			memo: string;
-	  }
-	| {
-			address: string;
-			chain: string;
-			/** Stellar blockchain specific */
-			memo?: string;
-	  }
->;
+export type GetDepositAddressResponse = JSONRPCResponse<{
+	address: string;
+	chain: string;
+	/** Stellar blockchain specific */
+	memo?: string;
+}>;
 
 export type DepositStatus = {
 	tx_hash: string;
