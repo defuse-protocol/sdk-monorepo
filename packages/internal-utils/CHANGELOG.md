@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.1.1
+
+### Patch Changes
+
+- 6d588d6: Make `evmRpc` optional, fallback to public URLs.
+
 ## 0.1.0
 
 ### Minor Changes
