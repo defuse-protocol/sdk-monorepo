@@ -133,6 +133,7 @@ export class BridgeSDK implements IBridgeSDK {
 			withdrawalParams,
 			referral: referral ?? this.referral,
 			bridgeSDK: this,
+			logger,
 		});
 	}
 
@@ -169,6 +170,7 @@ export class BridgeSDK implements IBridgeSDK {
 			withdrawalParams,
 			referral: referral ?? this.referral,
 			bridgeSDK: this,
+			logger,
 		});
 	}
 
@@ -176,6 +178,7 @@ export class BridgeSDK implements IBridgeSDK {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
+		logger?: ILogger;
 	}): Promise<IntentPrimitive[]> {
 		for (const bridge of this.bridges) {
 			if (bridge.supports(args.withdrawalParams)) {
@@ -186,6 +189,7 @@ export class BridgeSDK implements IBridgeSDK {
 				await bridge.validateMinWithdrawalAmount({
 					assetId: args.withdrawalParams.assetId,
 					amount: actualAmount,
+					logger: args.logger,
 				});
 
 				return bridge.createWithdrawalIntents({

@@ -1,4 +1,5 @@
 import type { RetryOptions } from "@defuse-protocol/internal-utils";
+import type { ILogger } from "@defuse-protocol/internal-utils";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { determineBridge } from "../lib/bridge";
@@ -23,6 +24,7 @@ export class SingleWithdrawalImpl<
 	protected bridgeSDK: IBridgeSDK;
 	protected intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 	protected intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
+	protected logger?: ILogger;
 
 	protected feeEstimation: FeeEstimation | null = null;
 	protected intentTicket: Ticket | null = null;
@@ -35,12 +37,14 @@ export class SingleWithdrawalImpl<
 		bridgeSDK: IBridgeSDK;
 		intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 		intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
+		logger?: ILogger;
 	}) {
 		this.withdrawalParams = args.withdrawalParams;
 		this.referral = args.referral;
 		this.bridgeSDK = args.bridgeSDK;
 		this.intentExecuter = args.intentExecuter;
 		this.intentRelayParams = args.intentRelayParams;
+		this.logger = args.logger;
 	}
 
 	async process(): Promise<void> {
@@ -83,6 +87,7 @@ export class SingleWithdrawalImpl<
 			withdrawalParams: this.withdrawalParams,
 			feeEstimation: feeEstimation,
 			referral: this.referral,
+			logger: this.logger,
 		});
 
 		const { ticket } = await this.intentExecuter.signAndSendIntent({

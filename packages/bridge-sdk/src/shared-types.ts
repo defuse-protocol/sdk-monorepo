@@ -26,6 +26,7 @@ export interface IBridgeSDK {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
+		logger?: ILogger;
 	}): Promise<IntentPrimitive[]>;
 
 	estimateWithdrawalFee<
