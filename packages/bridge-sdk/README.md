@@ -348,18 +348,6 @@ try {
     // Plus 0.2 ZEC fee, so user needs at least 1.2 ZEC to withdraw 1.0 ZEC
   }
 }
-
-// Or validate manually when amount is determined later:
-try {
-  await sdk.validateMinWithdrawalAmount({
-    assetId: 'nep141:zec.omft.near',
-    amount: BigInt('50000000'),
-  });
-} catch (error) {
-  if (error instanceof MinWithdrawalAmountError) {
-    console.log('Amount too small for withdrawal');
-  }
-}
 ```
 
 Note: Other bridges (Direct, Aurora Engine, Hot, Intents) don't have minimum withdrawal restrictions, so validation passes through for those bridges.

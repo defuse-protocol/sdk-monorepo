@@ -10,18 +10,6 @@ import type { CAIP2_NETWORK } from "./lib/caip2";
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;
 
-	/**
-	 * Validates minimum withdrawal amount for the appropriate bridge.
-	 * This should be called when the actual withdrawal amount is known.
-	 * Different bridges may have different minimum withdrawal requirements.
-	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
-	 */
-	validateMinWithdrawalAmount(args: {
-		assetId: string;
-		amount: bigint;
-		logger?: ILogger;
-	}): Promise<void>;
-
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;

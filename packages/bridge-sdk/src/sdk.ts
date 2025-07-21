@@ -207,25 +207,6 @@ export class BridgeSDK implements IBridgeSDK {
 			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
 		);
 	}
-	/**
-	 * Validates minimum withdrawal amount for the appropriate bridge.
-	 * This should be called when the actual withdrawal amount is known.
-	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
-	 */
-	async validateMinWithdrawalAmount(args: {
-		assetId: string;
-		amount: bigint;
-		logger?: ILogger;
-	}): Promise<void> {
-		for (const bridge of this.bridges) {
-			if (bridge.supports({ assetId: args.assetId })) {
-				await bridge.validateMinWithdrawalAmount(args);
-				return;
-			}
-		}
-
-		throw new Error(`Cannot determine bridge for asset = ${args.assetId}`);
-	}
 
 	async estimateWithdrawalFee<
 		T extends Pick<
