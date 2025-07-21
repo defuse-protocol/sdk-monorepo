@@ -53,18 +53,18 @@ function makeAuroraEngineDepositMsg(recipientAddress: string): string {
 }
 
 export function withdrawalParamsInvariant<
-	T extends Pick<WithdrawalParams, "bridgeConfig">,
+	T extends Pick<WithdrawalParams, "routeConfig">,
 >(
 	params: T,
 ): asserts params is T & {
-	bridgeConfig: Extract<
-		NonNullable<T["bridgeConfig"]>,
-		{ bridge: RouteEnum["VirtualChain"] }
+	routeConfig: Extract<
+		NonNullable<T["routeConfig"]>,
+		{ route: RouteEnum["VirtualChain"] }
 	>;
 } {
-	assert(params.bridgeConfig != null, "Bridge config is required");
+	assert(params.routeConfig != null, "Bridge config is required");
 	assert(
-		params.bridgeConfig.bridge === RouteEnum.VirtualChain,
+		params.routeConfig.route === RouteEnum.VirtualChain,
 		"Bridge is not aurora_engine",
 	);
 }

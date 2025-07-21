@@ -28,11 +28,11 @@ import type {
 } from "./intents/shared-types";
 import type {
 	Bridge,
-	BridgeConfig,
 	FeeEstimation,
 	IBridgeSDK,
 	NearTxInfo,
 	ParsedAssetInfo,
+	RouteConfig,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
@@ -213,7 +213,7 @@ export class BridgeSDK implements IBridgeSDK {
 			WithdrawalParams,
 			| "assetId"
 			| "destinationAddress"
-			| "bridgeConfig"
+			| "routeConfig"
 			| "feeInclusive"
 			| "amount"
 		>,
@@ -246,7 +246,7 @@ export class BridgeSDK implements IBridgeSDK {
 	}
 
 	waitForWithdrawalCompletion(args: {
-		bridge: BridgeConfig;
+		routeConfig: RouteConfig;
 		tx: NearTxInfo;
 		index: number;
 		signal?: AbortSignal;
@@ -254,11 +254,11 @@ export class BridgeSDK implements IBridgeSDK {
 		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo> {
 		for (const bridge of this.bridges) {
-			if (bridge.is(args.bridge)) {
+			if (bridge.is(args.routeConfig)) {
 				return bridge.waitForWithdrawalCompletion({
 					tx: args.tx,
 					index: args.index,
-					bridge: args.bridge,
+					routeConfig: args.routeConfig,
 					signal: args.signal,
 					retryOptions: args.retryOptions,
 					logger: args.logger,
@@ -266,7 +266,7 @@ export class BridgeSDK implements IBridgeSDK {
 			}
 		}
 
-		throw new Error(`Unsupported bridge = ${args.bridge}`);
+		throw new Error(`Unsupported bridge = ${args.routeConfig}`);
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo {

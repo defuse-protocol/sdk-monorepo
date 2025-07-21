@@ -3,21 +3,21 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
-	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
+	RouteConfig,
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
 
 export class IntentsBridge implements Bridge {
-	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig.bridge === RouteEnum.InternalTransfer;
+	is(routeConfig: RouteConfig) {
+		return routeConfig.route === RouteEnum.InternalTransfer;
 	}
 
-	supports(params: Pick<WithdrawalParams, "bridgeConfig">): boolean {
-		if ("bridgeConfig" in params && params.bridgeConfig != null) {
-			return this.is(params.bridgeConfig);
+	supports(params: Pick<WithdrawalParams, "routeConfig">): boolean {
+		if ("routeConfig" in params && params.routeConfig != null) {
+			return this.is(params.routeConfig);
 		}
 		return false;
 	}

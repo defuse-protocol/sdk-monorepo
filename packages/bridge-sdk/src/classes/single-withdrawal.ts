@@ -2,7 +2,7 @@ import type { RetryOptions } from "@defuse-protocol/internal-utils";
 import type { ILogger } from "@defuse-protocol/internal-utils";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
-import { determineBridge } from "../lib/bridge";
+import { determineRouteConfig } from "../lib/route-config";
 import type {
 	FeeEstimation,
 	IBridgeSDK,
@@ -62,7 +62,7 @@ export class SingleWithdrawalImpl<
 
 		const wid = this.getWithdrawalIdentifier();
 		// biome-ignore lint/suspicious/noConsole: <explanation>
-		console.log("withdrawals =", `${wid.bridge} ${wid.index}`);
+		console.log("withdrawals =", `${wid.routeConfig} ${wid.index}`);
 
 		await this.waitForWithdrawalCompletion();
 		// biome-ignore lint/suspicious/noConsole: <explanation>
@@ -136,7 +136,7 @@ export class SingleWithdrawalImpl<
 		}
 
 		return {
-			bridge: determineBridge(this.bridgeSDK, this.withdrawalParams),
+			routeConfig: determineRouteConfig(this.bridgeSDK, this.withdrawalParams),
 			index: 0,
 			tx: intentTx,
 		};

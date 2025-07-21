@@ -13,9 +13,9 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
 	Bridge,
-	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
+	RouteConfig,
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
@@ -37,15 +37,13 @@ export class AuroraEngineBridge implements Bridge {
 		this.nearProvider = nearProvider;
 	}
 
-	is(bridgeConfig: BridgeConfig): boolean {
-		return bridgeConfig.bridge === RouteEnum.VirtualChain;
+	is(routeConfig: RouteConfig): boolean {
+		return routeConfig.route === RouteEnum.VirtualChain;
 	}
 
-	supports(
-		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
-	): boolean {
-		if ("bridgeConfig" in params && params.bridgeConfig != null) {
-			return this.is(params.bridgeConfig);
+	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
+		if ("routeConfig" in params && params.routeConfig != null) {
+			return this.is(params.routeConfig);
 		}
 		return false;
 	}
@@ -79,9 +77,9 @@ export class AuroraEngineBridge implements Bridge {
 		const intent = createWithdrawIntentPrimitive({
 			assetId: args.withdrawalParams.assetId,
 			auroraEngineContractId:
-				args.withdrawalParams.bridgeConfig.auroraEngineContractId,
+				args.withdrawalParams.routeConfig.auroraEngineContractId,
 			proxyTokenContractId:
-				args.withdrawalParams.bridgeConfig.proxyTokenContractId,
+				args.withdrawalParams.routeConfig.proxyTokenContractId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
 			storageDeposit: args.feeEstimation.quote
@@ -106,7 +104,7 @@ export class AuroraEngineBridge implements Bridge {
 	}
 
 	async estimateWithdrawalFee(args: {
-		withdrawalParams: Pick<WithdrawalParams, "assetId" | "bridgeConfig">;
+		withdrawalParams: Pick<WithdrawalParams, "assetId" | "routeConfig">;
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
@@ -124,7 +122,7 @@ export class AuroraEngineBridge implements Bridge {
 			}),
 			getNearNep141StorageBalance({
 				contractId: tokenAccountId,
-				accountId: args.withdrawalParams.bridgeConfig.auroraEngineContractId,
+				accountId: args.withdrawalParams.routeConfig.auroraEngineContractId,
 				nearProvider: this.nearProvider,
 			}),
 		]);

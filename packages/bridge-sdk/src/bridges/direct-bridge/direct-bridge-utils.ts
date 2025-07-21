@@ -40,19 +40,19 @@ export function createWithdrawIntentPrimitive(params: {
 }
 
 export function withdrawalParamsInvariant<
-	T extends Pick<WithdrawalParams, "bridgeConfig">,
+	T extends Pick<WithdrawalParams, "routeConfig">,
 >(
 	params: T,
 ): asserts params is T & {
-	bridgeConfig?: Extract<
-		NonNullable<T["bridgeConfig"]>,
-		{ bridge: RouteEnum["NearWithdrawal"] }
+	routeConfig?: Extract<
+		NonNullable<T["routeConfig"]>,
+		{ route: RouteEnum["NearWithdrawal"] }
 	>;
 } {
 	assert(
-		!params.bridgeConfig
+		!params.routeConfig
 			? true
-			: params.bridgeConfig.bridge === RouteEnum.NearWithdrawal,
+			: params.routeConfig.route === RouteEnum.NearWithdrawal,
 		"Bridge is not direct",
 	);
 }

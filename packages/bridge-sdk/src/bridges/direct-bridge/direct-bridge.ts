@@ -14,10 +14,10 @@ import { assert } from "../../lib/assert";
 import { CAIP2_NETWORK } from "../../lib/caip2";
 import type {
 	Bridge,
-	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
+	RouteConfig,
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
@@ -39,17 +39,15 @@ export class DirectBridge implements Bridge {
 		this.nearProvider = nearProvider;
 	}
 
-	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig.bridge === RouteEnum.NearWithdrawal;
+	is(routeConfig: RouteConfig) {
+		return routeConfig.route === RouteEnum.NearWithdrawal;
 	}
 
-	supports(
-		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
-	): boolean {
+	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		let result = true;
 
-		if ("bridgeConfig" in params && params.bridgeConfig != null) {
-			result &&= this.is(params.bridgeConfig);
+		if ("routeConfig" in params && params.routeConfig != null) {
+			result &&= this.is(params.routeConfig);
 		}
 
 		try {
@@ -65,7 +63,7 @@ export class DirectBridge implements Bridge {
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
 				blockchain: CAIP2_NETWORK.Near,
-				bridge: RouteEnum.NearWithdrawal,
+				route: RouteEnum.NearWithdrawal,
 				address: parsed.contractId,
 			});
 		}
@@ -102,7 +100,7 @@ export class DirectBridge implements Bridge {
 			storageDeposit: args.feeEstimation.quote
 				? BigInt(args.feeEstimation.quote.amount_out)
 				: args.feeEstimation.amount,
-			msg: args.withdrawalParams.bridgeConfig?.msg,
+			msg: args.withdrawalParams.routeConfig?.msg,
 		});
 
 		intents.push(intent);
@@ -124,7 +122,7 @@ export class DirectBridge implements Bridge {
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<
 			WithdrawalParams,
-			"assetId" | "destinationAddress" | "bridgeConfig"
+			"assetId" | "destinationAddress" | "routeConfig"
 		>;
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
@@ -140,7 +138,7 @@ export class DirectBridge implements Bridge {
 			// We don't directly withdraw `wrap.near`, we unwrap it first, so it doesn't require storage
 			args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID &&
 			// Ensure `msg` is not passed, because `native_withdraw` intent doesn't support `msg`
-			args.withdrawalParams.bridgeConfig?.msg === undefined
+			args.withdrawalParams.routeConfig?.msg === undefined
 		)
 			return {
 				amount: 0n,

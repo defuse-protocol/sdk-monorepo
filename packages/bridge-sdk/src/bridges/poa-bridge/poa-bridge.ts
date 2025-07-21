@@ -13,10 +13,10 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
 	Bridge,
-	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
+	RouteConfig,
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
@@ -39,17 +39,15 @@ export class PoaBridge implements Bridge {
 		this.env = env;
 	}
 
-	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig.bridge === RouteEnum.PoaBridge;
+	is(routeConfig: RouteConfig) {
+		return routeConfig.route === RouteEnum.PoaBridge;
 	}
 
-	supports(
-		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
-	): boolean {
+	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		let result = true;
 
-		if ("bridgeConfig" in params && params.bridgeConfig != null) {
-			result &&= this.is(params.bridgeConfig);
+		if ("routeConfig" in params && params.routeConfig != null) {
+			result &&= this.is(params.routeConfig);
 		}
 
 		try {
@@ -68,7 +66,7 @@ export class PoaBridge implements Bridge {
 		) {
 			return Object.assign(parsed, {
 				blockchain: contractIdToCaip2(parsed.contractId),
-				bridge: RouteEnum.PoaBridge,
+				route: RouteEnum.PoaBridge,
 				address: "", // todo: derive address (or native)
 			});
 		}

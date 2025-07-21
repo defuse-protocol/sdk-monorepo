@@ -23,7 +23,7 @@ export interface IBridgeSDK {
 			WithdrawalParams,
 			| "assetId"
 			| "destinationAddress"
-			| "bridgeConfig"
+			| "routeConfig"
 			| "feeInclusive"
 			| "amount"
 		>,
@@ -33,7 +33,7 @@ export interface IBridgeSDK {
 	}): Promise<FeeEstimation>;
 
 	waitForWithdrawalCompletion(args: {
-		bridge: BridgeConfig;
+		routeConfig: RouteConfig;
 		tx: NearTxInfo;
 		index: number;
 		signal?: AbortSignal;
@@ -56,33 +56,32 @@ export interface TxNoInfo {
 	hash: null;
 }
 
-type BridgeKind = RouteEnumValues;
-export type { RouteEnumValues as BridgeKind };
-
 export interface WithdrawalParams {
 	assetId: string;
 	amount: bigint;
 	destinationAddress: string;
 	destinationMemo: string | undefined;
 	feeInclusive: boolean;
-	bridgeConfig?: BridgeConfig;
+	routeConfig?: RouteConfig;
 }
 
-export type BridgeConfig =
+export type RouteConfig =
 	| {
-			bridge: RouteEnum["HotBridge"] | RouteEnum["PoaBridge"];
+			route: RouteEnum["HotBridge"] | RouteEnum["PoaBridge"];
 			chain: CAIP2_NETWORK;
 	  }
 	| {
-			bridge: RouteEnum["NearWithdrawal"];
+			route: RouteEnum["NearWithdrawal"];
 			msg?: string;
 	  }
 	| {
-			bridge: RouteEnum["VirtualChain"];
+			route: RouteEnum["VirtualChain"];
 			auroraEngineContractId: string;
 			proxyTokenContractId: string | null;
 	  }
-	| { bridge: RouteEnum["InternalTransfer"] };
+	| {
+			route: RouteEnum["InternalTransfer"];
+	  };
 
 export interface FeeEstimation {
 	amount: bigint;
@@ -90,8 +89,8 @@ export interface FeeEstimation {
 }
 
 export interface Bridge {
-	is(bridgeConfig: BridgeConfig): boolean;
-	supports(params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">): boolean;
+	is(routeConfig: RouteConfig): boolean;
+	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
 
 	/**
@@ -110,7 +109,7 @@ export interface Bridge {
 	estimateWithdrawalFee<
 		T extends Pick<
 			WithdrawalParams,
-			"assetId" | "destinationAddress" | "bridgeConfig"
+			"assetId" | "destinationAddress" | "routeConfig"
 		>,
 	>(args: {
 		withdrawalParams: T;
@@ -125,7 +124,7 @@ export interface Bridge {
 	waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
-		bridge: BridgeConfig;
+		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 		logger?: ILogger;
@@ -156,7 +155,7 @@ export interface BatchWithdrawal<Ticket> {
 }
 
 export interface WithdrawalIdentifier {
-	bridge: BridgeConfig;
+	routeConfig: RouteConfig;
 	index: number;
 	tx: NearTxInfo;
 }
@@ -164,13 +163,13 @@ export interface WithdrawalIdentifier {
 export type ParsedAssetInfo = (
 	| {
 			blockchain: CAIP2_NETWORK;
-			bridge: BridgeKind;
+			route: RouteEnumValues;
 			standard: "nep141";
 			contractId: string;
 	  }
 	| {
 			blockchain: CAIP2_NETWORK;
-			bridge: BridgeKind;
+			route: RouteEnumValues;
 			standard: "nep245";
 			contractId: string;
 			tokenId: string;

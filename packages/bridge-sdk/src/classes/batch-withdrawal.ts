@@ -4,7 +4,7 @@ import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { drop, zip } from "../lib/array";
 import { assert } from "../lib/assert";
-import { determineBridge } from "../lib/bridge";
+import { determineRouteConfig } from "../lib/route-config";
 import type {
 	BatchWithdrawal,
 	FeeEstimation,
@@ -68,7 +68,7 @@ export class BatchWithdrawalImpl<
 		// biome-ignore lint/suspicious/noConsole: <explanation>
 		console.log(
 			"withdrawals =",
-			wids.map((w) => `${w.bridge} ${w.index}`).join(","),
+			wids.map((w) => `${w.routeConfig} ${w.index}`).join(","),
 		);
 
 		await this.waitForWithdrawalCompletion();
@@ -249,23 +249,23 @@ export class BatchWithdrawalImpl<
 		const indexes = new Map<string, number>(
 			zip(
 				this.withdrawalParams.map((w) => {
-					const bridge = determineBridge(this.bridgeSDK, w);
-					return typeof bridge === "string" ? bridge : bridge.bridge;
+					const routeConfig = determineRouteConfig(this.bridgeSDK, w);
+					return routeConfig.route;
 				}),
 				Array(this.withdrawalParams.length).fill(0),
 			),
 		);
 
 		return this.withdrawalParams.map((w): WithdrawalIdentifier => {
-			const bridge = determineBridge(this.bridgeSDK, w);
-			const bridgeKind = typeof bridge === "string" ? bridge : bridge.bridge;
+			const routeConfig = determineRouteConfig(this.bridgeSDK, w);
+			const route = routeConfig.route;
 
 			// biome-ignore lint/style/noNonNullAssertion: <explanation>
-			const index = indexes.get(bridgeKind)!;
-			indexes.set(bridgeKind, index + 1);
+			const index = indexes.get(route)!;
+			indexes.set(route, index + 1);
 
 			return {
-				bridge,
+				routeConfig: routeConfig,
 				index,
 				tx: intentTx,
 			};
