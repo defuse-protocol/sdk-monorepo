@@ -15,9 +15,7 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
@@ -36,6 +34,7 @@
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@defuse-protocol/internal-utils": "workspace:*",
 		"@hot-labs/omni-sdk": "2.8.3",
+		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
 		"@scure/base": "^1.0.0",
 		"borsher": "^4.0.0",

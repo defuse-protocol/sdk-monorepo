@@ -6,6 +6,7 @@ import {
 	poaBridge,
 	utils,
 } from "@defuse-protocol/internal-utils";
+import TTLCache from "@isaacs/ttlcache";
 import { MinWithdrawalAmountError } from "../../classes/errors";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
@@ -26,6 +27,12 @@ import {
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
+
+	// TTL cache for supported tokens with 30-second TTL
+	private supportedTokensCache = new TTLCache<
+		string,
+		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
+	>({ ttl: 30 * 1000 });
 
 	constructor({ env }: { env: NearIntentsEnv }) {
 		this.env = env;
@@ -92,14 +99,10 @@ export class PoaBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
-		const { tokens } = await poaBridge.httpClient.getSupportedTokens(
-			{
-				chains: [toPoaNetwork(assetInfo.blockchain)],
-			},
-			{
-				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
-				logger: args.logger,
-			},
+		// Use cached getSupportedTokens to avoid frequent API calls
+		const { tokens } = await this.getCachedSupportedTokens(
+			[toPoaNetwork(assetInfo.blockchain)],
+			args.logger,
 		);
 
 		const tokenInfo = tokens.find(
@@ -162,5 +165,35 @@ export class PoaBridge implements Bridge {
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
+	}
+
+	/**
+	 * Gets supported tokens with caching to avoid frequent API calls.
+	 * Cache expires after 30 seconds using TTL cache.
+	 */
+	private async getCachedSupportedTokens(
+		chains: string[],
+		logger?: ILogger,
+	): Promise<
+		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
+	> {
+		const cacheKey = chains.sort().join(",");
+
+		const cached = this.supportedTokensCache.get(cacheKey);
+		if (cached != null) {
+			return cached;
+		}
+
+		const data = await poaBridge.httpClient.getSupportedTokens(
+			{ chains },
+			{
+				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				logger,
+			},
+		);
+
+		this.supportedTokensCache.set(cacheKey, data);
+
+		return data;
 	}
 }
