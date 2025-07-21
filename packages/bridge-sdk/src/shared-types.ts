@@ -3,7 +3,8 @@ import type {
 	RetryOptions,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
-import type { RouteEnum, RouteEnumValues } from "./constants/route-enum";
+import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
+import type { RouteEnum } from "./constants/route-enum";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
 import type { CAIP2_NETWORK } from "./lib/caip2";
@@ -177,13 +178,13 @@ export interface WithdrawalIdentifier {
 export type ParsedAssetInfo = (
 	| {
 			blockchain: CAIP2_NETWORK;
-			route: RouteEnumValues;
+			bridgeName: BridgeNameEnumValues;
 			standard: "nep141";
 			contractId: string;
 	  }
 	| {
 			blockchain: CAIP2_NETWORK;
-			route: RouteEnumValues;
+			bridgeName: BridgeNameEnumValues;
 			standard: "nep245";
 			contractId: string;
 			tokenId: string;

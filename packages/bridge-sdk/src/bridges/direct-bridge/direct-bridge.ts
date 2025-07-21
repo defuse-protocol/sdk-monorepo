@@ -8,6 +8,7 @@ import {
 	utils,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
+import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
@@ -63,7 +64,7 @@ export class DirectBridge implements Bridge {
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
 				blockchain: CAIP2_NETWORK.Near,
-				route: RouteEnum.NearWithdrawal,
+				bridgeName: BridgeNameEnum.None,
 				address: parsed.contractId,
 			});
 		}

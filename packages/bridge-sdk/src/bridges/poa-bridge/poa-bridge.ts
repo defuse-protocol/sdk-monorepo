@@ -8,6 +8,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import { MinWithdrawalAmountError } from "../../classes/errors";
+import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
@@ -66,7 +67,7 @@ export class PoaBridge implements Bridge {
 		) {
 			return Object.assign(parsed, {
 				blockchain: contractIdToCaip2(parsed.contractId),
-				route: RouteEnum.PoaBridge,
+				bridgeName: BridgeNameEnum.Poa,
 				address: "", // todo: derive address (or native)
 			});
 		}
