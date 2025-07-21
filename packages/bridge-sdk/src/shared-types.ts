@@ -10,6 +10,18 @@ import type { CAIP2_NETWORK } from "./lib/caip2";
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;
 
+	/**
+	 * Validates minimum withdrawal amount for the appropriate bridge.
+	 * This should be called when the actual withdrawal amount is known.
+	 * Different bridges may have different minimum withdrawal requirements.
+	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 */
+	validateMinWithdrawalAmount(args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void>;
+
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
@@ -90,6 +102,20 @@ export interface Bridge {
 	is(bridgeConfig: BridgeConfig): boolean;
 	supports(params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">): boolean;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
+
+	/**
+	 * Validates minimum withdrawal amount for the bridge.
+	 * Each bridge implementation may have different minimum withdrawal requirements.
+	 * Some bridges (like Aurora Engine, Intents) have no restrictions and will always pass.
+	 * Others (like POA) check against their API for token-specific minimum amounts.
+	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 */
+	validateMinWithdrawalAmount(args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void>;
+
 	estimateWithdrawalFee<
 		T extends Pick<
 			WithdrawalParams,

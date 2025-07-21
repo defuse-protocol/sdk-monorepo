@@ -109,6 +109,17 @@ export class DirectBridge implements Bridge {
 		return Promise.resolve(intents);
 	}
 
+	/**
+	 * Direct bridge doesn't have minimum withdrawal amount restrictions.
+	 */
+	async validateMinWithdrawalAmount(_args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void> {
+		return;
+	}
+
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<
 			WithdrawalParams,

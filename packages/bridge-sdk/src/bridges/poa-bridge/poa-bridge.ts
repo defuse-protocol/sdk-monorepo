@@ -6,6 +6,7 @@ import {
 	poaBridge,
 	utils,
 } from "@defuse-protocol/internal-utils";
+import { MinWithdrawalAmountError } from "../../classes/errors";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -75,6 +76,47 @@ export class PoaBridge implements Bridge {
 			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
 		});
 		return Promise.resolve([intent]);
+	}
+
+	/**
+	 * Validates minimum withdrawal amount for POA bridge tokens.
+	 * Checks the bridge's supported tokens API to ensure the withdrawal amount
+	 * meets the minimum required amount for the specific token and blockchain.
+	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 */
+	async validateMinWithdrawalAmount(args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void> {
+		const assetInfo = this.parseAssetId(args.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
+		const { tokens } = await poaBridge.httpClient.getSupportedTokens(
+			{
+				chains: [toPoaNetwork(assetInfo.blockchain)],
+			},
+			{
+				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				logger: args.logger,
+			},
+		);
+
+		const tokenInfo = tokens.find(
+			(token) => token.intents_token_id === args.assetId,
+		);
+
+		if (tokenInfo != null) {
+			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+
+			if (args.amount < minWithdrawalAmount) {
+				throw new MinWithdrawalAmountError(
+					minWithdrawalAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
+		}
 	}
 
 	async estimateWithdrawalFee(args: {

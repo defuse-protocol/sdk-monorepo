@@ -144,6 +144,17 @@ export class HotBridge implements Bridge {
 		return intents;
 	}
 
+	/**
+	 * Hot bridge doesn't have minimum withdrawal amount restrictions.
+	 */
+	async validateMinWithdrawalAmount(_args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void> {
+		return;
+	}
+
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId">;
 		quoteOptions?: { waitMs: number };
