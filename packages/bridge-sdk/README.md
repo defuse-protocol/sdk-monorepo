@@ -294,7 +294,7 @@ if ('hash' in completionResult) {
 ### Error Handling
 
 ```typescript
-import { FeeExceedsAmountError } from '@defuse-protocol/bridge-sdk';
+import { FeeExceedsAmountError, MinWithdrawalAmountError } from '@defuse-protocol/bridge-sdk';
 
 const withdrawal = sdk.createWithdrawal({
     withdrawalParams: {
@@ -311,11 +311,46 @@ try {
 } catch (error) {
   if (error instanceof FeeExceedsAmountError) {
     console.log('Fee exceeds withdrawal amount');
-    console.log('Required fee:', error.fee.amount);
+    console.log('Required fee:', error.feeEstimation.amount);
     console.log('Withdrawal amount:', error.amount);
+  } else if (error instanceof MinWithdrawalAmountError) {
+    console.log('Amount below minimum withdrawal limit');
+    console.log('Minimum required:', error.minAmount);
+    console.log('Requested amount:', error.requestedAmount);
+    console.log('Asset:', error.assetId);
   }
 }
 ```
+
+### POA Bridge Minimum Withdrawal Amount Validation
+
+POA bridge has minimum withdrawal amount requirements that vary per token and blockchain. The SDK automatically validates this for all withdrawals.
+
+```typescript
+// Validation happens automatically during withdrawal processing:
+try {
+  const withdrawal = sdk.createWithdrawal({
+    withdrawalParams: {
+      assetId: 'nep141:zec.omft.near', // Zcash token
+      amount: BigInt('50000000'), // 0.5 ZEC (in smallest units)
+      destinationAddress: 'your-zcash-address',
+      destinationMemo: undefined,
+      feeInclusive: false
+    }
+  });
+  
+  await withdrawal.process(); // Validation happens here
+} catch (error) {
+  if (error instanceof MinWithdrawalAmountError) {
+    console.log(`Minimum withdrawal for ${error.assetId}: ${error.minAmount}`);
+    console.log(`Requested amount: ${error.requestedAmount}`);
+    // For Zcash: minimum is typically 1.0 ZEC (100000000 in smallest units)
+    // Plus 0.2 ZEC fee, so user needs at least 1.2 ZEC to withdraw 1.0 ZEC
+  }
+}
+```
+
+Note: Other bridges (Direct, Aurora Engine, Hot, Intents) don't have minimum withdrawal restrictions, so validation passes through for those bridges.
 
 TBD
 

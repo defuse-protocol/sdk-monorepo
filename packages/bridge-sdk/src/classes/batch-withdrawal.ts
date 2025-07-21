@@ -1,4 +1,5 @@
 import type { RetryOptions } from "@defuse-protocol/internal-utils";
+import type { ILogger } from "@defuse-protocol/internal-utils";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { drop, zip } from "../lib/array";
@@ -26,6 +27,7 @@ export class BatchWithdrawalImpl<
 	protected bridgeSDK: IBridgeSDK;
 	protected intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 	protected intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
+	protected logger?: ILogger;
 
 	protected feeEstimations: PromiseSettledResult<FeeEstimation>[] | null = null;
 	protected intentTicket: Ticket | null = null;
@@ -39,12 +41,14 @@ export class BatchWithdrawalImpl<
 		bridgeSDK: IBridgeSDK;
 		intentExecuter: IIntentExecuter<Ticket, RelayParams>;
 		intentRelayParams?: IntentRelayParamsFactory<RelayParams>;
+		logger?: ILogger;
 	}) {
 		this.withdrawalParams = args.withdrawalParams;
 		this.referral = args.referral;
 		this.bridgeSDK = args.bridgeSDK;
 		this.intentExecuter = args.intentExecuter;
 		this.intentRelayParams = args.intentRelayParams;
+		this.logger = args.logger;
 	}
 
 	async process(): Promise<void> {
@@ -188,6 +192,7 @@ export class BatchWithdrawalImpl<
 							withdrawalParams: withdrawalParams,
 							feeEstimation: feeEstimation.value,
 							referral: this.referral,
+							logger: this.logger,
 						});
 					},
 				),

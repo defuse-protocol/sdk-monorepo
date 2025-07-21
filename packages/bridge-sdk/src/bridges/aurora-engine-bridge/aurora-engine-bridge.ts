@@ -93,6 +93,17 @@ export class AuroraEngineBridge implements Bridge {
 		return Promise.resolve(intents);
 	}
 
+	/**
+	 * Aurora Engine bridge doesn't have minimum withdrawal amount restrictions.
+	 */
+	async validateMinWithdrawalAmount(_args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void> {
+		return;
+	}
+
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "bridgeConfig">;
 		quoteOptions?: { waitMs: number };

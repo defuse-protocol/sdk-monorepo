@@ -23,7 +23,7 @@ export class HotWithdrawalNotFoundError extends BaseError {
 		public txHash: string,
 		public index: number,
 	) {
-		super("Withdrawal with given index is not found", {
+		super("Withdrawal with given index is not found.", {
 			metaMessages: [`TxHash: ${txHash}`, `Index: ${index}`],
 			name: "HotWithdrawalNotFoundError",
 		});
@@ -38,7 +38,7 @@ export class HotWithdrawalCancelledError extends BaseError {
 		public txHash: string,
 		public index: number,
 	) {
-		super("Gasless withdrawal was canceled", {
+		super("Gasless withdrawal was canceled.", {
 			metaMessages: [`TxHash: ${txHash}`, `Index: ${index}`],
 			name: "HotWithdrawalCancelledError",
 		});

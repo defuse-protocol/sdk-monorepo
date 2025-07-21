@@ -38,13 +38,41 @@ export type GetSupportedTokensRequest = JSONRPCRequest<
 
 export type GetSupportedTokensResponse = JSONRPCResponse<{
 	tokens: {
-		defuse_asset_identifier: string;
-		decimals: number;
-		asset_name: string;
+		/**
+		 * Raw asset id.
+		 * Example: "nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR"
+		 */
+		intents_token_id: string;
+		/**
+		 * Token standard extracted from intents_token_id (the part before the first colon).
+		 * In most cases it is either "nep245" or "nep141"
+		 */
+		standard: string;
+		/**
+		 * Contract ID extracted from intents_token_id (the part between the first and second colon).
+		 * Example: "v2_1.omni.hot.tg"
+		 */
 		near_token_id: string;
+		/**
+		 * Token ID extracted from intents_token_id (the part after the second colon).
+		 * Only present for "nep245" standard tokens.
+		 * Example: "1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR"
+		 */
+		multi_token_id?: string;
+		/**
+		 * Symbol
+		 */
+		asset_name: string;
+		decimals: number;
 		min_deposit_amount: string;
 		min_withdrawal_amount: string;
 		withdrawal_fee: string;
+		/**
+		 * Internal POA Bridge identifier.
+		 * @deprecated This identifier is for internal use only and should not be used in client code.
+		 * @internal
+		 */
+		defuse_asset_identifier: string;
 	}[];
 }>;
 

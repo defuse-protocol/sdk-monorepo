@@ -47,7 +47,7 @@ export function withTimeout<data>(
 
 class SpecialInternalTimeoutError extends BaseError {
 	constructor() {
-		super("Special internal timeout error", {
+		super("Special internal timeout error.", {
 			name: "SpecialInternalTimeoutError",
 			details:
 				"This error should be never be caught since another error instance is rethrown.",

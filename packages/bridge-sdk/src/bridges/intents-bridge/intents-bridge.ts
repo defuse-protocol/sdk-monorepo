@@ -1,4 +1,4 @@
-import {} from "@defuse-protocol/internal-utils";
+import type { ILogger } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
@@ -41,6 +41,17 @@ export class IntentsBridge implements Bridge {
 		];
 
 		return Promise.resolve(intents);
+	}
+
+	/**
+	 * Intents bridge doesn't have minimum withdrawal amount restrictions.
+	 */
+	async validateMinWithdrawalAmount(_args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void> {
+		return;
 	}
 
 	async estimateWithdrawalFee(): Promise<FeeEstimation> {

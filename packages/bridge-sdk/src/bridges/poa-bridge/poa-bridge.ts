@@ -6,6 +6,8 @@ import {
 	poaBridge,
 	utils,
 } from "@defuse-protocol/internal-utils";
+import TTLCache from "@isaacs/ttlcache";
+import { MinWithdrawalAmountError } from "../../classes/errors";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -25,6 +27,12 @@ import {
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
+
+	// TTL cache for supported tokens with 30-second TTL
+	private supportedTokensCache = new TTLCache<
+		string,
+		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
+	>({ ttl: 30 * 1000 });
 
 	constructor({ env }: { env: NearIntentsEnv }) {
 		this.env = env;
@@ -77,6 +85,43 @@ export class PoaBridge implements Bridge {
 		return Promise.resolve([intent]);
 	}
 
+	/**
+	 * Validates minimum withdrawal amount for POA bridge tokens.
+	 * Checks the bridge's supported tokens API to ensure the withdrawal amount
+	 * meets the minimum required amount for the specific token and blockchain.
+	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 */
+	async validateMinWithdrawalAmount(args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void> {
+		const assetInfo = this.parseAssetId(args.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
+		// Use cached getSupportedTokens to avoid frequent API calls
+		const { tokens } = await this.getCachedSupportedTokens(
+			[toPoaNetwork(assetInfo.blockchain)],
+			args.logger,
+		);
+
+		const tokenInfo = tokens.find(
+			(token) => token.intents_token_id === args.assetId,
+		);
+
+		if (tokenInfo != null) {
+			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+
+			if (args.amount < minWithdrawalAmount) {
+				throw new MinWithdrawalAmountError(
+					minWithdrawalAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
+		}
+	}
+
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
 		logger?: ILogger;
@@ -120,5 +165,35 @@ export class PoaBridge implements Bridge {
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
+	}
+
+	/**
+	 * Gets supported tokens with caching to avoid frequent API calls.
+	 * Cache expires after 30 seconds using TTL cache.
+	 */
+	private async getCachedSupportedTokens(
+		chains: string[],
+		logger?: ILogger,
+	): Promise<
+		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
+	> {
+		const cacheKey = chains.sort().join(",");
+
+		const cached = this.supportedTokensCache.get(cacheKey);
+		if (cached != null) {
+			return cached;
+		}
+
+		const data = await poaBridge.httpClient.getSupportedTokens(
+			{ chains },
+			{
+				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				logger,
+			},
+		);
+
+		this.supportedTokensCache.set(cacheKey, data);
+
+		return data;
 	}
 }

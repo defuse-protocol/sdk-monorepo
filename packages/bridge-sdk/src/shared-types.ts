@@ -14,6 +14,7 @@ export interface IBridgeSDK {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
+		logger?: ILogger;
 	}): Promise<IntentPrimitive[]>;
 
 	estimateWithdrawalFee<
@@ -90,6 +91,20 @@ export interface Bridge {
 	is(bridgeConfig: BridgeConfig): boolean;
 	supports(params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">): boolean;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
+
+	/**
+	 * Validates minimum withdrawal amount for the bridge.
+	 * Each bridge implementation may have different minimum withdrawal requirements.
+	 * Some bridges (like Aurora Engine, Intents) have no restrictions and will always pass.
+	 * Others (like POA) check against their API for token-specific minimum amounts.
+	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 */
+	validateMinWithdrawalAmount(args: {
+		assetId: string;
+		amount: bigint;
+		logger?: ILogger;
+	}): Promise<void>;
+
 	estimateWithdrawalFee<
 		T extends Pick<
 			WithdrawalParams,
