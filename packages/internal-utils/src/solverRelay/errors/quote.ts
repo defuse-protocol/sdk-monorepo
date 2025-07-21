@@ -14,7 +14,7 @@ export class QuoteError extends BaseError {
 		quote: FailedQuote | null;
 		quoteParams: Parameters<typeof quote_>[0];
 	}) {
-		super("Quote error", {
+		super("Quote error.", {
 			details: quote == null ? "NO_QUOTE" : quote.type,
 			metaMessages: [
 				`Quote: ${serialize(quote)}`,

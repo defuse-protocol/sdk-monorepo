@@ -10,7 +10,7 @@ export class FeeExceedsAmountError extends BaseError {
 		public feeEstimation: FeeEstimation,
 		public amount: bigint,
 	) {
-		super("Amount too small to pay fee", {
+		super("Amount too small to pay fee.", {
 			metaMessages: [
 				`Required fee: ${feeEstimation.amount}`,
 				`Withdrawal amount: ${amount}`,
@@ -30,7 +30,7 @@ export class MinWithdrawalAmountError extends BaseError {
 		public requestedAmount: bigint,
 		public assetId: string,
 	) {
-		super("Withdrawal amount is below minimum required", {
+		super("Withdrawal amount is below minimum required.", {
 			metaMessages: [
 				`Asset ID: ${assetId}`,
 				`Minimum amount: ${minAmount}`,
