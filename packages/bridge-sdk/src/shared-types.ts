@@ -62,26 +62,40 @@ export interface WithdrawalParams {
 	destinationAddress: string;
 	destinationMemo: string | undefined;
 	feeInclusive: boolean;
-	routeConfig?: RouteConfig;
+	routeConfig?: RouteConfig | undefined;
 }
 
+export type NearWithdrawalRouteConfig = {
+	route: RouteEnum["NearWithdrawal"];
+	msg?: string;
+};
+
+export type InternalTransferRouteConfig = {
+	route: RouteEnum["InternalTransfer"];
+};
+
+export type VirtualChainRouteConfig = {
+	route: RouteEnum["VirtualChain"];
+	auroraEngineContractId: string;
+	proxyTokenContractId: string | null;
+};
+
+export type PoaBridgeRouteConfig = {
+	route: RouteEnum["PoaBridge"];
+	chain: CAIP2_NETWORK;
+};
+
+export type HotBridgeRouteConfig = {
+	route: RouteEnum["HotBridge"];
+	chain: CAIP2_NETWORK;
+};
+
 export type RouteConfig =
-	| {
-			route: RouteEnum["HotBridge"] | RouteEnum["PoaBridge"];
-			chain: CAIP2_NETWORK;
-	  }
-	| {
-			route: RouteEnum["NearWithdrawal"];
-			msg?: string;
-	  }
-	| {
-			route: RouteEnum["VirtualChain"];
-			auroraEngineContractId: string;
-			proxyTokenContractId: string | null;
-	  }
-	| {
-			route: RouteEnum["InternalTransfer"];
-	  };
+	| NearWithdrawalRouteConfig
+	| InternalTransferRouteConfig
+	| VirtualChainRouteConfig
+	| PoaBridgeRouteConfig
+	| HotBridgeRouteConfig;
 
 export interface FeeEstimation {
 	amount: bigint;
