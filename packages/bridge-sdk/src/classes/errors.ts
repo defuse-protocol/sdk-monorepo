@@ -30,7 +30,7 @@ export class MinWithdrawalAmountError extends BaseError {
 		public requestedAmount: bigint,
 		public assetId: string,
 	) {
-		super("Withdrawal amount is below minimum required.", {
+		super("Withdrawal amount is below minimum required by the bridge.", {
 			metaMessages: [
 				`Asset ID: ${assetId}`,
 				`Minimum amount: ${minAmount}`,
