@@ -1,9 +1,9 @@
 export const RouteEnum = {
-	HotBridge: "hot",
-	PoaBridge: "poa",
-	NearWithdrawal: "direct",
-	VirtualChain: "aurora_engine",
-	InternalTransfer: "intents",
+	HotBridge: "hot_bridge",
+	PoaBridge: "poa_bridge",
+	NearWithdrawal: "near_withdrawal",
+	VirtualChain: "virtual_chain",
+	InternalTransfer: "internal_transfer",
 } as const;
 
 export type RouteEnum = typeof RouteEnum;
