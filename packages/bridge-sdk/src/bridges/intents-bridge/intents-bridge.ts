@@ -1,4 +1,5 @@
 import type { ILogger } from "@defuse-protocol/internal-utils";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
@@ -11,7 +12,7 @@ import type {
 
 export class IntentsBridge implements Bridge {
 	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig.bridge === "intents";
+		return bridgeConfig.bridge === RouteEnum.InternalTransfer;
 	}
 
 	supports(params: Pick<WithdrawalParams, "bridgeConfig">): boolean {

@@ -8,6 +8,7 @@ import {
 	utils,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -37,7 +38,7 @@ export class AuroraEngineBridge implements Bridge {
 	}
 
 	is(bridgeConfig: BridgeConfig): boolean {
-		return bridgeConfig.bridge === "aurora_engine";
+		return bridgeConfig.bridge === RouteEnum.VirtualChain;
 	}
 
 	supports(

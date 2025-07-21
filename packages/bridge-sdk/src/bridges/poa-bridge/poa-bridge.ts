@@ -8,6 +8,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import { MinWithdrawalAmountError } from "../../classes/errors";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -39,7 +40,7 @@ export class PoaBridge implements Bridge {
 	}
 
 	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig.bridge === "poa";
+		return bridgeConfig.bridge === RouteEnum.PoaBridge;
 	}
 
 	supports(
@@ -67,7 +68,7 @@ export class PoaBridge implements Bridge {
 		) {
 			return Object.assign(parsed, {
 				blockchain: contractIdToCaip2(parsed.contractId),
-				bridge: "poa" as const,
+				bridge: RouteEnum.PoaBridge,
 				address: "", // todo: derive address (or native)
 			});
 		}

@@ -8,6 +8,7 @@ import {
 	utils,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import { CAIP2_NETWORK } from "../../lib/caip2";
@@ -39,7 +40,7 @@ export class DirectBridge implements Bridge {
 	}
 
 	is(bridgeConfig: BridgeConfig) {
-		return bridgeConfig.bridge === "direct";
+		return bridgeConfig.bridge === RouteEnum.NearWithdrawal;
 	}
 
 	supports(
@@ -64,7 +65,7 @@ export class DirectBridge implements Bridge {
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
 				blockchain: CAIP2_NETWORK.Near,
-				bridge: "direct" as const,
+				bridge: RouteEnum.NearWithdrawal,
 				address: parsed.contractId,
 			});
 		}

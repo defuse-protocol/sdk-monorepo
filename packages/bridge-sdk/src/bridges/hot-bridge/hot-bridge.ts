@@ -10,6 +10,7 @@ import {
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
@@ -46,7 +47,7 @@ export class HotBridge implements Bridge {
 	}
 
 	is(bridgeConfig: BridgeConfig): boolean {
-		return bridgeConfig.bridge === "hot";
+		return bridgeConfig.bridge === RouteEnum.HotBridge;
 	}
 
 	supports(
@@ -80,7 +81,7 @@ export class HotBridge implements Bridge {
 				parsed,
 				{
 					blockchain: networkIdToCaip2(chainId),
-					bridge: "hot" as const,
+					bridge: RouteEnum.HotBridge,
 				},
 				(address === "native" ? { native: true } : { address }) as
 					| { native: true }

@@ -15,8 +15,8 @@ export function determineBridge(
 
 	const parseAssetId = sdk.parseAssetId(withdrawalParams.assetId);
 	assert(
-		parseAssetId.bridge !== "aurora_engine",
-		"aurora_engine should be passed as `bridgeConfig`",
+		parseAssetId.bridge !== "virtual_chain",
+		"virtual_chain should be passed as `bridgeConfig`",
 	);
 	return {
 		bridge: parseAssetId.bridge,

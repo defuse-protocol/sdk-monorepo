@@ -3,6 +3,7 @@ import type {
 	RetryOptions,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
+import type { RouteEnum, RouteEnumValues } from "./constants/route-enum";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
 import type { CAIP2_NETWORK } from "./lib/caip2";
@@ -55,7 +56,8 @@ export interface TxNoInfo {
 	hash: null;
 }
 
-export type BridgeKind = "direct" | "poa" | "hot" | "aurora_engine" | "intents";
+type BridgeKind = RouteEnumValues;
+export type { RouteEnumValues as BridgeKind };
 
 export interface WithdrawalParams {
 	assetId: string;
@@ -68,19 +70,19 @@ export interface WithdrawalParams {
 
 export type BridgeConfig =
 	| {
-			bridge: "hot" | "poa";
+			bridge: RouteEnum["HotBridge"] | RouteEnum["PoaBridge"];
 			chain: CAIP2_NETWORK;
 	  }
 	| {
-			bridge: "direct";
+			bridge: RouteEnum["NearWithdrawal"];
 			msg?: string;
 	  }
 	| {
-			bridge: "aurora_engine";
+			bridge: RouteEnum["VirtualChain"];
 			auroraEngineContractId: string;
 			proxyTokenContractId: string | null;
 	  }
-	| { bridge: "intents" };
+	| { bridge: RouteEnum["InternalTransfer"] };
 
 export interface FeeEstimation {
 	amount: bigint;
