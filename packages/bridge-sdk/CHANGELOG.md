@@ -1,5 +1,27 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.9.0
+
+### Minor Changes
+
+- 390bacc: Add minimum withdrawal amount validation for POA bridge. POA bridge now validates minimum withdrawal amounts (e.g., ZCash requires 1.0 minimum). Adds `MinWithdrawalAmountError`.
+- 5f1ed8f: Add new utility functions to create intent signers. Add `createIntentSignerNEP413()`, `createIntentSignerNearKeyPair()` and `createIntentSignerViem()`.
+- 237943b: Change `ParsedAssetInfo` to include `bridgeName` instead of `route`. Export `BridgeNameEnum` and `RouteConfig`.
+
+### Patch Changes
+
+- 237943b: Add new utility functions for creating route configs:
+  - `createInternalTransferRoute()`
+  - `createNearWithdrawalRoute()`
+  - `createVirtualChainRoute()`
+  - `createDefaultRoute()`
+- 6d588d6: Make `evmRpc` optional, fallback to public URLs.
+- Updated dependencies [390bacc]
+- Updated dependencies [61d00ec]
+- Updated dependencies [6d588d6]
+- Updated dependencies [fbe2b7c]
+  - @defuse-protocol/internal-utils@0.1.1
+
 ## 0.8.1
 
 ### Patch Changes
