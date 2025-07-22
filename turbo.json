@@ -12,6 +12,7 @@
       "cache": false,
       "persistent": true
     },
-    "format": {}
+    "format": {},
+    "typecheck": {}
   }
 }
