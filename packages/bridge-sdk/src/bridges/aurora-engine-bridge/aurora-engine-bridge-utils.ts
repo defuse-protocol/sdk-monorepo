@@ -1,5 +1,6 @@
 import { utils } from "@defuse-protocol/internal-utils";
 import { getAddress } from "viem";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type { WithdrawalParams } from "../../shared-types";
@@ -52,18 +53,18 @@ function makeAuroraEngineDepositMsg(recipientAddress: string): string {
 }
 
 export function withdrawalParamsInvariant<
-	T extends Pick<WithdrawalParams, "bridgeConfig">,
+	T extends Pick<WithdrawalParams, "routeConfig">,
 >(
 	params: T,
 ): asserts params is T & {
-	bridgeConfig: Extract<
-		NonNullable<T["bridgeConfig"]>,
-		{ bridge: "aurora_engine" }
+	routeConfig: Extract<
+		NonNullable<T["routeConfig"]>,
+		{ route: RouteEnum["VirtualChain"] }
 	>;
 } {
-	assert(params.bridgeConfig != null, "Bridge config is required");
+	assert(params.routeConfig != null, "Bridge config is required");
 	assert(
-		params.bridgeConfig.bridge === "aurora_engine",
+		params.routeConfig.route === RouteEnum.VirtualChain,
 		"Bridge is not aurora_engine",
 	);
 }

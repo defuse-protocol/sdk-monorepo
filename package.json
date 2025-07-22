@@ -9,6 +9,7 @@
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",
 		"format": "turbo run format",
+		"typecheck": "turbo run typecheck",
 		"changeset": "changeset",
 		"version": "changeset version && pnpm install --lockfile-only",
 		"release": "turbo run build && changeset publish"

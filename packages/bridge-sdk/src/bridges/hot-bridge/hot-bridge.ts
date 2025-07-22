@@ -10,14 +10,16 @@ import {
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
+import { BridgeNameEnum } from "../../constants/bridge-name-enum";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type {
 	Bridge,
-	BridgeConfig,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
+	RouteConfig,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
@@ -45,17 +47,15 @@ export class HotBridge implements Bridge {
 		this.hotSdk = hotSdk;
 	}
 
-	is(bridgeConfig: BridgeConfig): boolean {
-		return bridgeConfig.bridge === "hot";
+	is(routeConfig: RouteConfig): boolean {
+		return routeConfig.route === RouteEnum.HotBridge;
 	}
 
-	supports(
-		params: Pick<WithdrawalParams, "assetId" | "bridgeConfig">,
-	): boolean {
+	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		let result = true;
 
-		if ("bridgeConfig" in params && params.bridgeConfig != null) {
-			result &&= this.is(params.bridgeConfig);
+		if ("routeConfig" in params && params.routeConfig != null) {
+			result &&= this.is(params.routeConfig);
 		}
 
 		try {
@@ -80,7 +80,7 @@ export class HotBridge implements Bridge {
 				parsed,
 				{
 					blockchain: networkIdToCaip2(chainId),
-					bridge: "hot" as const,
+					bridgeName: BridgeNameEnum.Hot,
 				},
 				(address === "native" ? { native: true } : { address }) as
 					| { native: true }
@@ -197,7 +197,7 @@ export class HotBridge implements Bridge {
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
-		bridge: BridgeConfig;
+		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo> {
@@ -230,8 +230,8 @@ export class HotBridge implements Bridge {
 				if (typeof status === "string") {
 					return {
 						hash:
-							"chain" in args.bridge
-								? formatTxHash(status, args.bridge.chain)
+							"chain" in args.routeConfig
+								? formatTxHash(status, args.routeConfig.chain)
 								: status,
 					};
 				}

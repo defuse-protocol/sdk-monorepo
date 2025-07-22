@@ -6,11 +6,13 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "test": {},
     "lint": {},
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "format": {}
+    "format": {},
+    "typecheck": {}
   }
 }

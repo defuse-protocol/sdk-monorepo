@@ -1,4 +1,5 @@
 import { utils } from "@defuse-protocol/internal-utils";
+import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type { WithdrawalParams } from "../../shared-types";
@@ -39,14 +40,19 @@ export function createWithdrawIntentPrimitive(params: {
 }
 
 export function withdrawalParamsInvariant<
-	T extends Pick<WithdrawalParams, "bridgeConfig">,
+	T extends Pick<WithdrawalParams, "routeConfig">,
 >(
 	params: T,
 ): asserts params is T & {
-	bridgeConfig?: Extract<NonNullable<T["bridgeConfig"]>, { bridge: "direct" }>;
+	routeConfig?: Extract<
+		NonNullable<T["routeConfig"]>,
+		{ route: RouteEnum["NearWithdrawal"] }
+	>;
 } {
 	assert(
-		!params.bridgeConfig ? true : params.bridgeConfig.bridge === "direct",
+		!params.routeConfig
+			? true
+			: params.routeConfig.route === RouteEnum.NearWithdrawal,
 		"Bridge is not direct",
 	);
 }

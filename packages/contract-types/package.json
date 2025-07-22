@@ -15,14 +15,13 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"lint": "biome check .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"tsup": "^8.0.2",
