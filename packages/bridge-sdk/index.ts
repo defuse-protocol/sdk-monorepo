@@ -1,6 +1,6 @@
 export { config, configureSDK } from "@defuse-protocol/internal-utils";
 export * from "./src/sdk";
-export * from "./src/intents/intent-signer-impl";
+export * from "./src/intents";
 export type {
 	FeeEstimation,
 	WithdrawalParams,

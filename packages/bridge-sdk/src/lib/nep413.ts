@@ -7,6 +7,12 @@ const nep413PayloadSchema = BorshSchema.Struct({
 	callback_url: BorshSchema.Option(BorshSchema.String),
 });
 
+export type NEP413Payload = typeof nep413PayloadSchema extends BorshSchema<
+	infer T
+>
+	? Omit<T, "callback_url"> & { callback_url?: string | null | undefined }
+	: never;
+
 /**
  * Client-side utility to serialize and hash NEP-413 messages for EdDSA signature verification.
  * Follows the NEP-413 specification for message serialization and hashing:
@@ -26,12 +32,7 @@ export async function hashNEP413Message({
 	recipient,
 	nonce,
 	callback_url,
-}: {
-	message: string;
-	recipient: string;
-	nonce: Uint8Array;
-	callback_url: string | null;
-}): Promise<Uint8Array> {
+}: NEP413Payload): Promise<Uint8Array> {
 	const payload = {
 		message: message,
 		nonce: Array.from(nonce),
