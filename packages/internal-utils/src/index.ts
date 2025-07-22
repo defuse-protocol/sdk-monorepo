@@ -16,3 +16,5 @@ export { nearFailoverRpcProvider } from "./utils/failover";
 export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";
 export type { ILogger } from "./logger";
 export { BlockchainEnum } from "./poaBridge/constants/blockchains";
+export { withTimeout } from "./utils/promise/withTimeout";
+export { request, type RequestErrorType } from "./utils/request";
