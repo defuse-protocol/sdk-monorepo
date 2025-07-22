@@ -106,7 +106,7 @@ export class PoaBridge implements Bridge {
 		);
 
 		const tokenInfo = tokens.find(
-			(token) => token.intents_token_id === args.assetId,
+			(token) => token.defuse_asset_identifier === args.assetId,
 		);
 
 		if (tokenInfo != null) {
