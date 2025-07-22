@@ -16,7 +16,7 @@ import {
 	type PoaWithdrawalPendingErrorType,
 } from "./errors/withdrawal";
 import { getWithdrawalStatus } from "./poaBridgeHttpClient";
-import type { types } from "./poaBridgeHttpClient";
+import type * as types from "./poaBridgeHttpClient/types";
 
 export type WaitForWithdrawalCompletionOkType = {
 	destinationTxHash: string;

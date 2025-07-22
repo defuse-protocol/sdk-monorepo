@@ -1,5 +1,6 @@
 import type { IntentsUserId } from "../types/intentsUserId";
-import { getDepositStatus, type types } from "./poaBridgeHttpClient";
+import { getDepositStatus } from "./poaBridgeHttpClient";
+import type * as types from "./poaBridgeHttpClient";
 
 type PendingDeposit =
 	types.GetDepositStatusResponse["result"]["deposits"][number] & {
