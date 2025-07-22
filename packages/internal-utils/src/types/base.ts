@@ -10,7 +10,7 @@ export type SupportedChainName =
 	| "tuxappchain"
 	| "vertex"
 	| "optima"
-	| "coineasy"
+	| "easychain"
 	| "aurora"
 	| "xrpledger"
 	| "zcash"

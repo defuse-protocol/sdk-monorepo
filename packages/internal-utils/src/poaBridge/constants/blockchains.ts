@@ -26,7 +26,7 @@ export const VirtualNetworkReference = {
 	TUXAPPCHAIN: "eth:1313161573",
 	VERTEX: "eth:1313161587",
 	OPTIMA: "eth:1313161569",
-	COINEASY: "eth:1313161752",
+	EASYCHAIN: "eth:1313161752",
 	AURORA: "eth:1313161554",
 } as const;
 
