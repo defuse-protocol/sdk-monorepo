@@ -30,7 +30,7 @@ export class IntentSignerNEP413 implements IIntentSigner {
 	}
 
 	async signIntent(intent: IntentPayload): Promise<MultiPayload> {
-		const nep413Payload = {
+		const nep413Payload: NEP413Payload = {
 			recipient: intent.verifying_contract,
 			nonce: Array.from(base64.decode(intent.nonce)),
 			message: JSON.stringify({
@@ -38,7 +38,6 @@ export class IntentSignerNEP413 implements IIntentSigner {
 				intents: intent.intents,
 				signer_id: intent.signer_id ?? this.accountId,
 			}),
-			callback_url: null,
 		};
 
 		const nep413Hash = await hashNEP413Message(nep413Payload);

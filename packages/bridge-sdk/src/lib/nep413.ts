@@ -10,7 +10,7 @@ const nep413PayloadSchema = BorshSchema.Struct({
 export type NEP413Payload = typeof nep413PayloadSchema extends BorshSchema<
 	infer T
 >
-	? T
+	? Omit<T, "callback_url"> & { callback_url?: string | null | undefined }
 	: never;
 
 /**
