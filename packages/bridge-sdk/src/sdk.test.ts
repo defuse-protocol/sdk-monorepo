@@ -5,16 +5,16 @@ import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
 } from "./classes/errors";
-import { IntentSignerEVM } from "./intents/intent-signer-impl";
+import { createIntentSignerViem } from "./intents";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
 } from "./lib/route-config-factory";
 import { BridgeSDK } from "./sdk";
 
-const intentSigner = new IntentSignerEVM({
-	signer: privateKeyToAccount(generatePrivateKey()),
-});
+const intentSigner = createIntentSignerViem(
+	privateKeyToAccount(generatePrivateKey()),
+);
 
 describe.concurrent("poa_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {

@@ -3,23 +3,17 @@ import type { Account } from "viem";
 import type { IIntentSigner } from "../interfaces/intent-signer";
 import type { IntentPayload, MultiPayload } from "../shared-types";
 
-export class IntentSignerEVM implements IIntentSigner {
-	private signer: Account;
+export type IntentSignerViemConfig = Pick<Account, "address" | "signMessage">;
 
-	constructor({
-		signer,
-	}: {
-		signer: Account;
-	}) {
-		this.signer = signer;
-	}
+export class IntentSignerViem implements IIntentSigner {
+	constructor(private account: IntentSignerViemConfig) {}
 
 	async signIntent(intent: IntentPayload): Promise<MultiPayload> {
 		const payload = JSON.stringify({
 			signer_id:
 				intent.signer_id ??
 				utils.authHandleToIntentsUserId({
-					identifier: this.signer.address,
+					identifier: this.account.address,
 					method: "evm",
 				}),
 			verifying_contract: intent.verifying_contract,
@@ -28,7 +22,7 @@ export class IntentSignerEVM implements IIntentSigner {
 			intents: intent.intents,
 		});
 
-		const signature = await this.signer.signMessage?.({
+		const signature = await this.account.signMessage?.({
 			message: payload,
 		});
 		if (signature == null) {
