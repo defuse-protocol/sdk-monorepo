@@ -1,5 +1,5 @@
 import { base58, base64 } from "@scure/base";
-import { hashNEP413Message, type NEP413Payload } from "../../lib/nep413";
+import { type NEP413Payload, hashNEP413Message } from "../../lib/nep413";
 import type { IIntentSigner } from "../interfaces/intent-signer";
 import type { IntentPayload, MultiPayload } from "../shared-types";
 
