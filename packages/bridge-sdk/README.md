@@ -20,7 +20,7 @@ npm install @defuse-protocol/bridge-sdk --save-exact
 ## Quick Start
 
 ```typescript
-import { BridgeSDK, IntentSignerNear } from '@defuse-protocol/bridge-sdk';
+import { BridgeSDK, createIntentSignerNearKeyPair } from '@defuse-protocol/bridge-sdk';
 import { KeyPair } from 'near-api-js';
 
 // Initialize the SDK with required configuration
@@ -30,8 +30,8 @@ const sdk = new BridgeSDK({
 
 // Set up intent signer (for NEAR)
 const keyPair = KeyPair.fromString('your-private-key');
-const signer = new IntentSignerNear({
-  signer: keyPair,
+const signer = createIntentSignerNearKeyPair({
+  keypair: keyPair,
   accountId: 'your-account.near'
 });
 sdk.setIntentSigner(signer);
@@ -140,29 +140,43 @@ console.log('Quote info:', feeEstimation.quote);
 
 ### Intent Signers
 
-The SDK supports multiple intent signing methods:
+The SDK supports multiple intent signing methods using factory functions:
 
-#### NEAR Signer
+#### NEAR KeyPair Signer
 ```typescript
-import { IntentSignerNear, BridgeSDK } from '@defuse-protocol/bridge-sdk';
+import { createIntentSignerNearKeyPair, BridgeSDK } from '@defuse-protocol/bridge-sdk';
 import { KeyPair } from 'near-api-js';
 
 const keyPair = KeyPair.fromString('your-private-key');
-const signer = new IntentSignerNear({
-  signer: keyPair,
+const signer = createIntentSignerNearKeyPair({
+  keypair: keyPair,
   accountId: 'your-account.near'
 });
 ```
 
-#### EVM Signer
+#### NEP-413 Signer
 ```typescript
-import { IntentSignerEVM } from '@defuse-protocol/bridge-sdk';
+import { createIntentSignerNEP413 } from '@defuse-protocol/bridge-sdk';
+
+const signer = createIntentSignerNEP413({
+  signMessage: async (nep413Payload, nep413Hash) => {
+    // Implement your custom signing logic here
+    return {
+      publicKey: 'ed25519:YourPublicKey',
+      signature: 'base64-encoded-signature'
+    };
+  },
+  accountId: 'your-account.near'
+});
+```
+
+#### EVM/Viem Signer
+```typescript
+import { createIntentSignerViem } from '@defuse-protocol/bridge-sdk';
 import { privateKeyToAccount } from 'viem/accounts';
 
 const account = privateKeyToAccount('0x...');
-const signer = new IntentSignerEVM({
-  signer: account
-});
+const signer = createIntentSignerViem(account);
 
 // Set the signer at runtime
 sdk.setIntentSigner(signer);
