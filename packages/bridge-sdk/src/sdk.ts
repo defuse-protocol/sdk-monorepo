@@ -266,7 +266,7 @@ export class BridgeSDK implements IBridgeSDK {
 			}
 		}
 
-		throw new Error(`Unsupported bridge = ${args.routeConfig}`);
+		throw new Error(`Unsupported bridge = ${stringify(args.routeConfig)}`);
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo {
