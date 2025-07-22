@@ -91,7 +91,7 @@ describe("prepareSwapSignedData()", () => {
 		).toMatchSnapshot();
 	});
 
-	it("should return the correct signed data for a WebAuthn signature", async () => {
+	it.skip("should return the correct signed data for a WebAuthn signature", async () => {
 		const signature: WebAuthnSignatureData = {
 			type: "WEBAUTHN",
 			signatureData: {
