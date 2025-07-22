@@ -17,15 +17,11 @@
 	},
 	"files": ["dist"],
 	"scripts": {
+		"test": "vitest --passWithNoTests",
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"lint": "biome check .",
 		"format": "biome format --write ."
-	},
-	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
-		"@types/bun": "latest",
-		"tsup": "^8.5.0"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
@@ -40,5 +36,11 @@
 		"borsher": "^4.0.0",
 		"near-api-js": "^4.0.0 || ^5.0.0",
 		"viem": "^2.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/bun": "latest",
+		"tsup": "^8.5.0",
+		"vitest": "2.1.2"
 	}
 }
