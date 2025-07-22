@@ -29,9 +29,9 @@ const sdk = new BridgeSDK({
 });
 
 // Set up intent signer (for NEAR)
-const keyPair = KeyPair.fromString('your-private-key');
+const keypair = KeyPair.fromString('your-private-key');
 const signer = createIntentSignerNearKeyPair({
-  keypair: keyPair,
+  keypair: keypair,
   accountId: 'your-account.near'
 });
 sdk.setIntentSigner(signer);
