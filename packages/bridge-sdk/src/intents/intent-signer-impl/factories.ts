@@ -1,16 +1,16 @@
-import {
-	IntentSignerNEP413,
-	type IntentSignerNEP413Config,
-} from "./intent-signer-nep413";
 import type { IIntentSigner } from "../interfaces/intent-signer";
-import {
-	IntentSignerViem,
-	type IntentSignerViemConfig,
-} from "./intent-signer-viem";
 import {
 	IntentSignerNearKeypair,
 	type IntentSignerNearKeypairConfig,
 } from "./intent-signer-near-keypair";
+import {
+	IntentSignerNEP413,
+	type IntentSignerNEP413Config,
+} from "./intent-signer-nep413";
+import {
+	IntentSignerViem,
+	type IntentSignerViemConfig,
+} from "./intent-signer-viem";
 
 export function createIntentSignerNEP413(
 	config: IntentSignerNEP413Config,
