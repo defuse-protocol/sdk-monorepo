@@ -10,6 +10,7 @@ import {
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
+import { UnsupportedDestinationMemoError } from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -95,6 +96,20 @@ export class HotBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
+		// Validate that `destinationMemo` is not accidentally used with Stellar or TON
+		if (
+			args.withdrawalParams.destinationMemo != null &&
+			args.withdrawalParams.destinationMemo !== ""
+		) {
+			throw new UnsupportedDestinationMemoError(
+				assetInfo.blockchain,
+				args.withdrawalParams.assetId,
+			);
+		}
+
 		const intents: IntentPrimitive[] = [];
 		let feeAmount: bigint;
 
@@ -113,9 +128,6 @@ export class HotBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-
-		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
-		assert(assetInfo != null, "Asset is not supported");
 
 		const isNative = "native" in assetInfo;
 		const amount = args.withdrawalParams.amount + (isNative ? feeAmount : 0n);

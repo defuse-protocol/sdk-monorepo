@@ -40,3 +40,21 @@ export class MinWithdrawalAmountError extends BaseError {
 		});
 	}
 }
+
+export type UnsupportedDestinationMemoErrorType =
+	UnsupportedDestinationMemoError & {
+		name: "UnsupportedDestinationMemoError";
+	};
+
+export class UnsupportedDestinationMemoError extends BaseError {
+	constructor(
+		public blockchain: string,
+		public assetId: string,
+	) {
+		super("Destination memo is not supported for this blockchain.", {
+			details: "Destination memo is only supported for XRP Ledger withdrawals.",
+			metaMessages: [`Blockchain: ${blockchain}`, `Asset ID: ${assetId}`],
+			name: "UnsupportedDestinationMemoError",
+		});
+	}
+}

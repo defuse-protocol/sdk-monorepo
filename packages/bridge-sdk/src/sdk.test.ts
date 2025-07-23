@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
+	UnsupportedDestinationMemoError,
 } from "./classes/errors";
 import { createIntentSignerViem } from "./intents";
 import {
@@ -222,6 +223,102 @@ describe.concurrent("hot_bridge", () => {
 				],
 			},
 		]);
+	});
+
+	describe.concurrent("stellar", () => {
+		it("estimateWithdrawalFee(): returns fee", async () => {
+			const sdk = new BridgeSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1n,
+					destinationAddress: zeroAddress,
+					destinationMemo: undefined,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: expect.any(BigInt),
+				quote: null,
+			});
+		});
+
+		it.skip("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
+			const sdk = new BridgeSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1n,
+					destinationAddress: zeroAddress,
+					destinationMemo: undefined,
+					feeInclusive: true,
+				},
+			});
+
+			await expect(fee).rejects.toThrow(FeeExceedsAmountError);
+		});
+
+		it("createWithdrawalIntents(): returns intents array", async () => {
+			const sdk = new BridgeSDK({ referral: "", intentSigner });
+
+			const intents = sdk.createWithdrawalIntents({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1n,
+					destinationAddress:
+						"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU",
+					destinationMemo: undefined,
+					feeInclusive: false,
+				},
+				feeEstimation: {
+					amount: 0n,
+					quote: null,
+				},
+			});
+
+			await expect(intents).resolves.toEqual([
+				{
+					amounts: ["1"],
+					intent: "mt_withdraw",
+					msg: expect.stringMatching(
+						/{"receiver_id":"1114wxgAxsZMgciovmoCpRmNCtLu7KVkNZnS7VYz9HSmwCs6dwdsjAeHgbn","amount_native":"0","block_number":\d+}/,
+					),
+					receiver_id: "bridge-refuel.hot.tg",
+					token: "v2_1.omni.hot.tg",
+					token_ids: [
+						"1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					],
+				},
+			]);
+		});
+
+		it("createWithdrawalIntents(): rejects when destinationMemo is used with Stellar", async () => {
+			const sdk = new BridgeSDK({ referral: "", intentSigner });
+
+			const intents = sdk.createWithdrawalIntents({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1000000n,
+					destinationAddress:
+						"GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5",
+					destinationMemo: "test-memo",
+					feeInclusive: false,
+				},
+				feeEstimation: {
+					amount: 0n,
+					quote: null,
+				},
+			});
+
+			await expect(intents).rejects.toThrow(UnsupportedDestinationMemoError);
+		});
 	});
 });
 

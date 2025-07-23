@@ -9,6 +9,7 @@ export type {
 export {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
+	UnsupportedDestinationMemoError,
 } from "./src/classes/errors";
 export { HOT_BRIDGE_CHAINS_CAIP2 } from "./src/bridges/hot-bridge/hot-bridge-constants";
 export * from "./src/lib/caip2";
