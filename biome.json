@@ -12,7 +12,7 @@
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
-		"ignore": ["**/dist/**", "**/node_modules/**"]
+		"ignore": ["**/dist/**", "**/node_modules/**", "**/package.json"]
 	},
 	"organizeImports": {
 		"enabled": true
