@@ -3,7 +3,7 @@ import type { IntentsUserId } from "../types/intentsUserId";
 import { assert, type AssertErrorType } from "../utils/assert";
 import { toHotOmniNetwork } from "../utils/hotOmniUtils";
 import { hotOmniWithdraw } from "./poaBridgeHttpClient";
-import type { types } from "./poaBridgeHttpClient";
+import type * as types from "./poaBridgeHttpClient/types";
 
 export type WaitForHotOmniWithdrawalCompletionReturnType = null | {
 	destinationTxHash: string | null;
