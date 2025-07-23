@@ -4,7 +4,5 @@ export const BridgeNameEnum = {
 	None: null,
 } as const;
 
-export type BridgeNameEnum = typeof BridgeNameEnum;
-
-export type BridgeNameEnumValues =
-	(typeof BridgeNameEnum)[keyof typeof BridgeNameEnum];
+type BridgeNameEnumType = typeof BridgeNameEnum;
+export type BridgeNameEnumValue = BridgeNameEnumType[keyof BridgeNameEnumType];

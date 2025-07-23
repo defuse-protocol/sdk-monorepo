@@ -41,5 +41,5 @@ export const BlockchainEnum = {
 	HYPERLIQUID: "hyperliquid:999",
 } as const;
 
-export type BlockchainEnum =
-	(typeof BlockchainEnum)[keyof typeof BlockchainEnum];
+export type BlockchainEnumType = typeof BlockchainEnum;
+export type BlockchainEnumValue = BlockchainEnumType[keyof BlockchainEnumType];
