@@ -3,7 +3,7 @@ import { base58, hex } from "@scure/base";
 import type {
 	AuthHandle,
 	AuthIdentifier,
-	AuthMethodValue,
+	AuthMethod,
 } from "../types/authHandle";
 import type { IntentsUserId } from "../types/intentsUserId";
 import { assert } from "./assert";
@@ -34,14 +34,14 @@ import { parsePublicKey } from "./webAuthn";
  */
 export function authHandleToIntentsUserId(
 	authIdentifier: AuthIdentifier,
-	authMethod: AuthMethodValue,
+	authMethod: AuthMethod,
 ): IntentsUserId;
 export function authHandleToIntentsUserId(
 	authHandle: AuthHandle,
 ): IntentsUserId;
 export function authHandleToIntentsUserId(
 	authIdentifier: AuthIdentifier | AuthHandle,
-	authMethod?: AuthMethodValue,
+	authMethod?: AuthMethod,
 ): IntentsUserId {
 	let authHandle: AuthHandle;
 	if (typeof authIdentifier === "object") {

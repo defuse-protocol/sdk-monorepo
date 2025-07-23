@@ -1,5 +1,4 @@
-export type AuthMethodType = typeof AuthMethod;
-export type AuthMethodValue = AuthMethodType[keyof AuthMethodType];
+export type AuthMethod = "near" | "evm" | "solana" | "webauthn" | "ton";
 
 export const AuthMethod = {
 	Near: "near",
@@ -18,5 +17,5 @@ export type AuthIdentifier = string;
 
 export type AuthHandle = {
 	identifier: AuthIdentifier;
-	method: AuthMethodValue;
+	method: AuthMethod;
 };
