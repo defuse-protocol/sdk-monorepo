@@ -1,13 +1,13 @@
 import type { MultiPayload } from "@defuse-protocol/contract-types";
 import { base58, base64urlnopad } from "@scure/base";
-import type { AuthMethodValue } from "../../types/authHandle";
+import type { AuthMethod } from "../../types/authHandle";
 import type { WebAuthnSignatureData } from "../../types/walletMessage";
 import type { CurveType, FormattedPublicKey } from "../../types/webAuthn";
 import { assert } from "../assert";
 import { extractRawSignature, parsePublicKey } from "../webAuthn";
 
 export function makeWebAuthnMultiPayload(
-	userInfo: { userAddress: string; userChainType: AuthMethodValue },
+	userInfo: { userAddress: string; userChainType: AuthMethod },
 	signature: WebAuthnSignatureData,
 ): MultiPayload {
 	assert(

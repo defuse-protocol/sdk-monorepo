@@ -6,5 +6,6 @@ export const RouteEnum = {
 	InternalTransfer: "internal_transfer",
 } as const;
 
-export type RouteEnumType = typeof RouteEnum;
-export type RouteEnumValue = (typeof RouteEnum)[keyof typeof RouteEnum];
+export type RouteEnum = typeof RouteEnum;
+
+export type RouteEnumValues = (typeof RouteEnum)[keyof typeof RouteEnum];

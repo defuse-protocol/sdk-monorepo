@@ -1,5 +1,5 @@
 import type { Result } from "@thames/monads";
-import type { AuthMethodValue } from "../types/authHandle";
+import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "../utils/assert";
 import { prepareSwapSignedData } from "../utils/prepareBroadcastRequest";
@@ -14,7 +14,7 @@ export type PublishIntentErrorType = PublishIntentsErrorType;
 
 export function publishIntent(
 	signatureData: WalletSignatureResult,
-	userInfo: { userAddress: string; userChainType: AuthMethodValue },
+	userInfo: { userAddress: string; userChainType: AuthMethod },
 	quoteHashes: string[],
 ): Promise<Result<PublishIntentReturnType, PublishIntentErrorType>> {
 	return publishIntents({

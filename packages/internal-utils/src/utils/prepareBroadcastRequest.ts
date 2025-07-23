@@ -3,14 +3,14 @@ import type {
 	Params,
 	PublishIntentRequest,
 } from "../solverRelay/solverRelayHttpClient/types";
-import type { AuthMethodValue } from "../types/authHandle";
+import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "./assert";
 import { makeWebAuthnMultiPayload } from "./multiPayload/webauthn";
 
 export function prepareSwapSignedData(
 	signature: WalletSignatureResult,
-	userInfo: { userAddress: string; userChainType: AuthMethodValue },
+	userInfo: { userAddress: string; userChainType: AuthMethod },
 ): Params<PublishIntentRequest>["signed_data"] {
 	const signatureType = signature.type;
 	switch (signatureType) {

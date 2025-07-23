@@ -3,11 +3,11 @@ import type {
 	RetryOptions,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
-import type { BridgeNameEnumValue } from "./constants/bridge-name-enum";
-import type { RouteEnumType } from "./constants/route-enum";
+import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
+import type { RouteEnum } from "./constants/route-enum";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
-import type { CAIP2NetworkValue } from "./lib/caip2";
+import type { CAIP2_NETWORK } from "./lib/caip2";
 
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;
@@ -70,28 +70,28 @@ export interface WithdrawalParams {
 }
 
 export type NearWithdrawalRouteConfig = {
-	route: RouteEnumType["NearWithdrawal"];
+	route: RouteEnum["NearWithdrawal"];
 	msg?: string;
 };
 
 export type InternalTransferRouteConfig = {
-	route: RouteEnumType["InternalTransfer"];
+	route: RouteEnum["InternalTransfer"];
 };
 
 export type VirtualChainRouteConfig = {
-	route: RouteEnumType["VirtualChain"];
+	route: RouteEnum["VirtualChain"];
 	auroraEngineContractId: string;
 	proxyTokenContractId: string | null;
 };
 
 export type PoaBridgeRouteConfig = {
-	route: RouteEnumType["PoaBridge"];
-	chain: CAIP2NetworkValue;
+	route: RouteEnum["PoaBridge"];
+	chain: CAIP2_NETWORK;
 };
 
 export type HotBridgeRouteConfig = {
-	route: RouteEnumType["HotBridge"];
-	chain: CAIP2NetworkValue;
+	route: RouteEnum["HotBridge"];
+	chain: CAIP2_NETWORK;
 };
 
 export type RouteConfig =
@@ -180,14 +180,14 @@ export interface WithdrawalIdentifier {
 
 export type ParsedAssetInfo = (
 	| {
-			blockchain: CAIP2NetworkValue;
-			bridgeName: BridgeNameEnumValue;
+			blockchain: CAIP2_NETWORK;
+			bridgeName: BridgeNameEnumValues;
 			standard: "nep141";
 			contractId: string;
 	  }
 	| {
-			blockchain: CAIP2NetworkValue;
-			bridgeName: BridgeNameEnumValue;
+			blockchain: CAIP2_NETWORK;
+			bridgeName: BridgeNameEnumValues;
 			standard: "nep245";
 			contractId: string;
 			tokenId: string;
