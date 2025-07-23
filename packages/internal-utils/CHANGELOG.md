@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.1.3
+
+### Patch Changes
+
+- 43abe56: Fix variable and type names collisions. E.g. `BlockchainEnum` is exported just a regular object.
+
 ## 0.1.2
 
 ### Patch Changes

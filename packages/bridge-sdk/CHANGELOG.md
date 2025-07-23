@@ -1,5 +1,13 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.10.1
+
+### Patch Changes
+
+- 43abe56: Fix variable and type names collisions. E.g. `BlockchainEnum` is exported just a regular object.
+- Updated dependencies [43abe56]
+  - @defuse-protocol/internal-utils@0.1.3
+
 ## 0.10.0
 
 ### Minor Changes
