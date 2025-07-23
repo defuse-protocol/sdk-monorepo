@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.1.2
+
+### Patch Changes
+
+- f270534: Fix exporting types of poaBridge and solverRelay namespaces.
+
 ## 0.1.1
 
 ### Patch Changes
