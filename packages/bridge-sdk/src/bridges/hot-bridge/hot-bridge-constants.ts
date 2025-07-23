@@ -11,6 +11,7 @@ export const HOT_BRIDGE_CHAINS_CAIP2 = [
 	CAIP2_NETWORK.TON,
 	CAIP2_NETWORK.Optimism,
 	CAIP2_NETWORK.Avalanche,
+	CAIP2_NETWORK.Stellar,
 ];
 
 export type HOT_BRIDGE_CHAINS_CAIP2 = (typeof HOT_BRIDGE_CHAINS_CAIP2)[number];

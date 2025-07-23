@@ -18,6 +18,7 @@ export const CAIP2_NETWORK = {
 	Avalanche: "eip155:43114",
 	Sui: "sui:mainnet",
 	Aptos: "aptos:mainnet",
+	Stellar: "stellar:pubnet",
 } as const;
 
 export type CAIP2_NETWORK = (typeof CAIP2_NETWORK)[keyof typeof CAIP2_NETWORK];

@@ -61,6 +61,9 @@ export interface WithdrawalParams {
 	assetId: string;
 	amount: bigint;
 	destinationAddress: string;
+	/**
+	 * XRP Leger chain specific. MEMO IS NOT SUPPORTED FOR STELLAR AND TON.
+	 */
 	destinationMemo: string | undefined;
 	feeInclusive: boolean;
 	routeConfig?: RouteConfig | undefined;

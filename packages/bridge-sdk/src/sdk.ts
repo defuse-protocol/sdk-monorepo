@@ -10,12 +10,16 @@ import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
+import type { HotBridgeEVMChainIds } from "./bridges/hot-bridge/hot-bridge-types";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
 import { FeeExceedsAmountError } from "./classes/errors";
 import { SingleWithdrawalImpl } from "./classes/single-withdrawal";
-import { PUBLIC_EVM_RPC_URLS } from "./constants/evm-rpc-urls";
+import {
+	PUBLIC_EVM_RPC_URLS,
+	PUBLIC_STELLAR_RPC_URLS,
+} from "./constants/public-rpc-urls";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
@@ -26,6 +30,7 @@ import type {
 	IntentPrimitive,
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
+import { assert } from "./lib/assert";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -49,17 +54,26 @@ export class BridgeSDK implements IBridgeSDK {
 		env?: NearIntentsEnv;
 		intentSigner?: IIntentSigner;
 		// Fallback to public RPCs if omitted
-		evmRpc?: Record<number, string[]>;
+		evmRpc?: Record<HotBridgeEVMChainIds, string[]>;
 		// Fallback to public RPCs if omitted
 		nearRpc?: string[];
+		stellarRpc?: string[];
 		referral: string;
 	}) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
 
 		const nearRpcUrls = args.nearRpc ?? PUBLIC_NEAR_RPC_URLS;
+		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
-		const evmRpcUrls = Object.assign(PUBLIC_EVM_RPC_URLS, args.evmRpc ?? {});
+
+		const stellarRpcUrls = args.stellarRpc ?? PUBLIC_STELLAR_RPC_URLS;
+		assert(stellarRpcUrls.length > 0, "Stellar RPC URLs are not provided");
+
+		const evmRpcUrls = args.evmRpc ?? PUBLIC_EVM_RPC_URLS;
+		for (const [chainId, urls] of Object.entries(evmRpcUrls)) {
+			assert(urls.length > 0, `EVM RPC URLs for ${chainId} are not provided`);
+		}
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
@@ -80,6 +94,7 @@ export class BridgeSDK implements IBridgeSDK {
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
 					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
 					nearRpc: nearRpcUrls,
+					stellarRpc: stellarRpcUrls[0],
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
