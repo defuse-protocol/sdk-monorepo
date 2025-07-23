@@ -1,7 +1,9 @@
+import type { HotBridgeEVMChainIds } from "../bridges/hot-bridge/hot-bridge-types";
+
 /**
  * Default EVM RPC endpoints for HOT bridge supported chains
  */
-export const PUBLIC_EVM_RPC_URLS: Record<number, string[]> = {
+export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChainIds, string[]> = {
 	56: ["https://bsc-rpc.publicnode.com"], // BNB Chain
 	137: ["https://polygon-bor-rpc.publicnode.com"], // Polygon
 	10: ["https://optimism-rpc.publicnode.com"], // Optimism
