@@ -1,5 +1,6 @@
 import type { RetryOptions } from "@defuse-protocol/internal-utils";
 import type { ILogger } from "@defuse-protocol/internal-utils";
+import { stringify } from "viem";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { drop, zip } from "../lib/array";
@@ -68,7 +69,7 @@ export class BatchWithdrawalImpl<
 		// biome-ignore lint/suspicious/noConsole: <explanation>
 		console.log(
 			"withdrawals =",
-			wids.map((w) => `${w.routeConfig} ${w.index}`).join(","),
+			wids.map((w) => `${stringify(w.routeConfig)} ${w.index}`).join(","),
 		);
 
 		await this.waitForWithdrawalCompletion();

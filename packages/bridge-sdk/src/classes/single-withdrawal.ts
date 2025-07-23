@@ -1,5 +1,6 @@
 import type { RetryOptions } from "@defuse-protocol/internal-utils";
 import type { ILogger } from "@defuse-protocol/internal-utils";
+import { stringify } from "viem";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { determineRouteConfig } from "../lib/route-config";
@@ -62,7 +63,7 @@ export class SingleWithdrawalImpl<
 
 		const wid = this.getWithdrawalIdentifier();
 		// biome-ignore lint/suspicious/noConsole: <explanation>
-		console.log("withdrawals =", `${wid.routeConfig} ${wid.index}`);
+		console.log("withdrawals =", `${stringify(wid.routeConfig)} ${wid.index}`);
 
 		await this.waitForWithdrawalCompletion();
 		// biome-ignore lint/suspicious/noConsole: <explanation>
