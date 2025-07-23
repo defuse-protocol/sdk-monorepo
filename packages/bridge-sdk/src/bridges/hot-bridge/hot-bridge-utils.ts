@@ -15,6 +15,8 @@ export function getFeeAssetIdForChain(caip2: HOT_BRIDGE_CHAINS_CAIP2) {
 			return "nep245:v2_1.omni.hot.tg:10_11111111111111111111";
 		case CAIP2_NETWORK.Avalanche:
 			return "nep245:v2_1.omni.hot.tg:43114_11111111111111111111";
+		case CAIP2_NETWORK.Stellar:
+			return "nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz";
 		default:
 			caip2 satisfies never;
 			throw new Error(`Unsupported chain = ${caip2}`);
@@ -28,6 +30,7 @@ export function toHOTNetwork(caip2: CAIP2_NETWORK): Network {
 		[CAIP2_NETWORK.TON]: Network.Ton,
 		[CAIP2_NETWORK.Optimism]: Network.Optimism,
 		[CAIP2_NETWORK.Avalanche]: Network.Avalanche,
+		[CAIP2_NETWORK.Stellar]: Network.Stellar,
 	};
 
 	if (caip2 in mapping) {
@@ -44,6 +47,7 @@ export function networkIdToCaip2(network: string): CAIP2_NETWORK {
 		[Network.Ton]: CAIP2_NETWORK.TON,
 		[Network.Optimism]: CAIP2_NETWORK.Optimism,
 		[Network.Avalanche]: CAIP2_NETWORK.Avalanche,
+		[Network.Stellar]: CAIP2_NETWORK.Stellar,
 	};
 
 	if (mapping[network] != null) {

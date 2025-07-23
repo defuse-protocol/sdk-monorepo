@@ -80,6 +80,7 @@ export class BridgeSDK implements IBridgeSDK {
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
 					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
 					nearRpc: nearRpcUrls,
+					stellarRpc: "https://stellar.public-rpc.com/http/stellar_horizon",
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},

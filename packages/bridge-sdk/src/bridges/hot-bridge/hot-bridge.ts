@@ -156,7 +156,7 @@ export class HotBridge implements Bridge {
 	}
 
 	async estimateWithdrawalFee(args: {
-		withdrawalParams: Pick<WithdrawalParams, "assetId">;
+		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
@@ -166,7 +166,7 @@ export class HotBridge implements Bridge {
 
 		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
 			toHOTNetwork(assetInfo.blockchain),
-			"native" in assetInfo ? "native" : assetInfo.address,
+			args.withdrawalParams.destinationAddress,
 		);
 
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
