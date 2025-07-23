@@ -1,5 +1,5 @@
 import { utils } from "@defuse-protocol/internal-utils";
-import { RouteEnum } from "../../constants/route-enum";
+import { RouteEnum, type RouteEnumType } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
 import type { WithdrawalParams } from "../../shared-types";
@@ -46,7 +46,7 @@ export function withdrawalParamsInvariant<
 ): asserts params is T & {
 	routeConfig?: Extract<
 		NonNullable<T["routeConfig"]>,
-		{ route: RouteEnum["NearWithdrawal"] }
+		{ route: RouteEnumType["NearWithdrawal"] }
 	>;
 } {
 	assert(

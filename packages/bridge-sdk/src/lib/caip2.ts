@@ -21,4 +21,5 @@ export const CAIP2_NETWORK = {
 	Stellar: "stellar:pubnet",
 } as const;
 
-export type CAIP2_NETWORK = (typeof CAIP2_NETWORK)[keyof typeof CAIP2_NETWORK];
+type CAIP2NetworkType = typeof CAIP2_NETWORK;
+export type CAIP2NetworkValue = CAIP2NetworkType[keyof CAIP2NetworkType];

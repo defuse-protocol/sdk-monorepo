@@ -1,6 +1,6 @@
 import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { CAIP2_NETWORK } from "../../lib/caip2";
+import { type CAIP2NetworkValue, CAIP2_NETWORK } from "../../lib/caip2";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -84,7 +84,7 @@ const tokenPrefixMapping = {
 	aptos: CAIP2_NETWORK.Aptos,
 };
 
-export function contractIdToCaip2(contractId: string): CAIP2_NETWORK {
+export function contractIdToCaip2(contractId: string): CAIP2NetworkValue {
 	for (const [prefix, caip2] of Object.entries(tokenPrefixMapping)) {
 		if (
 			contractId.startsWith(`${prefix}.`) ||
