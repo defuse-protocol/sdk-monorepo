@@ -15,7 +15,10 @@ import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
 import { FeeExceedsAmountError } from "./classes/errors";
 import { SingleWithdrawalImpl } from "./classes/single-withdrawal";
-import { PUBLIC_EVM_RPC_URLS } from "./constants/evm-rpc-urls";
+import {
+	PUBLIC_EVM_RPC_URLS,
+	PUBLIC_STELLAR_RPC_URLS,
+} from "./constants/evm-rpc-urls";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
@@ -26,6 +29,7 @@ import type {
 	IntentPrimitive,
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
+import { assert } from "./lib/assert";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -52,14 +56,23 @@ export class BridgeSDK implements IBridgeSDK {
 		evmRpc?: Record<number, string[]>;
 		// Fallback to public RPCs if omitted
 		nearRpc?: string[];
+		stellarRpc?: string[];
 		referral: string;
 	}) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
 
 		const nearRpcUrls = args.nearRpc ?? PUBLIC_NEAR_RPC_URLS;
+		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
+
+		const stellarRpcUrls = args.stellarRpc ?? PUBLIC_STELLAR_RPC_URLS;
+		assert(stellarRpcUrls.length > 0, "Stellar RPC URLs are not provided");
+
 		const evmRpcUrls = Object.assign(PUBLIC_EVM_RPC_URLS, args.evmRpc ?? {});
+		for (const [chainId, urls] of Object.entries(evmRpcUrls)) {
+			assert(urls.length > 0, `EVM RPC URLs for ${chainId} are not provided`);
+		}
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
@@ -80,7 +93,7 @@ export class BridgeSDK implements IBridgeSDK {
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
 					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
 					nearRpc: nearRpcUrls,
-					stellarRpc: "https://stellar.public-rpc.com/http/stellar_horizon",
+					stellarRpc: stellarRpcUrls[0],
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},

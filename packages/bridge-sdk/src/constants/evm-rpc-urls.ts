@@ -7,3 +7,7 @@ export const PUBLIC_EVM_RPC_URLS: Record<number, string[]> = {
 	10: ["https://optimism-rpc.publicnode.com"], // Optimism
 	43114: ["https://avalanche-c-chain-rpc.publicnode.com"], // Avalanche
 };
+
+export const PUBLIC_STELLAR_RPC_URLS = [
+	"https://stellar.public-rpc.com/http/stellar_horizon",
+];
