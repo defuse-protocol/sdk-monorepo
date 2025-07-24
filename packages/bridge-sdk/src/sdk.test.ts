@@ -241,7 +241,6 @@ describe.concurrent("hot_bridge", () => {
 					destinationMemo: undefined,
 					feeInclusive: false,
 				},
-				logger: console,
 			});
 
 			await expect(fee).resolves.toEqual({
