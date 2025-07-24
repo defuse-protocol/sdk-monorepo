@@ -226,6 +226,9 @@ describe.concurrent("hot_bridge", () => {
 	});
 
 	describe.concurrent("stellar", () => {
+		const stellarAddress =
+			"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU";
+
 		it("estimateWithdrawalFee(): returns fee", async () => {
 			const sdk = new BridgeSDK({ referral: "", intentSigner });
 
@@ -234,10 +237,11 @@ describe.concurrent("hot_bridge", () => {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1n,
-					destinationAddress: zeroAddress,
+					destinationAddress: stellarAddress,
 					destinationMemo: undefined,
 					feeInclusive: false,
 				},
+				logger: console,
 			});
 
 			await expect(fee).resolves.toEqual({
@@ -254,7 +258,7 @@ describe.concurrent("hot_bridge", () => {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1n,
-					destinationAddress: zeroAddress,
+					destinationAddress: stellarAddress,
 					destinationMemo: undefined,
 					feeInclusive: true,
 				},
@@ -271,8 +275,7 @@ describe.concurrent("hot_bridge", () => {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1n,
-					destinationAddress:
-						"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU",
+					destinationAddress: stellarAddress,
 					destinationMemo: undefined,
 					feeInclusive: false,
 				},
