@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.10.3
+
+### Patch Changes
+
+- 0b80a13: Update `IntentSignerNEP413` to support formatted signature ("ed25519:<base58>").
+
 ## 0.10.2
 
 ### Patch Changes
