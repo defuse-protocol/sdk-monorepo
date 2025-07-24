@@ -11,7 +11,7 @@ type SignMessageNEP413 = (
 ) => MaybePromise<{
 	// The public counterpart of the key used to sign, expressed as a string with format "<key-type>:<base58-key-bytes>" (e.g. "ed25519:6TupyNrcHGTt5XRLmHTc2KGaiSbjhQi1KHtCXTgbcr4Y")
 	publicKey: string;
-	// The base64 representation of the signature.
+	// The base64 representation of the signature or "<key-type>:<base58-signature-bytes>"
 	signature: string;
 }>;
 
@@ -46,7 +46,10 @@ export class IntentSignerNEP413 implements IIntentSigner {
 			nep413Payload,
 			nep413Hash,
 		);
-		const signatureFormatted = `ed25519:${base58.encode(base64.decode(signature))}`;
+
+		const signatureFormatted = signature.startsWith("ed25519:")
+			? signature
+			: `ed25519:${base58.encode(base64.decode(signature))}`;
 
 		return {
 			standard: "nep413",
