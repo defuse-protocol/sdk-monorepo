@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.1.4
+
+### Patch Changes
+
+- 1a93def: Revert "fix(bridge-sdk,internal-utils): fix var and type name collisions (#55)"
+
 ## 0.1.3
 
 ### Patch Changes
