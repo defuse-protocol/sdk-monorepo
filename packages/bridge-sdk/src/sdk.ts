@@ -201,9 +201,10 @@ export class BridgeSDK implements IBridgeSDK {
 					? args.withdrawalParams.amount - args.feeEstimation.amount
 					: args.withdrawalParams.amount;
 
-				await bridge.validateMinWithdrawalAmount({
+				await bridge.validateWithdrawal({
 					assetId: args.withdrawalParams.assetId,
 					amount: actualAmount,
+					destinationAddress: args.withdrawalParams.destinationAddress,
 					logger: args.logger,
 				});
 

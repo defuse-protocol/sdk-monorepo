@@ -45,11 +45,12 @@ export class IntentsBridge implements Bridge {
 	}
 
 	/**
-	 * Intents bridge doesn't have minimum withdrawal amount restrictions.
+	 * Intents bridge doesn't have withdrawal restrictions.
 	 */
-	async validateMinWithdrawalAmount(_args: {
+	async validateWithdrawal(_args: {
 		assetId: string;
 		amount: bigint;
+		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
 		return;
