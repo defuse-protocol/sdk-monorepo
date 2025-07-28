@@ -9,6 +9,7 @@ import type { IIntentExecuter } from "../interfaces/intent-executer";
 import type { IIntentRelayer } from "../interfaces/intent-relayer";
 import type { IIntentSigner } from "../interfaces/intent-signer";
 import type {
+	IntentPayload,
 	IntentPayloadFactory,
 	IntentRelayParamsFactory,
 } from "../shared-types";
@@ -48,13 +49,13 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 			verifying_contract: verifyingContract,
 			...intentParams,
 		});
-		intentPayload = this.intentPayloadFactory
-			? // We allow omitting properties, that's why we pass the result through the factory again
-				defaultIntentPayloadFactory({
-					verifying_contract: verifyingContract,
-					...(await this.intentPayloadFactory(intentPayload)),
-				})
-			: intentPayload;
+
+		if (this.intentPayloadFactory) {
+			intentPayload = await mergeIntentPayloads(
+				intentPayload,
+				this.intentPayloadFactory,
+			);
+		}
 
 		const multiPayload = await this.intentSigner.signIntent(intentPayload);
 		const relayParams = relayParamsFactory ? await relayParamsFactory() : {};
@@ -74,4 +75,20 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 			logger: this.logger,
 		});
 	}
+}
+
+async function mergeIntentPayloads(
+	basePayload: IntentPayload,
+	intentPayloadFactory: IntentPayloadFactory,
+): Promise<IntentPayload> {
+	const customPayload = await intentPayloadFactory(basePayload);
+	const customPayloadIntents = customPayload.intents ?? [];
+
+	return {
+		...basePayload,
+		...customPayload,
+		intents: Array.from(
+			new Set([...customPayloadIntents, ...basePayload.intents]),
+		),
+	};
 }
