@@ -10,6 +10,4 @@ export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChainIds, string[]> = {
 	43114: ["https://avalanche-c-chain-rpc.publicnode.com"], // Avalanche
 };
 
-export const PUBLIC_STELLAR_RPC_URLS = [
-	"https://stellar.public-rpc.com/http/stellar_horizon",
-];
+export const PUBLIC_STELLAR_RPC_URLS = ["https://mainnet.sorobanrpc.com"];
