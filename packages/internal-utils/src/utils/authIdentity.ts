@@ -63,6 +63,7 @@ export function authHandleToIntentsUserId(
 			return authHandle.identifier.toLowerCase() as IntentsUserId;
 
 		case "solana":
+		case "stellar":
 			return hex.encode(base58.decode(authHandle.identifier)) as IntentsUserId;
 
 		case "webauthn": {
