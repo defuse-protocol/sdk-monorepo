@@ -7,6 +7,9 @@ The Bridge SDK for Near Intents provides a set of tools for interacting with var
 - Support for multiple bridge implementations (Hot, PoA)
 - Single and batch withdrawal operations
 - Automatic fee estimation
+- Built-in validation for withdrawal constraints:
+  - PoA Bridge minimum withdrawal amounts
+  - Hot Bridge Stellar trustline validation
 - Transfers within Near Intents
 - Transfers to NEAR blockchain
 - Transfers to Virtual Chains (e.g. Aurora)
@@ -413,9 +416,9 @@ try {
 }
 ```
 
-### POA Bridge Minimum Withdrawal Amount Validation
+#### PoA Bridge Minimum Withdrawal Amount Validation
 
-POA bridge has minimum withdrawal amount requirements that vary per token and blockchain. The SDK automatically validates this for all withdrawals.
+PoA bridge has minimum withdrawal amount requirements that vary per token and blockchain. The SDK automatically validates this for all withdrawals.
 
 ```typescript
 // Validation happens automatically during withdrawal processing:
@@ -441,7 +444,49 @@ try {
 }
 ```
 
-Note: Other routes (Near Withdrawal, Virtual Chain, Hot Bridge, Internal Transfer) don't have minimum withdrawal restrictions, so validation passes through for those routes.
+Note: Other routes (Near Withdrawal, Virtual Chain, Internal Transfer) don't have minimum withdrawal restrictions, so validation passes through for those routes.
+
+#### Hot Bridge Stellar Trustline Validation
+
+Hot Bridge validates that destination addresses have the required trustlines when withdrawing to Stellar blockchain. This prevents failed transactions due to missing trustlines.
+
+```typescript
+import { TrustlineNotFoundError } from '@defuse-protocol/bridge-sdk';
+
+// Validation happens automatically during withdrawal processing:
+try {
+  const withdrawal = sdk.createWithdrawal({
+    withdrawalParams: {
+      assetId: 'nep245:v2_1.omni.hot.tg:stellar_1_USD_GBDMM6LG7YX7YGF6JFAEWX3KFUSBXGAEPZ2IHDLWH:1100', // Stellar USD token
+      amount: BigInt('1000000'), // 1 USD (in smallest units)
+      destinationAddress: 'GCKFBEIYTKP6RYVDYGMVVMJ6J6XKCRZL74JPWTFGD2NQNMPBQC2LGTVZ', // Stellar address
+      destinationMemo: undefined,
+      feeInclusive: false
+    }
+  });
+  
+  await withdrawal.process(); // Trustline validation happens here
+} catch (error) {
+  if (error instanceof TrustlineNotFoundError) {
+    console.log(`Trustline not found for token: ${error.tokenCode}`);
+    console.log(`Destination address: ${error.destinationAddress}`);
+    console.log('The destination address must have a trustline for this token before withdrawal');
+    // User needs to create a trustline for the token on Stellar before withdrawing
+  }
+}
+```
+
+**What is a trustline?**
+On Stellar, accounts must explicitly create "trustlines" to hold non-native assets. Before receiving any token (except XLM), the destination address must:
+1. Create a trustline for that specific token
+2. Have sufficient XLM balance to maintain the trustline
+
+**Why this validation matters:**
+- Prevents failed withdrawals due to missing trustlines
+- Saves gas fees and reduces user frustration
+- Provides clear error messages for troubleshooting
+
+Note: This validation only applies to Stellar destinations via Hot Bridge. Other blockchains and routes don't require trustline validation.
 
 TBD
 
