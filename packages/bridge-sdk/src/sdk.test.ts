@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
+	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
 import { createIntentSignerViem } from "./intents";
@@ -227,6 +228,8 @@ describe.concurrent("hot_bridge", () => {
 
 	describe.concurrent("stellar", () => {
 		const stellarAddress =
+			"GAUA7XL5K54CC2DDGP77FJ2YBHRJLT36CPZDXWPM6MP7MANOGG77PNJU";
+		const stellarAddressWithoutTrustline =
 			"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU";
 
 		it("estimateWithdrawalFee(): returns fee", async () => {
@@ -266,10 +269,31 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 		});
 
+		it("estimateWithdrawalFee(): rejects when no trustline", async () => {
+			const sdk = new BridgeSDK({ referral: "", intentSigner });
+
+			const fee = sdk.createWithdrawalIntents({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+					amount: 1000000n,
+					destinationAddress: stellarAddressWithoutTrustline,
+					destinationMemo: undefined,
+					feeInclusive: false,
+				},
+				feeEstimation: {
+					amount: 0n,
+					quote: null,
+				},
+			});
+
+			await expect(fee).rejects.toThrow(TrustlineNotFoundError);
+		});
+
 		it("createWithdrawalIntents(): returns intents array", async () => {
 			const sdk = new BridgeSDK({ referral: "", intentSigner });
 
-			const intents = sdk.createWithdrawalIntents({
+			const intentsNative = sdk.createWithdrawalIntents({
 				withdrawalParams: {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
@@ -284,17 +308,47 @@ describe.concurrent("hot_bridge", () => {
 				},
 			});
 
-			await expect(intents).resolves.toEqual([
+			const intentsToken = sdk.createWithdrawalIntents({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+					amount: 1n,
+					destinationAddress: stellarAddress,
+					destinationMemo: undefined,
+					feeInclusive: false,
+				},
+				feeEstimation: {
+					amount: 0n,
+					quote: null,
+				},
+			});
+
+			await expect(intentsNative).resolves.toEqual([
 				{
 					amounts: ["1"],
 					intent: "mt_withdraw",
 					msg: expect.stringMatching(
-						/{"receiver_id":"1114wxgAxsZMgciovmoCpRmNCtLu7KVkNZnS7VYz9HSmwCs6dwdsjAeHgbn","amount_native":"0","block_number":\d+}/,
+						/{"receiver_id":"1114wxgAxsZMgcigrJfNL8z1q1fqaZMQaiz1hhPQb4GcFRELffsLeNcoy4i","amount_native":"0","block_number":\d+}/,
 					),
 					receiver_id: "bridge-refuel.hot.tg",
 					token: "v2_1.omni.hot.tg",
 					token_ids: [
 						"1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					],
+				},
+			]);
+
+			await expect(intentsToken).resolves.toEqual([
+				{
+					amounts: ["1"],
+					intent: "mt_withdraw",
+					msg: expect.stringMatching(
+						/{"receiver_id":"1114wxgAxsZMgcigrJfNL8z1q1fqaZMQaiz1hhPQb4GcFRELffsLeNcoy4i","amount_native":"0","block_number":\d+}/,
+					),
+					receiver_id: "bridge-refuel.hot.tg",
+					token: "v2_1.omni.hot.tg",
+					token_ids: [
+						"1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
 					],
 				},
 			]);
@@ -308,8 +362,7 @@ describe.concurrent("hot_bridge", () => {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1000000n,
-					destinationAddress:
-						"GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5",
+					destinationAddress: stellarAddress,
 					destinationMemo: "test-memo",
 					feeInclusive: false,
 				},

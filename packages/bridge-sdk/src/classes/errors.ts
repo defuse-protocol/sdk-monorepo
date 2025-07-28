@@ -58,3 +58,26 @@ export class UnsupportedDestinationMemoError extends BaseError {
 		});
 	}
 }
+
+export type TrustlineNotFoundErrorType = TrustlineNotFoundError & {
+	name: "TrustlineNotFoundError";
+};
+
+export class TrustlineNotFoundError extends BaseError {
+	constructor(
+		public destinationAddress: string,
+		public assetId: string,
+		public blockchain: string,
+	) {
+		super("Destination address does not have a trustline for this asset.", {
+			details:
+				"The destination address must establish a trustline before receiving this asset.",
+			metaMessages: [
+				`Blockchain: ${blockchain}`,
+				`Asset ID: ${assetId}`,
+				`Destination address: ${destinationAddress}`,
+			],
+			name: "TrustlineNotFoundError",
+		});
+	}
+}
