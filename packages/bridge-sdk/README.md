@@ -468,7 +468,7 @@ try {
   await withdrawal.process(); // Trustline validation happens here
 } catch (error) {
   if (error instanceof TrustlineNotFoundError) {
-    console.log(`Trustline not found for token: ${error.tokenCode}`);
+    console.log(`Trustline not found for token: ${error.assetId}`);
     console.log(`Destination address: ${error.destinationAddress}`);
     console.log('The destination address must have a trustline for this token before withdrawal');
     // User needs to create a trustline for the token on Stellar before withdrawing
