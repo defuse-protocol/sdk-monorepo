@@ -37,6 +37,7 @@ export function prepareSwapSignedData(
 		}
 
 		case "SOLANA":
+		case "STELLAR":
 			assert(
 				userInfo.userChainType === "solana",
 				"User chain and signature chain must match",
@@ -46,7 +47,7 @@ export function prepareSwapSignedData(
 				payload: new TextDecoder().decode(signature.signedData.message),
 				// Solana address is its public key encoded in base58
 				public_key: `ed25519:${userInfo.userAddress}`,
-				signature: transformSolanaSignature(signature.signatureData),
+				signature: transformED25519Signature(signature.signatureData),
 			};
 
 		case "WEBAUTHN": {
@@ -108,6 +109,6 @@ function toRecoveryBit(yParityOrV: number) {
 	throw new Error("Invalid yParityOrV value");
 }
 
-function transformSolanaSignature(signature: Uint8Array) {
+function transformED25519Signature(signature: Uint8Array) {
 	return `ed25519:${base58.encode(signature)}`;
 }

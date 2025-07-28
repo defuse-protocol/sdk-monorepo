@@ -38,6 +38,11 @@ describe("prepareSwapSignedData()", () => {
 				Buffer.from(JSON.stringify({ foo: "bar" }), "utf8"),
 			),
 		},
+		STELLAR: {
+			message: Uint8Array.from(
+				Buffer.from(JSON.stringify({ foo: "bar" }), "utf8"),
+			),
+		},
 		WEBAUTHN: swapMessage.WEBAUTHN,
 		TON_CONNECT: swapMessage.TON_CONNECT,
 	};
