@@ -91,9 +91,10 @@ export class PoaBridge implements Bridge {
 	 * meets the minimum required amount for the specific token and blockchain.
 	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
 	 */
-	async validateMinWithdrawalAmount(args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
+		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);

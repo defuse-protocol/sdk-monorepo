@@ -112,15 +112,17 @@ export interface Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
 
 	/**
-	 * Validates minimum withdrawal amount for the bridge.
-	 * Each bridge implementation may have different minimum withdrawal requirements.
+	 * Validates withdrawal constraints for the bridge.
+	 * Each bridge implementation may have different withdrawal requirements.
 	 * Some bridges (like Aurora Engine, Intents) have no restrictions and will always pass.
-	 * Others (like POA) check against their API for token-specific minimum amounts.
+	 * Others (like POA) check minimum amounts, and HOT Bridge checks trustlines for Stellar.
 	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 * @throws {TrustlineNotFoundError} If destination address lacks required trustline
 	 */
-	validateMinWithdrawalAmount(args: {
+	validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
+		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void>;
 

@@ -10,11 +10,15 @@ import {
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
-import { UnsupportedDestinationMemoError } from "../../classes/errors";
+import {
+	TrustlineNotFoundError,
+	UnsupportedDestinationMemoError,
+} from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
+import { CAIP2_NETWORK } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -157,14 +161,36 @@ export class HotBridge implements Bridge {
 	}
 
 	/**
-	 * Hot bridge doesn't have minimum withdrawal amount restrictions.
+	 * Hot bridge validates trustlines for Stellar addresses.
+	 * For Stellar chains, checks if the destination address has the required trustline.
+	 * @throws {TrustlineNotFoundError} If Stellar destination address lacks required trustline
 	 */
-	async validateMinWithdrawalAmount(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
+		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
-		return;
+		const assetInfo = this.parseAssetId(args.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+		hotBlockchainInvariant(assetInfo.blockchain);
+
+		if (assetInfo.blockchain === CAIP2_NETWORK.Stellar) {
+			const token = "native" in assetInfo ? "native" : assetInfo.address;
+
+			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
+				args.destinationAddress,
+				token,
+			);
+
+			if (!hasTrustline) {
+				throw new TrustlineNotFoundError(
+					args.destinationAddress,
+					args.assetId,
+					assetInfo.blockchain,
+				);
+			}
+		}
 	}
 
 	async estimateWithdrawalFee(args: {
@@ -184,7 +210,7 @@ export class HotBridge implements Bridge {
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId
+			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
 				? null
 				: await solverRelay.getQuote({
 						quoteParams: {

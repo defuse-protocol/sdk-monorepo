@@ -110,11 +110,12 @@ export class DirectBridge implements Bridge {
 	}
 
 	/**
-	 * Direct bridge doesn't have minimum withdrawal amount restrictions.
+	 * Direct bridge doesn't have withdrawal restrictions.
 	 */
-	async validateMinWithdrawalAmount(_args: {
+	async validateWithdrawal(_args: {
 		assetId: string;
 		amount: bigint;
+		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
 		return;
