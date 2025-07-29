@@ -39,7 +39,8 @@ export function prepareSwapSignedData(
 		case "SOLANA":
 		case "STELLAR":
 			assert(
-				userInfo.userChainType === "solana",
+				userInfo.userChainType === "solana" ||
+					userInfo.userChainType === "stellar",
 				"User chain and signature chain must match",
 			);
 			return {
