@@ -53,7 +53,7 @@ type RPCEndpointMap = Record<
 	string[]
 >;
 
-interface BridgeSDKConfig {
+export interface BridgeSDKConfig {
 	env?: NearIntentsEnv;
 	intentSigner?: IIntentSigner;
 	rpc?: Partial<RPCEndpointMap>;
