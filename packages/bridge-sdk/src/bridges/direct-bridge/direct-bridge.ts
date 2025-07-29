@@ -12,7 +12,7 @@ import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
-import { CAIP2_NETWORK } from "../../lib/caip2";
+import { Chains } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -63,7 +63,7 @@ export class DirectBridge implements Bridge {
 
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
-				blockchain: CAIP2_NETWORK.Near,
+				blockchain: Chains.Near,
 				bridgeName: BridgeNameEnum.None,
 				address: parsed.contractId,
 			});

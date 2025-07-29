@@ -1,4 +1,7 @@
-export const CAIP2_NETWORK = {
+/**
+ * CAIP2 identifiers
+ */
+export const Chains = {
 	Bitcoin: "bip122:000000000019d6689c085ae165831e93",
 	Ethereum: "eip155:1",
 	Base: "eip155:8453",
@@ -21,4 +24,4 @@ export const CAIP2_NETWORK = {
 	Stellar: "stellar:pubnet",
 } as const;
 
-export type CAIP2_NETWORK = (typeof CAIP2_NETWORK)[keyof typeof CAIP2_NETWORK];
+export type Chain = (typeof Chains)[keyof typeof Chains];

@@ -7,7 +7,7 @@ import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
 import type { RouteEnum } from "./constants/route-enum";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
-import type { CAIP2_NETWORK } from "./lib/caip2";
+import type { Chain } from "./lib/caip2";
 
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;
@@ -86,12 +86,12 @@ export type VirtualChainRouteConfig = {
 
 export type PoaBridgeRouteConfig = {
 	route: RouteEnum["PoaBridge"];
-	chain: CAIP2_NETWORK;
+	chain: Chain;
 };
 
 export type HotBridgeRouteConfig = {
 	route: RouteEnum["HotBridge"];
-	chain: CAIP2_NETWORK;
+	chain: Chain;
 };
 
 export type RouteConfig =
@@ -182,13 +182,13 @@ export interface WithdrawalIdentifier {
 
 export type ParsedAssetInfo = (
 	| {
-			blockchain: CAIP2_NETWORK;
+			blockchain: Chain;
 			bridgeName: BridgeNameEnumValues;
 			standard: "nep141";
 			contractId: string;
 	  }
 	| {
-			blockchain: CAIP2_NETWORK;
+			blockchain: Chain;
 			bridgeName: BridgeNameEnumValues;
 			standard: "nep245";
 			contractId: string;

@@ -1,6 +1,6 @@
 import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { CAIP2_NETWORK } from "../../lib/caip2";
+import { type Chain, Chains } from "../../lib/caip2";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -40,19 +40,19 @@ function createWithdrawMemo({
 }
 
 const caip2Mapping = {
-	[CAIP2_NETWORK.Ethereum]: "eth:1",
-	[CAIP2_NETWORK.Base]: "eth:8453",
-	[CAIP2_NETWORK.Arbitrum]: "eth:42161",
-	[CAIP2_NETWORK.Bitcoin]: "btc:mainnet",
-	[CAIP2_NETWORK.Solana]: "sol:mainnet",
-	[CAIP2_NETWORK.Dogecoin]: "doge:mainnet",
-	[CAIP2_NETWORK.XRPL]: "xrp:mainnet",
-	[CAIP2_NETWORK.Zcash]: "zec:mainnet",
-	[CAIP2_NETWORK.Gnosis]: "eth:100",
-	[CAIP2_NETWORK.Berachain]: "eth:80094",
-	[CAIP2_NETWORK.Tron]: "tron:mainnet",
-	[CAIP2_NETWORK.Sui]: "sui:mainnet",
-	[CAIP2_NETWORK.Aptos]: "aptos:mainnet",
+	[Chains.Ethereum]: "eth:1",
+	[Chains.Base]: "eth:8453",
+	[Chains.Arbitrum]: "eth:42161",
+	[Chains.Bitcoin]: "btc:mainnet",
+	[Chains.Solana]: "sol:mainnet",
+	[Chains.Dogecoin]: "doge:mainnet",
+	[Chains.XRPL]: "xrp:mainnet",
+	[Chains.Zcash]: "zec:mainnet",
+	[Chains.Gnosis]: "eth:100",
+	[Chains.Berachain]: "eth:80094",
+	[Chains.Tron]: "tron:mainnet",
+	[Chains.Sui]: "sui:mainnet",
+	[Chains.Aptos]: "aptos:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -69,22 +69,22 @@ export function toPoaNetwork(caip2: string) {
 }
 
 const tokenPrefixMapping = {
-	eth: CAIP2_NETWORK.Ethereum,
-	base: CAIP2_NETWORK.Base,
-	arb: CAIP2_NETWORK.Arbitrum,
-	btc: CAIP2_NETWORK.Bitcoin,
-	sol: CAIP2_NETWORK.Solana,
-	doge: CAIP2_NETWORK.Dogecoin,
-	xrp: CAIP2_NETWORK.XRPL,
-	zec: CAIP2_NETWORK.Zcash,
-	gnosis: CAIP2_NETWORK.Gnosis,
-	bera: CAIP2_NETWORK.Berachain,
-	tron: CAIP2_NETWORK.Tron,
-	sui: CAIP2_NETWORK.Sui,
-	aptos: CAIP2_NETWORK.Aptos,
+	eth: Chains.Ethereum,
+	base: Chains.Base,
+	arb: Chains.Arbitrum,
+	btc: Chains.Bitcoin,
+	sol: Chains.Solana,
+	doge: Chains.Dogecoin,
+	xrp: Chains.XRPL,
+	zec: Chains.Zcash,
+	gnosis: Chains.Gnosis,
+	bera: Chains.Berachain,
+	tron: Chains.Tron,
+	sui: Chains.Sui,
+	aptos: Chains.Aptos,
 };
 
-export function contractIdToCaip2(contractId: string): CAIP2_NETWORK {
+export function contractIdToCaip2(contractId: string): Chain {
 	for (const [prefix, caip2] of Object.entries(tokenPrefixMapping)) {
 		if (
 			contractId.startsWith(`${prefix}.`) ||
