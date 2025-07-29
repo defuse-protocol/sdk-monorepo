@@ -1,8 +1,11 @@
 import { RouteEnum } from "../constants/route-enum";
+import type { Chain } from "./caip2";
 import type {
 	InternalTransferRouteConfig,
 	NearWithdrawalRouteConfig,
 	VirtualChainRouteConfig,
+	PoaBridgeRouteConfig,
+	HotBridgeRouteConfig,
 } from "../shared-types";
 
 export function createInternalTransferRoute(): InternalTransferRouteConfig {
@@ -23,6 +26,20 @@ export function createVirtualChainRoute(
 		route: RouteEnum.VirtualChain,
 		auroraEngineContractId,
 		proxyTokenContractId,
+	};
+}
+
+export function createPoaBridgeRoute(chain: Chain): PoaBridgeRouteConfig {
+	return {
+		route: RouteEnum.PoaBridge,
+		chain,
+	};
+}
+
+export function createHotBridgeRoute(chain: Chain): HotBridgeRouteConfig {
+	return {
+		route: RouteEnum.HotBridge,
+		chain,
 	};
 }
 

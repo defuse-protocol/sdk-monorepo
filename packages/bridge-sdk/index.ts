@@ -30,8 +30,10 @@ export {
 
 export {
 	createDefaultRoute,
+	createHotBridgeRoute,
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
+	createPoaBridgeRoute,
 	createVirtualChainRoute,
 } from "./src/lib/route-config-factory";
 
