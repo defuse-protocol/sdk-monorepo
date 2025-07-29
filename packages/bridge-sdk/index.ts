@@ -15,7 +15,7 @@ export {
 export {
 	HotBridgeChains,
 	type HotBridgeChain,
-} from "./src/bridges/hot-bridge/hot-bridge-constants";
+} from "./src/bridges/hot-bridge/hot-bridge-chains";
 export * from "./src/lib/caip2";
 export * from "./src/lib/route-config-factory";
 export * from "./src/constants/bridge-name-enum";

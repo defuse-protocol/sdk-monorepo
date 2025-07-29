@@ -1,7 +1,7 @@
 import { Network } from "@hot-labs/omni-sdk";
 import { assert } from "../../lib/assert";
 import { type Chain, Chains } from "../../lib/caip2";
-import { type HotBridgeChain, HotBridgeChains } from "./hot-bridge-constants";
+import { type HotBridgeChain, HotBridgeChains } from "./hot-bridge-chains";
 
 const nativeTokenMapping: Record<HotBridgeChain, string> = {
 	[Chains.BNB]: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",

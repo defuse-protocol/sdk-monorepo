@@ -10,7 +10,10 @@ import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
-import type { HotBridgeEVMChainIds } from "./bridges/hot-bridge/hot-bridge-types";
+import {
+	type HotBridgeEVMChain,
+	HotBridgeEVMChains,
+} from "./bridges/hot-bridge/hot-bridge-chains";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
@@ -31,6 +34,8 @@ import type {
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
 import { assert } from "./lib/assert";
+import { Chains } from "./lib/caip2";
+import { pick } from "./lib/object";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -43,6 +48,18 @@ import type {
 	WithdrawalParams,
 } from "./shared-types";
 
+type RPCEndpointMap = Record<
+	typeof Chains.Near | typeof Chains.Stellar | HotBridgeEVMChain,
+	string[]
+>;
+
+interface BridgeSDKConfig {
+	env?: NearIntentsEnv;
+	intentSigner?: IIntentSigner;
+	rpc?: Partial<RPCEndpointMap>;
+	referral: string;
+}
+
 export class BridgeSDK implements IBridgeSDK {
 	protected env: NearIntentsEnv;
 	protected referral: string;
@@ -50,27 +67,22 @@ export class BridgeSDK implements IBridgeSDK {
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 
-	constructor(args: {
-		env?: NearIntentsEnv;
-		intentSigner?: IIntentSigner;
-		// Fallback to public RPCs if omitted
-		evmRpc?: Record<HotBridgeEVMChainIds, string[]>;
-		// Fallback to public RPCs if omitted
-		nearRpc?: string[];
-		stellarRpc?: string[];
-		referral: string;
-	}) {
+	constructor(args: BridgeSDKConfig) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
 
-		const nearRpcUrls = args.nearRpc ?? PUBLIC_NEAR_RPC_URLS;
+		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
 		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
 
-		const stellarRpcUrls = args.stellarRpc ?? PUBLIC_STELLAR_RPC_URLS;
+		const stellarRpcUrls =
+			args.rpc?.[Chains.Stellar] ?? PUBLIC_STELLAR_RPC_URLS;
 		assert(stellarRpcUrls.length > 0, "Stellar RPC URLs are not provided");
 
-		const evmRpcUrls = args.evmRpc ?? PUBLIC_EVM_RPC_URLS;
+		const evmRpcUrls = pick(
+			Object.assign(PUBLIC_EVM_RPC_URLS, args.rpc ?? {}),
+			HotBridgeEVMChains,
+		);
 		for (const [chainId, urls] of Object.entries(evmRpcUrls)) {
 			assert(urls.length > 0, `EVM RPC URLs for ${chainId} are not provided`);
 		}
