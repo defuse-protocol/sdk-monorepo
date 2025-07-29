@@ -252,14 +252,15 @@ sdk.setIntentSigner(signer);
 Set NEAR and EVM chains RPC URLs in the constructor: 
 
 ```typescript
+import { Chains } from '@defuse-protocol/bridge-sdk'
+
 const sdk = new BridgeSDK({
     ...,
-    nearRpc: ['https://rpc.mainnet.near.org'],
-    evmRpc: {
-        137: ['https://polygon-rpc.com/'], // Polygon
-        56: ['https://bsc-dataseed.binance.org/'], // BNB Chain
-        // Add other HOT bridge supported networks: Optimism (10), Avalanche (43114)
-    },
+    rpc: {
+        [Chains.Near]: ['https://rpc.mainnet.near.org'],
+        [Chains.Polygon]: ['https://polygon-rpc.com'],
+        [Chains.BNB]: ['https://bsc-dataseed.binance.org'],
+    }
 });
 ```
 
