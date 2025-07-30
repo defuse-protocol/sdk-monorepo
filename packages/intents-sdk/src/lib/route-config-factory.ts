@@ -4,6 +4,7 @@ import type {
 	InternalTransferRouteConfig,
 	NearWithdrawalRouteConfig,
 	PoaBridgeRouteConfig,
+	OmniBridgeRouteConfig,
 	VirtualChainRouteConfig,
 } from "../shared-types";
 import type { Chain } from "./caip2";
@@ -16,6 +17,9 @@ export function createNearWithdrawalRoute(
 	msg?: string,
 ): NearWithdrawalRouteConfig {
 	return { route: RouteEnum.NearWithdrawal, msg };
+}
+export function createOmniWithdrawalRoute(): OmniBridgeRouteConfig {
+	return { route: RouteEnum.OmniBridge };
 }
 
 export function createVirtualChainRoute(

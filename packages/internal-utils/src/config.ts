@@ -15,6 +15,7 @@ export interface EnvConfig {
 	solverRelayBaseURL: string;
 	managerConsoleBaseURL: string;
 	nearIntentsBaseURL: string;
+	omniBridgeRelayerBaseUrl: string;
 }
 
 export type NearIntentsEnv = "production" | "stage";
@@ -27,6 +28,7 @@ export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 		solverRelayBaseURL: "https://solver-relay-v2.chaindefuser.com",
 		managerConsoleBaseURL: "https://api-mng-console.chaindefuser.com/api/",
 		nearIntentsBaseURL: "https://near-intents.org/api/",
+		omniBridgeRelayerBaseUrl: "https://mainnet.api.bridge.nearone.org",
 	},
 	stage: {
 		contractID: "staging-intents.near",
@@ -35,6 +37,7 @@ export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 		solverRelayBaseURL: "https://solver-relay-stage.intents-near.org",
 		managerConsoleBaseURL: "https://mng-console-stage.intents-near.org/api/",
 		nearIntentsBaseURL: "https://stage.near-intents.org/api/",
+		omniBridgeRelayerBaseUrl: "https://mainnet.api.bridge.nearone.org",
 	},
 };
 

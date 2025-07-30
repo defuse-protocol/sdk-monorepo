@@ -17,6 +17,7 @@ import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
 import { HotBridgeEVMChains } from "./bridges/hot-bridge/hot-bridge-chains";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
+import { OmniBridge } from "./bridges/omni-bridge/omni-bridge";
 import { FeeExceedsAmountError } from "./classes/errors";
 import {
 	PUBLIC_EVM_RPC_URLS,
@@ -118,6 +119,10 @@ export class IntentsSDK implements IIntentsSDK {
 					},
 				}),
 			}),
+			new OmniBridge({
+				env: this.env,
+				nearProvider,
+			}),
 			new DirectBridge({
 				env: this.env,
 				nearProvider,
@@ -149,6 +154,7 @@ export class IntentsSDK implements IIntentsSDK {
 					assetId: args.withdrawalParams.assetId,
 					amount: actualAmount,
 					destinationAddress: args.withdrawalParams.destinationAddress,
+					feeEstimation: args.feeEstimation,
 					logger: args.logger,
 				});
 
