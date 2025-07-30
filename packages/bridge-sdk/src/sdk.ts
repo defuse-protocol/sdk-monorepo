@@ -35,7 +35,7 @@ import type {
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
 import { Chains } from "./lib/caip2";
-import { pick } from "./lib/object";
+import { configureEvmRpcUrls } from "./lib/evm-rpc-config";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -79,13 +79,11 @@ export class BridgeSDK implements IBridgeSDK {
 			args.rpc?.[Chains.Stellar] ?? PUBLIC_STELLAR_RPC_URLS;
 		assert(stellarRpcUrls.length > 0, "Stellar RPC URLs are not provided");
 
-		const evmRpcUrls = pick(
-			Object.assign(PUBLIC_EVM_RPC_URLS, args.rpc ?? {}),
+		const evmRpcUrls = configureEvmRpcUrls(
+			PUBLIC_EVM_RPC_URLS,
+			args.rpc,
 			HotBridgeEVMChains,
 		);
-		for (const [chainId, urls] of Object.entries(evmRpcUrls)) {
-			assert(urls.length > 0, `EVM RPC URLs for ${chainId} are not provided`);
-		}
 
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.

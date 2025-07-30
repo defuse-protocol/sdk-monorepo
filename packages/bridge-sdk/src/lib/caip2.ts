@@ -1,3 +1,5 @@
+import { assert } from "@defuse-protocol/internal-utils";
+
 /**
  * CAIP2 identifiers
  */
@@ -25,3 +27,12 @@ export const Chains = {
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
+
+export function getEIP155ChainId(chain: string): number {
+	assert(chain.startsWith("eip155:"), "Chain is not an EIP-155 chain");
+	const chainIdStr = chain.slice(7);
+	assert(chainIdStr.length > 0, "Chain is not an EIP-155 chain");
+	const chainId = Number(chainIdStr);
+	assert(!Number.isNaN(chainId), "Chain is not an EIP-155 chain");
+	return chainId;
+}
