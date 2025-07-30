@@ -1,7 +1,10 @@
 import { utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { assert } from "../../lib/assert";
-import { OMNI_BRIDGE_CONTRACT, supportedNetworks } from "./omni-bridge-constants";
+import {
+	OMNI_BRIDGE_CONTRACT,
+	supportedNetworks,
+} from "./omni-bridge-constants";
 import type { CAIP2_NETWORK } from "../../lib/caip2";
 
 export function createWithdrawIntentPrimitive(params: {
@@ -9,7 +12,8 @@ export function createWithdrawIntentPrimitive(params: {
 	destinationAddress: string;
 	amount: bigint;
 	storageDeposit: bigint;
-	origin: CAIP2_NETWORK
+	origin: CAIP2_NETWORK;
+	transferredTokenFee: bigint;
 }): IntentPrimitive {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -25,8 +29,8 @@ export function createWithdrawIntentPrimitive(params: {
 		msg: JSON.stringify({
 			//@ts-ignore
 			recipient: `${supportedNetworks[params.origin]}:${params.destinationAddress}`,
-			fee: "0",
-			native_token_fee: "0"
-		})
-	}
+			fee: params.transferredTokenFee.toString(),
+			native_token_fee: "0",
+		}),
+	};
 }

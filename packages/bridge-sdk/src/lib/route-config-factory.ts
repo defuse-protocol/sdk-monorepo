@@ -30,4 +30,4 @@ export function createVirtualChainRoute(
 	};
 }
 
-export function createDefaultRoute(): undefined { }
+export function createDefaultRoute(): undefined {}

@@ -1,7 +1,13 @@
 import {
+	configsByEnvironment,
+	getNearNep141MinStorageBalance,
+	getNearNep141StorageBalance,
 	type ILogger,
 	type NearIntentsEnv,
+	solverRelay,
+	omniBridge,
 	utils,
+	poaBridge,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
@@ -18,10 +24,19 @@ import type {
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { createWithdrawIntentPrimitive } from "./omni-bridge-utils";
 import {
-	createWithdrawIntentPrimitive,
-} from "./omni-bridge-utils";
-import { OMNI_ARB_PREFIX, OMNI_BASE_PREFIX, OMNI_BRIDGE_FACTORY, OMNI_BTC_ADDRESS_ON_NEAR, OMNI_ETH_ADDRESS_ON_NEAR, OMNI_ETH_FACTORY, OMNI_SOL_PREFIX } from "./omni-bridge-constants";
+	NEAR_NATIVE_ASSET_ID,
+	OMNI_ARB_PREFIX,
+	OMNI_BASE_PREFIX,
+	OMNI_BRIDGE_CONTRACT,
+	OMNI_BRIDGE_FACTORY,
+	OMNI_BTC_ADDRESS_ON_NEAR,
+	OMNI_ETH_ADDRESS_ON_NEAR,
+	OMNI_ETH_FACTORY,
+	OMNI_SOL_PREFIX,
+	supportedNetworks,
+} from "./omni-bridge-constants";
 
 export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -57,28 +72,25 @@ export class OmniBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = utils.parseDefuseAssetId(assetId);
 
-		if (parsed.standard !== "nep141") return null
-		let originChain = null
+		if (parsed.standard !== "nep141") return null;
+		let originChain = null;
 
-		if (parsed.contractId === OMNI_BTC_ADDRESS_ON_NEAR) originChain = CAIP2_NETWORK.Bitcoin
-		else if (parsed.contractId === OMNI_ETH_ADDRESS_ON_NEAR) originChain = CAIP2_NETWORK.Ethereum
+		if (parsed.contractId === OMNI_BTC_ADDRESS_ON_NEAR)
+			originChain = CAIP2_NETWORK.Bitcoin;
+		else if (parsed.contractId === OMNI_ETH_ADDRESS_ON_NEAR)
+			originChain = CAIP2_NETWORK.Ethereum;
 		else if (parsed.contractId.endsWith(OMNI_BRIDGE_FACTORY)) {
 			if (parsed.contractId.includes(OMNI_BASE_PREFIX)) {
-				originChain = CAIP2_NETWORK.Base
+				originChain = CAIP2_NETWORK.Base;
+			} else if (parsed.contractId.includes(OMNI_ARB_PREFIX)) {
+				originChain = CAIP2_NETWORK.Arbitrum;
+			} else if (parsed.contractId.includes(OMNI_SOL_PREFIX)) {
+				originChain = CAIP2_NETWORK.Solana;
 			}
-			else if (parsed.contractId.includes(OMNI_ARB_PREFIX)) {
-
-				originChain = CAIP2_NETWORK.Arbitrum
-			}
-			else if (parsed.contractId.includes(OMNI_SOL_PREFIX)) {
-				originChain = CAIP2_NETWORK.Solana
-
-			}
+		} else if (parsed.contractId.endsWith(OMNI_ETH_FACTORY)) {
+			originChain = CAIP2_NETWORK.Ethereum;
 		}
-		else if (parsed.contractId.endsWith(OMNI_ETH_FACTORY)) {
-			originChain = CAIP2_NETWORK.Ethereum
-		}
-		if (originChain === null) return null
+		if (originChain === null) return null;
 		return Object.assign(parsed, {
 			blockchain: originChain,
 			bridgeName: BridgeNameEnum.Omni,
@@ -91,37 +103,25 @@ export class OmniBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
-		console.log('args.withdrawalParams.assetId', args.withdrawalParams.assetId)
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+		// need to be moved
+		assert(
+			args.withdrawalParams.amount > args.feeEstimation.amount,
+			"Withdrawal amount is less than fee amount",
+		);
 
 		const intents: IntentPrimitive[] = [];
-
-		// if (args.feeEstimation.quote != null) {
-		// 	intents.push({
-		// 		intent: "token_diff",
-		// 		diff: {
-		// 			[args.feeEstimation.quote.defuse_asset_identifier_in]:
-		// 				`-${args.feeEstimation.quote.amount_in}`,
-		// 			[args.feeEstimation.quote.defuse_asset_identifier_out]:
-		// 				args.feeEstimation.quote.amount_out,
-		// 		},
-		// 		referral: args.referral,
-		// 	});
-		// }
 
 		const intent = createWithdrawIntentPrimitive({
 			assetId: args.withdrawalParams.assetId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
+			origin: assetInfo.blockchain,
 			storageDeposit: 0n,
-			origin: assetInfo.blockchain
-			// storageDeposit: args.feeEstimation.quote
-			// 	? BigInt(args.feeEstimation.quote.amount_out)
-			// 	: args.feeEstimation.amount,
+			transferredTokenFee: args.feeEstimation.amount,
 		});
 
-		console.log(intent)
 		intents.push(intent);
 
 		return Promise.resolve(intents);
@@ -138,7 +138,6 @@ export class OmniBridge implements Bridge {
 		return;
 	}
 
-	// TODO
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<
 			WithdrawalParams,
@@ -147,8 +146,22 @@ export class OmniBridge implements Bridge {
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+		const fee = await omniBridge.httpClient.fee({
+			token: `near:${assetInfo.contractId}`,
+			sender: `near:${configsByEnvironment[this.env].contractID}`,
+			//@ts-ignore
+			recipient: `${supportedNetworks[assetInfo.blockchain]}:${args.withdrawalParams.destinationAddress}`,
+		});
+
+		assert(
+			fee.transferred_token_fee != null,
+			"Asset is not supported by the relayer",
+		);
+
 		return {
-			amount: 0n,
+			amount: BigInt(fee.transferred_token_fee),
 			quote: null,
 		};
 		// const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
