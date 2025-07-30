@@ -10,7 +10,7 @@ export {
 	createIntentSignerNearKeyPair,
 	createIntentSignerNEP413,
 	createIntentSignerViem,
-} from "./src/intents/intent-signer-impl";
+} from "./src/intents/intent-signer-impl/factories";
 
 export type { IIntentSigner } from "./src/intents/interfaces/intent-signer";
 

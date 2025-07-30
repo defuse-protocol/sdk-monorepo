@@ -25,7 +25,7 @@ import {
 	PUBLIC_STELLAR_RPC_URLS,
 } from "./constants/public-rpc-urls";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
-import { IntentRelayerPublic } from "./intents/intent-relayer-impl";
+import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type {
