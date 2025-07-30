@@ -3,6 +3,7 @@ import { serialize } from "../../utils/serialize";
 import type { quote as quote_ } from "../solverRelayHttpClient";
 import type { FailedQuote } from "../solverRelayHttpClient/types";
 
+export type QuoteErrorType = QuoteError & { name: "QuoteError" };
 export class QuoteError extends BaseError {
 	quote: FailedQuote | null;
 	quoteParams: Parameters<typeof quote_>[0];

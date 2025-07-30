@@ -70,6 +70,14 @@ export {
 // ============================================================================
 // Errors
 // ============================================================================
+
+// Base Error Classes
+export {
+	BaseError,
+	type BaseErrorType,
+} from "@defuse-protocol/internal-utils";
+
+// Bridge SDK Core Errors
 export {
 	FeeExceedsAmountError,
 	type FeeExceedsAmountErrorType,
@@ -81,7 +89,7 @@ export {
 	type UnsupportedDestinationMemoErrorType,
 } from "./src/classes/errors";
 
-// HOT Bridge specific errors
+// Hot Bridge Errors
 export {
 	HotWithdrawalPendingError,
 	type HotWithdrawalPendingErrorType,
@@ -91,16 +99,47 @@ export {
 	type HotWithdrawalCancelledErrorType,
 } from "./src/bridges/hot-bridge/error";
 
-// ============================================================================
-// Re-exports from internal-utils (commonly needed utilities)
-// ============================================================================
+// Poa Bridge Errors
+export {
+	PoaWithdrawalInvariantError,
+	type PoaWithdrawalInvariantErrorType,
+	PoaWithdrawalNotFoundError,
+	type PoaWithdrawalNotFoundErrorType,
+	PoaWithdrawalPendingError,
+	type PoaWithdrawalPendingErrorType,
+} from "@defuse-protocol/internal-utils";
+
+// HTTP & Network Errors
+export {
+	HttpRequestError,
+	type HttpRequestErrorType,
+	RpcRequestError,
+	type RpcRequestErrorType,
+	TimeoutError,
+	type TimeoutErrorType,
+} from "@defuse-protocol/internal-utils";
+
+// Assertion Errors
+export {
+	AssertionError,
+	type AssertionErrorType,
+} from "@defuse-protocol/internal-utils";
+
+// Solver Relay Errors
+export {
+	QuoteError,
+	type QuoteErrorType,
+	IntentSettlementError,
+	type IntentSettlementErrorType,
+	RelayPublishError,
+	type RelayPublishErrorType,
+} from "@defuse-protocol/internal-utils";
+
 export type {
 	ILogger,
 	RetryOptions,
 	NearIntentsEnv,
 } from "@defuse-protocol/internal-utils";
-
-export { BaseError } from "@defuse-protocol/internal-utils";
 
 // ============================================================================
 // Intent Types (for advanced users)
