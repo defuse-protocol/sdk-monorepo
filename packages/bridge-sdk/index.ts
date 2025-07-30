@@ -151,3 +151,8 @@ export type {
 	IntentRelayParamsFactory,
 	MultiPayload,
 } from "./src/intents/shared-types";
+
+// ============================================================================
+// Hooks
+// ============================================================================
+export type { OnBeforePublishIntentHook } from "./src/intents/intent-executer-impl/intent-executer";
