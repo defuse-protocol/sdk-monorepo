@@ -138,6 +138,8 @@ export class OmniBridge implements Bridge {
 		return;
 	}
 
+	// doesnt include verifcation for storage deposit
+	// probably need to throw in case storage deposit is not present
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<
 			WithdrawalParams,
@@ -154,7 +156,8 @@ export class OmniBridge implements Bridge {
 			//@ts-ignore
 			recipient: `${supportedNetworks[assetInfo.blockchain]}:${args.withdrawalParams.destinationAddress}`,
 		});
-
+		// Need to be moved somewhere
+		// validateMinWithdrawalAmount is a candidate but it doesnt have a fee amount passed
 		assert(
 			fee.transferred_token_fee != null,
 			"Asset is not supported by the relayer",
