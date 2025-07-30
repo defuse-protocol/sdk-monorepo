@@ -23,6 +23,7 @@ export const PoaBridgeNetworkReference = {
 	SUI: "sui:mainnet",
 	STELLAR: "stellar:mainnet",
 	APTOS: "aptos:mainnet",
+	CARDANO: "cardano:mainnet",
 } as const;
 
 export const VirtualNetworkReference = {
