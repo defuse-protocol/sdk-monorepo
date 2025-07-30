@@ -5,7 +5,10 @@ import type {
 	RouteConfig,
 	WithdrawalParams,
 } from "../shared-types";
-import { createNearWithdrawalRoute } from "./route-config-factory";
+import {
+	createNearWithdrawalRoute,
+	createOmniWithdrawalRoute,
+} from "./route-config-factory";
 
 export function determineRouteConfig(
 	sdk: IIntentsSDK,
@@ -29,6 +32,8 @@ export function determineRouteConfig(
 				route: RouteEnum.PoaBridge,
 				chain: parseAssetId.blockchain,
 			};
+		case BridgeNameEnum.Omni:
+			return createOmniWithdrawalRoute();
 		case BridgeNameEnum.None:
 			return createNearWithdrawalRoute();
 		default:

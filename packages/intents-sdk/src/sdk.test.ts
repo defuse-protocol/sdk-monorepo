@@ -1,6 +1,7 @@
 import { zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it } from "vitest";
+import { OMNI_BRIDGE_CONTRACT } from "./bridges/omni-bridge/omni-bridge-constants";
 import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
@@ -11,6 +12,7 @@ import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
+	createOmniWithdrawalRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
 
@@ -601,5 +603,161 @@ describe.concurrent("near_withdrawal", () => {
 				receiver_id: "0x0000000000000000000000000000000000000000",
 			},
 		]);
+	});
+});
+
+describe.concurrent("omni_bridge", () => {
+	it("estimateWithdrawalFee(): should return fee", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:eth.bridge.near",
+				amount: 1000000000000000000n,
+				destinationAddress: zeroAddress,
+				feeInclusive: false,
+				routeConfig: createOmniWithdrawalRoute(),
+			},
+		});
+
+		await expect(fee).resolves.toEqual({
+			amount: expect.any(BigInt),
+			quote: null,
+		});
+	});
+
+	it("createWithdrawalIntents(): returns intents array with feeInclusive = false", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		const withdrawalParams = {
+			assetId: "nep141:eth.bridge.near",
+			amount: 1000000000000000000n,
+			destinationAddress: zeroAddress,
+			feeInclusive: false,
+			routeConfig: createOmniWithdrawalRoute(),
+		};
+		const feeEstimation = await sdk.estimateWithdrawalFee({
+			withdrawalParams,
+		});
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "eth.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: String(withdrawalParams.amount + feeEstimation.amount),
+				storage_deposit: null,
+				msg: JSON.stringify({
+					recipient: `eth:${zeroAddress}`,
+					fee: feeEstimation.amount.toString(),
+					native_token_fee: "0",
+				}),
+			},
+		]);
+	});
+	it("createWithdrawalIntents(): returns intents array with feeInclusive = true", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		const withdrawalParams = {
+			assetId: "nep141:eth.bridge.near",
+			amount: 1000000000000000000n,
+			destinationAddress: zeroAddress,
+			feeInclusive: true,
+			routeConfig: createOmniWithdrawalRoute(),
+		};
+		const feeEstimation = await sdk.estimateWithdrawalFee({
+			withdrawalParams,
+		});
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "eth.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: withdrawalParams.amount.toString(),
+				storage_deposit: null,
+				msg: JSON.stringify({
+					recipient: `eth:${zeroAddress}`,
+					fee: feeEstimation.amount.toString(),
+					native_token_fee: "0",
+				}),
+			},
+		]);
+	});
+
+	it("createWithdrawalIntents(): returns intents array with storage swap", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const withdrawalParams = {
+			assetId: "nep141:eth.bridge.near",
+			amount: 1000000000000000000n,
+			destinationAddress: zeroAddress,
+			feeInclusive: true,
+			routeConfig: createOmniWithdrawalRoute(),
+		};
+
+		const feeEstimation = {
+			amount: 356349421707378n,
+			quote: {
+				defuse_asset_identifier_in: "nep141:eth.bridge.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "1000",
+				amount_out: "1250000000000000000000",
+				expiration_time: "2025-07-22T03:52:23.747Z",
+				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+			},
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				diff: {
+					"nep141:eth.bridge.near": "-1000",
+					"nep141:wrap.near": "1250000000000000000000",
+				},
+				intent: "token_diff",
+				referral: "",
+			},
+			{
+				intent: "ft_withdraw",
+				token: "eth.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: withdrawalParams.amount.toString(),
+				storage_deposit: "1250000000000000000000",
+				msg: JSON.stringify({
+					recipient: `eth:${zeroAddress}`,
+					fee: feeEstimation.amount.toString(),
+					native_token_fee: "0",
+				}),
+			},
+		]);
+	});
+
+	it("estimateWithdrawalFee(): rejects when amount is lower than fee", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:eth.bridge.near",
+				amount: 1n,
+				destinationAddress: zeroAddress,
+				feeInclusive: true,
+				routeConfig: createOmniWithdrawalRoute(),
+			},
+		});
+
+		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 	});
 });
