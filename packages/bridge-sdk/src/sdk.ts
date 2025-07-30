@@ -24,7 +24,10 @@ import {
 	PUBLIC_EVM_RPC_URLS,
 	PUBLIC_STELLAR_RPC_URLS,
 } from "./constants/public-rpc-urls";
-import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
+import {
+	IntentExecuter,
+	type OnBeforePublishIntentHook,
+} from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
@@ -136,6 +139,7 @@ export class BridgeSDK implements IBridgeSDK {
 			payload?: IntentPayloadFactory;
 			relayParams?: IntentRelayParamsFactory;
 			signer?: IIntentSigner;
+			onBeforePublishIntent?: OnBeforePublishIntentHook;
 		};
 		referral?: string;
 		logger?: ILogger;
@@ -152,6 +156,7 @@ export class BridgeSDK implements IBridgeSDK {
 				intentSigner: intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
+				onBeforePublishIntent: intent?.onBeforePublishIntent,
 			}),
 			// @ts-expect-error
 			intentRelayParams: intent?.relayParams,
@@ -173,6 +178,7 @@ export class BridgeSDK implements IBridgeSDK {
 			payload?: IntentPayloadFactory;
 			relayParams?: IntentRelayParamsFactory;
 			signer?: IIntentSigner;
+			onBeforePublishIntent?: OnBeforePublishIntentHook;
 		};
 		referral?: string;
 		logger?: ILogger;
@@ -189,6 +195,7 @@ export class BridgeSDK implements IBridgeSDK {
 				intentSigner,
 				intentRelayer: this.intentRelayer,
 				intentPayloadFactory: intent?.payload,
+				onBeforePublishIntent: intent?.onBeforePublishIntent,
 			}),
 			// @ts-expect-error
 			intentRelayParams: intent?.relayParams,

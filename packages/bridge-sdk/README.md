@@ -269,6 +269,59 @@ const sdk = new BridgeSDK({
 });
 ```
 
+### Intent Publishing Hooks
+
+Use the `onBeforePublishIntent` hook to intercept and process intent data before it's published to the relayer. This is useful for persistence, logging, analytics, or custom processing:
+
+```typescript
+import { type OnBeforePublishIntentHook } from '@defuse-protocol/bridge-sdk';
+
+// Define your hook function
+const onBeforePublishIntent: OnBeforePublishIntentHook = async (intentData) => {
+  // Save to database for tracking
+  await saveIntentToDatabase({
+    hash: intentData.intentHash,
+    payload: intentData.intentPayload,
+    timestamp: new Date(),
+  });
+  
+  // Send analytics
+  analytics.track('intent_about_to_publish', {
+    intentHash: intentData.intentHash,
+    intentType: intentData.intentPayload.intents[0]?.intent,
+  });
+};
+
+// Use the hook in single withdrawals
+const withdrawal = sdk.createWithdrawal({
+  withdrawalParams: { /* ... */ },
+  intent: {
+    onBeforePublishIntent, // Add the hook here
+  }
+});
+
+// Or in batch withdrawals
+const batchWithdrawal = sdk.createBatchWithdrawals({
+  withdrawalParams: [/* ... */],
+  intent: {
+    onBeforePublishIntent, // Add the hook here
+  }
+});
+
+await withdrawal.process(); // Hook will be called before publishing
+```
+
+**Hook Parameters:**
+- `intentHash` - The computed hash of the intent payload
+- `intentPayload` - The unsigned intent payload
+- `multiPayload` - The signed multi-payload containing signature and metadata
+- `relayParams` - Additional parameters passed to the relayer (quote hashes)
+
+**Important Notes:**
+- The hook is called synchronously before publishing the intent
+- If the hook throws an error, the withdrawal will fail
+- The hook can be async and return a Promise
+
 ### Batch Withdrawals
 
 Process multiple withdrawals in a single transaction:
@@ -305,6 +358,8 @@ await batchWithdrawal.process();
 // await batchWithdrawal.waitForIntentSettlement();
 // await batchWithdrawal.waitForWithdrawalCompletion();
 ```
+
+**Note:** Batch withdrawals also support the `intent.onBeforePublishIntent` hook - see the [Intent Publishing Hooks](#intent-publishing-hooks) section for details.
 
 ### Dynamically add withdrawals to Batch Withdrawals
 
