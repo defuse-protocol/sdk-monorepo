@@ -1,6 +1,16 @@
 ---
-"@defuse-protocol/internal-utils": minor
 "@defuse-protocol/bridge-sdk": minor
 ---
 
-Change sdk the RPCs config. Re-organize exports.
+Replace `nearRpc`, `evmRpc` and `stellarRpc` configs with a unified `rpc` config. Example:
+```typescript
+import { Chains, BridgeSDK } from '@defuse-protocol/bridge-sdk'
+
+const sdk = new BridgeSDK({
+    rpc: {
+        [Chains.Near]: ['https://rpc.mainnet.near.org'],
+        [Chains.Polygon]: ['https://polygon-rpc.com'],
+        [Chains.BNB]: ['https://bsc-dataseed.binance.org'],
+    }
+});
+```
