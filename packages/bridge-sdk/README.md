@@ -15,6 +15,8 @@ The Bridge SDK for Near Intents provides a set of tools for interacting with var
   - Transfers to NEAR blockchain
   - Transfers to Virtual Chains (e.g. Aurora)
 
+
+
 Note: Bridging to Near Intents is not supported yet.
   
 ## Installation
@@ -496,16 +498,7 @@ TBD
 
 ## Supported Networks
 
-The SDK supports transfers across multiple blockchain networks:
-
-- **Ethereum** (`eip155:1`)
-- **Base** (`eip155:8453`) 
-- **Arbitrum** (`eip155:42161`)
-- **Polygon** (`eip155:137`)
-- **BNB Smart Chain** (`eip155:56`)
-- **NEAR** (`near:mainnet`)
-- **Gnosis** (`eip155:100`)
-- **And more...**
+For a list of supported chains, see the [Chain Support page](https://docs.near-intents.org/near-intents/chain-address-support) in the Near Intents documentation.
 
 ## Development
 
