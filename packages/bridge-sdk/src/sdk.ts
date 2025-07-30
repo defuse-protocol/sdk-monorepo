@@ -10,6 +10,7 @@ import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
+import { OmniBridge } from "./bridges/omni-bridge/omni-bridge";
 import type { HotBridgeEVMChainIds } from "./bridges/hot-bridge/hot-bridge-types";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
@@ -101,6 +102,10 @@ export class BridgeSDK implements IBridgeSDK {
 				}),
 			}),
 			new DirectBridge({
+				env: this.env,
+				nearProvider,
+			}),
+			new OmniBridge({
 				env: this.env,
 				nearProvider,
 			}),
