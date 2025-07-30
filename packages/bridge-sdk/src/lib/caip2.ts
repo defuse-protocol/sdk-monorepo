@@ -24,6 +24,7 @@ export const Chains = {
 	Sui: "sui:mainnet",
 	Aptos: "aptos:mainnet",
 	Stellar: "stellar:pubnet",
+	Cardano: "cip34:1-764824073",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];

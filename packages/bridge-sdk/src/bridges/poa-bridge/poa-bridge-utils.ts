@@ -53,6 +53,7 @@ const caip2Mapping = {
 	[Chains.Tron]: "tron:mainnet",
 	[Chains.Sui]: "sui:mainnet",
 	[Chains.Aptos]: "aptos:mainnet",
+	[Chains.Cardano]: "cardano:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -82,6 +83,7 @@ const tokenPrefixMapping = {
 	tron: Chains.Tron,
 	sui: Chains.Sui,
 	aptos: Chains.Aptos,
+	cardano: Chains.Cardano,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {
