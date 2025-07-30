@@ -1,10 +1,9 @@
 import type { RetryOptions } from "@defuse-protocol/internal-utils";
-import type { ILogger } from "@defuse-protocol/internal-utils";
+import { assert, type ILogger } from "@defuse-protocol/internal-utils";
 import { stringify } from "viem";
 import type { IIntentExecuter } from "../intents/interfaces/intent-executer";
 import type { IntentRelayParamsFactory } from "../intents/shared-types";
 import { drop, zip } from "../lib/array";
-import { assert } from "../lib/assert";
 import { determineRouteConfig } from "../lib/route-config";
 import type {
 	BatchWithdrawal,

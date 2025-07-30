@@ -1,4 +1,9 @@
-export const CAIP2_NETWORK = {
+import { assert } from "@defuse-protocol/internal-utils";
+
+/**
+ * CAIP2 identifiers
+ */
+export const Chains = {
 	Bitcoin: "bip122:000000000019d6689c085ae165831e93",
 	Ethereum: "eip155:1",
 	Base: "eip155:8453",
@@ -21,4 +26,13 @@ export const CAIP2_NETWORK = {
 	Stellar: "stellar:pubnet",
 } as const;
 
-export type CAIP2_NETWORK = (typeof CAIP2_NETWORK)[keyof typeof CAIP2_NETWORK];
+export type Chain = (typeof Chains)[keyof typeof Chains];
+
+export function getEIP155ChainId(chain: string): number {
+	assert(chain.startsWith("eip155:"), "Chain is not an EIP-155 chain");
+	const chainIdStr = chain.slice(7);
+	assert(chainIdStr.length > 0, "Chain is not an EIP-155 chain");
+	const chainId = Number(chainIdStr);
+	assert(!Number.isNaN(chainId), "Chain is not an EIP-155 chain");
+	return chainId;
+}

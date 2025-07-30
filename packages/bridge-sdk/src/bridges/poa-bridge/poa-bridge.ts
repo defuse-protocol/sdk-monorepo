@@ -1,4 +1,5 @@
 import {
+	assert,
 	type ILogger,
 	type NearIntentsEnv,
 	type RetryOptions,
@@ -11,7 +12,6 @@ import { MinWithdrawalAmountError } from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { assert } from "../../lib/assert";
 import type {
 	Bridge,
 	FeeEstimation,

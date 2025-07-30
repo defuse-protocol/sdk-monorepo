@@ -7,7 +7,7 @@ import {
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
-import { createIntentSignerViem } from "./intents";
+import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,

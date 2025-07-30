@@ -1,7 +1,4 @@
 import { BaseError } from "../../errors/base";
-import type { ErrorType } from "../../errors/types";
-
-export type WithTimeoutErrorType = ErrorType;
 
 export function withTimeout<data>(
 	fn: ({

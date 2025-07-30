@@ -4,16 +4,19 @@ The Bridge SDK for Near Intents provides a set of tools for interacting with var
 
 ## Features
 
-- Support for multiple bridge implementations (Hot, PoA)
-- Single and batch withdrawal operations
-- Automatic fee estimation
-- Built-in validation for withdrawal constraints:
-  - PoA Bridge minimum withdrawal amounts
-  - Hot Bridge Stellar trustline validation
-- Transfers within Near Intents
-- Transfers to NEAR blockchain
-- Transfers to Virtual Chains (e.g. Aurora)
+- Bridging from Near Intents:
+  - Support for multiple bridge implementations (Hot, PoA)
+  - Single and batch withdrawal operations
+  - Automatic fee estimation
+  - Built-in validation for withdrawal constraints:
+    - PoA Bridge minimum withdrawal amounts
+    - Hot Bridge Stellar trustline validation
+  - Transfers within Near Intents
+  - Transfers to NEAR blockchain
+  - Transfers to Virtual Chains (e.g. Aurora)
 
+Note: Bridging to Near Intents is not supported yet.
+  
 ## Installation
 
 ```bash
@@ -252,14 +255,15 @@ sdk.setIntentSigner(signer);
 Set NEAR and EVM chains RPC URLs in the constructor: 
 
 ```typescript
+import { Chains } from '@defuse-protocol/bridge-sdk'
+
 const sdk = new BridgeSDK({
     ...,
-    nearRpc: ['https://rpc.mainnet.near.org'],
-    evmRpc: {
-        137: ['https://polygon-rpc.com/'], // Polygon
-        56: ['https://bsc-dataseed.binance.org/'], // BNB Chain
-        // Add other HOT bridge supported networks: Optimism (10), Avalanche (43114)
-    },
+    rpc: {
+        [Chains.Near]: ['https://rpc.mainnet.near.org'],
+        [Chains.Polygon]: ['https://polygon-rpc.com'],
+        [Chains.BNB]: ['https://bsc-dataseed.binance.org'],
+    }
 });
 ```
 

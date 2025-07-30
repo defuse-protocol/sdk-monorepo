@@ -1,4 +1,5 @@
 import {
+	assert,
 	type ILogger,
 	type NearIntentsEnv,
 	RETRY_CONFIGS,
@@ -17,8 +18,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { assert } from "../../lib/assert";
-import { CAIP2_NETWORK } from "../../lib/caip2";
+import { Chains } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -34,13 +34,13 @@ import {
 	HotWithdrawalNotFoundError,
 	HotWithdrawalPendingError,
 } from "./error";
-import { HOT_WITHDRAW_STATUS_STRINGS } from "./hot-bridge-constants";
+import { HotWithdrawStatus } from "./hot-bridge-constants";
 import {
 	formatTxHash,
 	getFeeAssetIdForChain,
 	hotBlockchainInvariant,
-	networkIdToCaip2,
-	toHOTNetwork,
+	hotNetworkIdToCAIP2,
+	toHotNetworkId,
 } from "./hot-bridge-utils";
 
 export class HotBridge implements Bridge {
@@ -84,7 +84,7 @@ export class HotBridge implements Bridge {
 			return Object.assign(
 				parsed,
 				{
-					blockchain: networkIdToCaip2(chainId),
+					blockchain: hotNetworkIdToCAIP2(chainId),
 					bridgeName: BridgeNameEnum.Hot,
 				},
 				(address === "native" ? { native: true } : { address }) as
@@ -139,7 +139,7 @@ export class HotBridge implements Bridge {
 		const intent = await this.hotSdk.buildGaslessWithdrawIntent({
 			feeToken: "native",
 			feeAmount,
-			chain: toHOTNetwork(assetInfo.blockchain),
+			chain: toHotNetworkId(assetInfo.blockchain),
 			token: isNative ? "native" : assetInfo.address,
 			amount,
 			receiver: args.withdrawalParams.destinationAddress,
@@ -175,7 +175,7 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		if (assetInfo.blockchain === CAIP2_NETWORK.Stellar) {
+		if (assetInfo.blockchain === Chains.Stellar) {
 			const token = "native" in assetInfo ? "native" : assetInfo.address;
 
 			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
@@ -203,7 +203,7 @@ export class HotBridge implements Bridge {
 		hotBlockchainInvariant(assetInfo.blockchain);
 
 		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
-			toHOTNetwork(assetInfo.blockchain),
+			toHotNetworkId(assetInfo.blockchain),
 			args.withdrawalParams.destinationAddress,
 		);
 
@@ -259,10 +259,10 @@ export class HotBridge implements Bridge {
 					nonce.toString(),
 				);
 
-				if (status === HOT_WITHDRAW_STATUS_STRINGS.Canceled) {
+				if (status === HotWithdrawStatus.Canceled) {
 					throw new HotWithdrawalCancelledError(args.tx.hash, args.index);
 				}
-				if (status === HOT_WITHDRAW_STATUS_STRINGS.Completed) {
+				if (status === HotWithdrawStatus.Completed) {
 					return { hash: null };
 				}
 				if (typeof status === "string") {

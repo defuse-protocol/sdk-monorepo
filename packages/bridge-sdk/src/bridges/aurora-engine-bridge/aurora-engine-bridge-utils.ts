@@ -1,8 +1,7 @@
-import { utils } from "@defuse-protocol/internal-utils";
+import { assert, utils } from "@defuse-protocol/internal-utils";
 import { getAddress } from "viem";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { assert } from "../../lib/assert";
 import type { WithdrawalParams } from "../../shared-types";
 
 export function createWithdrawIntentPrimitive(params: {
