@@ -1,12 +1,12 @@
 import { RouteEnum } from "../constants/route-enum";
-import type { Chain } from "./caip2";
 import type {
+	HotBridgeRouteConfig,
 	InternalTransferRouteConfig,
 	NearWithdrawalRouteConfig,
-	VirtualChainRouteConfig,
 	PoaBridgeRouteConfig,
-	HotBridgeRouteConfig,
+	VirtualChainRouteConfig,
 } from "../shared-types";
+import type { Chain } from "./caip2";
 
 export function createInternalTransferRoute(): InternalTransferRouteConfig {
 	return { route: RouteEnum.InternalTransfer };
