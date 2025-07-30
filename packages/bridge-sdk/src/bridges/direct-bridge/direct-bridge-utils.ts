@@ -1,7 +1,6 @@
-import { utils } from "@defuse-protocol/internal-utils";
+import { assert, utils } from "@defuse-protocol/internal-utils";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { assert } from "../../lib/assert";
 import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 

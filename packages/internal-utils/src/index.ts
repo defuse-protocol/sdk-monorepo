@@ -64,3 +64,6 @@ export {
 	RelayPublishError,
 	type RelayPublishErrorType,
 } from "./solverRelay/utils/parseFailedPublishError";
+
+// Top-level utils
+export { assert } from "./utils/assert";

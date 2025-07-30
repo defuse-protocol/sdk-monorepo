@@ -1,4 +1,5 @@
 import {
+	assert,
 	type ILogger,
 	type NearIntentsEnv,
 	configsByEnvironment,
@@ -10,7 +11,6 @@ import {
 import type { providers } from "near-api-js";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { assert } from "../../lib/assert";
 import type {
 	Bridge,
 	FeeEstimation,

@@ -1,4 +1,5 @@
 import {
+	assert,
 	type ILogger,
 	type NearIntentsEnv,
 	PUBLIC_NEAR_RPC_URLS,
@@ -33,7 +34,6 @@ import type {
 	IntentPrimitive,
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
-import { assert } from "./lib/assert";
 import { Chains } from "./lib/caip2";
 import { pick } from "./lib/object";
 import type {

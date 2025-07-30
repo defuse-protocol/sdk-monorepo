@@ -1,4 +1,4 @@
-import { assert } from "./assert";
+import { assert } from "@defuse-protocol/internal-utils";
 
 export function drop<T>(arr: T[], indexes: number[]): T[] {
 	const result: T[] = [];
