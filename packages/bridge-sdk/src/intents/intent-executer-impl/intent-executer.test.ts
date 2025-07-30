@@ -1,6 +1,6 @@
 import type { MultiPayload } from "@defuse-protocol/contract-types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IntentRelayerPublic } from "../intent-relayer-impl";
+import { IntentRelayerPublic } from "../intent-relayer-impl/intent-relayer-public";
 import type { IIntentSigner } from "../interfaces/intent-signer";
 import type { IntentPayload } from "../shared-types";
 import { IntentExecuter } from "./intent-executer";
