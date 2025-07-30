@@ -1,7 +1,7 @@
 import { keccak_256 } from "@noble/hashes/sha3";
 import { base58, base64 } from "@scure/base";
 import { hashNEP413Message } from "../lib/nep413";
-import type { MultiPayload } from "./shared-types";
+import type { IntentHash, MultiPayload } from "./shared-types";
 
 /**
  * Computes the intent hash for a MultiPayload locally, without needing to publish it.
@@ -13,7 +13,7 @@ import type { MultiPayload } from "./shared-types";
  */
 export async function computeIntentHash(
 	multiPayload: MultiPayload,
-): Promise<string> {
+): Promise<IntentHash> {
 	const hashBytes = await computeIntentHashBytes(multiPayload);
 	return base58.encode(hashBytes);
 }

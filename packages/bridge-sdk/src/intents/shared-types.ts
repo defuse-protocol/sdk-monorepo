@@ -16,7 +16,7 @@ export type IntentPayloadFactory = (
 
 export type { MultiPayload };
 
-export type IntentHash = string & { __brand: "IntentHash" };
+export type IntentHash = string;
 
 export interface RelayParamsDefault {
 	multiPayload: MultiPayload;
