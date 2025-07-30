@@ -1,0 +1,9 @@
+export const NEAR_NATIVE_ASSET_ID = "nep141:wrap.near";
+export const OMNI_BRIDGE_CONTRACT = "omni.bridge.near";
+export const OMNI_BTC_ADDRESS_ON_NEAR = "nbtc.bridge.near";
+export const OMNI_ETH_ADDRESS_ON_NEAR = "eth.bridge.near";
+export const OMNI_BRIDGE_FACTORY = ".omdep.near";
+export const OMNI_ETH_FACTORY = ".factory.bridge.near";
+export const OMNI_SOL_PREFIX = "sol-";
+export const OMNI_BASE_PREFIX = "base-";
+export const OMNI_ARB_PREFIX = "arb-";

@@ -94,12 +94,17 @@ export type HotBridgeRouteConfig = {
 	chain: CAIP2_NETWORK;
 };
 
+export type OmniBridgeRouteConfig = {
+	route: RouteEnum["OmniBridge"];
+};
+
 export type RouteConfig =
 	| NearWithdrawalRouteConfig
 	| InternalTransferRouteConfig
 	| VirtualChainRouteConfig
 	| PoaBridgeRouteConfig
-	| HotBridgeRouteConfig;
+	| HotBridgeRouteConfig
+	| OmniBridgeRouteConfig;
 
 export interface FeeEstimation {
 	amount: bigint;
