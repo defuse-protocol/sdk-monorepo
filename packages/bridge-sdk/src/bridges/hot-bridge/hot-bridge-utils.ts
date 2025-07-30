@@ -1,5 +1,5 @@
-import { Network } from "@hot-labs/omni-sdk";
 import { assert } from "@defuse-protocol/internal-utils";
+import { Network } from "@hot-labs/omni-sdk";
 import { type Chain, Chains } from "../../lib/caip2";
 import { type HotBridgeChain, HotBridgeChains } from "./hot-bridge-chains";
 
