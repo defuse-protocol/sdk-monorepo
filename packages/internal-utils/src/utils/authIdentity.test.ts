@@ -51,4 +51,14 @@ describe("authHandleToIntentsUserId", () => {
 			),
 		).toThrow();
 	});
+
+	it("returns hex encoded Stellar address for 'stellar' chain type", () => {
+		const result = authHandleToIntentsUserId(
+			"GAIGS3N533ZGF7V4B6JFWHXFOH2FNGPSM5VOAF7YKNUCMXKLBXPNMLVT",
+			"stellar",
+		);
+		expect(result).toBe(
+			"10696dbddef262febc0f925b1ee571f45699f2676ae017f85368265d4b0dded6",
+		);
+	});
 });

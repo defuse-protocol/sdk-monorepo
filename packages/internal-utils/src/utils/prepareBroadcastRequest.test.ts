@@ -106,7 +106,8 @@ describe("prepareSwapSignedData()", () => {
 
 		expect(
 			prepareSwapSignedData(signature, {
-				userAddress: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+				userAddress:
+					"10696dbddef262febc0f925b1ee571f45699f2676ae017f85368265d4b0dded6",
 				userChainType: "stellar",
 			}),
 		).toMatchSnapshot();
