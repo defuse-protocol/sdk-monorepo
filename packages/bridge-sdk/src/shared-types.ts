@@ -3,11 +3,12 @@ import type {
 	RetryOptions,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
+import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
 import type { RouteEnum } from "./constants/route-enum";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type { IntentPrimitive } from "./intents/shared-types";
-import type { Chain } from "./lib/caip2";
+import type { Chain, Chains } from "./lib/caip2";
 
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;
@@ -196,3 +197,13 @@ export type ParsedAssetInfo = (
 	  }
 ) &
 	({ native: true } | { address: string });
+
+export type RPCEndpointMap = Record<
+	typeof Chains.Near | HotBridgeEVMChain,
+	string[]
+> & {
+	[K in typeof Chains.Stellar]: {
+		soroban: string[];
+		horizon: string[];
+	};
+};

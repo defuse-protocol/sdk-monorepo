@@ -11,10 +11,7 @@ import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
-import {
-	type HotBridgeEVMChain,
-	HotBridgeEVMChains,
-} from "./bridges/hot-bridge/hot-bridge-chains";
+import { HotBridgeEVMChains } from "./bridges/hot-bridge/hot-bridge-chains";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
@@ -38,23 +35,22 @@ import type {
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
 import { Chains } from "./lib/caip2";
-import { configureEvmRpcUrls } from "./lib/evm-rpc-config";
+import {
+	configureEvmRpcUrls,
+	configureStellarRpcUrls,
+} from "./lib/configure-rpc-config";
 import type {
 	Bridge,
 	FeeEstimation,
 	IBridgeSDK,
 	NearTxInfo,
 	ParsedAssetInfo,
+	RPCEndpointMap,
 	RouteConfig,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
 } from "./shared-types";
-
-type RPCEndpointMap = Record<
-	typeof Chains.Near | typeof Chains.Stellar | HotBridgeEVMChain,
-	string[]
->;
 
 export interface BridgeSDKConfig {
 	env?: NearIntentsEnv;
@@ -78,9 +74,10 @@ export class BridgeSDK implements IBridgeSDK {
 		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
 
-		const stellarRpcUrls =
-			args.rpc?.[Chains.Stellar] ?? PUBLIC_STELLAR_RPC_URLS;
-		assert(stellarRpcUrls.length > 0, "Stellar RPC URLs are not provided");
+		const stellarRpcUrls = configureStellarRpcUrls(
+			PUBLIC_STELLAR_RPC_URLS,
+			args.rpc,
+		);
 
 		const evmRpcUrls = configureEvmRpcUrls(
 			PUBLIC_EVM_RPC_URLS,
@@ -107,7 +104,8 @@ export class BridgeSDK implements IBridgeSDK {
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
 					// 2. omni-sdk has near-api-js@5.0.1, and it uses `instanceof` which doesn't work when multiple versions of packages are installed
 					nearRpc: nearRpcUrls,
-					stellarRpc: stellarRpcUrls[0],
+					stellarRpc: stellarRpcUrls.soroban,
+					stellarHorizonRpc: stellarRpcUrls.horizon,
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
