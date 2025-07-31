@@ -1,11 +1,11 @@
 import { assert } from "@defuse-protocol/internal-utils";
-import type { RPCEndpointMap } from "../shared-types";
+import type { PartialRPCEndpointMap, RPCEndpointMap } from "../shared-types";
 import { Chains, getEIP155ChainId } from "./caip2";
 import { pick } from "./object";
 
 export function configureEvmRpcUrls(
 	defaultRpcUrls: Record<string, string[]>,
-	userRpcUrls: Partial<RPCEndpointMap> | undefined,
+	userRpcUrls: PartialRPCEndpointMap | undefined,
 	supportedChains: string[],
 ): Record<number, string[]> {
 	const evmRpcUrls: Record<number, string[]> = Object.fromEntries(
@@ -27,7 +27,7 @@ export function configureEvmRpcUrls(
 
 export function configureStellarRpcUrls(
 	defaultRpcUrls: RPCEndpointMap[typeof Chains.Stellar],
-	userRpcUrls: Partial<RPCEndpointMap> | undefined,
+	userRpcUrls: PartialRPCEndpointMap | undefined,
 ) {
 	const stellarRpcUrls = Object.assign(
 		{},

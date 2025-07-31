@@ -173,13 +173,12 @@ describe("configureStellarRpcUrls()", () => {
 	it("overrides default RPC URLs", () => {
 		const result = configureStellarRpcUrls(mockDefaultRpcUrls, {
 			[Chains.Stellar]: {
-				soroban: ["https://customsorobanrpc.com"],
 				horizon: ["https://customhorizonrpc.com"],
 			},
 		});
 
 		expect(result).toEqual({
-			soroban: ["https://customsorobanrpc.com"],
+			soroban: ["https://sorobanrpc.com"],
 			horizon: ["https://customhorizonrpc.com"],
 		});
 	});

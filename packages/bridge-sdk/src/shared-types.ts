@@ -207,3 +207,16 @@ export type RPCEndpointMap = Record<
 		horizon: string[];
 	};
 };
+
+type DeepPartial<T> = T extends object
+	? T extends Array<infer U>
+		? Array<DeepPartial<U>>
+		: // biome-ignore lint/complexity/noBannedTypes: <explanation>
+			T extends Function
+			? T
+			: {
+					[P in keyof T]?: DeepPartial<T[P]>;
+				}
+	: T;
+
+export type PartialRPCEndpointMap = DeepPartial<RPCEndpointMap>;
