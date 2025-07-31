@@ -45,7 +45,7 @@ import type {
 	IBridgeSDK,
 	NearTxInfo,
 	ParsedAssetInfo,
-	RPCEndpointMap,
+	PartialRPCEndpointMap,
 	RouteConfig,
 	TxInfo,
 	TxNoInfo,
@@ -55,7 +55,7 @@ import type {
 export interface BridgeSDKConfig {
 	env?: NearIntentsEnv;
 	intentSigner?: IIntentSigner;
-	rpc?: Partial<RPCEndpointMap>;
+	rpc?: PartialRPCEndpointMap;
 	referral: string;
 }
 
