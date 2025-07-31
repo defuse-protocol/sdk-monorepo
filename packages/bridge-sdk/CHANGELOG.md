@@ -1,5 +1,73 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.11.0
+
+### Minor Changes
+
+- d51f0db: Bump `@hot-labs/omni-sdk` to v2.16.0.
+  Change Stellar RPC URL configuration to include both Horizon and Soroban servers.
+- 89554ed: Re-organize package exports.
+
+  Renamed:
+
+  - `CAIP2_NETWORK` -> `Chains` and `Chain` type
+
+  Removed:
+
+  - `HOT_BRIDGE_CHAINS_CAIP2`
+  - Intent relayer
+
+  Added:
+
+  - `createPoaBridgeRoute()` and `createHotBridgeRoute()`
+  - Types: `BridgeSDKConfig`, `WithdrawalIdentifier`, `NearWithdrawalRouteConfig`, `InternalTransferRouteConfig`, `VirtualChainRouteConfig`, `PoaBridgeRouteConfig`, `HotBridgeRouteConfig`, `NearTxInfo`, `TxInfo`, `TxNoInfo`, `ParsedAssetInfo`, `ILogger`, `RetryOptions`, `NearIntentsEnv`, `IntentPrimitive`, `IntentPayload`, `IntentPayloadFactory`, `IntentRelayParamsFactory`, `MultiPayload`
+  - All error types
+
+- 9c47fd3: Add support for withdrawals to Cardano.
+- 7c39b2c: Add `onBeforePublishIntent` hook to process intents before publishing.
+- 89554ed: Replace `nearRpc`, `evmRpc` and `stellarRpc` configs with a unified `rpc` config. Example:
+
+  ```typescript
+  import { Chains, BridgeSDK } from "@defuse-protocol/bridge-sdk";
+
+  const sdk = new BridgeSDK({
+    rpc: {
+      [Chains.Near]: ["https://rpc.mainnet.near.org"],
+      [Chains.Polygon]: ["https://polygon-rpc.com"],
+      [Chains.BNB]: ["https://bsc-dataseed.binance.org"],
+    },
+  });
+  ```
+
+### Patch Changes
+
+- e0bc679: Improve withdrawal validation to Stellar: ensure the destination address has a trustline for a token.
+- d0340a7: Automatically append withdrawal intents. Example:
+
+  ```typescript
+  // Previously
+  bridgeSDK.createBatchWithdrawals({
+      intent: {
+          payload: (intentParams) => ({
+              intents: [...moreIntents, ...intentParams.intents],
+          })
+      }
+  )
+
+  // Now
+  bridgeSDK.createBatchWithdrawals({
+      intent: {
+          payload: () => ({
+              intents: moreIntents,
+          })
+      }
+  )
+  ```
+
+- Updated dependencies [89554ed]
+- Updated dependencies [9c47fd3]
+  - @defuse-protocol/internal-utils@0.2.0
+
 ## 0.10.3
 
 ### Patch Changes
