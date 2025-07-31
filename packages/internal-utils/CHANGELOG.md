@@ -1,5 +1,28 @@
 # @defuse-protocol/internal-utils
 
+## 0.2.0
+
+### Minor Changes
+
+- 89554ed: Re-organize package exports.
+
+  Renamed:
+
+  - `CAIP2_NETWORK` -> `Chains` and `Chain` type
+
+  Removed:
+
+  - `HOT_BRIDGE_CHAINS_CAIP2`
+  - Intent relayer
+
+  Added:
+
+  - `createPoaBridgeRoute()` and `createHotBridgeRoute()`
+  - Types: `BridgeSDKConfig`, `WithdrawalIdentifier`, `NearWithdrawalRouteConfig`, `InternalTransferRouteConfig`, `VirtualChainRouteConfig`, `PoaBridgeRouteConfig`, `HotBridgeRouteConfig`, `NearTxInfo`, `TxInfo`, `TxNoInfo`, `ParsedAssetInfo`, `ILogger`, `RetryOptions`, `NearIntentsEnv`, `IntentPrimitive`, `IntentPayload`, `IntentPayloadFactory`, `IntentRelayParamsFactory`, `MultiPayload`
+  - All error types
+
+- 9c47fd3: Add support for withdrawals to Cardano.
+
 ## 0.1.4
 
 ### Patch Changes

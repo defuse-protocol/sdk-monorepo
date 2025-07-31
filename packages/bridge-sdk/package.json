@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/bridge-sdk",
-	"version": "0.10.3",
+	"version": "0.11.0",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
