@@ -1,10 +1,11 @@
 import { assert } from "@defuse-protocol/internal-utils";
-import { getEIP155ChainId } from "./caip2";
+import type { RPCEndpointMap } from "../shared-types";
+import { Chains, getEIP155ChainId } from "./caip2";
 import { pick } from "./object";
 
 export function configureEvmRpcUrls(
 	defaultRpcUrls: Record<string, string[]>,
-	userRpcUrls: Record<string, string[]> | undefined,
+	userRpcUrls: Partial<RPCEndpointMap> | undefined,
 	supportedChains: string[],
 ): Record<number, string[]> {
 	const evmRpcUrls: Record<number, string[]> = Object.fromEntries(
@@ -22,4 +23,20 @@ export function configureEvmRpcUrls(
 		);
 	}
 	return evmRpcUrls;
+}
+
+export function configureStellarRpcUrls(
+	defaultRpcUrls: RPCEndpointMap[typeof Chains.Stellar],
+	userRpcUrls: Partial<RPCEndpointMap> | undefined,
+) {
+	const stellarRpcUrls = Object.assign(
+		{},
+		defaultRpcUrls,
+		userRpcUrls?.[Chains.Stellar] ?? {},
+	);
+	for (const [key, value] of Object.entries(stellarRpcUrls)) {
+		assert(value.length > 0, `Stellar RPC URL for ${key} is not provided`);
+	}
+
+	return stellarRpcUrls;
 }

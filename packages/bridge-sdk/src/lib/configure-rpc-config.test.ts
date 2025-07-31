@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { HotBridgeEVMChains } from "../bridges/hot-bridge/hot-bridge-chains";
-import { Chains } from "../lib/caip2";
-import { configureEvmRpcUrls } from "./evm-rpc-config";
+import { Chains } from "./caip2";
+import {
+	configureEvmRpcUrls,
+	configureStellarRpcUrls,
+} from "./configure-rpc-config";
 
 describe("configureEvmRpcUrls()", () => {
 	const mockDefaultRpcUrls = {
@@ -136,5 +139,60 @@ describe("configureEvmRpcUrls()", () => {
 	it("should handle empty supported chains array", () => {
 		const result = configureEvmRpcUrls(mockDefaultRpcUrls, {}, []);
 		expect(result).toEqual({});
+	});
+
+	it("ignores stellar config", () => {
+		const limitedSupported = [Chains.Ethereum];
+
+		const result = configureEvmRpcUrls(
+			mockDefaultRpcUrls,
+			{ [Chains.Stellar]: { soroban: [""], horizon: [""] } },
+			limitedSupported,
+		);
+
+		expect(result).toEqual({
+			1: ["https://eth-mainnet.public.blastapi.io"],
+		});
+	});
+});
+
+describe("configureStellarRpcUrls()", () => {
+	const mockDefaultRpcUrls = {
+		soroban: ["https://sorobanrpc.com"],
+		horizon: ["https://horizonrpc.com"],
+	};
+
+	it("ignores other chains", () => {
+		const result = configureStellarRpcUrls(mockDefaultRpcUrls, {
+			[Chains.Polygon]: ["https://polygonrpc.com"],
+		});
+
+		expect(result).toEqual(mockDefaultRpcUrls);
+	});
+
+	it("overrides default RPC URLs", () => {
+		const result = configureStellarRpcUrls(mockDefaultRpcUrls, {
+			[Chains.Stellar]: {
+				soroban: ["https://customsorobanrpc.com"],
+				horizon: ["https://customhorizonrpc.com"],
+			},
+		});
+
+		expect(result).toEqual({
+			soroban: ["https://customsorobanrpc.com"],
+			horizon: ["https://customhorizonrpc.com"],
+		});
+	});
+
+	it("throws when empty list provided", () => {
+		const fn = () =>
+			configureStellarRpcUrls(mockDefaultRpcUrls, {
+				[Chains.Stellar]: {
+					soroban: ["https://customsorobanrpc.com"],
+					horizon: [],
+				},
+			});
+
+		expect(fn).toThrow("Stellar RPC URL for horizon is not provided");
 	});
 });
