@@ -1,13 +1,11 @@
 import {
 	configsByEnvironment,
-	getNearNep141MinStorageBalance,
-	getNearNep141StorageBalance,
 	type ILogger,
 	type NearIntentsEnv,
-	solverRelay,
 	omniBridge,
+	RETRY_CONFIGS,
+	type RetryOptions,
 	utils,
-	poaBridge,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
@@ -22,14 +20,16 @@ import type {
 	ParsedAssetInfo,
 	RouteConfig,
 	TxInfo,
+	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
-import { createWithdrawIntentPrimitive } from "./omni-bridge-utils";
 import {
-	NEAR_NATIVE_ASSET_ID,
+	createWithdrawIntentPrimitive,
+	getTransferNonce,
+} from "./omni-bridge-utils";
+import {
 	OMNI_ARB_PREFIX,
 	OMNI_BASE_PREFIX,
-	OMNI_BRIDGE_CONTRACT,
 	OMNI_BRIDGE_FACTORY,
 	OMNI_BTC_ADDRESS_ON_NEAR,
 	OMNI_ETH_ADDRESS_ON_NEAR,
@@ -37,6 +37,7 @@ import {
 	OMNI_SOL_PREFIX,
 	supportedNetworks,
 } from "./omni-bridge-constants";
+import { retry } from "@lifeomic/attempt";
 
 export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -217,11 +218,61 @@ export class OmniBridge implements Bridge {
 		// };
 	}
 
-	// TODO go to api for verification
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
-	}): Promise<TxInfo> {
-		return { hash: args.tx.hash };
+		routeConfig: RouteConfig;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+	}): Promise<TxInfo | TxNoInfo> {
+		return retry(
+			async () => {
+				if (args.signal?.aborted) {
+					throw args.signal.reason;
+				}
+
+				const transferNonce = await getTransferNonce(
+					this.nearProvider,
+					configsByEnvironment[this.env].contractID,
+					args.tx.hash,
+				);
+				if (transferNonce === null) throw new Error("Nonce not found");
+				const transfer = await omniBridge.httpClient.transfer({
+					originChain: "Near",
+					originNonce: transferNonce,
+				});
+				//@ts-ignore
+				const destinationChain =
+					transfer.transfer_message.recipient.split(":")[0];
+				let txHash = null;
+				if (
+					destinationChain === "eth" ||
+					destinationChain === "arb" ||
+					destinationChain === "base"
+				) {
+					//@ts-ignore
+					txHash = transfer.finalised.EVMLog.transaction_hash;
+				} else if (destinationChain === "sol") {
+					//@ts-ignore
+					txHash = transfer.finalised.Solana.signature;
+				} else {
+					throw new Error("Not supported destination chain");
+				}
+				if (!txHash) throw new Error("Hash not found");
+				return { hash: txHash };
+			},
+			{
+				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
+				handleError: (err, ctx) => {
+					if (
+						err.text === "Nonce not found" ||
+						err.text === "Not supported destination chain" ||
+						err === args.signal?.reason
+					) {
+						ctx.abort();
+					}
+				},
+			},
+		);
 	}
 }

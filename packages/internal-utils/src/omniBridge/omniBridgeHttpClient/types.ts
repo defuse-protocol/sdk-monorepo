@@ -7,7 +7,7 @@ export type OmniAddress =
 	| `sol:${string}` // Solana public keys
 	| `arb:${string}` // Arbitrum addresses
 	| `base:${string}`; // Base addresses
-
+export type Chain = "Eth" | "Near" | "Sol" | "Arb" | "Base";
 export type RequestConfig = {
 	requestId?: string | undefined;
 	timeout?: number | undefined;
