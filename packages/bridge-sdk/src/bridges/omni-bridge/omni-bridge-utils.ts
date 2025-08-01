@@ -4,7 +4,6 @@ import { assert } from "../../lib/assert";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 import { CAIP2_NETWORK } from "../../lib/caip2";
 import { omniAddress, ChainKind } from "omni-bridge-sdk";
-import type { CAIP2_NETWORK as CAIP2_NETWORK_TYPE } from "../../lib/caip2";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -36,26 +35,17 @@ export function createWithdrawIntentPrimitive(params: {
 	};
 }
 
-type AllowedNetworks = Extract<
-	CAIP2_NETWORK_TYPE,
-	| "eip155:8453"
-	| "eip155:1"
-	| "eip155:8453"
-	| "eip155:42161"
-	| "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
->;
 export function caip2ToChainKind(network: CAIP2_NETWORK): ChainKind {
-	const mapping: Record<Extract<CAIP2_NETWORK, AllowedNetworks>, ChainKind> = {
-		[CAIP2_NETWORK.Ethereum]: ChainKind.Eth,
-		[CAIP2_NETWORK.Base]: ChainKind.Base,
-		[CAIP2_NETWORK.Arbitrum]: ChainKind.Arb,
-		[CAIP2_NETWORK.Solana]: ChainKind.Sol,
-		// [CAIP2_NETWORK.Bitcoin]: ChainKind.Btc,
-	};
-
-	if (mapping[network as keyof typeof mapping]) {
-		return mapping[network as keyof typeof mapping]!;
+	switch (network) {
+		case CAIP2_NETWORK.Ethereum:
+			return ChainKind.Eth;
+		case CAIP2_NETWORK.Base:
+			return ChainKind.Base;
+		case CAIP2_NETWORK.Arbitrum:
+			return ChainKind.Arb;
+		case CAIP2_NETWORK.Solana:
+			return ChainKind.Sol;
+		default:
+			throw new Error(`Unsupported Omni network = ${network}`);
 	}
-
-	throw new Error(`Unsupported Omni network = ${network}`);
 }
