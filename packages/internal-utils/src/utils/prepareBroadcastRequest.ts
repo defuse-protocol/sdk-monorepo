@@ -1,5 +1,4 @@
 import { base58, base64, hex } from "@scure/base";
-import { Keypair } from "@stellar/stellar-sdk";
 import type {
 	Params,
 	PublishIntentRequest,
@@ -7,6 +6,8 @@ import type {
 import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "./assert";
+import { decodeCheck } from "./decodeCheck";
+import { encodeCheck } from "./encodeCheck";
 import { makeWebAuthnMultiPayload } from "./multiPayload/webauthn";
 
 export function prepareSwapSignedData(
@@ -71,12 +72,16 @@ export function prepareSwapSignedData(
 				userInfo.userChainType === "stellar",
 				"User chain and signature chain must match",
 			);
-			const publicKeypair = Keypair.fromPublicKey(userInfo.userAddress);
 			return {
 				standard: "raw_ed25519",
 				payload: new TextDecoder().decode(signature.signedData.message),
 				// We should encode the Stellar address to base58
-				public_key: `ed25519:${base58.encode(publicKeypair.rawPublicKey())}`,
+				public_key: `ed25519:${base58.encode(
+					decodeCheck(
+						"accountId",
+						encodeCheck("accountId", hex.decode(userInfo.userAddress)),
+					),
+				)}`,
 				signature: transformED25519Signature(signature.signatureData),
 			};
 		}
