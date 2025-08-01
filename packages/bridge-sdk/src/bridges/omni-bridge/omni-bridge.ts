@@ -23,6 +23,7 @@ import type {
 	WithdrawalParams,
 } from "../../shared-types";
 import {
+	caip2ToChainKind,
 	createWithdrawIntentPrimitive,
 } from "./omni-bridge-utils";
 import {
@@ -33,7 +34,6 @@ import {
 	OMNI_ETH_ADDRESS_ON_NEAR,
 	OMNI_ETH_FACTORY,
 	OMNI_SOL_PREFIX,
-	supportedNetworks,
 } from "./omni-bridge-constants";
 import { retry } from "@lifeomic/attempt";
 import { ChainKind, omniAddress, OmniBridgeAPI } from "omni-bridge-sdk";
@@ -152,8 +152,14 @@ export class OmniBridge implements Bridge {
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-		//@ts-ignore
-		const fee = await this.omniBridgeAPI.getFee(omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID), `${supportedNetworks[assetInfo.blockchain]}:${args.withdrawalParams.destinationAddress}`, omniAddress(ChainKind.Near, assetInfo.contractId));
+		const fee = await this.omniBridgeAPI.getFee(
+			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
+			omniAddress(
+				caip2ToChainKind(assetInfo.blockchain),
+				args.withdrawalParams.destinationAddress,
+			),
+			omniAddress(ChainKind.Near, assetInfo.contractId),
+		);
 		// Need to be moved somewhere
 		// validateMinWithdrawalAmount is a candidate but it doesnt have a fee amount passed
 		assert(
@@ -180,28 +186,30 @@ export class OmniBridge implements Bridge {
 					throw args.signal.reason;
 				}
 
-				const transfer = (await this.omniBridgeAPI.findOmniTransfers({
-					transaction_id: args.tx.hash,
-					offset: 0,
-					limit: 1
-				}))[0]
-				if (!transfer) throw new Error("Transfer not found")
+				const transfer = (
+					await this.omniBridgeAPI.findOmniTransfers({
+						transaction_id: args.tx.hash,
+						offset: 0,
+						limit: 1,
+					})
+				)[0];
+				if (!transfer) throw new Error("Transfer not found");
 				const destinationChain =
-					//@ts-ignore
 					transfer.transfer_message.recipient.split(":")[0];
 				let txHash = null;
 				if (
-					destinationChain === "eth" ||
-					destinationChain === "arb" ||
-					destinationChain === "base"
+					(destinationChain === "eth" ||
+						destinationChain === "arb" ||
+						destinationChain === "base") &&
+					transfer?.finalised?.EVMLog
 				) {
-					//@ts-ignore
 					txHash = transfer.finalised.EVMLog.transaction_hash;
-				} else if (destinationChain === "sol") {
-					//@ts-ignore
+				} else if (destinationChain === "sol" && transfer?.finalised?.Solana) {
 					txHash = transfer.finalised.Solana.signature;
 				} else {
-					throw new Error(`Not supported destination chain ${destinationChain}`);
+					throw new Error(
+						`Not supported destination chain ${destinationChain}`,
+					);
 				}
 				if (!txHash) throw new Error("Hash not found");
 				return { hash: txHash };
