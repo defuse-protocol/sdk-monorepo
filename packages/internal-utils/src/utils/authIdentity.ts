@@ -7,7 +7,7 @@ import type {
 } from "../types/authHandle";
 import type { IntentsUserId } from "../types/intentsUserId";
 import { assert } from "./assert";
-import { decodeCheck } from "./decodeCheck";
+import { stellarAddressToBytes } from "./stellarAddressToBytes";
 import { parsePublicKey } from "./webAuthn";
 
 /**
@@ -79,7 +79,7 @@ export function authHandleToIntentsUserId(
 		}
 
 		case "stellar": {
-			const decoded = decodeCheck("accountId", authHandle.identifier);
+			const decoded = stellarAddressToBytes(authHandle.identifier);
 			return hex.encode(decoded) as IntentsUserId;
 		}
 

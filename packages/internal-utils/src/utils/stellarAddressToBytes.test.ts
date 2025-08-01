@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { decodeCheck } from "./decodeCheck";
+import { stellarAddressToBytes } from "./stellarAddressToBytes";
 
-describe("decodeCheck", () => {
+describe("stellarAddressToBytes", () => {
 	describe("Stellar account ID validation", () => {
 		it("should decode valid Stellar account ID", () => {
-			const result = decodeCheck(
+			const result = stellarAddressToBytes(
 				"GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
 			);
 			expect(result).toBeInstanceOf(Buffer);
@@ -13,26 +13,30 @@ describe("decodeCheck", () => {
 
 		it("should throw error for invalid checksum when version byte is wrong", () => {
 			expect(() => {
-				decodeCheck("SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF");
+				stellarAddressToBytes(
+					"SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+				);
 			}).toThrow("invalid checksum");
 		});
 
 		it("should throw error for invalid checksum", () => {
 			expect(() => {
-				decodeCheck("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+				stellarAddressToBytes(
+					"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+				);
 			}).toThrow("invalid checksum");
 		});
 
 		it("should throw error for invalid base32 encoding", () => {
 			expect(() => {
-				decodeCheck("invalid_base32_string!!!");
+				stellarAddressToBytes("invalid_base32_string!!!");
 			}).toThrow("Unknown letter");
 		});
 	});
 
 	describe("Real Stellar addresses", () => {
 		it("should handle real Stellar account ID", () => {
-			const result = decodeCheck(
+			const result = stellarAddressToBytes(
 				"GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
 			);
 			expect(result).toBeInstanceOf(Buffer);

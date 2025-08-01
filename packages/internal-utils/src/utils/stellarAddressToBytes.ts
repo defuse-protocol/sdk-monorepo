@@ -1,6 +1,6 @@
 import { base32 } from "@scure/base";
 
-export function decodeCheck(encoded: string): Buffer {
+export function stellarAddressToBytes(encoded: string): Buffer {
 	if (typeof encoded !== "string") {
 		throw new TypeError("encoded argument must be of type String");
 	}
@@ -37,7 +37,7 @@ function verifyChecksum(expected: Uint8Array, actual: Uint8Array): boolean {
 }
 
 // Computes the CRC16-XModem checksum of `payload` in little-endian order
-export function calculateChecksum(payload: Uint8Array): Uint8Array {
+function calculateChecksum(payload: Uint8Array): Uint8Array {
 	const crcTable = [
 		0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108,
 		0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210,
@@ -89,4 +89,19 @@ export function calculateChecksum(payload: Uint8Array): Uint8Array {
 	checksum[0] = crc16 & 0xff;
 	checksum[1] = (crc16 >> 8) & 0xff;
 	return checksum;
+}
+
+export function bytesToStellarAddress(data: Uint8Array): string {
+	const payload = new Uint8Array(1 + data.length);
+	payload[0] = 0x30; // accountId version byte
+	payload.set(data, 1);
+
+	const checksum = calculateChecksum(payload);
+
+	// Combine payload and checksum
+	const combined = new Uint8Array(payload.length + checksum.length);
+	combined.set(payload);
+	combined.set(checksum, payload.length);
+
+	return base32.encode(combined);
 }
