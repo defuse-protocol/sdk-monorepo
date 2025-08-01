@@ -2,7 +2,6 @@ import {
 	configsByEnvironment,
 	type ILogger,
 	type NearIntentsEnv,
-	omniBridge,
 	RETRY_CONFIGS,
 	type RetryOptions,
 	utils,
@@ -37,10 +36,12 @@ import {
 	supportedNetworks,
 } from "./omni-bridge-constants";
 import { retry } from "@lifeomic/attempt";
+import { ChainKind, omniAddress, OmniBridgeAPI } from "omni-bridge-sdk";
 
 export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
+	protected omniBridgeAPI: OmniBridgeAPI;
 
 	constructor({
 		env,
@@ -48,6 +49,7 @@ export class OmniBridge implements Bridge {
 	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
 		this.env = env;
 		this.nearProvider = nearProvider;
+		this.omniBridgeAPI = new OmniBridgeAPI();
 	}
 
 	is(routeConfig: RouteConfig) {
@@ -150,12 +152,8 @@ export class OmniBridge implements Bridge {
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-		const fee = await omniBridge.httpClient.fee({
-			token: `near:${assetInfo.contractId}`,
-			sender: `near:${configsByEnvironment[this.env].contractID}`,
-			//@ts-ignore
-			recipient: `${supportedNetworks[assetInfo.blockchain]}:${args.withdrawalParams.destinationAddress}`,
-		});
+		//@ts-ignore
+		const fee = await this.omniBridgeAPI.getFee(omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID), `${supportedNetworks[assetInfo.blockchain]}:${args.withdrawalParams.destinationAddress}`, omniAddress(ChainKind.Near, assetInfo.contractId));
 		// Need to be moved somewhere
 		// validateMinWithdrawalAmount is a candidate but it doesnt have a fee amount passed
 		assert(
@@ -167,54 +165,6 @@ export class OmniBridge implements Bridge {
 			amount: BigInt(fee.transferred_token_fee),
 			quote: null,
 		};
-		// const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
-		// 	args.withdrawalParams.assetId,
-		// );
-		// assert(standard === "nep141", "Only NEP-141 is supported");
-
-		// const [minStorageBalance, userStorageBalance] = await Promise.all([
-		// 	getNearNep141MinStorageBalance({
-		// 		contractId: tokenAccountId,
-		// 		nearProvider: this.nearProvider,
-		// 	}),
-		// 	getNearNep141StorageBalance({
-		// 		contractId: tokenAccountId,
-		// 		accountId: args.withdrawalParams.destinationAddress,
-		// 		nearProvider: this.nearProvider,
-		// 	}),
-		// ]);
-
-		// if (minStorageBalance <= userStorageBalance) {
-		// 	return {
-		// 		amount: 0n,
-		// 		quote: null,
-		// 	};
-		// }
-
-		// const feeAssetId = NEAR_NATIVE_ASSET_ID;
-		// const feeAmount = minStorageBalance - userStorageBalance;
-
-		// const feeQuote =
-		// 	args.withdrawalParams.assetId === feeAssetId
-		// 		? null
-		// 		: await solverRelay.getQuote({
-		// 			quoteParams: {
-		// 				defuse_asset_identifier_in: args.withdrawalParams.assetId,
-		// 				defuse_asset_identifier_out: feeAssetId,
-		// 				exact_amount_out: feeAmount.toString(),
-		// 				wait_ms: args.quoteOptions?.waitMs,
-		// 			},
-		// 			config: {
-		// 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-		// 				logBalanceSufficient: false,
-		// 				logger: args.logger,
-		// 			},
-		// 		});
-
-		// return {
-		// 	amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
-		// 	quote: feeQuote,
-		// };
 	}
 
 	async waitForWithdrawalCompletion(args: {
@@ -230,9 +180,11 @@ export class OmniBridge implements Bridge {
 					throw args.signal.reason;
 				}
 
-				const transfer = await omniBridge.httpClient.transfer({
-					hash: args.tx.hash,
-				});
+				const transfer = (await this.omniBridgeAPI.findOmniTransfers({
+					transaction_id: args.tx.hash,
+					offset: 0,
+					limit: 1
+				}))[0]
 				if (!transfer) throw new Error("Transfer not found")
 				const destinationChain =
 					//@ts-ignore
