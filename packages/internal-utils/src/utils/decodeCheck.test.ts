@@ -5,52 +5,34 @@ describe("decodeCheck", () => {
 	describe("Stellar account ID validation", () => {
 		it("should decode valid Stellar account ID", () => {
 			const result = decodeCheck(
-				"accountId",
 				"GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
 			);
 			expect(result).toBeInstanceOf(Buffer);
 			expect(result.length).toBeGreaterThan(0);
 		});
 
-		it("should throw error for invalid version byte", () => {
+		it("should throw error for invalid checksum when version byte is wrong", () => {
 			expect(() => {
-				decodeCheck(
-					"accountId",
-					"SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-				);
-			}).toThrow("invalid version byte");
+				decodeCheck("SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF");
+			}).toThrow("invalid checksum");
 		});
 
 		it("should throw error for invalid checksum", () => {
 			expect(() => {
-				decodeCheck(
-					"accountId",
-					"GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-				);
+				decodeCheck("GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
 			}).toThrow("invalid checksum");
 		});
 
 		it("should throw error for invalid base32 encoding", () => {
 			expect(() => {
-				decodeCheck("accountId", "invalid_base32_string!!!");
+				decodeCheck("invalid_base32_string!!!");
 			}).toThrow("Unknown letter");
-		});
-
-		it("should throw error for invalid version byte name", () => {
-			expect(() => {
-				decodeCheck(
-					// @ts-expect-error - Testing invalid version byte name
-					"invalidType",
-					"GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
-				);
-			}).toThrow("invalidType is not a valid version byte name");
 		});
 	});
 
 	describe("Real Stellar addresses", () => {
 		it("should handle real Stellar account ID", () => {
 			const result = decodeCheck(
-				"accountId",
 				"GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
 			);
 			expect(result).toBeInstanceOf(Buffer);

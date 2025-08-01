@@ -1,46 +1,17 @@
 import { base32 } from "@scure/base";
 
-// Version bytes for different address types
-const versionBytes = {
-	accountId: 0x30,
-	seed: 0x90,
-	preAuthTx: 0x98,
-	sha256Hash: 0x28,
-} as const;
-
-type VersionByteName = keyof typeof versionBytes;
-
-export function decodeCheck(
-	versionByteName: VersionByteName,
-	encoded: string,
-): Buffer {
+export function decodeCheck(encoded: string): Buffer {
 	if (typeof encoded !== "string") {
 		throw new TypeError("encoded argument must be of type String");
 	}
 
 	const decoded = base32.decode(encoded);
-	const versionByte = decoded[0];
 	const payload = decoded.slice(0, -2);
 	const data = payload.slice(1);
 	const checksum = decoded.slice(-2);
 
 	if (encoded !== base32.encode(decoded)) {
 		throw new Error("invalid encoded string");
-	}
-
-	const expectedVersion = versionBytes[versionByteName];
-
-	if (expectedVersion === undefined) {
-		throw new Error(
-			`${versionByteName} is not a valid version byte name. ` +
-				`Expected one of ${Object.keys(versionBytes).join(", ")}`,
-		);
-	}
-
-	if (versionByte !== expectedVersion) {
-		throw new Error(
-			`invalid version byte. expected ${expectedVersion}, got ${versionByte}`,
-		);
 	}
 
 	const expectedChecksum = calculateChecksum(payload);

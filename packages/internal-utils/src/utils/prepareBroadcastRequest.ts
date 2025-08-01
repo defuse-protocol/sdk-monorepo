@@ -77,10 +77,7 @@ export function prepareSwapSignedData(
 				payload: new TextDecoder().decode(signature.signedData.message),
 				// We should encode the Stellar address to base58
 				public_key: `ed25519:${base58.encode(
-					decodeCheck(
-						"accountId",
-						encodeCheck("accountId", hex.decode(userInfo.userAddress)),
-					),
+					decodeCheck(encodeCheck(hex.decode(userInfo.userAddress))),
 				)}`,
 				signature: transformED25519Signature(signature.signatureData),
 			};
