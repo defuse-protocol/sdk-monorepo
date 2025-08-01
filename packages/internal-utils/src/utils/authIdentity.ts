@@ -1,6 +1,5 @@
 import { keccak_256 } from "@noble/hashes/sha3";
 import { base58, hex } from "@scure/base";
-import { Keypair } from "@stellar/stellar-sdk";
 import type {
 	AuthHandle,
 	AuthIdentifier,
@@ -8,6 +7,7 @@ import type {
 } from "../types/authHandle";
 import type { IntentsUserId } from "../types/intentsUserId";
 import { assert } from "./assert";
+import { decodeCheck } from "./decodeCheck";
 import { parsePublicKey } from "./webAuthn";
 
 /**
@@ -79,8 +79,8 @@ export function authHandleToIntentsUserId(
 		}
 
 		case "stellar": {
-			const keypair = Keypair.fromPublicKey(authHandle.identifier);
-			return hex.encode(keypair.rawPublicKey()) as IntentsUserId;
+			const decoded = decodeCheck("accountId", authHandle.identifier);
+			return hex.encode(decoded) as IntentsUserId;
 		}
 
 		default:
