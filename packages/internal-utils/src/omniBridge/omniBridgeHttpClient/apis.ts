@@ -23,18 +23,18 @@ export async function fee(
 
 export async function transfer(
 	params: {
-		originChain: types.Chain;
-		originNonce: string;
+		hash: string;
 	},
 	config: types.RequestConfig = {},
-): Promise<types.OmniTransferFeeResponse> {
+): Promise<any[]> {
 	const baseURL = config.baseURL ?? globalConfig.env.omniBridgeRelayerBaseUrl;
 	const response = await request({
-		url: `${baseURL}/api/v1/transfers/transfer?origin_chain=${params.originChain}&origin_nonce=${params.originNonce}`,
+		url: `${baseURL}/api/v1/transfers/?transaction_id=${params.hash}&offset=0&limit=1`,
 		fetchOptions: {
 			method: "GET",
 		},
 	});
 
-	return response.json();
+	const data = await response.json();
+	return data[0]
 }

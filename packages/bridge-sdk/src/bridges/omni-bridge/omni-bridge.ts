@@ -25,7 +25,6 @@ import type {
 } from "../../shared-types";
 import {
 	createWithdrawIntentPrimitive,
-	getTransferNonce,
 } from "./omni-bridge-utils";
 import {
 	OMNI_ARB_PREFIX,
@@ -231,16 +230,10 @@ export class OmniBridge implements Bridge {
 					throw args.signal.reason;
 				}
 
-				const transferNonce = await getTransferNonce(
-					this.nearProvider,
-					configsByEnvironment[this.env].contractID,
-					args.tx.hash,
-				);
-				if (transferNonce === null) throw new Error("Nonce not found");
 				const transfer = await omniBridge.httpClient.transfer({
-					originChain: "Near",
-					originNonce: transferNonce,
+					hash: args.tx.hash,
 				});
+				if (!transfer) throw new Error("Transfer not found")
 				const destinationChain =
 					//@ts-ignore
 					transfer.transfer_message.recipient.split(":")[0];
@@ -265,7 +258,7 @@ export class OmniBridge implements Bridge {
 				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
 				handleError: (err, ctx) => {
 					if (
-						err.message === "Nonce not found" ||
+						err.message === "Transfer not found" ||
 						err.message === "Not supported destination chain" ||
 						err === args.signal?.reason
 					) {
