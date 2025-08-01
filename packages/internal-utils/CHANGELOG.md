@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.2.1
+
+### Patch Changes
+
+- 404647a: Update `solverRelay` to include `httpClient` namespace.
+
 ## 0.2.0
 
 ### Minor Changes
