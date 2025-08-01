@@ -241,8 +241,8 @@ export class OmniBridge implements Bridge {
 					originChain: "Near",
 					originNonce: transferNonce,
 				});
-				//@ts-ignore
 				const destinationChain =
+					//@ts-ignore
 					transfer.transfer_message.recipient.split(":")[0];
 				let txHash = null;
 				if (
