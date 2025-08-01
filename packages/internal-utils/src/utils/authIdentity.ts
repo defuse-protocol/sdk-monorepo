@@ -1,5 +1,6 @@
 import { keccak_256 } from "@noble/hashes/sha3";
 import { base58, hex } from "@scure/base";
+import { Keypair } from "@stellar/stellar-sdk";
 import type {
 	AuthHandle,
 	AuthIdentifier,
@@ -63,7 +64,6 @@ export function authHandleToIntentsUserId(
 			return authHandle.identifier.toLowerCase() as IntentsUserId;
 
 		case "solana":
-		case "stellar":
 			return hex.encode(base58.decode(authHandle.identifier)) as IntentsUserId;
 
 		case "webauthn": {
@@ -76,6 +76,11 @@ export function authHandleToIntentsUserId(
 			assert(authHandle.identifier.length === 64);
 			hex.decode(authHandle.identifier);
 			return authHandle.identifier.toLowerCase() as IntentsUserId;
+		}
+
+		case "stellar": {
+			const keypair = Keypair.fromPublicKey(authHandle.identifier);
+			return hex.encode(keypair.rawPublicKey()) as IntentsUserId;
 		}
 
 		default:

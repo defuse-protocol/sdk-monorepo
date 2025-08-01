@@ -1,4 +1,5 @@
 import { base58, base64, hex } from "@scure/base";
+import { Keypair } from "@stellar/stellar-sdk";
 import type {
 	Params,
 	PublishIntentRequest,
@@ -37,10 +38,8 @@ export function prepareSwapSignedData(
 		}
 
 		case "SOLANA":
-		case "STELLAR":
 			assert(
-				userInfo.userChainType === "solana" ||
-					userInfo.userChainType === "stellar",
+				userInfo.userChainType === "solana",
 				"User chain and signature chain must match",
 			);
 			return {
@@ -64,6 +63,21 @@ export function prepareSwapSignedData(
 				payload: signature.signatureData.payload,
 				public_key: `ed25519:${base58.encode(hex.decode(userInfo.userAddress))}`,
 				signature: `ed25519:${base58.encode(base64.decode(signature.signatureData.signature))}`,
+			};
+		}
+
+		case "STELLAR": {
+			assert(
+				userInfo.userChainType === "stellar",
+				"User chain and signature chain must match",
+			);
+			const publicKeypair = Keypair.fromPublicKey(userInfo.userAddress);
+			return {
+				standard: "raw_ed25519",
+				payload: new TextDecoder().decode(signature.signedData.message),
+				// We should encode the Stellar address to base58
+				public_key: `ed25519:${base58.encode(publicKeypair.rawPublicKey())}`,
+				signature: transformED25519Signature(signature.signatureData),
 			};
 		}
 

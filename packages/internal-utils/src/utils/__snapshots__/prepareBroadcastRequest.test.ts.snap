@@ -26,7 +26,7 @@ exports[`prepareSwapSignedData() > should return the correct signed data for a S
 exports[`prepareSwapSignedData() > should return the correct signed data for a Stellar signature 1`] = `
 {
   "payload": "{"foo":"bar"}",
-  "public_key": "ed25519:GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+  "public_key": "ed25519:11111111111111111111111111111111",
   "signature": "ed25519:S88bG8B",
   "standard": "raw_ed25519",
 }
