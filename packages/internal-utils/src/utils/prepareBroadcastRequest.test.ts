@@ -3,6 +3,7 @@ import type {
 	ERC191SignatureData,
 	NEP413SignatureData,
 	SolanaSignatureData,
+	StellarSignatureData,
 	TonConnectSignatureData,
 	WalletMessage,
 	WebAuthnSignatureData,
@@ -34,6 +35,11 @@ describe("prepareSwapSignedData()", () => {
 			message: JSON.stringify({ foo: "bar" }),
 		},
 		SOLANA: {
+			message: Uint8Array.from(
+				Buffer.from(JSON.stringify({ foo: "bar" }), "utf8"),
+			),
+		},
+		STELLAR: {
 			message: Uint8Array.from(
 				Buffer.from(JSON.stringify({ foo: "bar" }), "utf8"),
 			),
@@ -87,6 +93,22 @@ describe("prepareSwapSignedData()", () => {
 			prepareSwapSignedData(signature, {
 				userAddress: "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy",
 				userChainType: "solana",
+			}),
+		).toMatchSnapshot();
+	});
+
+	it("should return the correct signed data for a Stellar signature", () => {
+		const signature: StellarSignatureData = {
+			type: "STELLAR",
+			signatureData: Buffer.from("deadbeef1c", "hex"),
+			signedData: walletMessage.STELLAR,
+		};
+
+		expect(
+			prepareSwapSignedData(signature, {
+				userAddress:
+					"10696dbddef262febc0f925b1ee571f45699f2676ae017f85368265d4b0dded6",
+				userChainType: "stellar",
 			}),
 		).toMatchSnapshot();
 	});

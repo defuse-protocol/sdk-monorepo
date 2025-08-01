@@ -2,6 +2,11 @@ export * as poaBridge from "./poaBridge";
 export * as solverRelay from "./solverRelay";
 export * as utils from "./utils";
 export * as errors from "./errors";
+export * as messageFactory from "./utils/messageFactory";
+export * as authIdentity from "./utils/authIdentity";
+export * as prepareBroadcastRequest from "./utils/prepareBroadcastRequest";
+export * as walletMessage from "./types/walletMessage";
+export * as authHandle from "./types/authHandle";
 export * from "./services/blockchainBalanceService";
 export {
 	configureSDK,
@@ -17,6 +22,7 @@ export { request, type RequestErrorType } from "./utils/request";
 export { serialize } from "./utils/serialize";
 export { nearFailoverRpcProvider } from "./utils/failover";
 export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";
+export { AuthMethod } from "./types/authHandle";
 
 // Base error classes
 export {

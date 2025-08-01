@@ -7,6 +7,10 @@ import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "./assert";
 import { makeWebAuthnMultiPayload } from "./multiPayload/webauthn";
+import {
+	bytesToStellarAddress,
+	stellarAddressToBytes,
+} from "./stellarAddressToBytes";
 
 export function prepareSwapSignedData(
 	signature: WalletSignatureResult,
@@ -46,7 +50,7 @@ export function prepareSwapSignedData(
 				payload: new TextDecoder().decode(signature.signedData.message),
 				// Solana address is its public key encoded in base58
 				public_key: `ed25519:${userInfo.userAddress}`,
-				signature: transformSolanaSignature(signature.signatureData),
+				signature: transformED25519Signature(signature.signatureData),
 			};
 
 		case "WEBAUTHN": {
@@ -62,6 +66,24 @@ export function prepareSwapSignedData(
 				payload: signature.signatureData.payload,
 				public_key: `ed25519:${base58.encode(hex.decode(userInfo.userAddress))}`,
 				signature: `ed25519:${base58.encode(base64.decode(signature.signatureData.signature))}`,
+			};
+		}
+
+		case "STELLAR": {
+			assert(
+				userInfo.userChainType === "stellar",
+				"User chain and signature chain must match",
+			);
+			return {
+				standard: "raw_ed25519",
+				payload: new TextDecoder().decode(signature.signedData.message),
+				// We should encode the Stellar address to base58
+				public_key: `ed25519:${base58.encode(
+					stellarAddressToBytes(
+						bytesToStellarAddress(hex.decode(userInfo.userAddress)),
+					),
+				)}`,
+				signature: transformED25519Signature(signature.signatureData),
 			};
 		}
 
@@ -108,6 +130,6 @@ function toRecoveryBit(yParityOrV: number) {
 	throw new Error("Invalid yParityOrV value");
 }
 
-function transformSolanaSignature(signature: Uint8Array) {
+function transformED25519Signature(signature: Uint8Array) {
 	return `ed25519:${base58.encode(signature)}`;
 }
