@@ -256,7 +256,7 @@ export class OmniBridge implements Bridge {
 					//@ts-ignore
 					txHash = transfer.finalised.Solana.signature;
 				} else {
-					throw new Error("Not supported destination chain");
+					throw new Error(`Not supported destination chain ${destinationChain}`);
 				}
 				if (!txHash) throw new Error("Hash not found");
 				return { hash: txHash };
@@ -265,8 +265,8 @@ export class OmniBridge implements Bridge {
 				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
 				handleError: (err, ctx) => {
 					if (
-						err.text === "Nonce not found" ||
-						err.text === "Not supported destination chain" ||
+						err.message === "Nonce not found" ||
+						err.message === "Not supported destination chain" ||
 						err === args.signal?.reason
 					) {
 						ctx.abort();
