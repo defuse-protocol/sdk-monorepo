@@ -1,5 +1,16 @@
 # @defuse-protocol/internal-utils
 
+## 0.3.0
+
+### Minor Changes
+
+- 304381d: Add Stellar signatures support including message types, signature data handling, and multipayload conversion for Stellar wallet integration
+
+### Patch Changes
+
+- 304381d: Export utility functions and type definitions from internal-utils
+- 404647a: Update `solverRelay` to include `httpClient` namespace.
+
 ## 0.2.0
 
 ### Minor Changes
