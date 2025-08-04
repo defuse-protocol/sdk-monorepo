@@ -57,18 +57,20 @@ describe("makeSwapMessage()", () => {
 				),
 			},
 			STELLAR: {
-				message: Uint8Array.from(
-					Buffer.from(
-						JSON.stringify({
-							signer_id: "user.near",
-							verifying_contract: "intents.near",
-							deadline: "2024-01-01T12:00:00.000Z",
-							nonce: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-							intents: [{ intent: "token_diff", diff: { "foo.near": "100" } }],
-						}),
-						"utf-8",
-					),
-				),
+				message: `{
+  "signer_id": "user.near",
+  "verifying_contract": "intents.near",
+  "deadline": "2024-01-01T12:00:00.000Z",
+  "nonce": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  "intents": [
+    {
+      "intent": "token_diff",
+      "diff": {
+        "foo.near": "100"
+      }
+    }
+  ]
+}`,
 			},
 			WEBAUTHN: expect.any(Object),
 			TON_CONNECT: {
