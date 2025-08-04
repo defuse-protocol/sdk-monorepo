@@ -49,6 +49,17 @@ export type SolanaSignatureData = {
 	signedData: SolanaMessage;
 };
 
+// Message for Stellar wallets
+export type StellarMessage = {
+	message: string;
+};
+
+export type StellarSignatureData = {
+	type: "STELLAR";
+	signatureData: Uint8Array;
+	signedData: StellarMessage;
+};
+
 // WebAuthn
 export type WebAuthnMessage = {
 	/** Hash that needs to be signed */
@@ -102,6 +113,7 @@ export type WalletMessage = {
 	ERC191: ERC191Message;
 	NEP413: NEP413Message;
 	SOLANA: SolanaMessage;
+	STELLAR: StellarMessage;
 	WEBAUTHN: WebAuthnMessage;
 	TON_CONNECT: TonConnectMessage;
 };
@@ -110,5 +122,6 @@ export type WalletSignatureResult =
 	| ERC191SignatureData
 	| NEP413SignatureData
 	| SolanaSignatureData
+	| StellarSignatureData
 	| WebAuthnSignatureData
 	| TonConnectSignatureData;

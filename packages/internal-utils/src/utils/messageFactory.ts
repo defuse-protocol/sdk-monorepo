@@ -273,6 +273,9 @@ export function makeSwapMessage({
 		SOLANA: {
 			message: payloadBytes,
 		},
+		STELLAR: {
+			message: JSON.stringify(payload, null, 2),
+		},
 		WEBAUTHN: {
 			challenge: makeChallenge(payloadBytes),
 			payload: payloadSerialized,
