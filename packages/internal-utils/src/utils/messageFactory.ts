@@ -274,7 +274,7 @@ export function makeSwapMessage({
 			message: payloadBytes,
 		},
 		STELLAR: {
-			message: payloadBytes,
+			message: JSON.stringify(payload, null, 2),
 		},
 		WEBAUTHN: {
 			challenge: makeChallenge(payloadBytes),

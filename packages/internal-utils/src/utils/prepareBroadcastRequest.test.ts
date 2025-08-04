@@ -40,9 +40,7 @@ describe("prepareSwapSignedData()", () => {
 			),
 		},
 		STELLAR: {
-			message: Uint8Array.from(
-				Buffer.from(JSON.stringify({ foo: "bar" }), "utf8"),
-			),
+			message: JSON.stringify({ foo: "bar" }),
 		},
 		WEBAUTHN: swapMessage.WEBAUTHN,
 		TON_CONNECT: swapMessage.TON_CONNECT,
@@ -101,13 +99,14 @@ describe("prepareSwapSignedData()", () => {
 		const signature: StellarSignatureData = {
 			type: "STELLAR",
 			signatureData: Buffer.from("deadbeef1c", "hex"),
-			signedData: walletMessage.STELLAR,
+			signedData: {
+				message: JSON.stringify({ foo: "bar" }),
+			},
 		};
 
 		expect(
 			prepareSwapSignedData(signature, {
-				userAddress:
-					"10696dbddef262febc0f925b1ee571f45699f2676ae017f85368265d4b0dded6",
+				userAddress: "GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
 				userChainType: "stellar",
 			}),
 		).toMatchSnapshot();

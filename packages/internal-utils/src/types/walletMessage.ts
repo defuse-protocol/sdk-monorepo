@@ -51,7 +51,7 @@ export type SolanaSignatureData = {
 
 // Message for Stellar wallets
 export type StellarMessage = {
-	message: Uint8Array;
+	message: string;
 };
 
 export type StellarSignatureData = {

@@ -7,10 +7,7 @@ import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "./assert";
 import { makeWebAuthnMultiPayload } from "./multiPayload/webauthn";
-import {
-	bytesToStellarAddress,
-	stellarAddressToBytes,
-} from "./stellarAddressToBytes";
+import { stellarAddressToBytes } from "./stellarAddressToBytes";
 
 export function prepareSwapSignedData(
 	signature: WalletSignatureResult,
@@ -76,12 +73,10 @@ export function prepareSwapSignedData(
 			);
 			return {
 				standard: "raw_ed25519",
-				payload: new TextDecoder().decode(signature.signedData.message),
+				payload: signature.signedData.message,
 				// We should encode the Stellar address to base58
 				public_key: `ed25519:${base58.encode(
-					stellarAddressToBytes(
-						bytesToStellarAddress(hex.decode(userInfo.userAddress)),
-					),
+					stellarAddressToBytes(userInfo.userAddress),
 				)}`,
 				signature: transformED25519Signature(signature.signatureData),
 			};
