@@ -3,8 +3,11 @@ import {
 	type ILogger,
 	type NearIntentsEnv,
 	PUBLIC_NEAR_RPC_URLS,
+	RETRY_CONFIGS,
 	type RetryOptions,
+	configsByEnvironment,
 	nearFailoverRpcProvider,
+	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import hotOmniSdk from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -14,42 +17,46 @@ import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
 import { HotBridgeEVMChains } from "./bridges/hot-bridge/hot-bridge-chains";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
-import { BatchWithdrawalImpl } from "./classes/batch-withdrawal";
 import { FeeExceedsAmountError } from "./classes/errors";
-import { SingleWithdrawalImpl } from "./classes/single-withdrawal";
 import {
 	PUBLIC_EVM_RPC_URLS,
 	PUBLIC_STELLAR_RPC_URLS,
 } from "./constants/public-rpc-urls";
-import {
-	IntentExecuter,
-	type OnBeforePublishIntentHook,
-} from "./intents/intent-executer-impl/intent-executer";
+import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
+import { noopIntentSigner } from "./intents/intent-signer-impl/intent-signer-noop";
 import type { IIntentRelayer } from "./intents/interfaces/intent-relayer";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type {
 	IntentHash,
-	IntentPayloadFactory,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
+import { zip } from "./lib/array";
 import { Chains } from "./lib/caip2";
 import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
 } from "./lib/configure-rpc-config";
+import { determineRouteConfig } from "./lib/route-config";
 import type {
+	BatchWithdrawalResult,
 	Bridge,
 	FeeEstimation,
 	IBridgeSDK,
+	IntentPublishResult,
+	IntentSettlementStatus,
 	NearTxInfo,
 	ParsedAssetInfo,
 	PartialRPCEndpointMap,
-	RouteConfig,
+	ProcessWithdrawalArgs,
+	SignAndSendArgs,
+	SignAndSendWithdrawalArgs,
 	TxInfo,
 	TxNoInfo,
+	WithdrawalIdentifier,
 	WithdrawalParams,
+	WithdrawalResult,
 } from "./shared-types";
 
 export interface BridgeSDKConfig {
@@ -122,89 +129,11 @@ export class BridgeSDK implements IBridgeSDK {
 		this.intentSigner = args.intentSigner;
 	}
 
-	setIntentSigner(signer: IIntentSigner) {
+	public setIntentSigner(signer: IIntentSigner) {
 		this.intentSigner = signer;
 	}
 
-	createWithdrawal({
-		withdrawalParams,
-		intent,
-		referral,
-		logger,
-	}: {
-		withdrawalParams: WithdrawalParams;
-		intent?: {
-			payload?: IntentPayloadFactory;
-			relayParams?: IntentRelayParamsFactory;
-			signer?: IIntentSigner;
-			onBeforePublishIntent?: OnBeforePublishIntentHook;
-		};
-		referral?: string;
-		logger?: ILogger;
-	}) {
-		const intentSigner = intent?.signer ?? this.intentSigner;
-		if (intentSigner == null) {
-			throw new Error("Intent signer is not provided");
-		}
-
-		return new SingleWithdrawalImpl({
-			intentExecuter: new IntentExecuter({
-				env: this.env,
-				logger,
-				intentSigner: intentSigner,
-				intentRelayer: this.intentRelayer,
-				intentPayloadFactory: intent?.payload,
-				onBeforePublishIntent: intent?.onBeforePublishIntent,
-			}),
-			// @ts-expect-error
-			intentRelayParams: intent?.relayParams,
-			withdrawalParams,
-			referral: referral ?? this.referral,
-			bridgeSDK: this,
-			logger,
-		});
-	}
-
-	createBatchWithdrawals({
-		withdrawalParams,
-		intent,
-		referral,
-		logger,
-	}: {
-		withdrawalParams: WithdrawalParams[];
-		intent?: {
-			payload?: IntentPayloadFactory;
-			relayParams?: IntentRelayParamsFactory;
-			signer?: IIntentSigner;
-			onBeforePublishIntent?: OnBeforePublishIntentHook;
-		};
-		referral?: string;
-		logger?: ILogger;
-	}) {
-		const intentSigner = intent?.signer ?? this.intentSigner;
-		if (intentSigner == null) {
-			throw new Error("Intent signer is not provided");
-		}
-
-		return new BatchWithdrawalImpl({
-			intentExecuter: new IntentExecuter({
-				env: this.env,
-				logger,
-				intentSigner,
-				intentRelayer: this.intentRelayer,
-				intentPayloadFactory: intent?.payload,
-				onBeforePublishIntent: intent?.onBeforePublishIntent,
-			}),
-			// @ts-expect-error
-			intentRelayParams: intent?.relayParams,
-			withdrawalParams,
-			referral: referral ?? this.referral,
-			bridgeSDK: this,
-			logger,
-		});
-	}
-
-	async createWithdrawalIntents(args: {
+	public async createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
@@ -239,17 +168,42 @@ export class BridgeSDK implements IBridgeSDK {
 		);
 	}
 
-	async estimateWithdrawalFee<
-		T extends Pick<
-			WithdrawalParams,
-			| "assetId"
-			| "destinationAddress"
-			| "routeConfig"
-			| "feeInclusive"
-			| "amount"
-		>,
-	>(args: {
-		withdrawalParams: T;
+	public estimateWithdrawalFee(args: {
+		withdrawalParams: WithdrawalParams;
+		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
+	}): Promise<FeeEstimation>;
+
+	public estimateWithdrawalFee(args: {
+		withdrawalParams: WithdrawalParams[];
+		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
+	}): Promise<FeeEstimation[]>;
+
+	public estimateWithdrawalFee(args: {
+		withdrawalParams: WithdrawalParams | WithdrawalParams[];
+		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
+	}): Promise<FeeEstimation | FeeEstimation[]> {
+		if (!Array.isArray(args.withdrawalParams)) {
+			return this._estimateWithdrawalFee({
+				...args,
+				withdrawalParams: args.withdrawalParams,
+			});
+		}
+
+		return Promise.all(
+			args.withdrawalParams.map((withdrawalParams) =>
+				this._estimateWithdrawalFee({
+					...args,
+					withdrawalParams,
+				}),
+			),
+		);
+	}
+
+	protected async _estimateWithdrawalFee(args: {
+		withdrawalParams: WithdrawalParams;
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
@@ -262,7 +216,7 @@ export class BridgeSDK implements IBridgeSDK {
 				});
 
 				if (args.withdrawalParams.feeInclusive) {
-					if (args.withdrawalParams.amount < fee.amount) {
+					if (args.withdrawalParams.amount <= fee.amount) {
 						throw new FeeExceedsAmountError(fee, args.withdrawalParams.amount);
 					}
 				}
@@ -276,31 +230,98 @@ export class BridgeSDK implements IBridgeSDK {
 		);
 	}
 
-	waitForWithdrawalCompletion(args: {
-		routeConfig: RouteConfig;
-		tx: NearTxInfo;
-		index: number;
+	protected getWithdrawalsIdentifiers({
+		withdrawalParams,
+		intentTx,
+	}: {
+		withdrawalParams: WithdrawalParams[];
+		intentTx: NearTxInfo;
+	}): WithdrawalIdentifier[] {
+		const indexes = new Map<string, number>(
+			zip(
+				withdrawalParams.map((w) => {
+					const routeConfig = determineRouteConfig(this, w);
+					return routeConfig.route;
+				}),
+				Array(withdrawalParams.length).fill(0),
+			),
+		);
+
+		return withdrawalParams.map((w): WithdrawalIdentifier => {
+			const routeConfig = determineRouteConfig(this, w);
+			const route = routeConfig.route;
+
+			const index = indexes.get(route);
+			assert(index != null, "Index is not found for route");
+			indexes.set(route, index + 1);
+
+			return {
+				routeConfig: routeConfig,
+				index,
+				tx: intentTx,
+			};
+		});
+	}
+
+	public waitForWithdrawalCompletion(args: {
+		withdrawalParams: WithdrawalParams;
+		intentTx: NearTxInfo;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 		logger?: ILogger;
-	}): Promise<TxInfo | TxNoInfo> {
-		for (const bridge of this.bridges) {
-			if (bridge.is(args.routeConfig)) {
-				return bridge.waitForWithdrawalCompletion({
-					tx: args.tx,
-					index: args.index,
-					routeConfig: args.routeConfig,
-					signal: args.signal,
-					retryOptions: args.retryOptions,
-					logger: args.logger,
-				});
-			}
+	}): Promise<TxInfo | TxNoInfo>;
+
+	public waitForWithdrawalCompletion(args: {
+		withdrawalParams: WithdrawalParams[];
+		intentTx: NearTxInfo;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+		logger?: ILogger;
+	}): Promise<Array<TxInfo | TxNoInfo>>;
+
+	public async waitForWithdrawalCompletion(args: {
+		withdrawalParams: WithdrawalParams | WithdrawalParams[];
+		intentTx: NearTxInfo;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+		logger?: ILogger;
+	}): Promise<(TxInfo | TxNoInfo) | Array<TxInfo | TxNoInfo>> {
+		const wids = this.getWithdrawalsIdentifiers({
+			withdrawalParams: Array.isArray(args.withdrawalParams)
+				? args.withdrawalParams
+				: [args.withdrawalParams],
+			intentTx: args.intentTx,
+		});
+
+		const result = await Promise.all(
+			wids.map((wid) => {
+				for (const bridge of this.bridges) {
+					if (bridge.is(wid.routeConfig)) {
+						return bridge.waitForWithdrawalCompletion({
+							tx: args.intentTx,
+							index: wid.index,
+							routeConfig: wid.routeConfig,
+							signal: args.signal,
+							retryOptions: args.retryOptions,
+							logger: args.logger,
+						});
+					}
+				}
+
+				throw new Error(`Unsupported route = ${stringify(wid.routeConfig)}`);
+			}),
+		);
+
+		if (Array.isArray(args.withdrawalParams)) {
+			return result;
 		}
 
-		throw new Error(`Unsupported bridge = ${stringify(args.routeConfig)}`);
+		assert(result.length === 1, "Unexpected result length");
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		return result[0]!;
 	}
 
-	parseAssetId(assetId: string): ParsedAssetInfo {
+	public parseAssetId(assetId: string): ParsedAssetInfo {
 		for (const bridge of this.bridges) {
 			const parsed = bridge.parseAssetId(assetId);
 			if (parsed != null) {
@@ -310,4 +331,194 @@ export class BridgeSDK implements IBridgeSDK {
 
 		throw new Error(`Cannot determine bridge for assetId = ${assetId}`);
 	}
+
+	public async signAndSendIntent(
+		args: SignAndSendArgs,
+	): Promise<IntentPublishResult> {
+		const intentSigner = args.signer ?? this.intentSigner;
+		assert(intentSigner != null, "Intent signer is not provided");
+
+		const intentExecuter = new IntentExecuter({
+			env: this.env,
+			logger: args.logger,
+			intentSigner,
+			intentRelayer: this.intentRelayer,
+			intentPayloadFactory: args.payload,
+			onBeforePublishIntent: args.onBeforePublishIntent,
+		});
+
+		return intentExecuter.signAndSendIntent({
+			intents: args.intents,
+			relayParams: args.relayParams,
+		});
+	}
+
+	public async signAndSendWithdrawalIntent(
+		args:
+			| SignAndSendWithdrawalArgs<WithdrawalParams>
+			| SignAndSendWithdrawalArgs<WithdrawalParams[]>,
+	): Promise<IntentPublishResult> {
+		let withdrawalParamsArray: WithdrawalParams[];
+		let feeEstimations: FeeEstimation[];
+		if (isBatchMode(args)) {
+			withdrawalParamsArray = args.withdrawalParams;
+			feeEstimations = args.feeEstimation;
+		} else {
+			withdrawalParamsArray = [args.withdrawalParams];
+			feeEstimations = [args.feeEstimation];
+		}
+
+		const intentsP = zip(withdrawalParamsArray, feeEstimations).map(
+			([withdrawalParams, feeEstimation]) => {
+				return this.createWithdrawalIntents({
+					withdrawalParams,
+					feeEstimation,
+					referral: args.referral ?? this.referral,
+					logger: args.logger,
+				});
+			},
+		);
+
+		const intents = (await Promise.all(intentsP)).flat();
+
+		const relayParamsFn: IntentRelayParamsFactory = async () => {
+			const relayParams =
+				args.intent?.relayParams != null
+					? await args.intent?.relayParams()
+					: { quoteHashes: undefined };
+
+			const quoteHashes = relayParams.quoteHashes ?? [];
+
+			for (const fee of feeEstimations) {
+				if (fee.quote != null) {
+					quoteHashes.push(fee.quote.quote_hash);
+				}
+			}
+
+			return { ...relayParams, quoteHashes };
+		};
+
+		return this.signAndSendIntent({
+			intents,
+			signer: args.intent?.signer,
+			onBeforePublishIntent: args.intent?.onBeforePublishIntent,
+			relayParams: relayParamsFn,
+			payload: args.intent?.payload,
+			logger: args.logger,
+		});
+	}
+
+	public async waitForIntentSettlement(args: {
+		ticket: IntentHash;
+		logger?: ILogger;
+	}): Promise<NearTxInfo> {
+		const intentExecuter = new IntentExecuter({
+			env: this.env,
+			logger: args.logger,
+			intentSigner: noopIntentSigner,
+			intentRelayer: this.intentRelayer,
+		});
+
+		const { tx } = await intentExecuter.waitForSettlement(args.ticket);
+		return tx;
+	}
+
+	public async getIntentStatus({
+		intentHash,
+		logger,
+	}: {
+		intentHash: IntentHash;
+		logger?: ILogger;
+	}): Promise<IntentSettlementStatus> {
+		return solverRelay.getStatus(
+			{
+				intent_hash: intentHash,
+			},
+			{
+				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				logger,
+			},
+		);
+	}
+
+	// Orchestrated functions
+
+	public processWithdrawal(
+		args: ProcessWithdrawalArgs<WithdrawalParams>,
+	): Promise<WithdrawalResult>;
+
+	public processWithdrawal(
+		args: ProcessWithdrawalArgs<WithdrawalParams[]>,
+	): Promise<BatchWithdrawalResult>;
+
+	async processWithdrawal(
+		args: ProcessWithdrawalArgs<WithdrawalParams | WithdrawalParams[]>,
+	): Promise<WithdrawalResult | BatchWithdrawalResult> {
+		const withdrawalParams = Array.isArray(args.withdrawalParams)
+			? args.withdrawalParams
+			: [args.withdrawalParams];
+
+		// Step 1: Estimate fee
+		const feeEstimation = await (() => {
+			if (args.feeEstimation != null) {
+				return Array.isArray(args.feeEstimation)
+					? args.feeEstimation
+					: [args.feeEstimation];
+			}
+
+			return this.estimateWithdrawalFee({
+				withdrawalParams,
+				logger: args.logger,
+			});
+		})();
+
+		// Step 2: Sign and send intent
+		const { ticket } = await this.signAndSendWithdrawalIntent({
+			withdrawalParams,
+			feeEstimation,
+			referral: args.referral,
+			intent: args.intent,
+			logger: args.logger,
+		});
+
+		// Step 3: Wait for intent settlement
+		const intentTx = await this.waitForIntentSettlement({
+			ticket,
+			logger: args.logger,
+		});
+
+		// Step 4: Wait for withdrawal completion
+		const destinationTx = await this.waitForWithdrawalCompletion({
+			withdrawalParams,
+			intentTx,
+			logger: args.logger,
+			retryOptions: RETRY_CONFIGS.FIVE_MINS_STEADY,
+		});
+
+		if (!Array.isArray(args.withdrawalParams)) {
+			return {
+				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				feeEstimation: feeEstimation[0]!,
+				intentHash: ticket,
+				intentTx,
+				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				destinationTx: destinationTx[0]!,
+			};
+		}
+
+		return {
+			feeEstimation,
+			intentHash: ticket,
+			intentTx,
+			destinationTx,
+		};
+	}
+}
+
+function isBatchMode(
+	args:
+		| SignAndSendWithdrawalArgs<WithdrawalParams>
+		| SignAndSendWithdrawalArgs<WithdrawalParams[]>,
+): args is SignAndSendWithdrawalArgs<WithdrawalParams[]> {
+	return Array.isArray(args.withdrawalParams);
 }
