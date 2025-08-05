@@ -18,10 +18,15 @@ export type { IIntentSigner } from "./src/intents/interfaces/intent-signer";
 // Core Types
 // ============================================================================
 export type {
+	// Intent-specific
+	IntentPublishResult,
+	IntentSettlementStatus,
 	// Main withdrawal interfaces
 	WithdrawalParams,
 	FeeEstimation,
 	WithdrawalIdentifier,
+	ProcessWithdrawalArgs,
+	SignAndSendWithdrawalArgs,
 	// Route configurations
 	RouteConfig,
 	NearWithdrawalRouteConfig,
@@ -29,6 +34,9 @@ export type {
 	VirtualChainRouteConfig,
 	PoaBridgeRouteConfig,
 	HotBridgeRouteConfig,
+	// Results of orchestrated fns
+	WithdrawalResult,
+	BatchWithdrawalResult,
 	// Transaction types
 	NearTxInfo,
 	TxInfo,

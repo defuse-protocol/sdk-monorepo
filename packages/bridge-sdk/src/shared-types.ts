@@ -6,12 +6,120 @@ import type {
 import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
 import type { RouteEnum } from "./constants/route-enum";
+import type { OnBeforePublishIntentHook } from "./intents/intent-executer-impl/intent-executer";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
-import type { IntentPrimitive } from "./intents/shared-types";
+import type {
+	IntentHash,
+	IntentPayloadFactory,
+	IntentPrimitive,
+	IntentRelayParamsFactory,
+} from "./intents/shared-types";
 import type { Chain, Chains } from "./lib/caip2";
+
+export interface IntentPublishResult {
+	ticket: IntentHash;
+}
+
+export interface WithdrawalResult {
+	feeEstimation: FeeEstimation;
+	intentHash: IntentHash;
+	intentTx: NearTxInfo;
+	destinationTx: TxInfo | TxNoInfo;
+}
+
+export interface BatchWithdrawalResult {
+	feeEstimation: FeeEstimation[];
+	intentHash: IntentHash;
+	intentTx: NearTxInfo;
+	destinationTx: (TxInfo | TxNoInfo)[];
+}
+
+export type IntentSettlementStatus = solverRelay.GetStatusReturnType;
+
+export interface SignAndSendArgs {
+	intents: IntentPrimitive[];
+	payload?: IntentPayloadFactory;
+	relayParams?: IntentRelayParamsFactory;
+	signer?: IIntentSigner;
+	onBeforePublishIntent?: OnBeforePublishIntentHook;
+	logger?: ILogger;
+}
+
+export type SignAndSendWithdrawalArgs<
+	T extends WithdrawalParams | WithdrawalParams[],
+> = {
+	withdrawalParams: T;
+	feeEstimation: T extends WithdrawalParams[] ? FeeEstimation[] : FeeEstimation;
+	referral?: string;
+	intent?: Omit<SignAndSendArgs, "logger" | "intents">;
+	logger?: ILogger;
+};
+
+export type ProcessWithdrawalArgs<
+	T extends WithdrawalParams | WithdrawalParams[],
+> = {
+	withdrawalParams: T;
+	feeEstimation?: T extends WithdrawalParams[]
+		? FeeEstimation[]
+		: FeeEstimation;
+	intent?: {
+		payload?: IntentPayloadFactory;
+		relayParams?: IntentRelayParamsFactory;
+		signer?: IIntentSigner;
+		onBeforePublishIntent?: OnBeforePublishIntentHook;
+	};
+	referral?: string;
+	logger?: ILogger;
+};
 
 export interface IBridgeSDK {
 	setIntentSigner(signer: IIntentSigner): void;
+
+	signAndSendIntent(args: SignAndSendArgs): Promise<IntentPublishResult>;
+
+	waitForIntentSettlement(args: {
+		ticket: IntentHash;
+		logger?: ILogger;
+	}): Promise<NearTxInfo>;
+
+	getIntentStatus(args: {
+		intentHash: IntentHash;
+		logger?: ILogger;
+	}): Promise<IntentSettlementStatus>;
+
+	estimateWithdrawalFee(args: {
+		withdrawalParams: WithdrawalParams;
+		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
+	}): Promise<FeeEstimation>;
+
+	estimateWithdrawalFee(args: {
+		withdrawalParams: WithdrawalParams[];
+		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
+	}): Promise<FeeEstimation[]>;
+
+	signAndSendWithdrawalIntent(
+		args:
+			| SignAndSendWithdrawalArgs<WithdrawalParams>
+			| SignAndSendWithdrawalArgs<WithdrawalParams[]>,
+	): Promise<IntentPublishResult>;
+
+	waitForWithdrawalCompletion(args: {
+		withdrawalParams: WithdrawalParams;
+		intentTx: NearTxInfo;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+		logger?: ILogger;
+	}): Promise<TxInfo | TxNoInfo>;
+
+	waitForWithdrawalCompletion(args: {
+		withdrawalParams: WithdrawalParams[];
+		intentTx: NearTxInfo;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+		logger?: ILogger;
+	}): Promise<Array<TxInfo | TxNoInfo>>;
 
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
@@ -20,29 +128,16 @@ export interface IBridgeSDK {
 		logger?: ILogger;
 	}): Promise<IntentPrimitive[]>;
 
-	estimateWithdrawalFee<
-		T extends Pick<
-			WithdrawalParams,
-			| "assetId"
-			| "destinationAddress"
-			| "routeConfig"
-			| "feeInclusive"
-			| "amount"
-		>,
-	>(args: {
-		withdrawalParams: T;
-		quoteOptions?: { waitMs: number };
-	}): Promise<FeeEstimation>;
-
-	waitForWithdrawalCompletion(args: {
-		routeConfig: RouteConfig;
-		tx: NearTxInfo;
-		index: number;
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-	}): Promise<TxInfo | TxNoInfo>;
-
 	parseAssetId(assetId: string): ParsedAssetInfo;
+
+	// Orchestrated functions for convenience
+	processWithdrawal(
+		args: ProcessWithdrawalArgs<WithdrawalParams>,
+	): Promise<WithdrawalResult>;
+
+	processWithdrawal(
+		args: ProcessWithdrawalArgs<WithdrawalParams[]>,
+	): Promise<BatchWithdrawalResult>;
 }
 
 export interface NearTxInfo {
@@ -152,29 +247,6 @@ export interface Bridge {
 	}): Promise<TxInfo | TxNoInfo>;
 }
 
-export interface SingleWithdrawal<Ticket> {
-	estimateFee(): Promise<bigint>;
-	signAndSendIntent(): Promise<Ticket>;
-	waitForIntentSettlement(): Promise<NearTxInfo>;
-	waitForWithdrawalCompletion(args?: {
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-	}): Promise<TxInfo | TxNoInfo>;
-	process(): Promise<void>;
-}
-
-export interface BatchWithdrawal<Ticket> {
-	estimateFee(): Promise<PromiseSettledResult<bigint>[]>;
-	removeUnprocessableWithdrawals(): void;
-	signAndSendIntent(): Promise<Ticket>;
-	waitForIntentSettlement(): Promise<NearTxInfo>;
-	waitForWithdrawalCompletion(args?: {
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-	}): Promise<PromiseSettledResult<TxInfo | TxNoInfo>[]>;
-	process(): Promise<void>;
-}
-
 export interface WithdrawalIdentifier {
 	routeConfig: RouteConfig;
 	index: number;
@@ -214,9 +286,7 @@ type DeepPartial<T> = T extends object
 		: // biome-ignore lint/complexity/noBannedTypes: <explanation>
 			T extends Function
 			? T
-			: {
-					[P in keyof T]?: DeepPartial<T[P]>;
-				}
+			: { [P in keyof T]?: DeepPartial<T[P]> }
 	: T;
 
 export type PartialRPCEndpointMap = DeepPartial<RPCEndpointMap>;

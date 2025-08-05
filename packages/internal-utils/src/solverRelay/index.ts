@@ -1,4 +1,5 @@
 export * from "./getQuote";
+export * from "./getStatus";
 export * from "./publishIntents";
 export * from "./waitForIntentSettlement";
 export * from "./publishIntent";

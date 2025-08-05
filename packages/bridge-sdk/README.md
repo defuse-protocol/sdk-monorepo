@@ -44,8 +44,8 @@ const signer = createIntentSignerNearKeyPair({
 });
 sdk.setIntentSigner(signer);
 
-// Create a withdrawal
-const withdrawal = sdk.createWithdrawal({
+// Method 1: Complete end-to-end withdrawal (orchestrated)
+const result = await sdk.processWithdrawal({
   withdrawalParams: {
     assetId: 'nep141:usdt.tether-token.near', // Asset identifier
     amount: 1000000n, // Amount in smallest unit
@@ -56,14 +56,42 @@ const withdrawal = sdk.createWithdrawal({
   }
 });
 
-// Execute the withdrawal (all steps in one call)
-await withdrawal.process();
+console.log('Intent hash:', result.intentHash);
+console.log('Destination tx:', result.destinationTx);
 
-// Or execute step by step for more control:
-// await withdrawal.estimateFee();
-// await withdrawal.signAndSendIntent();
-// await withdrawal.waitForIntentSettlement();
-// await withdrawal.waitForWithdrawalCompletion();
+// Method 2: Granular control with individual methods
+const feeEstimation = await sdk.estimateWithdrawalFee({
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
+    destinationMemo: undefined,
+    feeInclusive: false
+  }
+});
+
+const { ticket } = await sdk.signAndSendWithdrawalIntent({
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
+    destinationMemo: undefined,
+    feeInclusive: false
+  },
+  feeEstimation
+});
+
+const intentTx = await sdk.waitForIntentSettlement({ ticket });
+const destinationTx = await sdk.waitForWithdrawalCompletion({ 
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
+    destinationMemo: undefined,
+    feeInclusive: false
+  }, 
+  intentTx 
+});
 ```
 
 ## Core Concepts
@@ -174,23 +202,10 @@ The SDK automatically detects and supports multiple route types based on asset i
 
 ### Fee Estimation
 
+The SDK now supports both single and batch fee estimation:
+
 ```typescript
-// Get fee estimation for a withdrawal
-const withdrawal = sdk.createWithdrawal({
-  withdrawalParams: {
-    assetId: 'nep141:usdt.tether-token.near',
-    amount: 1000000n,
-    destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
-    feeInclusive: false
-  }
-});
-
-// Estimate fee before processing
-const feeAmount = await withdrawal.estimateFee();
-console.log('Fee amount:', feeAmount);
-
-// Or get detailed fee estimation from SDK
+// Single withdrawal fee estimation
 const feeEstimation = await sdk.estimateWithdrawalFee({
   withdrawalParams: {
     assetId: 'nep141:usdt.tether-token.near',
@@ -202,8 +217,29 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
 });
 
 console.log('Fee amount:', feeEstimation.amount);
-// Quote is null in case the fee is paid with withdrawn token 
-console.log('Quote info:', feeEstimation.quote);
+console.log('Quote info:', feeEstimation.quote); // null if fee paid with withdrawn token
+
+// Batch fee estimation
+const batchFees = await sdk.estimateWithdrawalFee({
+  withdrawalParams: [
+    {
+      assetId: 'nep141:usdt.tether-token.near',
+      amount: 1000000n,
+      destinationAddress: '0x742d35Cc...',
+      destinationMemo: undefined,
+      feeInclusive: false
+    },
+    {
+      assetId: 'nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L',
+      amount: 500000n,
+      destinationAddress: '0x742d35Cc...',
+      destinationMemo: undefined,
+      feeInclusive: false
+    }
+  ]
+});
+
+console.log('Batch fees:', batchFees); // Array of FeeEstimation objects
 ```
 
 ### Intent Signers
@@ -292,23 +328,28 @@ const onBeforePublishIntent: OnBeforePublishIntentHook = async (intentData) => {
   });
 };
 
-// Use the hook in single withdrawals
-const withdrawal = sdk.createWithdrawal({
+// Use the hook with the functional API
+const result = await sdk.processWithdrawal({
   withdrawalParams: { /* ... */ },
   intent: {
     onBeforePublishIntent, // Add the hook here
   }
 });
 
-// Or in batch withdrawals
-const batchWithdrawal = sdk.createBatchWithdrawals({
-  withdrawalParams: [/* ... */],
+// Or with granular control
+const { ticket } = await sdk.signAndSendWithdrawalIntent({
+  withdrawalParams: { /* ... */ },
+  feeEstimation: fee,
   intent: {
     onBeforePublishIntent, // Add the hook here
   }
 });
 
-await withdrawal.process(); // Hook will be called before publishing
+// Or with generic intent publishing
+const { ticket } = await sdk.signAndSendIntent({
+  intents: [/* ... */],
+  onBeforePublishIntent, // Add the hook here
+});
 ```
 
 **Hook Parameters:**
@@ -324,46 +365,94 @@ await withdrawal.process(); // Hook will be called before publishing
 
 ### Batch Withdrawals
 
-Process multiple withdrawals in a single transaction:
+Process multiple withdrawals in a single intent:
 
 ```typescript
-const batchWithdrawal = sdk.createBatchWithdrawals({
-  withdrawalParams: [
-    {
-      assetId: 'nep141:usdt.tether-token.near',
-      amount: 1000000n,
-      destinationAddress: '0x742d35Cc...',
-      destinationMemo: undefined,
-      feeInclusive: false
-    },
-    {
-      assetId: 'nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L',
-      amount: 100000n,
-      destinationAddress: '0x742d35Cc...',
-      destinationMemo: undefined,
-      feeInclusive: false
-    }
-  ]
+const withdrawalParams = [
+  {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc...',
+    destinationMemo: undefined,
+    feeInclusive: false
+  },
+  {
+    assetId: 'nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L',
+    amount: 100000n,
+    destinationAddress: '0x742d35Cc...',
+    destinationMemo: undefined,
+    feeInclusive: false
+  }
+]
+
+// Method 1: Complete end-to-end batch processing
+const batchResult = await sdk.processWithdrawal({
+  withdrawalParams,
+  // feeEstimation is optional - will be estimated automatically if not provided
 });
 
-// Process all withdrawals at once
-await batchWithdrawal.process();
+console.log('Batch intent hash:', batchResult.intentHash);
+console.log('Destination transactions:', batchResult.destinationTx); // Array of results
 
-// Or step by step:
-// await batchWithdrawal.estimateFee();
-// if (batchWithdrawal.hasUnprocessableWithdrawals()) {
-//   console.log('Removing unprocessable withdrawals:', batchWithdrawal.removeUnprocessableWithdrawals());
-// }
-// await batchWithdrawal.signAndSendIntent();
-// await batchWithdrawal.waitForIntentSettlement();
-// await batchWithdrawal.waitForWithdrawalCompletion();
+// Method 2: Step-by-step batch processing for granular control
+const feeEstimation = await sdk.estimateWithdrawalFee({
+  withdrawalParams
+});
+
+const { ticket } = await sdk.signAndSendWithdrawalIntent({
+  withdrawalParams,
+  feeEstimation
+});
+
+const intentTx = await sdk.waitForIntentSettlement({ ticket });
+
+const destinationTxs = await sdk.waitForWithdrawalCompletion({
+  withdrawalParams,
+  intentTx
+});
+
+console.log('All destination transactions:', destinationTxs);
 ```
 
-**Note:** Batch withdrawals also support the `intent.onBeforePublishIntent` hook - see the [Intent Publishing Hooks](#intent-publishing-hooks) section for details.
+### Intent Management
 
-### Dynamically add withdrawals to Batch Withdrawals
+The SDK provides direct access to intent operations for advanced use cases:
 
-TDB
+```typescript
+// Generic intent signing and publishing
+const { ticket } = await sdk.signAndSendIntent({
+  intents: [/* array of intent primitives */],
+  signer: customIntentSigner, // optional - uses SDK default if not provided
+  onBeforePublishIntent: async (data) => {
+    // Custom logic before publishing
+    console.log('About to publish intent:', data.intentHash);
+  }
+});
+
+// Wait for intent settlement
+const intentTx = await sdk.waitForIntentSettlement({ 
+  ticket 
+});
+
+// or manual status check
+
+// Check intent status at any time
+const status = await sdk.getIntentStatus({ 
+  intentHash: ticket 
+});
+
+console.log('Intent status:', status.status); // "PENDING" | "TX_BROADCASTED" | "SETTLED" | "NOT_FOUND_OR_NOT_VALID"
+
+if (status.status === 'SETTLED') {
+  console.log('Settlement transaction:', status.txHash);
+}
+```
+
+**Intent Status Values:**
+- `PENDING` - Intent published but not yet processed
+- `TX_BROADCASTED` - Intent being processed, transaction broadcasted
+- `SETTLED` - Intent successfully completed
+- `NOT_FOUND_OR_NOT_VALID` - Intent not found or invalid, it isn't executed onchain
 
 ### Route Configuration Factory Functions
 
@@ -391,7 +480,7 @@ const nearWithdrawalRoute = createNearWithdrawalRoute(
 const internalTransferRoute = createInternalTransferRoute();
 
 // Use the factory-created route configuration in withdrawal
-const withdrawal = sdk.createWithdrawal({
+const result = await sdk.processWithdrawal({
   withdrawalParams: {
     assetId: 'nep141:a35923162c49cf95e6bf26623385eb431ad920d3.factory.bridge.near',
     amount: BigInt('1000000'),
@@ -401,8 +490,6 @@ const withdrawal = sdk.createWithdrawal({
     routeConfig: virtualChainRoute // Recommended: Use factory function
   }
 });
-
-await withdrawal.process();
 ```
 
 ### Asset Information Parsing
@@ -426,18 +513,57 @@ try {
 Monitor withdrawal completion:
 
 ```typescript
-const withdrawal = sdk.createWithdrawal({
-  withdrawalParams: { /* ... */ }
+// Method 1: Using the orchestrated approach (automatic monitoring)
+const result = await sdk.processWithdrawal({
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc...',
+    destinationMemo: undefined,
+    feeInclusive: false
+  }
 });
 
-// Execute step by step for monitoring
-await withdrawal.estimateFee();
-await withdrawal.signAndSendIntent();
-const intentTx = await withdrawal.waitForIntentSettlement();
+console.log('Intent settled:', result.intentTx.hash);
+console.log('Withdrawal completed:', result.destinationTx);
+
+// Method 2: Step-by-step monitoring for granular control
+const feeEstimation = await sdk.estimateWithdrawalFee({
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc...',
+    destinationMemo: undefined,
+    feeInclusive: false
+  }
+});
+
+const { ticket } = await sdk.signAndSendWithdrawalIntent({
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc...',
+    destinationMemo: undefined,
+    feeInclusive: false
+  },
+  feeEstimation
+});
+
+// Monitor intent settlement
+const intentTx = await sdk.waitForIntentSettlement({ ticket });
 console.log('Intent settled:', intentTx.hash);
 
-// Wait for the withdrawal to complete on the destination chain
-const completionResult = await withdrawal.waitForWithdrawalCompletion();
+// Wait for withdrawal completion on destination chain
+const completionResult = await sdk.waitForWithdrawalCompletion({
+  withdrawalParams: {
+    assetId: 'nep141:usdt.tether-token.near',
+    amount: 1000000n,
+    destinationAddress: '0x742d35Cc...',
+    destinationMemo: undefined,
+    feeInclusive: false
+  },
+  intentTx
+});
 
 if ('hash' in completionResult) {
   console.log('Withdrawal completed with hash:', completionResult.hash);
@@ -451,18 +577,16 @@ if ('hash' in completionResult) {
 ```typescript
 import { FeeExceedsAmountError, MinWithdrawalAmountError } from '@defuse-protocol/bridge-sdk';
 
-const withdrawal = sdk.createWithdrawal({
-    withdrawalParams: {
-        assetId: 'nep141:usdt.tether-token.near',
-        amount: BigInt('100'), // Very small amount
-        destinationAddress: '0x742d35Cc...',
-        destinationMemo: undefined,
-        feeInclusive: true // Fee must be less than amount
-    }
-});
-
 try {
-  await withdrawal.process();
+  const result = await sdk.processWithdrawal({
+    withdrawalParams: {
+      assetId: 'nep141:usdt.tether-token.near',
+      amount: BigInt('100'), // Very small amount
+      destinationAddress: '0x742d35Cc...',
+      destinationMemo: undefined,
+      feeInclusive: true // Fee must be less than amount
+    }
+  });
 } catch (error) {
   if (error instanceof FeeExceedsAmountError) {
     console.log('Fee exceeds withdrawal amount');
@@ -475,6 +599,24 @@ try {
     console.log('Asset:', error.assetId);
   }
 }
+
+// Error handling with granular control
+try {
+  const feeEstimation = await sdk.estimateWithdrawalFee({
+    withdrawalParams: {
+      assetId: 'nep141:usdt.tether-token.near',
+      amount: 100n,
+      destinationAddress: '0x742d35Cc...',
+      destinationMemo: undefined,
+      feeInclusive: true
+    }
+  });
+  
+  // Continue with other operations...
+} catch (error) {
+  // Handle specific errors at each step
+  console.error('Fee estimation failed:', error);
+}
 ```
 
 #### PoA Bridge Minimum Withdrawal Amount Validation
@@ -484,7 +626,7 @@ PoA bridge has minimum withdrawal amount requirements that vary per token and bl
 ```typescript
 // Validation happens automatically during withdrawal processing:
 try {
-  const withdrawal = sdk.createWithdrawal({
+  const result = await sdk.processWithdrawal({
     withdrawalParams: {
       assetId: 'nep141:zec.omft.near', // Zcash token
       amount: BigInt('50000000'), // 0.5 ZEC (in smallest units)
@@ -493,8 +635,6 @@ try {
       feeInclusive: false
     }
   });
-  
-  await withdrawal.process(); // Validation happens here
 } catch (error) {
   if (error instanceof MinWithdrawalAmountError) {
     console.log(`Minimum withdrawal for ${error.assetId}: ${error.minAmount}`);
@@ -516,7 +656,7 @@ import { TrustlineNotFoundError } from '@defuse-protocol/bridge-sdk';
 
 // Validation happens automatically during withdrawal processing:
 try {
-  const withdrawal = sdk.createWithdrawal({
+  const result = await sdk.processWithdrawal({
     withdrawalParams: {
       assetId: 'nep245:v2_1.omni.hot.tg:stellar_1_USD_GBDMM6LG7YX7YGF6JFAEWX3KFUSBXGAEPZ2IHDLWH:1100', // Stellar USD token
       amount: BigInt('1000000'), // 1 USD (in smallest units)
@@ -525,8 +665,6 @@ try {
       feeInclusive: false
     }
   });
-  
-  await withdrawal.process(); // Trustline validation happens here
 } catch (error) {
   if (error instanceof TrustlineNotFoundError) {
     console.log(`Trustline not found for token: ${error.assetId}`);
