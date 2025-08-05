@@ -1,5 +1,12 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.11.2
+
+### Patch Changes
+
+- Updated dependencies [468246c]
+  - @defuse-protocol/internal-utils@0.4.0
+
 ## 0.11.1
 
 ### Patch Changes
