@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.5.0
+
+### Minor Changes
+
+- 82f0a04: Add `getStatus` function and export it from `solverRelay`.
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,32 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.12.0
+
+### Minor Changes
+
+- 82f0a04: Remove `BatchWithdrawalImpl` and `SingleWithdrawalImpl`.
+  Introduce more methods for granular control over the execution, which support single and batch withdrawals.
+
+  New intent-specific methods:
+
+  - `signAndSendIntent()`
+  - `waitForIntentSettlement()`
+  - `getIntentStatus()`
+
+  New withdraw-specific methods:
+
+  - `signAndSendWithdrawalIntent()`
+  - `processWithdrawal()` (replacement for deleted classes)
+
+  Changed signatures:
+
+  - `waitForWithdrawalCompletion()`
+
+### Patch Changes
+
+- Updated dependencies [82f0a04]
+  - @defuse-protocol/internal-utils@0.5.0
+
 ## 0.11.2
 
 ### Patch Changes
