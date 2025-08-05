@@ -5,6 +5,7 @@ export * as errors from "./errors";
 export * as messageFactory from "./utils/messageFactory";
 export * as authIdentity from "./utils/authIdentity";
 export * as prepareBroadcastRequest from "./utils/prepareBroadcastRequest";
+export * as appFee from "./utils/appFee";
 export * as walletMessage from "./types/walletMessage";
 export * as authHandle from "./types/authHandle";
 export * from "./services/blockchainBalanceService";
