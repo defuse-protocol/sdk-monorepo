@@ -1,5 +1,14 @@
 # @defuse-protocol/internal-utils
 
+## 0.4.0
+
+### Minor Changes
+
+- 468246c: Introduce app fee support.
+
+  - Updated message factory to accept app fee parameters.
+  - Exported app fee utilities from the package index.
+
 ## 0.3.0
 
 ### Minor Changes
