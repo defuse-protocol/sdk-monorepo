@@ -91,13 +91,21 @@ exports[`prepareSwapSignedData() should return the correct signed data for a Sol
 }
 `;
 
+exports[`prepareSwapSignedData() should return the correct signed data for a Stellar signature 1`] = `
+{
+  "payload": "{"foo":"bar"}",
+  "public_key": "ed25519:HRP7jA5tkMvCaNzPnu9cbNuAF1rJuwC2nBkFQtFpSQHC",
+  "signature": "ed25519:S88bG8B",
+  "standard": "raw_ed25519",
+}
+`;
+
 exports[`prepareSwapSignedData() should return the correct signed data for a TonConnect signature 1`] = `
 {
   "address": "0:fa63f5195b0f8682d3f3413e2b40decfae7778b3691748a2d55dae5b243a3054",
   "domain": "ton-connect.github.io",
   "payload": {
-    "text": 
-"{
+    "text": "{
   "signer_id": "user.near",
   "verifying_contract": "intents.near",
   "deadline": "2024-01-01T12:00:00.000Z",
@@ -110,8 +118,7 @@ exports[`prepareSwapSignedData() should return the correct signed data for a Ton
       }
     }
   ]
-}"
-,
+}",
     "type": "text",
   },
   "public_key": "ed25519:F8PB56zdMYNDL7Mq43DV4cV17uRqQkpn6ZygNdqavXCr",

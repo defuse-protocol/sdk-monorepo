@@ -12,6 +12,8 @@ describe("makeSwapMessage()", () => {
 		tokenDeltas: [["foo.near", 100n]],
 		signerId: authHandleToIntentsUserId("user.near", "near"),
 		deadlineTimestamp: 1704110400000, // 2024-01-01T12:00:00.000Z
+		appFee: [],
+		appFeeRecipient: "",
 	});
 
 	it("should return a WalletMessage object", () => {
@@ -101,6 +103,8 @@ describe("makeSwapMessage()", () => {
 				tokenDeltas: [["foo.near", 100n]],
 				signerId: authHandleToIntentsUserId("user.near", "near"),
 				deadlineTimestamp: 1704110400000, // 2024-01-01T12:00:00.000Z,
+				appFee: [],
+				appFeeRecipient: "",
 			}),
 			recipient: "recipient.near",
 			nonce: new Uint8Array(32),
@@ -167,6 +171,8 @@ describe("makeSwapMessage()", () => {
 			signerId: authHandleToIntentsUserId("user.near", "near"),
 			deadlineTimestamp: 1704110400000,
 			referral: "referrer.near",
+			appFee: [],
+			appFeeRecipient: "",
 		});
 
 		expect(innerMessage).toMatchInlineSnapshot(`
@@ -198,6 +204,8 @@ describe("makeSwapMessage()", () => {
 			],
 			signerId: authHandleToIntentsUserId("user.near", "near"),
 			deadlineTimestamp: 1704110400000,
+			appFee: [],
+			appFeeRecipient: "",
 		});
 
 		expect(innerMessage).toMatchInlineSnapshot(`
@@ -217,6 +225,45 @@ describe("makeSwapMessage()", () => {
         "signer_id": "user.near",
       }
     `);
+	});
+
+	it("includes app fee transfer", () => {
+		const innerMessage = makeInnerSwapMessage({
+			tokenDeltas: [
+				["foo.near", -100n],
+				["bar.near", 200n],
+			],
+			signerId: authHandleToIntentsUserId("user.near", "near"),
+			deadlineTimestamp: 1704110400000,
+			appFee: [["baz.near", 30n]],
+			appFeeRecipient: "app_fee_mock.near",
+		});
+
+		expect(innerMessage).toMatchInlineSnapshot(`
+			{
+			  "deadline": "2024-01-01T12:00:00.000Z",
+			  "intents": [
+			    {
+			      "diff": {
+			        "bar.near": "200",
+			        "foo.near": "-100",
+			      },
+			      "intent": "token_diff",
+			      "memo": undefined,
+			      "referral": undefined,
+			    },
+			    {
+			      "intent": "transfer",
+			      "memo": "APP_FEE",
+			      "receiver_id": "app_fee_mock.near",
+			      "tokens": {
+			        "baz.near": "30",
+			      },
+			    },
+			  ],
+			  "signer_id": "user.near",
+			}
+		`);
 	});
 });
 
