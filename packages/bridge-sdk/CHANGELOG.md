@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.13.0
+
+### Minor Changes
+
+- 283a27a: Rename `ticket` to `intentHash` in `IntentPublishResult` type.
+
 ## 0.12.0
 
 ### Minor Changes
