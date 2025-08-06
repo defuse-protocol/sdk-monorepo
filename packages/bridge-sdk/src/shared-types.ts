@@ -78,7 +78,7 @@ export interface IBridgeSDK {
 	signAndSendIntent(args: SignAndSendArgs): Promise<IntentPublishResult>;
 
 	waitForIntentSettlement(args: {
-		ticket: IntentHash;
+		intentHash: IntentHash;
 		logger?: ILogger;
 	}): Promise<NearTxInfo>;
 

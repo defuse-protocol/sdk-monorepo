@@ -410,7 +410,7 @@ export class BridgeSDK implements IBridgeSDK {
 	}
 
 	public async waitForIntentSettlement(args: {
-		ticket: IntentHash;
+		intentHash: IntentHash;
 		logger?: ILogger;
 	}): Promise<NearTxInfo> {
 		const intentExecuter = new IntentExecuter({
@@ -420,7 +420,7 @@ export class BridgeSDK implements IBridgeSDK {
 			intentRelayer: this.intentRelayer,
 		});
 
-		const { tx } = await intentExecuter.waitForSettlement(args.ticket);
+		const { tx } = await intentExecuter.waitForSettlement(args.intentHash);
 		return tx;
 	}
 
@@ -484,7 +484,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 		// Step 3: Wait for intent settlement
 		const intentTx = await this.waitForIntentSettlement({
-			ticket: intentHash,
+			intentHash: intentHash,
 			logger: args.logger,
 		});
 
