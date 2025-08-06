@@ -68,6 +68,7 @@ export class TrustlineNotFoundError extends BaseError {
 		public destinationAddress: string,
 		public assetId: string,
 		public blockchain: string,
+		public tokenAddress: string,
 	) {
 		super("Destination address does not have a trustline for this asset.", {
 			details:
@@ -76,6 +77,7 @@ export class TrustlineNotFoundError extends BaseError {
 				`Blockchain: ${blockchain}`,
 				`Asset ID: ${assetId}`,
 				`Destination address: ${destinationAddress}`,
+				`Token address: ${tokenAddress}`,
 			],
 			name: "TrustlineNotFoundError",
 		});
