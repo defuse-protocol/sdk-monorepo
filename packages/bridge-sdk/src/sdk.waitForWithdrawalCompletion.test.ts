@@ -22,7 +22,6 @@ describe("sdk.waitForWithdrawalCompletion()", () => {
 		assetId: "nep141:wrap.near",
 		amount: 5n,
 		destinationAddress: "foo.near",
-		destinationMemo: undefined,
 		feeInclusive: true,
 		routeConfig: createInternalTransferRoute(),
 	};

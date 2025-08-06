@@ -50,7 +50,6 @@ const result = await sdk.processWithdrawal({
     assetId: 'nep141:usdt.tether-token.near', // Asset identifier
     amount: 1000000n, // Amount in smallest unit
     destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
     feeInclusive: false, // Whether amount includes fees
     // routeConfig is optional - will be auto-detected from assetId
   }
@@ -65,7 +64,6 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
     feeInclusive: false
   }
 });
@@ -75,7 +73,6 @@ const { intentHash } = await sdk.signAndSendWithdrawalIntent({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
     feeInclusive: false
   },
   feeEstimation
@@ -87,7 +84,6 @@ const destinationTx = await sdk.waitForWithdrawalCompletion({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
     feeInclusive: false
   }, 
   intentTx 
@@ -211,7 +207,6 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
     feeInclusive: false
   }
 });
@@ -226,14 +221,12 @@ const batchFees = await sdk.estimateWithdrawalFee({
       assetId: 'nep141:usdt.tether-token.near',
       amount: 1000000n,
       destinationAddress: '0x742d35Cc...',
-      destinationMemo: undefined,
       feeInclusive: false
     },
     {
       assetId: 'nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L',
       amount: 500000n,
       destinationAddress: '0x742d35Cc...',
-      destinationMemo: undefined,
       feeInclusive: false
     }
   ]
@@ -373,14 +366,12 @@ const withdrawalParams = [
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc...',
-    destinationMemo: undefined,
     feeInclusive: false
   },
   {
     assetId: 'nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L',
     amount: 100000n,
     destinationAddress: '0x742d35Cc...',
-    destinationMemo: undefined,
     feeInclusive: false
   }
 ]
@@ -485,7 +476,6 @@ const result = await sdk.processWithdrawal({
     assetId: 'nep141:a35923162c49cf95e6bf26623385eb431ad920d3.factory.bridge.near',
     amount: BigInt('1000000'),
     destinationAddress: '0x742d35Cc6634C0532925a3b8D84B2021F90a51A3',
-    destinationMemo: undefined,
     feeInclusive: false,
     routeConfig: virtualChainRoute // Recommended: Use factory function
   }
@@ -519,7 +509,6 @@ const result = await sdk.processWithdrawal({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc...',
-    destinationMemo: undefined,
     feeInclusive: false
   }
 });
@@ -533,7 +522,6 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc...',
-    destinationMemo: undefined,
     feeInclusive: false
   }
 });
@@ -543,7 +531,6 @@ const { intentHash } = await sdk.signAndSendWithdrawalIntent({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc...',
-    destinationMemo: undefined,
     feeInclusive: false
   },
   feeEstimation
@@ -559,7 +546,6 @@ const completionResult = await sdk.waitForWithdrawalCompletion({
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
     destinationAddress: '0x742d35Cc...',
-    destinationMemo: undefined,
     feeInclusive: false
   },
   intentTx
@@ -583,7 +569,6 @@ try {
       assetId: 'nep141:usdt.tether-token.near',
       amount: BigInt('100'), // Very small amount
       destinationAddress: '0x742d35Cc...',
-      destinationMemo: undefined,
       feeInclusive: true // Fee must be less than amount
     }
   });
@@ -607,7 +592,6 @@ try {
       assetId: 'nep141:usdt.tether-token.near',
       amount: 100n,
       destinationAddress: '0x742d35Cc...',
-      destinationMemo: undefined,
       feeInclusive: true
     }
   });
@@ -631,7 +615,6 @@ try {
       assetId: 'nep141:zec.omft.near', // Zcash token
       amount: BigInt('50000000'), // 0.5 ZEC (in smallest units)
       destinationAddress: 'your-zcash-address',
-      destinationMemo: undefined,
       feeInclusive: false
     }
   });
@@ -661,7 +644,6 @@ try {
       assetId: 'nep245:v2_1.omni.hot.tg:stellar_1_USD_GBDMM6LG7YX7YGF6JFAEWX3KFUSBXGAEPZ2IHDLWH:1100', // Stellar USD token
       amount: BigInt('1000000'), // 1 USD (in smallest units)
       destinationAddress: 'GCKFBEIYTKP6RYVDYGMVVMJ6J6XKCRZL74JPWTFGD2NQNMPBQC2LGTVZ', // Stellar address
-      destinationMemo: undefined,
       feeInclusive: false
     }
   });

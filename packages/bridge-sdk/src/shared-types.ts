@@ -160,7 +160,7 @@ export interface WithdrawalParams {
 	/**
 	 * XRP Leger chain specific. MEMO IS NOT SUPPORTED FOR STELLAR AND TON.
 	 */
-	destinationMemo: string | undefined;
+	destinationMemo?: string | undefined;
 	feeInclusive: boolean;
 	routeConfig?: RouteConfig | undefined;
 }
