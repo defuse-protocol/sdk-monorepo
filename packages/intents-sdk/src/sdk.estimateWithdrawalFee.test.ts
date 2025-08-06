@@ -4,7 +4,7 @@ import { noopIntentSigner } from "./intents/intent-signer-impl/intent-signer-noo
 import type { IntentPrimitive } from "./intents/shared-types";
 import { wait } from "./lib/async";
 import { createInternalTransferRoute } from "./lib/route-config-factory";
-import { BridgeSDK } from "./sdk";
+import { IntentsSDK } from "./sdk";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -234,8 +234,8 @@ function setupMocks() {
 	vi.spyOn(mockBridge, "estimateWithdrawalFee");
 	vi.spyOn(mockBridge, "supports");
 
-	class MockSDK extends BridgeSDK {
-		constructor(...args: ConstructorParameters<typeof BridgeSDK>) {
+	class MockSDK extends IntentsSDK {
+		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.bridges = [mockBridge];
 		}

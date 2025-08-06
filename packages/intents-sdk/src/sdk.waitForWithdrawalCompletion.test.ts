@@ -8,7 +8,7 @@ import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
 } from "./lib/route-config-factory";
-import { BridgeSDK } from "./sdk";
+import { IntentsSDK } from "./sdk";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -218,8 +218,8 @@ function setupMocks() {
 	vi.spyOn(mockBridge, "waitForWithdrawalCompletion");
 	vi.spyOn(mockBridge, "parseAssetId");
 
-	class MockSDK extends BridgeSDK {
-		constructor(...args: ConstructorParameters<typeof BridgeSDK>) {
+	class MockSDK extends IntentsSDK {
+		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.bridges = [mockBridge];
 		}

@@ -15,7 +15,7 @@ importers:
         specifier: ^2.5.5
         version: 2.5.5
 
-  packages/bridge-sdk:
+  packages/intents-sdk:
     dependencies:
       '@defuse-protocol/contract-types':
         specifier: workspace:*

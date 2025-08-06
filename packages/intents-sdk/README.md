@@ -1,6 +1,6 @@
-# @defuse-protocol/bridge-sdk
+# @defuse-protocol/intents-sdk
 
-The Bridge SDK for Near Intents provides a set of tools for interacting with various bridge implementations. It simplifies the process of transferring assets from Near Intents to different blockchains.
+The Intents SDK for Near Intents provides a set of tools for interacting with various bridge implementations. It simplifies the process of transferring assets from Near Intents to different blockchains.
 
 ## Features
 
@@ -22,17 +22,17 @@ Note: Bridging to Near Intents is not supported yet.
 ## Installation
 
 ```bash
-npm install @defuse-protocol/bridge-sdk --save-exact
+npm install @defuse-protocol/intents-sdk --save-exact
 ```
 
 ## Quick Start
 
 ```typescript
-import { BridgeSDK, createIntentSignerNearKeyPair } from '@defuse-protocol/bridge-sdk';
+import { IntentsSDK, createIntentSignerNearKeyPair } from '@defuse-protocol/intents-sdk';
 import { KeyPair } from 'near-api-js';
 
 // Initialize the SDK with required configuration
-const sdk = new BridgeSDK({
+const sdk = new IntentsSDK({
     referral: 'your-referral-code', // Only referral is required
 });
 
@@ -100,7 +100,7 @@ The SDK uses two key concepts to organize withdrawal operations:
 Routes define the **path** a withdrawal takes - the specific mechanism and destination for transferring assets. Each route represents a different withdrawal flow:
 
 ```typescript
-import { RouteEnum } from '@defuse-protocol/bridge-sdk';
+import { RouteEnum } from '@defuse-protocol/intents-sdk';
 
 console.log(RouteEnum.HotBridge);        // "hot_bridge" - Cross-chain via HOT protocol
 console.log(RouteEnum.PoaBridge);        // "poa_bridge" - Cross-chain via PoA bridge
@@ -113,7 +113,7 @@ console.log(RouteEnum.InternalTransfer); // "internal_transfer" - Between protoc
 Bridge names identify the **underlying bridge infrastructure** that handles the cross-chain transfer. This determines which external protocol processes the withdrawal:
 
 ```typescript
-import { BridgeNameEnum } from '@defuse-protocol/bridge-sdk';
+import { BridgeNameEnum } from '@defuse-protocol/intents-sdk';
 
 console.log(BridgeNameEnum.Hot);  // "hot" - HOT Labs bridge infrastructure
 console.log(BridgeNameEnum.Poa);  // "poa" - Proof-of-Authority bridge by Defuse Labs  
@@ -241,7 +241,7 @@ The SDK supports multiple intent signing methods using factory functions:
 
 #### NEAR KeyPair Signer
 ```typescript
-import { createIntentSignerNearKeyPair, BridgeSDK } from '@defuse-protocol/bridge-sdk';
+import { createIntentSignerNearKeyPair, IntentsSDK } from '@defuse-protocol/intents-sdk';
 import { KeyPair } from 'near-api-js';
 
 const keyPair = KeyPair.fromString('your-private-key');
@@ -253,7 +253,7 @@ const signer = createIntentSignerNearKeyPair({
 
 #### NEP-413 Signer
 ```typescript
-import { createIntentSignerNEP413 } from '@defuse-protocol/bridge-sdk';
+import { createIntentSignerNEP413 } from '@defuse-protocol/intents-sdk';
 
 const signer = createIntentSignerNEP413({
   signMessage: async (nep413Payload, nep413Hash) => {
@@ -269,7 +269,7 @@ const signer = createIntentSignerNEP413({
 
 #### EVM/Viem Signer
 ```typescript
-import { createIntentSignerViem } from '@defuse-protocol/bridge-sdk';
+import { createIntentSignerViem } from '@defuse-protocol/intents-sdk';
 import { privateKeyToAccount } from 'viem/accounts';
 
 const account = privateKeyToAccount('0x...');
@@ -286,9 +286,9 @@ sdk.setIntentSigner(signer);
 Set NEAR and EVM chains RPC URLs in the constructor: 
 
 ```typescript
-import { Chains } from '@defuse-protocol/bridge-sdk'
+import { Chains } from '@defuse-protocol/intents-sdk'
 
-const sdk = new BridgeSDK({
+const sdk = new IntentsSDK({
     ...,
     rpc: {
         [Chains.Near]: ['https://rpc.mainnet.near.org'],
@@ -303,7 +303,7 @@ const sdk = new BridgeSDK({
 Use the `onBeforePublishIntent` hook to intercept and process intent data before it's published to the relayer. This is useful for persistence, logging, analytics, or custom processing:
 
 ```typescript
-import { type OnBeforePublishIntentHook } from '@defuse-protocol/bridge-sdk';
+import { type OnBeforePublishIntentHook } from '@defuse-protocol/intents-sdk';
 
 // Define your hook function
 const onBeforePublishIntent: OnBeforePublishIntentHook = async (intentData) => {
@@ -454,7 +454,7 @@ import {
   createVirtualChainRoute, 
   createNearWithdrawalRoute, 
   createInternalTransferRoute 
-} from '@defuse-protocol/bridge-sdk';
+} from '@defuse-protocol/intents-sdk';
 
 // Create virtual chain route configuration (recommended)
 const virtualChainRoute = createVirtualChainRoute(
@@ -561,7 +561,7 @@ if ('hash' in completionResult) {
 ### Error Handling
 
 ```typescript
-import { FeeExceedsAmountError, MinWithdrawalAmountError } from '@defuse-protocol/bridge-sdk';
+import { FeeExceedsAmountError, MinWithdrawalAmountError } from '@defuse-protocol/intents-sdk';
 
 try {
   const result = await sdk.processWithdrawal({
@@ -635,7 +635,7 @@ Note: Other routes (Near Withdrawal, Virtual Chain, Internal Transfer) don't hav
 Hot Bridge validates that destination addresses have the required trustlines when withdrawing to Stellar blockchain. This prevents failed transactions due to missing trustlines.
 
 ```typescript
-import { TrustlineNotFoundError } from '@defuse-protocol/bridge-sdk';
+import { TrustlineNotFoundError } from '@defuse-protocol/intents-sdk';
 
 // Validation happens automatically during withdrawal processing:
 try {

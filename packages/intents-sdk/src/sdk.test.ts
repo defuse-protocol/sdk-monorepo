@@ -12,7 +12,7 @@ import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
 } from "./lib/route-config-factory";
-import { BridgeSDK } from "./sdk";
+import { IntentsSDK } from "./sdk";
 
 const intentSigner = createIntentSignerViem(
 	privateKeyToAccount(generatePrivateKey()),
@@ -20,7 +20,7 @@ const intentSigner = createIntentSignerViem(
 
 describe.concurrent("poa_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -38,7 +38,7 @@ describe.concurrent("poa_bridge", () => {
 	});
 
 	it("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -53,7 +53,7 @@ describe.concurrent("poa_bridge", () => {
 	});
 
 	it("createWithdrawalIntents(): returns intents array", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams: {
@@ -103,7 +103,7 @@ describe.concurrent("poa_bridge", () => {
 	});
 
 	it("createWithdrawalIntents(): rejects when not meet min_withdrawal_amount", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams: {
@@ -124,7 +124,7 @@ describe.concurrent("poa_bridge", () => {
 
 describe.concurrent("hot_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -151,7 +151,7 @@ describe.concurrent("hot_bridge", () => {
 	});
 
 	it("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -166,7 +166,7 @@ describe.concurrent("hot_bridge", () => {
 	});
 
 	it("createWithdrawalIntents(): returns intents array", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const feeEstimation = {
 			amount: 1662n,
@@ -225,7 +225,7 @@ describe.concurrent("hot_bridge", () => {
 			"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU";
 
 		it("estimateWithdrawalFee(): returns fee", async () => {
-			const sdk = new BridgeSDK({ referral: "", intentSigner });
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const fee = sdk.estimateWithdrawalFee({
 				withdrawalParams: {
@@ -244,7 +244,7 @@ describe.concurrent("hot_bridge", () => {
 		});
 
 		it.skip("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
-			const sdk = new BridgeSDK({ referral: "", intentSigner });
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const fee = sdk.estimateWithdrawalFee({
 				withdrawalParams: {
@@ -260,7 +260,7 @@ describe.concurrent("hot_bridge", () => {
 		});
 
 		it("estimateWithdrawalFee(): rejects when no trustline", async () => {
-			const sdk = new BridgeSDK({ referral: "", intentSigner });
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const fee = sdk.createWithdrawalIntents({
 				withdrawalParams: {
@@ -280,7 +280,7 @@ describe.concurrent("hot_bridge", () => {
 		});
 
 		it("createWithdrawalIntents(): returns intents array", async () => {
-			const sdk = new BridgeSDK({ referral: "", intentSigner });
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const intentsNative = sdk.createWithdrawalIntents({
 				withdrawalParams: {
@@ -342,7 +342,7 @@ describe.concurrent("hot_bridge", () => {
 		});
 
 		it("createWithdrawalIntents(): rejects when destinationMemo is used with Stellar", async () => {
-			const sdk = new BridgeSDK({ referral: "", intentSigner });
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const intents = sdk.createWithdrawalIntents({
 				withdrawalParams: {
@@ -372,7 +372,7 @@ describe.concurrent.each([
 	},
 ])("internal_transfer $standard", ({ assetId }) => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -391,7 +391,7 @@ describe.concurrent.each([
 	});
 
 	it("createWithdrawalIntents(): returns intents array", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams: {
@@ -416,7 +416,7 @@ describe.concurrent.each([
 
 describe.concurrent("near_withdrawal", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -442,7 +442,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 
 	it("estimateWithdrawalFee(): returns fee without quote for wrap.near with msg", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -461,7 +461,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 
 	it("estimateWithdrawalFee(): returns 0 fee for wrap.near", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -480,7 +480,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 
 	it("estimateWithdrawalFee(): returns 0 fee when has storage", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -499,7 +499,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 
 	it("createWithdrawalIntents(): returns intents array with storage swap", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const feeEstimation = {
 			amount: 1000n,
@@ -545,7 +545,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 
 	it("createWithdrawalIntents(): returns intents array with msg", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const feeEstimation = {
 			amount: 0n,
@@ -576,7 +576,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 
 	it("createWithdrawalIntents(): returns intents array with native", async () => {
-		const sdk = new BridgeSDK({ referral: "", intentSigner });
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const feeEstimation = {
 			amount: 0n,

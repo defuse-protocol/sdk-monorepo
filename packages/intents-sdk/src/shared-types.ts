@@ -72,7 +72,7 @@ export type ProcessWithdrawalArgs<
 	logger?: ILogger;
 };
 
-export interface IBridgeSDK {
+export interface IIntentsSDK {
 	setIntentSigner(signer: IIntentSigner): void;
 
 	signAndSendIntent(args: SignAndSendArgs): Promise<IntentPublishResult>;
