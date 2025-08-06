@@ -1,5 +1,12 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.13.2
+
+### Patch Changes
+
+- aa83092: Make `destinationMemo` field optional.
+- 8a637b7: Add `tokenAddress` to `TrustlineNotFoundError`.
+
 ## 0.13.1
 
 ### Patch Changes
