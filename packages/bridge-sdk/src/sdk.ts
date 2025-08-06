@@ -43,7 +43,7 @@ import type {
 	BatchWithdrawalResult,
 	Bridge,
 	FeeEstimation,
-	IBridgeSDK,
+	IIntentsSDK,
 	IntentPublishResult,
 	IntentSettlementStatus,
 	NearTxInfo,
@@ -59,21 +59,21 @@ import type {
 	WithdrawalResult,
 } from "./shared-types";
 
-export interface BridgeSDKConfig {
+export interface IntentsSDKConfig {
 	env?: NearIntentsEnv;
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
 }
 
-export class BridgeSDK implements IBridgeSDK {
+export class IntentsSDK implements IIntentsSDK {
 	protected env: NearIntentsEnv;
 	protected referral: string;
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 
-	constructor(args: BridgeSDKConfig) {
+	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
 

@@ -2,7 +2,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
-import { BridgeSDK } from "./sdk";
+import { IntentsSDK } from "./sdk";
 
 describe("sdk.signAndSendIntent()", () => {
 	it("signs with default signer", async () => {
@@ -75,8 +75,8 @@ function setupMocks() {
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });
 	vi.spyOn(intentRelayer, "publishIntent");
 
-	class MockSDK extends BridgeSDK {
-		constructor(...args: ConstructorParameters<typeof BridgeSDK>) {
+	class MockSDK extends IntentsSDK {
+		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.intentRelayer = intentRelayer;
 		}

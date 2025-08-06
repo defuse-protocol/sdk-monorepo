@@ -1,14 +1,14 @@
 import { BridgeNameEnum } from "../constants/bridge-name-enum";
 import { RouteEnum } from "../constants/route-enum";
 import type {
-	IBridgeSDK,
+	IIntentsSDK,
 	RouteConfig,
 	WithdrawalParams,
 } from "../shared-types";
 import { createNearWithdrawalRoute } from "./route-config-factory";
 
 export function determineRouteConfig(
-	sdk: IBridgeSDK,
+	sdk: IIntentsSDK,
 	withdrawalParams: WithdrawalParams,
 ): RouteConfig {
 	if (withdrawalParams.routeConfig != null) {

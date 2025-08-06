@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { createInternalTransferRoute } from "./lib/route-config-factory";
-import { BridgeSDK } from "./sdk";
+import { IntentsSDK } from "./sdk";
 
 describe("sdk.signAndSendWithdrawalIntent()", () => {
 	const withdrawalParams = {
@@ -111,8 +111,8 @@ function setupMocks() {
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });
 	vi.spyOn(intentRelayer, "publishIntent");
 
-	class MockSDK extends BridgeSDK {
-		constructor(...args: ConstructorParameters<typeof BridgeSDK>) {
+	class MockSDK extends IntentsSDK {
+		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.intentRelayer = intentRelayer;
 		}
