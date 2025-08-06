@@ -188,6 +188,7 @@ export class HotBridge implements Bridge {
 					args.destinationAddress,
 					args.assetId,
 					assetInfo.blockchain,
+					token,
 				);
 			}
 		}
