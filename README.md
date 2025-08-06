@@ -4,7 +4,7 @@ This is a monorepo for Defuse Protocol packages managed with Turborepo and Chang
 
 ## Packages
 
-- [@defuse-protocol/bridge-sdk](./packages/bridge-sdk) - SDK for bridge functionality between blockchains
+- [@defuse-protocol/intents-sdk](./packages/intents-sdk) - SDK for Near Intents
 - [@defuse-protocol/contract-types](./packages/contract-types) - TypeScript type definitions for Defuse Protocol contracts
 
 ## Development
