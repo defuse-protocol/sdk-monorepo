@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.6.0
+
+### Minor Changes
+
+- 4a66bf7: Adds Aurora Devnet network
+
 ## 0.5.0
 
 ### Minor Changes
