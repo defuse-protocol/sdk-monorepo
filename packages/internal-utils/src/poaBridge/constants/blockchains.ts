@@ -33,6 +33,7 @@ export const VirtualNetworkReference = {
 	OPTIMA: "eth:1313161569",
 	EASYCHAIN: "eth:1313161752",
 	AURORA: "eth:1313161554",
+	AURORA_DEVNET: "eth:1313161834",
 } as const;
 
 export const BlockchainEnum = {
