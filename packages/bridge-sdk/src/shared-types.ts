@@ -17,7 +17,7 @@ import type {
 import type { Chain, Chains } from "./lib/caip2";
 
 export interface IntentPublishResult {
-	ticket: IntentHash;
+	intentHash: IntentHash;
 }
 
 export interface WithdrawalResult {
@@ -78,7 +78,7 @@ export interface IBridgeSDK {
 	signAndSendIntent(args: SignAndSendArgs): Promise<IntentPublishResult>;
 
 	waitForIntentSettlement(args: {
-		ticket: IntentHash;
+		intentHash: IntentHash;
 		logger?: ILogger;
 	}): Promise<NearTxInfo>;
 

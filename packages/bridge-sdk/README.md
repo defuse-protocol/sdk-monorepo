@@ -70,7 +70,7 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
   }
 });
 
-const { ticket } = await sdk.signAndSendWithdrawalIntent({
+const { intentHash } = await sdk.signAndSendWithdrawalIntent({
   withdrawalParams: {
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
@@ -81,7 +81,7 @@ const { ticket } = await sdk.signAndSendWithdrawalIntent({
   feeEstimation
 });
 
-const intentTx = await sdk.waitForIntentSettlement({ ticket });
+const intentTx = await sdk.waitForIntentSettlement({ intentHash });
 const destinationTx = await sdk.waitForWithdrawalCompletion({ 
   withdrawalParams: {
     assetId: 'nep141:usdt.tether-token.near',
@@ -337,7 +337,7 @@ const result = await sdk.processWithdrawal({
 });
 
 // Or with granular control
-const { ticket } = await sdk.signAndSendWithdrawalIntent({
+const { intentHash } = await sdk.signAndSendWithdrawalIntent({
   withdrawalParams: { /* ... */ },
   feeEstimation: fee,
   intent: {
@@ -346,7 +346,7 @@ const { ticket } = await sdk.signAndSendWithdrawalIntent({
 });
 
 // Or with generic intent publishing
-const { ticket } = await sdk.signAndSendIntent({
+const { intentHash } = await sdk.signAndSendIntent({
   intents: [/* ... */],
   onBeforePublishIntent, // Add the hook here
 });
@@ -399,12 +399,12 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
   withdrawalParams
 });
 
-const { ticket } = await sdk.signAndSendWithdrawalIntent({
+const { intentHash } = await sdk.signAndSendWithdrawalIntent({
   withdrawalParams,
   feeEstimation
 });
 
-const intentTx = await sdk.waitForIntentSettlement({ ticket });
+const intentTx = await sdk.waitForIntentSettlement({ intentHash });
 
 const destinationTxs = await sdk.waitForWithdrawalCompletion({
   withdrawalParams,
@@ -420,7 +420,7 @@ The SDK provides direct access to intent operations for advanced use cases:
 
 ```typescript
 // Generic intent signing and publishing
-const { ticket } = await sdk.signAndSendIntent({
+const { intentHash } = await sdk.signAndSendIntent({
   intents: [/* array of intent primitives */],
   signer: customIntentSigner, // optional - uses SDK default if not provided
   onBeforePublishIntent: async (data) => {
@@ -431,14 +431,14 @@ const { ticket } = await sdk.signAndSendIntent({
 
 // Wait for intent settlement
 const intentTx = await sdk.waitForIntentSettlement({ 
-  ticket 
+  intentHash 
 });
 
 // or manual status check
 
 // Check intent status at any time
 const status = await sdk.getIntentStatus({ 
-  intentHash: ticket 
+  intentHash: intentHash 
 });
 
 console.log('Intent status:', status.status); // "PENDING" | "TX_BROADCASTED" | "SETTLED" | "NOT_FOUND_OR_NOT_VALID"
@@ -538,7 +538,7 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
   }
 });
 
-const { ticket } = await sdk.signAndSendWithdrawalIntent({
+const { intentHash } = await sdk.signAndSendWithdrawalIntent({
   withdrawalParams: {
     assetId: 'nep141:usdt.tether-token.near',
     amount: 1000000n,
@@ -550,7 +550,7 @@ const { ticket } = await sdk.signAndSendWithdrawalIntent({
 });
 
 // Monitor intent settlement
-const intentTx = await sdk.waitForIntentSettlement({ ticket });
+const intentTx = await sdk.waitForIntentSettlement({ intentHash });
 console.log('Intent settled:', intentTx.hash);
 
 // Wait for withdrawal completion on destination chain
