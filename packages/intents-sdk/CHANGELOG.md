@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.14.0
+
+### Minor Changes
+
+- b1195dc: Rename `BridgeSDK` to `IntentsSDK`.
+
 ## 0.13.2
 
 ### Patch Changes

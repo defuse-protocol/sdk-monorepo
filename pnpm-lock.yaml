@@ -15,6 +15,15 @@ importers:
         specifier: ^2.5.5
         version: 2.5.5
 
+  packages/contract-types:
+    devDependencies:
+      tsup:
+        specifier: ^8.0.2
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.3)(typescript@5.8.3)
+      typescript:
+        specifier: ^5.4.2
+        version: 5.8.3
+
   packages/intents-sdk:
     dependencies:
       '@defuse-protocol/contract-types':
@@ -57,15 +66,6 @@ importers:
       vitest:
         specifier: 2.1.2
         version: 2.1.2(@types/node@24.0.3)
-
-  packages/contract-types:
-    devDependencies:
-      tsup:
-        specifier: ^8.0.2
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.3)(typescript@5.8.3)
-      typescript:
-        specifier: ^5.4.2
-        version: 5.8.3
 
   packages/internal-utils:
     dependencies:
