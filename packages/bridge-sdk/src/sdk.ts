@@ -347,10 +347,11 @@ export class BridgeSDK implements IBridgeSDK {
 			onBeforePublishIntent: args.onBeforePublishIntent,
 		});
 
-		return intentExecuter.signAndSendIntent({
+		const { ticket } = await intentExecuter.signAndSendIntent({
 			intents: args.intents,
 			relayParams: args.relayParams,
 		});
+		return { intentHash: ticket };
 	}
 
 	public async signAndSendWithdrawalIntent(
@@ -473,7 +474,7 @@ export class BridgeSDK implements IBridgeSDK {
 		})();
 
 		// Step 2: Sign and send intent
-		const { ticket } = await this.signAndSendWithdrawalIntent({
+		const { intentHash } = await this.signAndSendWithdrawalIntent({
 			withdrawalParams,
 			feeEstimation,
 			referral: args.referral,
@@ -483,7 +484,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 		// Step 3: Wait for intent settlement
 		const intentTx = await this.waitForIntentSettlement({
-			ticket,
+			ticket: intentHash,
 			logger: args.logger,
 		});
 
@@ -499,7 +500,7 @@ export class BridgeSDK implements IBridgeSDK {
 			return {
 				// biome-ignore lint/style/noNonNullAssertion: <explanation>
 				feeEstimation: feeEstimation[0]!,
-				intentHash: ticket,
+				intentHash,
 				intentTx,
 				// biome-ignore lint/style/noNonNullAssertion: <explanation>
 				destinationTx: destinationTx[0]!,
@@ -508,7 +509,7 @@ export class BridgeSDK implements IBridgeSDK {
 
 		return {
 			feeEstimation,
-			intentHash: ticket,
+			intentHash,
 			intentTx,
 			destinationTx,
 		};
