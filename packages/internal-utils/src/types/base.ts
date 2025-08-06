@@ -12,6 +12,7 @@ export type SupportedChainName =
 	| "optima"
 	| "easychain"
 	| "aurora"
+	| "aurora_devnet"
 	| "xrpledger"
 	| "zcash"
 	| "gnosis"
