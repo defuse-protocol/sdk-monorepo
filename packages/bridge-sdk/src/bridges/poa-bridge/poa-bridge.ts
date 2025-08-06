@@ -81,6 +81,7 @@ export class PoaBridge implements Bridge {
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
 			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
+			destinationMemo: args.withdrawalParams.destinationMemo,
 		});
 		return Promise.resolve([intent]);
 	}

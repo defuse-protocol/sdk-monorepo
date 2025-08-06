@@ -27,7 +27,6 @@ describe.concurrent("poa_bridge", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 			},
 		});
@@ -46,7 +45,6 @@ describe.concurrent("poa_bridge", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: true,
 			},
 		});
@@ -62,7 +60,6 @@ describe.concurrent("poa_bridge", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 100_000_000n, // 1.0
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 			},
 			feeEstimation: {
@@ -86,7 +83,6 @@ describe.concurrent("poa_bridge", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 100_000_000n, // 1.0
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: true,
 			},
 			feeEstimation: {
@@ -114,7 +110,6 @@ describe.concurrent("poa_bridge", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 			},
 			feeEstimation: {
@@ -136,7 +131,6 @@ describe.concurrent("hot_bridge", () => {
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 			},
 		});
@@ -164,7 +158,6 @@ describe.concurrent("hot_bridge", () => {
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: true,
 			},
 		});
@@ -194,7 +187,6 @@ describe.concurrent("hot_bridge", () => {
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 			},
 			feeEstimation,
@@ -241,7 +233,6 @@ describe.concurrent("hot_bridge", () => {
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1n,
 					destinationAddress: stellarAddress,
-					destinationMemo: undefined,
 					feeInclusive: false,
 				},
 			});
@@ -261,7 +252,6 @@ describe.concurrent("hot_bridge", () => {
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1n,
 					destinationAddress: stellarAddress,
-					destinationMemo: undefined,
 					feeInclusive: true,
 				},
 			});
@@ -278,7 +268,6 @@ describe.concurrent("hot_bridge", () => {
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
 					amount: 1000000n,
 					destinationAddress: stellarAddressWithoutTrustline,
-					destinationMemo: undefined,
 					feeInclusive: false,
 				},
 				feeEstimation: {
@@ -299,7 +288,6 @@ describe.concurrent("hot_bridge", () => {
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 					amount: 1n,
 					destinationAddress: stellarAddress,
-					destinationMemo: undefined,
 					feeInclusive: false,
 				},
 				feeEstimation: {
@@ -314,7 +302,6 @@ describe.concurrent("hot_bridge", () => {
 						"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
 					amount: 1n,
 					destinationAddress: stellarAddress,
-					destinationMemo: undefined,
 					feeInclusive: false,
 				},
 				feeEstimation: {
@@ -392,7 +379,6 @@ describe.concurrent.each([
 				assetId,
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: true,
 				routeConfig: createInternalTransferRoute(),
 			},
@@ -412,7 +398,6 @@ describe.concurrent.each([
 				assetId,
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createInternalTransferRoute(),
 			},
@@ -438,7 +423,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute(),
 			},
@@ -465,7 +449,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:wrap.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute("hey"),
 			},
@@ -485,7 +468,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:wrap.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute(),
 			},
@@ -505,7 +487,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
 				destinationAddress: "intents.near",
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute(),
 			},
@@ -537,7 +518,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute(),
 			},
@@ -577,7 +557,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:wrap.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute("hey"),
 			},
@@ -609,7 +588,6 @@ describe.concurrent("near_withdrawal", () => {
 				assetId: "nep141:wrap.near",
 				amount: 1n,
 				destinationAddress: zeroAddress,
-				destinationMemo: undefined,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute(),
 			},

@@ -18,7 +18,6 @@ describe("sdk.estimateWithdrawalFee()", () => {
 		assetId: "nep141:wrap.near",
 		amount: 100n,
 		destinationAddress: "foo.near",
-		destinationMemo: undefined,
 		feeInclusive: false,
 		routeConfig: createInternalTransferRoute(),
 	};
