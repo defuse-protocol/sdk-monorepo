@@ -6,7 +6,6 @@ import { sha256 } from "@noble/hashes/sha256";
 import { base64 } from "@scure/base";
 import { getAddress } from "viem";
 import { config } from "../config";
-import { logger } from "../logger";
 import { createWithdrawMemo } from "../poaBridge/createWithdrawMemo";
 import type { SupportedChainName } from "../types/base";
 import type { IntentsUserId } from "../types/intentsUserId";
@@ -71,7 +70,6 @@ export function makeInnerSwapMessage({
 	}
 
 	if (Object.keys(tokenDiff).length === 0) {
-		logger.warn("Empty diff");
 		return {
 			deadline: new Date(deadlineTimestamp).toISOString(),
 			intents: [],
