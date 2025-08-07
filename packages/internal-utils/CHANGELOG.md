@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.7.0
+
+### Minor Changes
+
+- 9edf920: Simplify `ILogger` interface to satisfy `console`.
+
 ## 0.6.0
 
 ### Minor Changes
