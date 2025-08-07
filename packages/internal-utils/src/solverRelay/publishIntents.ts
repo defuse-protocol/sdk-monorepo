@@ -1,5 +1,4 @@
 import { Err, Ok, type Result } from "@thames/monads";
-import { logger } from "../logger";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
 	RelayPublishError,
@@ -42,7 +41,7 @@ export async function publishIntents(
 		.then((result) => {
 			if (result.isErr()) {
 				const err = result.unwrapErr();
-				logger.error(err);
+				args[1]?.logger?.error(err);
 			}
 			return result;
 		});

@@ -3,7 +3,6 @@ import { AsnParser } from "@peculiar/asn1-schema";
 import { base58, hex } from "@scure/base";
 import { base64urlnopad } from "@scure/base";
 import tweetnacl from "tweetnacl";
-import { logger } from "../logger";
 import type { CredentialKey, CurveType } from "../types/webAuthn";
 import { concatUint8Arrays } from "./uint8Array";
 
@@ -175,9 +174,7 @@ function extractSignedChallenge(
 		if (typeof clientData.challenge === "string") {
 			return clientData.challenge;
 		}
-	} catch {
-		logger.error("Failed to parse clientDataJSON");
-	}
+	} catch {}
 
 	return null;
 }
