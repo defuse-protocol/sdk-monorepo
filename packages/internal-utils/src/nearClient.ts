@@ -5,7 +5,7 @@ import { nearFailoverRpcProvider } from "./utils/failover";
  * https://docs.near.org/api/rpc/providers
  */
 export const PUBLIC_NEAR_RPC_URLS = [
-	"https://nearrpc.aurora.dev",
+	"https://relmn.aurora.dev",
 	"https://free.rpc.fastnear.com",
 	"https://rpc.mainnet.near.org",
 ];
