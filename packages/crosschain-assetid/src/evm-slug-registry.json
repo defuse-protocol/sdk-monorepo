@@ -1,0 +1,11 @@
+{
+	"1": "eth",
+	"10": "optimism",
+	"56": "bsc",
+	"100": "gnosis",
+	"137": "polygon",
+	"8453": "base",
+	"42161": "arbitrum",
+	"43114": "avalanche",
+	"80085": "berachain"
+}
