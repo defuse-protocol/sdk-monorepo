@@ -1,0 +1,52 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://example.com/1cs_v1-object.schema.json",
+	"title": "1cs_v1 asset (object form, encodeURIComponent on stringify)",
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"version": {
+			"const": "v1"
+		},
+		"chain": {
+			"type": "string",
+			"pattern": "^[a-z0-9][a-z0-9-]*$"
+		},
+		"namespace": {
+			"type": "string",
+			"pattern": "^[a-z][a-z0-9-]*$"
+		},
+		"reference": {
+			"type": "string",
+			"minLength": 1,
+			"description": "RAW (decoded) value; will be encodeURIComponent()'d when stringified."
+		},
+		"selector": {
+			"type": "string",
+			"minLength": 1,
+			"description": "RAW (decoded) sub-id; will be encodeURIComponent()'d when stringified."
+		}
+	},
+	"required": ["version", "chain", "namespace", "reference"],
+	"examples": [
+		{
+			"version": "v1",
+			"chain": "eth",
+			"namespace": "erc20",
+			"reference": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+		},
+		{
+			"version": "v1",
+			"chain": "near",
+			"namespace": "near-nft",
+			"reference": "apes.coolnft.near",
+			"selector": "series.1:blue/42"
+		},
+		{
+			"version": "v1",
+			"chain": "fiat",
+			"namespace": "iso4217",
+			"reference": "EUR"
+		}
+	]
+}
