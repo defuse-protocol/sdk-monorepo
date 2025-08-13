@@ -44,11 +44,11 @@ export class TokenNotSupportedByOmniRelayerError extends BaseError {
 		});
 	}
 }
-export type TokenNotFoundOnDestinationNetworkErrorType =
-	TokenNotFoundOnDestinationNetworkError & {
-		name: "TokenNotFoundOnDestinationNetworkError";
+export type TokenNotFoundOnDestinationChainErrorType =
+	TokenNotFoundOnDestinationChainError & {
+		name: "TokenNotFoundOnDestinationChainError";
 	};
-export class TokenNotFoundOnDestinationNetworkError extends BaseError {
+export class TokenNotFoundOnDestinationChainError extends BaseError {
 	constructor(
 		public token: string,
 		chainKind: Chain,
@@ -57,7 +57,7 @@ export class TokenNotFoundOnDestinationNetworkError extends BaseError {
 			`The token ${token} doesn't exist on destination network ${chainKind}`,
 			{
 				metaMessages: [`Token: ${token}`, `Destination Chain: ${chainKind}`],
-				name: "TokenNotFoundOnDestinationNetworkError",
+				name: "TokenNotFoundOnDestinationChainError",
 			},
 		);
 	}
