@@ -62,15 +62,3 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 		);
 	}
 }
-
-export type UnsupportedChainErrorType = UnsupportedChainError & {
-	name: "UnsupportedOmniNetworkError";
-};
-export class UnsupportedChainError extends BaseError {
-	constructor(chainKind: Chain) {
-		super(`Chain is not supported by the omni bridge ${chainKind}`, {
-			metaMessages: [`Chain: ${chainKind}`],
-			name: "UnsupportedChain",
-		});
-	}
-}
