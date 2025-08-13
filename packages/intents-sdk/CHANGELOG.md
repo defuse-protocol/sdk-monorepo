@@ -1,5 +1,18 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.15.0
+
+### Minor Changes
+
+- 7732be8: Adds omni bridge support
+
+### Patch Changes
+
+- Updated dependencies [f20577a]
+- Updated dependencies [7732be8]
+- Updated dependencies [9edf920]
+  - @defuse-protocol/internal-utils@0.7.0
+
 ## 0.14.0
 
 ### Minor Changes

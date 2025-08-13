@@ -1,5 +1,16 @@
 # @defuse-protocol/internal-utils
 
+## 0.7.0
+
+### Minor Changes
+
+- 7732be8: Adds omni bridge support
+- 9edf920: Simplify `ILogger` interface to satisfy `console`.
+
+### Patch Changes
+
+- f20577a: Switch Aurora RPC endpoint to new URL for proper load balancing and multi-region failover.
+
 ## 0.6.0
 
 ### Minor Changes
