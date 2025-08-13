@@ -35,6 +35,23 @@ export function createWithdrawIntentPrimitive(params: {
 	};
 }
 
+export function targetChainSupportedByOmniBridge(network: Chain): boolean {
+	switch (network) {
+		case Chains.Ethereum:
+			return true;
+		case Chains.Base:
+			return true;
+		case Chains.Arbitrum:
+			return true;
+		case Chains.Solana:
+			return true;
+		case Chains.Bitcoin:
+			return true;
+		default:
+			return false;
+	}
+}
+
 export function caip2ToChainKind(network: Chain): ChainKind {
 	switch (network) {
 		case Chains.Ethereum:

@@ -269,7 +269,8 @@ export class HotBridge implements Bridge {
 				if (typeof status === "string") {
 					return {
 						hash:
-							"chain" in args.routeConfig
+							"chain" in args.routeConfig &&
+							args.routeConfig.chain !== undefined
 								? formatTxHash(status, args.routeConfig.chain)
 								: status,
 					};

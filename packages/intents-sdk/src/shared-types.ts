@@ -192,6 +192,7 @@ export type HotBridgeRouteConfig = {
 
 export type OmniBridgeRouteConfig = {
 	route: RouteEnum["OmniBridge"];
+	chain?: Chain;
 };
 
 export type RouteConfig =
@@ -225,6 +226,7 @@ export interface Bridge {
 		amount: bigint;
 		destinationAddress: string;
 		feeEstimation: FeeEstimation;
+		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void>;
 
