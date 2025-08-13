@@ -52,6 +52,7 @@ import {
 	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentPrimitive,
+	targetChainSupportedByOmniBridge,
 } from "./omni-bridge-utils";
 
 type MinStorageBalance = bigint;
@@ -91,7 +92,9 @@ export class OmniBridge implements Bridge {
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		try {
-			if (this.targetChainSpecified(params.routeConfig)) return true;
+			if (this.targetChainSpecified(params.routeConfig)) {
+				return targetChainSupportedByOmniBridge(params.routeConfig.chain);
+			}
 			return this.parseAssetId(params.assetId) !== null;
 		} catch {
 			return false;
@@ -100,11 +103,11 @@ export class OmniBridge implements Bridge {
 
 	targetChainSpecified(
 		routeConfig?: RouteConfig,
-	): routeConfig is OmniBridgeRouteConfig {
+	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 

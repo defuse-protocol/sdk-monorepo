@@ -3,6 +3,7 @@ import { ChainKind, omniAddress } from "omni-bridge-sdk";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
+import { UnsupportedChainError } from "./error";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 
 export function createWithdrawIntentPrimitive(params: {
@@ -33,6 +34,15 @@ export function createWithdrawIntentPrimitive(params: {
 			native_token_fee: "0",
 		}),
 	};
+}
+
+
+export function targetChainSupportedByOmniBridge(network: Chain) {
+	try {
+		return Boolean(caip2ToChainKind(network));
+	} catch {
+		throw new UnsupportedChainError(network);
+	}
 }
 
 export function caip2ToChainKind(network: Chain): ChainKind {
