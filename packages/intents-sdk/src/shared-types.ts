@@ -190,12 +190,17 @@ export type HotBridgeRouteConfig = {
 	chain: Chain;
 };
 
+export type OmniBridgeRouteConfig = {
+	route: RouteEnum["OmniBridge"];
+};
+
 export type RouteConfig =
 	| NearWithdrawalRouteConfig
 	| InternalTransferRouteConfig
 	| VirtualChainRouteConfig
 	| PoaBridgeRouteConfig
-	| HotBridgeRouteConfig;
+	| HotBridgeRouteConfig
+	| OmniBridgeRouteConfig;
 
 export interface FeeEstimation {
 	amount: bigint;
@@ -219,6 +224,7 @@ export interface Bridge {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
+		feeEstimation: FeeEstimation;
 		logger?: ILogger;
 	}): Promise<void>;
 
