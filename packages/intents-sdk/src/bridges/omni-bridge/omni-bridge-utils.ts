@@ -36,7 +36,6 @@ export function createWithdrawIntentPrimitive(params: {
 	};
 }
 
-
 export function targetChainSupportedByOmniBridge(network: Chain) {
 	try {
 		return Boolean(caip2ToChainKind(network));
