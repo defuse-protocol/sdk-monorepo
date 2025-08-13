@@ -192,7 +192,7 @@ export type HotBridgeRouteConfig = {
 
 export type OmniBridgeRouteConfig = {
 	route: RouteEnum["OmniBridge"];
-	chain: Chain;
+	chain?: Chain;
 };
 
 export type RouteConfig =
