@@ -29,6 +29,7 @@ import type {
 	Bridge,
 	FeeEstimation,
 	NearTxInfo,
+	OmniBridgeRouteConfig,
 	ParsedAssetInfo,
 	RouteConfig,
 	TxInfo,
@@ -83,10 +84,21 @@ export class OmniBridge implements Bridge {
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		try {
+			if (this.targetChainSpecified(params.routeConfig)) return true;
 			return this.parseAssetId(params.assetId) !== null;
 		} catch {
 			return false;
 		}
+	}
+
+	targetChainSpecified(
+		routeConfig?: RouteConfig,
+	): routeConfig is OmniBridgeRouteConfig {
+		return Boolean(
+			routeConfig?.route &&
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
+		);
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
@@ -101,12 +113,34 @@ export class OmniBridge implements Bridge {
 		});
 	}
 
+	tokenSupported(assetId: string, routeConfig?: RouteConfig) {
+		const parsed = utils.parseDefuseAssetId(assetId);
+		if (parsed.standard !== "nep141") return null;
+		if (this.targetChainSpecified(routeConfig)) {
+			return Object.assign(parsed, {
+				blockchain: routeConfig.chain,
+				bridgeName: BridgeNameEnum.Omni,
+				address: parsed.contractId,
+			});
+		}
+		const chain = parseOriginChain(parsed.contractId);
+		if (chain === null) return null;
+		return Object.assign(parsed, {
+			blockchain: chainKindToCaip2(chain),
+			bridgeName: BridgeNameEnum.Omni,
+			address: parsed.contractId,
+		});
+	}
+
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
-		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		const assetInfo = this.tokenSupported(
+			args.withdrawalParams.assetId,
+			args.withdrawalParams.routeConfig,
+		);
 		assert(
 			assetInfo !== null,
 			`Asset ${args.withdrawalParams.assetId} is not supported`,
@@ -148,9 +182,10 @@ export class OmniBridge implements Bridge {
 		amount: bigint;
 		destinationAddress: string;
 		feeEstimation: FeeEstimation;
+		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void> {
-		const assetInfo = this.parseAssetId(args.assetId);
+		const assetInfo = this.tokenSupported(args.assetId, args.routeConfig);
 		assert(assetInfo !== null, `Asset ${args.assetId} is not supported`);
 		const supportedTokens = await this.getCachedSupportedTokens();
 		if (!supportedTokens[assetInfo.contractId]) {
@@ -171,7 +206,10 @@ export class OmniBridge implements Bridge {
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
-		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		const assetInfo = this.tokenSupported(
+			args.withdrawalParams.assetId,
+			args.withdrawalParams.routeConfig,
+		);
 		assert(
 			assetInfo !== null,
 			`Asset ${args.withdrawalParams.assetId} is not supported`,
