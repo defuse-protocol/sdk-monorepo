@@ -17,6 +17,7 @@ import {
 	ChainKind,
 	type OmniAddress,
 	OmniBridgeAPI,
+	getBridgedToken,
 	getChain,
 	isEvmChain,
 	omniAddress,
@@ -25,6 +26,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
+import type { Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -39,6 +41,7 @@ import type {
 import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
+	TokenNotFoundOnDestinationNetworkError,
 	TokenNotSupportedByOmniRelayerError,
 } from "./error";
 import {
@@ -67,6 +70,10 @@ export class OmniBridge implements Bridge {
 	private supportedTokensCache = new TTLCache<
 		string,
 		Record<string, OmniAddress>
+	>({ ttl: 86400000 }); // 86400000 - 1 day
+	private destinationChainAddressCache = new TTLCache<
+		string,
+		OmniAddress | null
 	>({ ttl: 86400000 }); // 86400000 - 1 day
 
 	constructor({
@@ -113,10 +120,21 @@ export class OmniBridge implements Bridge {
 		});
 	}
 
-	tokenSupported(assetId: string, routeConfig?: RouteConfig) {
+	async tokenSupported(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
 		if (this.targetChainSpecified(routeConfig)) {
+			const tokenOnDestinationNetwork =
+				await this.getCachedDestinationTokenAddress(
+					parsed.contractId,
+					routeConfig.chain,
+				);
+			if (tokenOnDestinationNetwork === null) {
+				throw new TokenNotFoundOnDestinationNetworkError(
+					assetId,
+					routeConfig.chain,
+				);
+			}
 			return Object.assign(parsed, {
 				blockchain: routeConfig.chain,
 				bridgeName: BridgeNameEnum.Omni,
@@ -132,12 +150,12 @@ export class OmniBridge implements Bridge {
 		});
 	}
 
-	createWithdrawalIntents(args: {
+	async createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
-		const assetInfo = this.tokenSupported(
+		const assetInfo = await this.tokenSupported(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
@@ -185,7 +203,7 @@ export class OmniBridge implements Bridge {
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void> {
-		const assetInfo = this.tokenSupported(args.assetId, args.routeConfig);
+		const assetInfo = await this.tokenSupported(args.assetId, args.routeConfig);
 		assert(assetInfo !== null, `Asset ${args.assetId} is not supported`);
 		const supportedTokens = await this.getCachedSupportedTokens();
 		if (!supportedTokens[assetInfo.contractId]) {
@@ -206,7 +224,7 @@ export class OmniBridge implements Bridge {
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
-		const assetInfo = this.tokenSupported(
+		const assetInfo = await this.tokenSupported(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
@@ -361,5 +379,29 @@ export class OmniBridge implements Bridge {
 		this.supportedTokensCache.set(OmniBridge.SUPPORTED_TOKENS_CACHE_KEY, data);
 
 		return data;
+	}
+
+	/**
+	 * Gets cached token address on destination chain.
+	 * Cache expires after one day using TTL cache.
+	 */
+	private async getCachedDestinationTokenAddress(
+		contractId: string,
+		chain: Chain,
+	): Promise<OmniAddress | null> {
+		const key = `${chain}:${contractId}`;
+		const cached = this.destinationChainAddressCache.get(key);
+		if (cached != null) {
+			return cached;
+		}
+
+		const tokenOnDestinationNetwork = await getBridgedToken(
+			omniAddress(ChainKind.Near, contractId),
+			caip2ToChainKind(chain),
+		);
+
+		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+
+		return tokenOnDestinationNetwork;
 	}
 }

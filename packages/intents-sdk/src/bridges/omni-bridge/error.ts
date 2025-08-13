@@ -1,4 +1,5 @@
 import { BaseError } from "@defuse-protocol/internal-utils";
+import type { Chain } from "../../lib/caip2";
 
 export type OmniTransferNotFoundErrorType = OmniTransferNotFoundError & {
 	name: "OmniTransferNotFoundError";
@@ -41,5 +42,23 @@ export class TokenNotSupportedByOmniRelayerError extends BaseError {
 			metaMessages: [`Token: ${token}`],
 			name: "TokenNotSupportedByOmniRelayerError",
 		});
+	}
+}
+export type TokenNotFoundOnDestinationNetworkErrorType =
+	TokenNotFoundOnDestinationNetworkError & {
+		name: "TokenNotFoundOnDestinationNetworkError";
+	};
+export class TokenNotFoundOnDestinationNetworkError extends BaseError {
+	constructor(
+		public token: string,
+		chainKind: Chain,
+	) {
+		super(
+			`The token ${token} doesn't exist on destination network ${chainKind}`,
+			{
+				metaMessages: [`Token: ${token}`, `Destination Chain: ${chainKind}`],
+				name: "TokenNotFoundOnDestinationNetworkError",
+			},
+		);
 	}
 }
