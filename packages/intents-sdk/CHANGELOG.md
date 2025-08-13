@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.16.0
+
+### Minor Changes
+
+- 058ecec: Add withdrawal to specific chain via omni bridge
+
 ## 0.15.0
 
 ### Minor Changes
