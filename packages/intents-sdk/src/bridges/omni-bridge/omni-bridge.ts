@@ -41,7 +41,7 @@ import type {
 import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
-	TokenNotFoundOnDestinationChainError,
+	TokenNotFoundInDestinationChainError,
 	TokenNotSupportedByOmniRelayerError,
 } from "./error";
 import {
@@ -103,8 +103,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -130,7 +130,7 @@ export class OmniBridge implements Bridge {
 					routeConfig.chain,
 				);
 			if (tokenOnDestinationNetwork === null) {
-				throw new TokenNotFoundOnDestinationChainError(
+				throw new TokenNotFoundInDestinationChainError(
 					assetId,
 					routeConfig.chain,
 				);
