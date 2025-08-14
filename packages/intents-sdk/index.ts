@@ -34,6 +34,7 @@ export type {
 	VirtualChainRouteConfig,
 	PoaBridgeRouteConfig,
 	HotBridgeRouteConfig,
+	OmniBridgeRouteConfig,
 	// Results of orchestrated fns
 	WithdrawalResult,
 	BatchWithdrawalResult,
@@ -55,6 +56,7 @@ export {
 	createVirtualChainRoute,
 	createPoaBridgeRoute,
 	createHotBridgeRoute,
+	createOmniWithdrawalRoute,
 } from "./src/lib/route-config-factory";
 
 // ============================================================================
@@ -106,6 +108,18 @@ export {
 	HotWithdrawalCancelledError,
 	type HotWithdrawalCancelledErrorType,
 } from "./src/bridges/hot-bridge/error";
+
+// Omni Bridge Errors
+export {
+	OmniTransferNotFoundError,
+	type OmniTransferNotFoundErrorType,
+	OmniTransferDestinationChainHashNotFoundError,
+	type OmniTransferDestinationChainHashNotFoundErrorType,
+	TokenNotSupportedByOmniRelayerError,
+	type TokenNotSupportedByOmniRelayerErrorType,
+	TokenNotFoundInDestinationChainError,
+	type TokenNotFoundInDestinationChainErrorType,
+} from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors
 export {

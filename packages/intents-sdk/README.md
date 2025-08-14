@@ -154,6 +154,7 @@ Examples:
 - `nep141:wrap.near` - Wrapped NEAR (native NEAR)
 - `nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L` - Polygon USDC through Hot
 - `nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near` - Base USDC through PoA
+- `nep141:sol.omdep.near` - SOL bridged through Omni Bridge
 
 ### Intent Execution
 
@@ -190,7 +191,7 @@ Deposit funds into Near Intents *(Coming Soon)*.
 Complete withdrawal functionality from Near Intents to external chains:
 
 - **Cross-Chain Transfers**: Withdraw to 20+ supported blockchains
-- **Multi-Bridge Support**: Hot Bridge, PoA Bridge
+- **Multi-Bridge Support**: Hot Bridge, PoA Bridge, Omni Bridge
 - **Batch Processing**: Process multiple withdrawals at a time
 - **Fee Management**: Automatic fee estimation with quote support
 - **Validation**: Built-in validation for withdrawal constraints
@@ -222,6 +223,7 @@ import {RouteEnum} from '@defuse-protocol/intents-sdk';
 
 console.log(RouteEnum.HotBridge);        // "hot_bridge" - Cross-chain via HOT protocol
 console.log(RouteEnum.PoaBridge);        // "poa_bridge" - Cross-chain via PoA bridge
+console.log(RouteEnum.OmniBridge);       // "omni_bridge" - Cross-chain via Omni bridge
 console.log(RouteEnum.NearWithdrawal);   // "near_withdrawal" - Direct to NEAR blockchain
 console.log(RouteEnum.VirtualChain);     // "virtual_chain" - To Aurora Engine chains
 console.log(RouteEnum.InternalTransfer); // "internal_transfer" - Between protocol users
@@ -237,6 +239,7 @@ import {BridgeNameEnum} from '@defuse-protocol/intents-sdk';
 
 console.log(BridgeNameEnum.Hot);  // "hot" - HOT Labs bridge infrastructure
 console.log(BridgeNameEnum.Poa);  // "poa" - Proof-of-Authority bridge by Defuse Labs  
+console.log(BridgeNameEnum.Omni);  // "omni" - Omni bridge by NEAR 
 console.log(BridgeNameEnum.None); // null - No external bridge (NEAR-native or internal)
 ```
 
@@ -265,6 +268,12 @@ The SDK automatically detects and supports multiple route types based on asset i
 - **Supported Assets**: Fungible tokens (NEP-141) ending with `.omft.near`
 - **Use Case**: Cross-chain transfers for assets bridged through PoA protocol
 - **Route Type**: `poa_bridge`
+
+##### Omni Bridge Route
+- **Purpose**: multi-chain asset bridge developed by Near
+- **Supported Assets**: Fungible tokens (NEP-141) supported by omni bridge relayer.
+- **Use Case**: multi-chain transfers for supported list of chains
+- **Route Type**: `omni_bridge`
 
 ##### Internal Transfer Route
 
