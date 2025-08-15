@@ -1,5 +1,15 @@
 # @defuse-protocol/internal-utils
 
+## 0.8.0
+
+### Minor Changes
+
+- 200fc6f: Add SEP-0053 standard support for Stellar wallet signatures.
+
+### Patch Changes
+
+- 9b9d6a8: Remove @hot-labs/omni-sdk package
+
 ## 0.7.0
 
 ### Minor Changes
