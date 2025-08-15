@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.8.1
+
+### Patch Changes
+
+- 3cbae8c: Remove `omniBridgeRelayerBaseUrl` from config.
+
 ## 0.8.0
 
 ### Minor Changes
