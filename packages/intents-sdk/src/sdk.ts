@@ -155,6 +155,7 @@ export class IntentsSDK implements IIntentsSDK {
 					amount: actualAmount,
 					destinationAddress: args.withdrawalParams.destinationAddress,
 					feeEstimation: args.feeEstimation,
+					routeConfig: args.withdrawalParams.routeConfig,
 					logger: args.logger,
 				});
 
