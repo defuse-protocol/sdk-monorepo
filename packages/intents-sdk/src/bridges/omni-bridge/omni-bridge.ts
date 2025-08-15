@@ -123,14 +123,14 @@ export class OmniBridge implements Bridge {
 		if (parsed.standard !== "nep141") return null;
 		if (this.targetChainSpecified(routeConfig)) {
 			const omniChainKind = caip2ToChainKind(routeConfig.chain);
-			assert(omniChainKind !== null, `Chain ${routeConfig.chain} not supported by omni bridge`)
+			assert(omniChainKind !== null, `Chain ${routeConfig.chain} is not supported by omni bridge`)
 			const tokenOnDestinationNetwork =
 				await this.getCachedDestinationTokenAddress(
 					parsed.contractId,
 					omniChainKind,
 				);
 
-			assert(tokenOnDestinationNetwork !== null, `Token ${assetId} does not exist on destination network ${routeConfig.chain}`)
+			assert(tokenOnDestinationNetwork !== null, `Token ${assetId} does not exist in destination network ${routeConfig.chain}`)
 
 			return Object.assign(parsed, {
 				blockchain: routeConfig.chain,
@@ -179,7 +179,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(omniChainKind !== null, `Chain ${assetInfo.blockchain} not supported by omni bridge`)
+		assert(omniChainKind !== null, `Chain ${assetInfo.blockchain} is not supported by omni bridge`)
 
 		const intent = createWithdrawIntentPrimitive({
 			assetId: args.withdrawalParams.assetId,
@@ -232,7 +232,7 @@ export class OmniBridge implements Bridge {
 		);
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(omniChainKind !== null, `Chain ${assetInfo.blockchain} not supported by omni bridge`)
+		assert(omniChainKind !== null, `Chain ${assetInfo.blockchain} is not supported by omni bridge`)
 
 
 		const fee = await this.omniBridgeAPI.getFee(
@@ -241,7 +241,7 @@ export class OmniBridge implements Bridge {
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
-		assert(fee.transferred_token_fee !== null, `Token ${args.withdrawalParams.assetId} not supported by omni bridge relayer`)
+		assert(fee.transferred_token_fee !== null, `Token ${args.withdrawalParams.assetId} is not supported by omni bridge relayer`)
 
 
 		const [minStorageBalance, userStorageBalance] =
