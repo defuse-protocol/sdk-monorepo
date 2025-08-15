@@ -23,6 +23,15 @@ exports[`prepareSwapSignedData() > should return the correct signed data for a S
 }
 `;
 
+exports[`prepareSwapSignedData() > should return the correct signed data for a Stellar SEP-0053 signature 1`] = `
+{
+  "payload": "{"foo":"bar"}",
+  "public_key": "ed25519:HRP7jA5tkMvCaNzPnu9cbNuAF1rJuwC2nBkFQtFpSQHC",
+  "signature": "ed25519:S88bG8B",
+  "standard": "sep53",
+}
+`;
+
 exports[`prepareSwapSignedData() > should return the correct signed data for a Stellar signature 1`] = `
 {
   "payload": "{"foo":"bar"}",
