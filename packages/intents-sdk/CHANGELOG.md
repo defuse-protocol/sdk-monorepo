@@ -1,5 +1,14 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.16.1
+
+### Patch Changes
+
+- 3c58f82: Update readme and add missing omni exports
+- Updated dependencies [200fc6f]
+- Updated dependencies [9b9d6a8]
+  - @defuse-protocol/internal-utils@0.8.0
+
 ## 0.16.0
 
 ### Minor Changes
