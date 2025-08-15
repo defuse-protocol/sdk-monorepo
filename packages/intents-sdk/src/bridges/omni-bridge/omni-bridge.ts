@@ -99,8 +99,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 
@@ -121,11 +121,11 @@ export class OmniBridge implements Bridge {
 	async tokenSupported(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		let omniChainKind = null
-		let blockchain = null
+		let omniChainKind = null;
+		let blockchain = null;
 		if (this.targetChainSpecified(routeConfig)) {
 			omniChainKind = caip2ToChainKind(routeConfig.chain);
-			blockchain = routeConfig.chain
+			blockchain = routeConfig.chain;
 		} else {
 			omniChainKind = parseOriginChain(parsed.contractId);
 			if (omniChainKind === null) return null;
@@ -137,7 +137,10 @@ export class OmniBridge implements Bridge {
 				parsed.contractId,
 				omniChainKind,
 			);
-		assert(tokenOnDestinationNetwork !== null, `Token ${assetId} does not exist in destination network ${blockchain}`)
+		assert(
+			tokenOnDestinationNetwork !== null,
+			`Token ${assetId} does not exist in destination network ${blockchain}`,
+		);
 		return Object.assign(parsed, {
 			blockchain,
 			bridgeName: BridgeNameEnum.Omni,
@@ -175,7 +178,10 @@ export class OmniBridge implements Bridge {
 		}
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(omniChainKind !== null, `Chain ${assetInfo.blockchain} is not supported by omni bridge`)
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by omni bridge`,
+		);
 
 		const intent = createWithdrawIntentPrimitive({
 			assetId: args.withdrawalParams.assetId,
@@ -228,8 +234,10 @@ export class OmniBridge implements Bridge {
 		);
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(omniChainKind !== null, `Chain ${assetInfo.blockchain} is not supported by omni bridge`)
-
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by omni bridge`,
+		);
 
 		const fee = await this.omniBridgeAPI.getFee(
 			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
@@ -237,8 +245,10 @@ export class OmniBridge implements Bridge {
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
-		assert(fee.transferred_token_fee !== null, `Token ${args.withdrawalParams.assetId} is not supported by omni bridge relayer`)
-
+		assert(
+			fee.transferred_token_fee !== null,
+			`Token ${args.withdrawalParams.assetId} is not supported by omni bridge relayer`,
+		);
 
 		const [minStorageBalance, userStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
