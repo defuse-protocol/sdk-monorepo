@@ -115,10 +115,6 @@ export {
 	type OmniTransferNotFoundErrorType,
 	OmniTransferDestinationChainHashNotFoundError,
 	type OmniTransferDestinationChainHashNotFoundErrorType,
-	TokenNotSupportedByOmniRelayerError,
-	type TokenNotSupportedByOmniRelayerErrorType,
-	TokenNotFoundInDestinationChainError,
-	type TokenNotFoundInDestinationChainErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors

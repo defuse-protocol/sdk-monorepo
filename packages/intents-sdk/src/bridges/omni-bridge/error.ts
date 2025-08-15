@@ -1,5 +1,4 @@
 import { BaseError } from "@defuse-protocol/internal-utils";
-import type { Chain } from "../../lib/caip2";
 
 export type OmniTransferNotFoundErrorType = OmniTransferNotFoundError & {
 	name: "OmniTransferNotFoundError";
@@ -28,49 +27,6 @@ export class OmniTransferDestinationChainHashNotFoundError extends BaseError {
 				`DestinationChain: ${destinationChain}`,
 			],
 			name: "OmniTransferDestinationChainHashNotFoundError",
-		});
-	}
-}
-
-export type TokenNotSupportedByOmniRelayerErrorType =
-	TokenNotSupportedByOmniRelayerError & {
-		name: "TokenNotSupportedByOmniRelayerError";
-	};
-export class TokenNotSupportedByOmniRelayerError extends BaseError {
-	constructor(public token: string) {
-		super(`Omni Relayer doesn't accept fee in the transferred token ${token}`, {
-			metaMessages: [`Token: ${token}`],
-			name: "TokenNotSupportedByOmniRelayerError",
-		});
-	}
-}
-export type TokenNotFoundInDestinationChainErrorType =
-	TokenNotFoundInDestinationChainError & {
-		name: "TokenNotFoundInDestinationChainError";
-	};
-export class TokenNotFoundInDestinationChainError extends BaseError {
-	constructor(
-		public token: string,
-		chainKind: Chain,
-	) {
-		super(
-			`The token ${token} doesn't exist in destination network ${chainKind}`,
-			{
-				metaMessages: [`Token: ${token}`, `Destination Chain: ${chainKind}`],
-				name: "TokenNotFoundInDestinationChainError",
-			},
-		);
-	}
-}
-export type ChainNotSupportedByOmniBridgeErrorType =
-	ChainNotSupportedByOmniBridgeError & {
-		name: "ChainNotSupportedByOmniBridgeError";
-	};
-export class ChainNotSupportedByOmniBridgeError extends BaseError {
-	constructor(chain: Chain) {
-		super(`Chain ${chain} is not supported by omni bridge `, {
-			metaMessages: [`Chain: ${chain}`],
-			name: "ChainNotSupportedByOmniBridgeError",
 		});
 	}
 }
