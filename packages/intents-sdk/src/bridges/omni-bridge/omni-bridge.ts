@@ -121,27 +121,23 @@ export class OmniBridge implements Bridge {
 	async tokenSupported(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
+		let omniChainKind = null
+		let blockchain = null
 		if (this.targetChainSpecified(routeConfig)) {
-			const omniChainKind = caip2ToChainKind(routeConfig.chain);
-			assert(omniChainKind !== null, `Chain ${routeConfig.chain} is not supported by omni bridge`)
-			const tokenOnDestinationNetwork =
-				await this.getCachedDestinationTokenAddress(
-					parsed.contractId,
-					omniChainKind,
-				);
-
-			assert(tokenOnDestinationNetwork !== null, `Token ${assetId} does not exist in destination network ${routeConfig.chain}`)
-
-			return Object.assign(parsed, {
-				blockchain: routeConfig.chain,
-				bridgeName: BridgeNameEnum.Omni,
-				address: parsed.contractId,
-			});
+			omniChainKind = caip2ToChainKind(routeConfig.chain);
+			blockchain = routeConfig.chain
+		} else {
+			omniChainKind = parseOriginChain(parsed.contractId);
+			if (omniChainKind === null) return null;
+			blockchain = chainKindToCaip2(omniChainKind);
 		}
-		const omniChainKind = parseOriginChain(parsed.contractId);
-		if (omniChainKind === null) return null;
-		const blockchain = chainKindToCaip2(omniChainKind);
-		if (blockchain === null) return null;
+		if (omniChainKind === null || blockchain === null) return null;
+		const tokenOnDestinationNetwork =
+			await this.getCachedDestinationTokenAddress(
+				parsed.contractId,
+				omniChainKind,
+			);
+		assert(tokenOnDestinationNetwork !== null, `Token ${assetId} does not exist in destination network ${blockchain}`)
 		return Object.assign(parsed, {
 			blockchain,
 			bridgeName: BridgeNameEnum.Omni,
