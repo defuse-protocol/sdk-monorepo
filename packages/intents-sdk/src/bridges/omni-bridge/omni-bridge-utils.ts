@@ -10,7 +10,7 @@ export function createWithdrawIntentPrimitive(params: {
 	destinationAddress: string;
 	amount: bigint;
 	storageDeposit: bigint;
-	origin: Chain;
+	omniChainKind: ChainKind;
 	transferredTokenFee: bigint;
 }): IntentPrimitive {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
@@ -25,34 +25,14 @@ export function createWithdrawIntentPrimitive(params: {
 		storage_deposit:
 			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
 		msg: JSON.stringify({
-			recipient: omniAddress(
-				caip2ToChainKind(params.origin),
-				params.destinationAddress,
-			),
+			recipient: omniAddress(params.omniChainKind, params.destinationAddress),
 			fee: params.transferredTokenFee.toString(),
 			native_token_fee: "0",
 		}),
 	};
 }
 
-export function targetChainSupportedByOmniBridge(network: Chain): boolean {
-	switch (network) {
-		case Chains.Ethereum:
-			return true;
-		case Chains.Base:
-			return true;
-		case Chains.Arbitrum:
-			return true;
-		case Chains.Solana:
-			return true;
-		case Chains.Bitcoin:
-			return true;
-		default:
-			return false;
-	}
-}
-
-export function caip2ToChainKind(network: Chain): ChainKind {
+export function caip2ToChainKind(network: Chain): ChainKind | null {
 	switch (network) {
 		case Chains.Ethereum:
 			return ChainKind.Eth;
@@ -65,11 +45,11 @@ export function caip2ToChainKind(network: Chain): ChainKind {
 		case Chains.Bitcoin:
 			return ChainKind.Btc;
 		default:
-			throw new Error(`Unsupported Omni network = ${network}`);
+			return null;
 	}
 }
 
-export function chainKindToCaip2(network: ChainKind): Chain {
+export function chainKindToCaip2(network: ChainKind): Chain | null {
 	switch (network) {
 		case ChainKind.Eth:
 			return Chains.Ethereum;
@@ -82,6 +62,6 @@ export function chainKindToCaip2(network: ChainKind): Chain {
 		case ChainKind.Btc:
 			return Chains.Bitcoin;
 		default:
-			throw new Error(`Unsupported Caip2 network = ${network}`);
+			return null;
 	}
 }
