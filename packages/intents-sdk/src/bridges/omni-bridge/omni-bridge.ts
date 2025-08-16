@@ -41,8 +41,6 @@ import type {
 import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
-	TokenNotFoundInDestinationChainError,
-	TokenNotSupportedByOmniRelayerError,
 } from "./error";
 import {
 	NEAR_NATIVE_ASSET_ID,
@@ -52,7 +50,6 @@ import {
 	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentPrimitive,
-	targetChainSupportedByOmniBridge,
 } from "./omni-bridge-utils";
 
 type MinStorageBalance = bigint;
@@ -64,13 +61,6 @@ export class OmniBridge implements Bridge {
 	private storageDepositCache = new TTLCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ ttl: 86400000 }); // 86400000 - 1 day
-	private static readonly SUPPORTED_TOKENS_CACHE_KEY: string =
-		"SUPPORTED_TOKENS_CACHE_KEY";
-	// TTL cache for supported tokens with 30-second TTL
-	private supportedTokensCache = new TTLCache<
-		string,
-		Record<string, OmniAddress>
 	>({ ttl: 86400000 }); // 86400000 - 1 day
 	private destinationChainAddressCache = new TTLCache<
 		string,
@@ -92,8 +82,14 @@ export class OmniBridge implements Bridge {
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		try {
-			if (this.targetChainSpecified(params.routeConfig)) {
-				return targetChainSupportedByOmniBridge(params.routeConfig.chain);
+			if (
+				this.targetChainSpecified(params.routeConfig) &&
+				caip2ToChainKind(params.routeConfig.chain) !== null
+			) {
+				return true;
+			}
+			if ("routeConfig" in params && params.routeConfig != null) {
+				return this.is(params.routeConfig);
 			}
 			return this.parseAssetId(params.assetId) !== null;
 		} catch {
@@ -114,10 +110,12 @@ export class OmniBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		const chain = parseOriginChain(parsed.contractId);
-		if (chain === null) return null;
+		const omniChainKind = parseOriginChain(parsed.contractId);
+		if (omniChainKind === null) return null;
+		const blockchain = chainKindToCaip2(omniChainKind);
+		if (blockchain === null) return null;
 		return Object.assign(parsed, {
-			blockchain: chainKindToCaip2(chain),
+			blockchain,
 			bridgeName: BridgeNameEnum.Omni,
 			address: parsed.contractId,
 		});
@@ -126,28 +124,28 @@ export class OmniBridge implements Bridge {
 	async tokenSupported(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
+		let omniChainKind = null;
+		let blockchain = null;
 		if (this.targetChainSpecified(routeConfig)) {
-			const tokenOnDestinationNetwork =
-				await this.getCachedDestinationTokenAddress(
-					parsed.contractId,
-					routeConfig.chain,
-				);
-			if (tokenOnDestinationNetwork === null) {
-				throw new TokenNotFoundInDestinationChainError(
-					assetId,
-					routeConfig.chain,
-				);
-			}
-			return Object.assign(parsed, {
-				blockchain: routeConfig.chain,
-				bridgeName: BridgeNameEnum.Omni,
-				address: parsed.contractId,
-			});
+			omniChainKind = caip2ToChainKind(routeConfig.chain);
+			blockchain = routeConfig.chain;
+		} else {
+			omniChainKind = parseOriginChain(parsed.contractId);
+			if (omniChainKind === null) return null;
+			blockchain = chainKindToCaip2(omniChainKind);
 		}
-		const chain = parseOriginChain(parsed.contractId);
-		if (chain === null) return null;
+		if (omniChainKind === null || blockchain === null) return null;
+		const tokenOnDestinationNetwork =
+			await this.getCachedDestinationTokenAddress(
+				parsed.contractId,
+				omniChainKind,
+			);
+		assert(
+			tokenOnDestinationNetwork !== null,
+			`Token ${assetId} does not exist in destination network ${blockchain}`,
+		);
 		return Object.assign(parsed, {
-			blockchain: chainKindToCaip2(chain),
+			blockchain,
 			bridgeName: BridgeNameEnum.Omni,
 			address: parsed.contractId,
 		});
@@ -182,11 +180,17 @@ export class OmniBridge implements Bridge {
 			});
 		}
 
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by omni bridge`,
+		);
+
 		const intent = createWithdrawIntentPrimitive({
 			assetId: args.withdrawalParams.assetId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
-			origin: assetInfo.blockchain,
+			omniChainKind,
 			storageDeposit: args.feeEstimation.quote
 				? BigInt(args.feeEstimation.quote.amount_out)
 				: 0n,
@@ -208,10 +212,6 @@ export class OmniBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = await this.tokenSupported(args.assetId, args.routeConfig);
 		assert(assetInfo !== null, `Asset ${args.assetId} is not supported`);
-		const supportedTokens = await this.getCachedSupportedTokens();
-		if (!supportedTokens[assetInfo.contractId]) {
-			throw new TokenNotSupportedByOmniRelayerError(args.assetId);
-		}
 		assert(
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
@@ -235,18 +235,22 @@ export class OmniBridge implements Bridge {
 			assetInfo !== null,
 			`Asset ${args.withdrawalParams.assetId} is not supported`,
 		);
+
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by omni bridge`,
+		);
+
 		const fee = await this.omniBridgeAPI.getFee(
 			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
-			omniAddress(
-				caip2ToChainKind(assetInfo.blockchain),
-				args.withdrawalParams.destinationAddress,
-			),
+			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
 		assert(
 			fee.transferred_token_fee !== null,
-			`Asset ${args.withdrawalParams.assetId} is not supported by the relayer`,
+			`Token ${args.withdrawalParams.assetId} is not supported by omni bridge relayer`,
 		);
 
 		const [minStorageBalance, userStorageBalance] =
@@ -364,35 +368,14 @@ export class OmniBridge implements Bridge {
 	}
 
 	/**
-	 * Gets cached tokens supported by the omni relayer, tokens not listed there can't be transferred.
-	 * Cache expires after one day using TTL cache.
-	 */
-	private async getCachedSupportedTokens(): Promise<
-		Record<string, OmniAddress>
-	> {
-		const cached = this.supportedTokensCache.get(
-			OmniBridge.SUPPORTED_TOKENS_CACHE_KEY,
-		);
-		if (cached != null) {
-			return cached;
-		}
-
-		const data = await this.omniBridgeAPI.getAllowlistedTokens();
-
-		this.supportedTokensCache.set(OmniBridge.SUPPORTED_TOKENS_CACHE_KEY, data);
-
-		return data;
-	}
-
-	/**
 	 * Gets cached token address on destination chain.
 	 * Cache expires after one day using TTL cache.
 	 */
 	private async getCachedDestinationTokenAddress(
 		contractId: string,
-		chain: Chain,
+		omniChainKind: ChainKind,
 	): Promise<OmniAddress | null> {
-		const key = `${chain}:${contractId}`;
+		const key = `${omniChainKind}:${contractId}`;
 		const cached = this.destinationChainAddressCache.get(key);
 		if (cached != null) {
 			return cached;
@@ -400,7 +383,7 @@ export class OmniBridge implements Bridge {
 
 		const tokenOnDestinationNetwork = await getBridgedToken(
 			omniAddress(ChainKind.Near, contractId),
-			caip2ToChainKind(chain),
+			omniChainKind,
 		);
 
 		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
