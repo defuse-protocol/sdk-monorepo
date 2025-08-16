@@ -88,6 +88,9 @@ export class OmniBridge implements Bridge {
 			) {
 				return true;
 			}
+			if ("routeConfig" in params && params.routeConfig != null) {
+				return this.is(params.routeConfig);
+			}
 			return this.parseAssetId(params.assetId) !== null;
 		} catch {
 			return false;
