@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.16.3
+
+### Patch Changes
+
+- ccab9ca: Temporary disable Omni Bridge.
+
 ## 0.16.2
 
 ### Patch Changes
