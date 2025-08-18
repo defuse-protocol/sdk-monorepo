@@ -86,6 +86,8 @@ export class OmniBridge implements Bridge {
 			if (params.routeConfig && !this.is(params.routeConfig)) {
 				return false;
 			}
+			// check if assed it is valid and parseable
+			utils.parseDefuseAssetId(params.assetId);
 			// Transfer of an omni token to one of the supported chains.
 			if (this.targetChainSpecified(params.routeConfig)) {
 				return caip2ToChainKind(params.routeConfig.chain) !== null;
@@ -388,7 +390,7 @@ export class OmniBridge implements Bridge {
 			);
 
 			this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
-
+			console.log(tokenOnDestinationNetwork);
 			return tokenOnDestinationNetwork;
 		} catch {
 			return null;
