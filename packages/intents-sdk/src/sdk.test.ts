@@ -638,7 +638,7 @@ describe.concurrent("near_withdrawal", () => {
 	});
 });
 
-describe.concurrent.skip("omni_bridge", () => {
+describe.concurrent("omni_bridge", () => {
 	it("estimateWithdrawalFee(): should return fee", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
