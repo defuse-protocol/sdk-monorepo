@@ -388,7 +388,7 @@ export class OmniBridge implements Bridge {
 			);
 
 			this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
-			console.log(tokenOnDestinationNetwork);
+
 			return tokenOnDestinationNetwork;
 		} catch {
 			return null;
