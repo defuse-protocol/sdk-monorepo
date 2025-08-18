@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.8.2
+
+### Patch Changes
+
+- 25d2e40: Add `?method=xxx` to Intents RPC requests.
+
 ## 0.8.1
 
 ### Patch Changes
