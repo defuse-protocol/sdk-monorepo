@@ -76,17 +76,18 @@ export class OmniBridge implements Bridge {
 		this.omniBridgeAPI = new OmniBridgeAPI();
 	}
 
+	is(routeConfig: RouteConfig): boolean {
+		return routeConfig.route === RouteEnum.HotBridge;
+	}
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		try {
 			// Non omni bridge route specified, abort.
-			if (params.routeConfig && params.routeConfig.route !== RouteEnum.OmniBridge) {
-				return false
+			if (params.routeConfig && !this.is(params.routeConfig)) {
+				return false;
 			}
 			// Transfer of omni token to one of the supported chains.
-			if (
-				this.targetChainSpecified(params.routeConfig)
-			) {
+			if (this.targetChainSpecified(params.routeConfig)) {
 				return caip2ToChainKind(params.routeConfig.chain) !== null;
 			}
 			// Transfer of a bridged token to it's origin chain.
@@ -101,8 +102,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 
