@@ -250,7 +250,7 @@ export class OmniBridge implements Bridge {
 
 		assert(
 			fee.transferred_token_fee !== null,
-			`Token ${args.withdrawalParams.assetId} is not supported by omni bridge relayer`,
+			`Token ${args.withdrawalParams.assetId} is not supported by the omni bridge relayer`,
 		);
 
 		const [minStorageBalance, userStorageBalance] =
