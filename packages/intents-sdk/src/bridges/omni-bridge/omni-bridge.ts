@@ -41,6 +41,7 @@ import type {
 import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
+	TokenNotFoundInDestinationChainError,
 } from "./error";
 import {
 	NEAR_NATIVE_ASSET_ID,
@@ -140,10 +141,11 @@ export class OmniBridge implements Bridge {
 				parsed.contractId,
 				omniChainKind,
 			);
-		assert(
-			tokenOnDestinationNetwork !== null,
-			`Token ${assetId} does not exist in destination network ${blockchain}`,
-		);
+
+		if (tokenOnDestinationNetwork === null) {
+			throw new TokenNotFoundInDestinationChainError(assetId, blockchain);
+		}
+
 		return Object.assign(parsed, {
 			blockchain,
 			bridgeName: BridgeNameEnum.Omni,
