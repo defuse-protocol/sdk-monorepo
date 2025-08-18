@@ -39,12 +39,15 @@ export type TokenNotFoundInDestinationChainErrorType =
 export class TokenNotFoundInDestinationChainError extends BaseError {
 	constructor(
 		public token: string,
-		chainKind: Chain,
+		destinationChain: Chain,
 	) {
 		super(
-			`The token ${token} doesn't exist in destination network ${chainKind}`,
+			`The token ${token} doesn't exist in destination network ${destinationChain}`,
 			{
-				metaMessages: [`Token: ${token}`, `Destination Chain: ${chainKind}`],
+				metaMessages: [
+					`Token: ${token}`,
+					`Destination Chain: ${destinationChain}`,
+				],
 				name: "TokenNotFoundInDestinationChainError",
 			},
 		);
