@@ -86,7 +86,7 @@ export class OmniBridge implements Bridge {
 			if (params.routeConfig && !this.is(params.routeConfig)) {
 				return false;
 			}
-			// Transfer of omni token to one of the supported chains.
+			// Transfer of an omni token to one of the supported chains.
 			if (this.targetChainSpecified(params.routeConfig)) {
 				return caip2ToChainKind(params.routeConfig.chain) !== null;
 			}
