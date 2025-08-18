@@ -42,6 +42,7 @@ import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
+	TransferredTokenFeeNotSupportedByOmniRelayerError,
 } from "./error";
 import {
 	NEAR_NATIVE_ASSET_ID,
@@ -250,10 +251,11 @@ export class OmniBridge implements Bridge {
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
-		assert(
-			fee.transferred_token_fee !== null,
-			`Token ${args.withdrawalParams.assetId} is not supported by the omni bridge relayer`,
-		);
+		if (fee.transferred_token_fee === null) {
+			throw new TransferredTokenFeeNotSupportedByOmniRelayerError(
+				args.withdrawalParams.assetId,
+			);
+		}
 
 		const [minStorageBalance, userStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);

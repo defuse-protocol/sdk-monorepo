@@ -50,3 +50,16 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 		);
 	}
 }
+
+export type TransferredTokenFeeNotSupportedByOmniRelayerErrorType =
+	TransferredTokenFeeNotSupportedByOmniRelayerError & {
+		name: "TransferredTokenFeeNotSupportedByOmniRelayerError";
+	};
+export class TransferredTokenFeeNotSupportedByOmniRelayerError extends BaseError {
+	constructor(public token: string) {
+		super(`Omni Relayer doesn't accept fee in the transferred token ${token}`, {
+			metaMessages: [`Token: ${token}`],
+			name: "TransferredTokenFeeNotSupportedByOmniRelayerError",
+		});
+	}
+}
