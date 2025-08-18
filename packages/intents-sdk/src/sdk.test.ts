@@ -8,6 +8,7 @@ import {
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
+import { RouteEnum } from "./constants/route-enum";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
@@ -601,6 +602,37 @@ describe.concurrent("near_withdrawal", () => {
 				amount: "1",
 				intent: "native_withdraw",
 				receiver_id: "0x0000000000000000000000000000000000000000",
+			},
+		]);
+	});
+	it("createWithdrawalIntents(): should not be overriden by any other bridge", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		// This type of withdrawal is last in priority, so we need to make sure no other
+		// bridge could override an explicitly set route config.
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 700n,
+				destinationAddress: "hello.near",
+				feeInclusive: false,
+				routeConfig: {
+					route: RouteEnum.NearWithdrawal,
+				},
+			},
+			feeEstimation: {
+				amount: 0n,
+				quote: null,
+			},
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "nbtc.bridge.near",
+				receiver_id: "hello.near",
+				amount: "700",
+				storage_deposit: null,
+				msg: undefined,
 			},
 		]);
 	});
