@@ -82,12 +82,6 @@ export class OmniBridge implements Bridge {
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		try {
-			if (
-				this.targetChainSpecified(params.routeConfig) &&
-				caip2ToChainKind(params.routeConfig.chain) !== null
-			) {
-				return true;
-			}
 			if ("routeConfig" in params && params.routeConfig != null) {
 				return this.is(params.routeConfig);
 			}
@@ -102,8 +96,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
