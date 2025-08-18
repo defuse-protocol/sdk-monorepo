@@ -778,7 +778,7 @@ try {
     const result = await sdk.processWithdrawal({
         withdrawalParams: {
             assetId: 'nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near', // Aurora token
-            amount: BigInt('70000000000000000000'), // 70 Aurora (in smallest units)
+            amount: 70000000000000000000n, // 70 Aurora (in smallest units)
             destinationAddress: '0x741b0b0F27c4b4047ecFCcDf4690F749C6Cfd66c',
             feeInclusive: false
         }
