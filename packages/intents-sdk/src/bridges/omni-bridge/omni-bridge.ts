@@ -102,8 +102,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 
@@ -375,23 +375,19 @@ export class OmniBridge implements Bridge {
 		contractId: string,
 		omniChainKind: ChainKind,
 	): Promise<OmniAddress | null> {
-		try {
-			const key = `${omniChainKind}:${contractId}`;
-			const cached = this.destinationChainAddressCache.get(key);
-			if (cached != null) {
-				return cached;
-			}
-
-			const tokenOnDestinationNetwork = await getBridgedToken(
-				omniAddress(ChainKind.Near, contractId),
-				omniChainKind,
-			);
-
-			this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
-
-			return tokenOnDestinationNetwork;
-		} catch {
-			return null;
+		const key = `${omniChainKind}:${contractId}`;
+		const cached = this.destinationChainAddressCache.get(key);
+		if (cached != null) {
+			return cached;
 		}
+
+		const tokenOnDestinationNetwork = await getBridgedToken(
+			omniAddress(ChainKind.Near, contractId),
+			omniChainKind,
+		);
+
+		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+
+		return tokenOnDestinationNetwork;
 	}
 }
