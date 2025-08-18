@@ -77,7 +77,7 @@ export class OmniBridge implements Bridge {
 	}
 
 	is(routeConfig: RouteConfig): boolean {
-		return routeConfig.route === RouteEnum.HotBridge;
+		return routeConfig.route === RouteEnum.OmniBridge;
 	}
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
@@ -102,8 +102,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
