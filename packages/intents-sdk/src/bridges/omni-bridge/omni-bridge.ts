@@ -90,7 +90,9 @@ export class OmniBridge implements Bridge {
 		return routeConfig.route === RouteEnum.OmniBridge;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
 		try {
 			if (this.targetChainSpecified(params.routeConfig)) {
 				return targetChainSupportedByOmniBridge(params.routeConfig.chain);

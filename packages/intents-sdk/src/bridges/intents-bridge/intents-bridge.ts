@@ -15,7 +15,9 @@ export class IntentsBridge implements Bridge {
 		return routeConfig.route === RouteEnum.InternalTransfer;
 	}
 
-	supports(params: Pick<WithdrawalParams, "routeConfig">): boolean {
+	async supports(
+		params: Pick<WithdrawalParams, "routeConfig">,
+	): Promise<boolean> {
 		if ("routeConfig" in params && params.routeConfig != null) {
 			return this.is(params.routeConfig);
 		}

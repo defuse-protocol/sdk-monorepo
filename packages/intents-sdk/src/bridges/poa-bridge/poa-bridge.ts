@@ -44,7 +44,9 @@ export class PoaBridge implements Bridge {
 		return routeConfig.route === RouteEnum.PoaBridge;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
 		let result = true;
 
 		if ("routeConfig" in params && params.routeConfig != null) {
