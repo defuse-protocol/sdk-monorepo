@@ -45,7 +45,6 @@
 		"@near-js/keystores": "^2.0.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
 		"tsup": "^8.5.0",
 		"vitest": "2.1.2"
 	}
