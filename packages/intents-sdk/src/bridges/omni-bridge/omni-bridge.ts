@@ -87,6 +87,10 @@ export class OmniBridge implements Bridge {
 		if (params.routeConfig && !this.is(params.routeConfig)) {
 			return false;
 		}
+		const parsed = utils.parseDefuseAssetId(params.assetId);
+		if (parsed.standard !== "nep141") return false;
+		// omni sdk to check if the token has any relation to omni bridge
+		if (parseOriginChain(parsed.contractId) === null) return false
 		// Transfer of an omni token to one of the supported chains.
 		if (this.targetChainSpecified(params.routeConfig)) {
 			const omniChainKind = caip2ToChainKind(params.routeConfig.chain);
@@ -105,8 +109,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
