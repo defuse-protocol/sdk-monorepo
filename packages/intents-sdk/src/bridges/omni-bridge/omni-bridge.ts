@@ -83,20 +83,21 @@ export class OmniBridge implements Bridge {
 	}
 
 	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
-		try {
-			// Non omni bridge route specified, abort.
-			if (params.routeConfig && !this.is(params.routeConfig)) {
-				return false;
-			}
-			// Transfer of an omni token to one of the supported chains.
-			if (this.targetChainSpecified(params.routeConfig)) {
-				return caip2ToChainKind(params.routeConfig.chain) !== null;
-			}
-			// Transfer of a bridged token to it's origin chain.
-			return this.parseAssetId(params.assetId) !== null;
-		} catch {
+		// Non omni bridge route specified, abort.
+		if (params.routeConfig && !this.is(params.routeConfig)) {
 			return false;
 		}
+		// Transfer of an omni token to one of the supported chains.
+		if (this.targetChainSpecified(params.routeConfig)) {
+			const omniChainKind = caip2ToChainKind(params.routeConfig.chain);
+			assert(
+				omniChainKind !== null,
+				`Chain ${params.routeConfig.chain} is not supported in Omni Bridge.`,
+			);
+			return true;
+		}
+		// Transfer of a bridged token to it's origin chain.
+		return this.parseAssetId(params.assetId) !== null;
 	}
 
 	targetChainSpecified(
