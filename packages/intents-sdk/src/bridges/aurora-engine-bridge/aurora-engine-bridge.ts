@@ -41,7 +41,9 @@ export class AuroraEngineBridge implements Bridge {
 		return routeConfig.route === RouteEnum.VirtualChain;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
 		if ("routeConfig" in params && params.routeConfig != null) {
 			return this.is(params.routeConfig);
 		}
