@@ -23,6 +23,7 @@
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"typecheck": "npx tsc --noEmit"
 	},
@@ -45,7 +46,6 @@
 		"@near-js/keystores": "^2.0.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
 		"tsup": "^8.5.0",
 		"vitest": "2.1.2"
 	}
