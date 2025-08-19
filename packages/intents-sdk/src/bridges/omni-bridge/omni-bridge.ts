@@ -82,22 +82,44 @@ export class OmniBridge implements Bridge {
 		return routeConfig.route === RouteEnum.OmniBridge;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
+	//MOST OF THE CHECK WILL BE HERE
+	async supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
 		// Non omni bridge route specified, abort.
 		if (params.routeConfig && !this.is(params.routeConfig)) {
 			return false;
 		}
-		// Transfer of an omni token to one of the supported chains.
+
+		// BEFORE  utils.parseDefuseAssetId(params.assetId) there will be  util function from
+		// omni sdk to check if the token has any relation to omni bridge
+		const parsed = utils.parseDefuseAssetId(params.assetId);
+		if (parsed.standard !== "nep141") return false;
+		let omniChainKind: ChainKind | null = null
+		let caip2Chain: Chain | null = null
+		// Transfer to some specific route
 		if (this.targetChainSpecified(params.routeConfig)) {
-			const omniChainKind = caip2ToChainKind(params.routeConfig.chain);
+			omniChainKind = caip2ToChainKind(params.routeConfig.chain);
 			assert(
 				omniChainKind !== null,
 				`Chain ${params.routeConfig.chain} is not supported in Omni Bridge.`,
 			);
-			return true;
+			caip2Chain = params.routeConfig.chain
+		} else {
+			// Transfer of an omni token to one of the supported chains.
+			omniChainKind = parseOriginChain(parsed.contractId);
+			if (omniChainKind === null) return false;
+			caip2Chain = chainKindToCaip2(omniChainKind);
+			if (caip2Chain === null) return false;
 		}
-		// Transfer of a bridged token to it's origin chain.
-		return this.parseAssetId(params.assetId) !== null;
+		const tokenOnDestinationNetwork =
+			await this.getCachedDestinationTokenAddress(
+				parsed.contractId,
+				omniChainKind,
+			);
+		if (tokenOnDestinationNetwork === null) {
+			throw new TokenNotFoundInDestinationChainError(params.assetId, caip2Chain);
+		}
+
+		return true;
 	}
 
 	targetChainSpecified(
@@ -105,11 +127,12 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
+	// I think we can replace the only usage of this in determine route config with supports
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
@@ -124,7 +147,8 @@ export class OmniBridge implements Bridge {
 		});
 	}
 
-	async tokenSupported(assetId: string, routeConfig?: RouteConfig) {
+	// This will be an analog of parse asset id , just with a wider interface
+	tokenSupported(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
 		let omniChainKind = null;
@@ -138,16 +162,6 @@ export class OmniBridge implements Bridge {
 			blockchain = chainKindToCaip2(omniChainKind);
 		}
 		if (omniChainKind === null || blockchain === null) return null;
-		const tokenOnDestinationNetwork =
-			await this.getCachedDestinationTokenAddress(
-				parsed.contractId,
-				omniChainKind,
-			);
-
-		if (tokenOnDestinationNetwork === null) {
-			throw new TokenNotFoundInDestinationChainError(assetId, blockchain);
-		}
-
 		return Object.assign(parsed, {
 			blockchain,
 			bridgeName: BridgeNameEnum.Omni,
@@ -160,7 +174,7 @@ export class OmniBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
-		const assetInfo = await this.tokenSupported(
+		const assetInfo = this.tokenSupported(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
@@ -214,8 +228,9 @@ export class OmniBridge implements Bridge {
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void> {
-		const assetInfo = await this.tokenSupported(args.assetId, args.routeConfig);
-		assert(assetInfo !== null, `Asset ${args.assetId} is not supported`);
+		// THIS CAN PROBABLY BE REMOVED, since we checked everything before and we don't need any other data
+		// const assetInfo = this.tokenSupported(args.assetId, args.routeConfig);
+		// assert(assetInfo !== null, `Asset ${args.assetId} is not supported`);
 		assert(
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
@@ -231,7 +246,7 @@ export class OmniBridge implements Bridge {
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
-		const assetInfo = await this.tokenSupported(
+		const assetInfo = this.tokenSupported(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
