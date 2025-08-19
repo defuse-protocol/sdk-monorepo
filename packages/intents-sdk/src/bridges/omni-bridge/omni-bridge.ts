@@ -89,10 +89,11 @@ export class OmniBridge implements Bridge {
 			return false;
 		}
 
-		// BEFORE  utils.parseDefuseAssetId(params.assetId) there will be  util function from
-		// omni sdk to check if the token has any relation to omni bridge
+
 		const parsed = utils.parseDefuseAssetId(params.assetId);
 		if (parsed.standard !== "nep141") return false;
+		// omni sdk to check if the token has any relation to omni bridge
+		if (parseOriginChain(parsed.contractId) === null) return false
 		let omniChainKind: ChainKind | null = null
 		let caip2Chain: Chain | null = null
 		// Transfer to some specific route
