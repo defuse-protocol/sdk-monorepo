@@ -24,6 +24,8 @@ import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./aurora-engine-bridge-utils";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { UnsupportedAssetIdError } from "../../classes/errors";
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -44,10 +46,20 @@ export class AuroraEngineBridge implements Bridge {
 	async supports(
 		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
-		if ("routeConfig" in params && params.routeConfig != null) {
-			return this.is(params.routeConfig);
+		if (params.routeConfig != null && !this.is(params.routeConfig)) {
+			return false;
 		}
-		return false;
+
+		const assetInfo = parseDefuseAssetId(params.assetId);
+		const isValid = assetInfo.standard === "nep141";
+
+		if (params.routeConfig != null) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				"`assetId` does not match `routeConfig`.",
+			);
+		}
+		return isValid;
 	}
 
 	parseAssetId(): null {

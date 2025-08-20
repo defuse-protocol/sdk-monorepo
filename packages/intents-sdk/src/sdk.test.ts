@@ -15,6 +15,8 @@ import {
 	createOmniWithdrawalRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
+import { Chains } from "./lib/caip2";
+import { BridgeNameEnum } from "./constants/bridge-name-enum";
 
 const intentSigner = createIntentSignerViem(
 	privateKeyToAccount(generatePrivateKey()),
@@ -759,5 +761,41 @@ describe.concurrent.skip("omni_bridge", () => {
 		});
 
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
+	});
+});
+
+describe("sdk.parseAssetId()", () => {
+	it.each([
+		[
+			"nep141:btc.omft.near",
+			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Bitcoin },
+		],
+		[
+			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Ethereum },
+		],
+		[
+			"nep245:v2_1.omni.hot.tg:137_3hpYoaLtt8MP1Z2GH1U473DMRKgr",
+			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.Polygon },
+		],
+		[
+			"nep245:v2_1.omni.hot.tg:1117_",
+			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
+		],
+		[
+			"nep141:wrap.near",
+			{ bridgeName: BridgeNameEnum.None, blockchain: Chains.Near },
+		],
+		/* Even though this is a valid `assetId`, but it's not supported in SDK yet.
+		[
+			"nep245:intents.near:nep141:wrap.near",
+			{ bridgeName: BridgeNameEnum.None, blockchain: Chains.Near },
+		],
+		*/
+	])("returns parsed asset info", (assetId, assetInfo) => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		expect(sdk.parseAssetId(assetId)).toEqual(
+			expect.objectContaining(assetInfo),
+		);
 	});
 });
