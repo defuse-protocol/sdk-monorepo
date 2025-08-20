@@ -67,6 +67,44 @@ describe("OmniBridge", () => {
 		);
 
 		it.each([
+			{
+				assetId: "nep245:v3_1.omni.hot.tg:56_11111111111111111111",
+				routeConfig: createOmniBridgeRoute(),
+			},
+		])(
+			"throws UnsupportedAssetIdError if trying to bridge to origin chain with unsupported standard but set routeConfig",
+			async ({ assetId, routeConfig }) => {
+				const bridge = new OmniBridge({
+					env: "production",
+					nearProvider: {} as any,
+				});
+
+				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
+					UnsupportedAssetIdError,
+				);
+			},
+		);
+
+		it.each([
+			{
+				assetId: "nep141:eth.bridge.fake.near",
+				routeConfig: createOmniBridgeRoute(),
+			},
+		])(
+			"throws UnsupportedAssetIdError if trying to bridge to origin chain with invalid token format",
+			async ({ assetId, routeConfig }) => {
+				const bridge = new OmniBridge({
+					env: "production",
+					nearProvider: {} as any,
+				});
+
+				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
+					UnsupportedAssetIdError,
+				);
+			},
+		);
+
+		it.each([
 			"nep141:btc.omft.near",
 			"nep141:wrap.near",
 			"nep141:token.publicailab.near",

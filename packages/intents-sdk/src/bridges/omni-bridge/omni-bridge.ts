@@ -92,15 +92,32 @@ export class OmniBridge implements Bridge {
 			return false;
 		}
 		const parsed = utils.parseDefuseAssetId(params.assetId);
+		const omniBridgeSetWithNoChain = Boolean(
+			params.routeConfig &&
+				params.routeConfig.route === RouteEnum.OmniBridge &&
+				params.routeConfig.chain === undefined,
+		);
+		const nonValidStandard = parsed.standard !== "nep141";
 		// only nep141 supported
-		if (parsed.standard !== "nep141") return false;
+		if (nonValidStandard && omniBridgeSetWithNoChain) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				`Non nep141 is not supported in Omni Bridge.`,
+			);
+		}
+		if (nonValidStandard) return false;
 		// Should only allow tokens bridged from other networks unless a specific
 		// chain for withdrawal is set.
-		if (
-			this.targetChainSpecified(params.routeConfig) === false &&
-			validateOmniToken(parsed.contractId) === false
-		)
+		const nonValidToken = validateOmniToken(parsed.contractId) === false;
+		if (nonValidToken && omniBridgeSetWithNoChain) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				`Non valid omni contract id ${parsed.contractId}`,
+			);
+		}
+		if (!this.targetChainSpecified(params.routeConfig) && nonValidToken)
 			return false;
+
 		let omniChainKind: ChainKind | null = null;
 		let caip2Chain: Chain | null = null;
 		// Transfer to some specific chain specified in route config
