@@ -782,6 +782,24 @@ describe("sdk.parseAssetId()", () => {
 			"nep245:v2_1.omni.hot.tg:1117_",
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
+		/* todo: uncomment when Omni is enabled
+		[
+			"nep141:sol.omdep.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
+		],
+		[
+			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Ethereum },
+		],
+		[
+			"nep141:eth.bridge.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Ethereum },
+		],
+		[
+			"nep141:nbtc.bridge.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Bitcoin },
+		],
+		 */
 		[
 			"nep141:wrap.near",
 			{ bridgeName: BridgeNameEnum.None, blockchain: Chains.Near },
