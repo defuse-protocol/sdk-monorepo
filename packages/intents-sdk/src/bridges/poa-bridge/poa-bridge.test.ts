@@ -40,7 +40,7 @@ describe("PoaBridge", () => {
 				);
 
 				// It throws even if routeConfig is provided.
-				await expect(() =>
+				await expect(
 					bridge.supports({
 						assetId,
 						routeConfig: createPoaBridgeRoute(Chains.Arbitrum),
@@ -58,7 +58,7 @@ describe("PoaBridge", () => {
 			async (assetId) => {
 				const bridge = new PoaBridge({ env: "production" });
 
-				await expect(() =>
+				await expect(
 					bridge.supports({
 						assetId,
 						routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
