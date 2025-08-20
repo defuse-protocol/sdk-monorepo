@@ -97,6 +97,8 @@ export {
 	type TrustlineNotFoundErrorType,
 	UnsupportedDestinationMemoError,
 	type UnsupportedDestinationMemoErrorType,
+	UnsupportedAssetIdError,
+	type UnsupportedAssetIdErrorType,
 } from "./src/classes/errors";
 
 // Hot Bridge Errors

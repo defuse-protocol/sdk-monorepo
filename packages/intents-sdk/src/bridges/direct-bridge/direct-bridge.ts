@@ -27,6 +27,8 @@ import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
+import { UnsupportedAssetIdError } from "../../classes/errors";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -47,21 +49,24 @@ export class DirectBridge implements Bridge {
 	async supports(
 		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
-		let result = true;
-
-		if ("routeConfig" in params && params.routeConfig != null) {
-			result &&= this.is(params.routeConfig);
-		}
-
-		try {
-			return result && this.parseAssetId(params.assetId) != null;
-		} catch {
+		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
 		}
+
+		const assetInfo = this.parseAssetId(params.assetId);
+		const isValid = assetInfo != null;
+
+		if (!isValid && params.routeConfig != null) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				"`assetId` does not match `routeConfig`.",
+			);
+		}
+		return isValid;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = utils.parseDefuseAssetId(assetId);
+		const parsed = parseDefuseAssetId(assetId);
 
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
