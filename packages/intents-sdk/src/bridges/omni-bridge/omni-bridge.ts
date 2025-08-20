@@ -54,6 +54,7 @@ import {
 	createWithdrawIntentPrimitive,
 	validateOmniToken,
 } from "./omni-bridge-utils";
+import { UnsupportedAssetIdError } from "../../classes/errors";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -105,23 +106,31 @@ export class OmniBridge implements Bridge {
 		// Transfer to some specific chain specified in route config
 		if (this.targetChainSpecified(params.routeConfig)) {
 			omniChainKind = caip2ToChainKind(params.routeConfig.chain);
-			assert(
-				omniChainKind !== null,
-				`Chain ${params.routeConfig.chain} is not supported in Omni Bridge.`,
-			);
+			if (omniChainKind === null) {
+				throw new UnsupportedAssetIdError(
+					params.assetId,
+					`Chain ${params.routeConfig.chain} is not supported in Omni Bridge.`,
+				);
+			}
 			caip2Chain = params.routeConfig.chain;
 		} else {
 			// Transfer of an omni token to it's origin chain
 			omniChainKind = parseOriginChain(parsed.contractId);
-			assert(
-				omniChainKind !== null,
-				`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
-			);
+
+			if (omniChainKind === null) {
+				throw new UnsupportedAssetIdError(
+					params.assetId,
+					`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
+				);
+			}
 			caip2Chain = chainKindToCaip2(omniChainKind);
-			assert(
-				caip2Chain !== null,
-				`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
-			);
+
+			if (caip2Chain === null) {
+				throw new UnsupportedAssetIdError(
+					params.assetId,
+					`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
+				);
+			}
 		}
 		const tokenOnDestinationNetwork =
 			await this.getCachedDestinationTokenAddress(
