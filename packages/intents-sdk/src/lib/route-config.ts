@@ -28,7 +28,7 @@ export function determineRouteConfig(
 		case BridgeNameEnum.Poa:
 			return createPoaBridgeRoute(parseAssetId.blockchain);
 		case BridgeNameEnum.Omni:
-			return createOmniBridgeRoute();
+			return createOmniBridgeRoute(parseAssetId.blockchain);
 		case BridgeNameEnum.None:
 			return createNearWithdrawalRoute();
 		default:
