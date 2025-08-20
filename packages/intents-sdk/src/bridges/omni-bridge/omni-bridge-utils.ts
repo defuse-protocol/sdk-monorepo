@@ -65,8 +65,23 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return null;
 	}
 }
+const CHAIN_PATTERNS: Record<string, ChainKind> = {
+	"nbtc.bridge.near": ChainKind.Btc,
+	"eth.bridge.near": ChainKind.Eth,
+	"sol.omdep.near": ChainKind.Sol,
+	"base.omdep.near": ChainKind.Base,
+	"arb.omdep.near": ChainKind.Arb,
+	"nbtc-dev.testnet": ChainKind.Btc,
+	"eth.sepolia.testnet": ChainKind.Eth,
+	"sol.omnidep.testnet": ChainKind.Sol,
+	"base.omnidep.testnet": ChainKind.Base,
+	"arb.omnidep.testnet": ChainKind.Arb,
+};
 
 // REPLACE BY OMNI SDK
 export function validateOmniToken(nearAddress: string): boolean {
-	return /\.(omdep\.near|factory\.bridge\.near)$/.test(nearAddress);
+	return (
+		nearAddress in CHAIN_PATTERNS ||
+		/\.(omdep\.near|factory\.bridge\.near)$/.test(nearAddress)
+	);
 }
