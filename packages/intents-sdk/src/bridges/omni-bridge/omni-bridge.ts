@@ -97,9 +97,13 @@ export class OmniBridge implements Bridge {
 				params.routeConfig.route === RouteEnum.OmniBridge &&
 				params.routeConfig.chain === undefined,
 		);
+		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
 		// only nep141 supported
-		if (nonValidStandard && omniBridgeSetWithNoChain) {
+		if (
+			nonValidStandard &&
+			(omniBridgeSetWithNoChain || targetChainSpecified)
+		) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				`Non nep141 is not supported in Omni Bridge.`,
@@ -115,8 +119,7 @@ export class OmniBridge implements Bridge {
 				`Non valid omni contract id ${parsed.contractId}`,
 			);
 		}
-		if (!this.targetChainSpecified(params.routeConfig) && nonValidToken)
-			return false;
+		if (!targetChainSpecified && nonValidToken) return false;
 
 		let omniChainKind: ChainKind | null = null;
 		let caip2Chain: Chain | null = null;
