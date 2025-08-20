@@ -7,7 +7,7 @@ import type {
 import {
 	createHotBridgeRoute,
 	createNearWithdrawalRoute,
-	createOmniWithdrawalRoute,
+	createOmniBridgeRoute,
 	createPoaBridgeRoute,
 } from "./route-config-factory";
 
@@ -28,7 +28,7 @@ export function determineRouteConfig(
 		case BridgeNameEnum.Poa:
 			return createPoaBridgeRoute(parseAssetId.blockchain);
 		case BridgeNameEnum.Omni:
-			return createOmniWithdrawalRoute();
+			return createOmniBridgeRoute();
 		case BridgeNameEnum.None:
 			return createNearWithdrawalRoute();
 		default:

@@ -12,7 +12,7 @@ import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
-	createOmniWithdrawalRoute,
+	createOmniBridgeRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
 
@@ -616,7 +616,7 @@ describe.concurrent.skip("omni_bridge", () => {
 				amount: 1000000000000000000n,
 				destinationAddress: zeroAddress,
 				feeInclusive: false,
-				routeConfig: createOmniWithdrawalRoute(),
+				routeConfig: createOmniBridgeRoute(),
 			},
 		});
 
@@ -633,7 +633,7 @@ describe.concurrent.skip("omni_bridge", () => {
 			amount: 1000000000000000000n,
 			destinationAddress: zeroAddress,
 			feeInclusive: false,
-			routeConfig: createOmniWithdrawalRoute(),
+			routeConfig: createOmniBridgeRoute(),
 		};
 		const feeEstimation = await sdk.estimateWithdrawalFee({
 			withdrawalParams,
@@ -666,7 +666,7 @@ describe.concurrent.skip("omni_bridge", () => {
 			amount: 1000000000000000000n,
 			destinationAddress: zeroAddress,
 			feeInclusive: true,
-			routeConfig: createOmniWithdrawalRoute(),
+			routeConfig: createOmniBridgeRoute(),
 		};
 		const feeEstimation = await sdk.estimateWithdrawalFee({
 			withdrawalParams,
@@ -701,7 +701,7 @@ describe.concurrent.skip("omni_bridge", () => {
 			amount: 1000000000000000000n,
 			destinationAddress: zeroAddress,
 			feeInclusive: true,
-			routeConfig: createOmniWithdrawalRoute(),
+			routeConfig: createOmniBridgeRoute(),
 		};
 
 		const feeEstimation = {
@@ -754,7 +754,7 @@ describe.concurrent.skip("omni_bridge", () => {
 				amount: 1n,
 				destinationAddress: zeroAddress,
 				feeInclusive: true,
-				routeConfig: createOmniWithdrawalRoute(),
+				routeConfig: createOmniBridgeRoute(),
 			},
 		});
 
