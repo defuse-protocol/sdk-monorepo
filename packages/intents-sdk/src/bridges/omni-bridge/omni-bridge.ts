@@ -93,8 +93,13 @@ export class OmniBridge implements Bridge {
 		const parsed = utils.parseDefuseAssetId(params.assetId);
 		// only nep141 supported
 		if (parsed.standard !== "nep141") return false;
-		// omni sdk to check if the token has any relation to omni bridge
-		if (validateOmniToken(parsed.contractId) === false) return false;
+		// Should only allow tokens bridged from other networks unless a specific
+		// chain for withdrawal is set.
+		if (
+			this.targetChainSpecified(params.routeConfig) === false &&
+			validateOmniToken(parsed.contractId) === false
+		)
+			return false;
 		let omniChainKind: ChainKind | null = null;
 		let caip2Chain: Chain | null = null;
 		// Transfer to some specific chain specified in route config
