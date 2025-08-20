@@ -145,7 +145,7 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<IntentPrimitive[]> {
 		for (const bridge of this.bridges) {
-			if (bridge.supports(args.withdrawalParams)) {
+			if (await bridge.supports(args.withdrawalParams)) {
 				const actualAmount = args.withdrawalParams.feeInclusive
 					? args.withdrawalParams.amount - args.feeEstimation.amount
 					: args.withdrawalParams.amount;
@@ -215,7 +215,7 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
-			if (bridge.supports(args.withdrawalParams)) {
+			if (await bridge.supports(args.withdrawalParams)) {
 				const fee = await bridge.estimateWithdrawalFee({
 					withdrawalParams: args.withdrawalParams,
 					quoteOptions: args.quoteOptions,

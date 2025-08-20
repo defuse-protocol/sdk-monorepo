@@ -201,7 +201,7 @@ function setupMocks() {
 			throw new Error("Not implemented.");
 		}
 
-		supports(): boolean {
+		async supports(): Promise<boolean> {
 			return true;
 		}
 
