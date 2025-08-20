@@ -21,33 +21,35 @@ describe("PoaBridge", () => {
 		).resolves.toBe(true);
 	});
 
-	it.each(["nep245:v2_1.omni.hot.tg:56_11111111111111111111"])(
-		"does not support %s",
-		async (tokenId) => {
-			const bridge = new PoaBridge({ env: "production" });
+	it.each([
+		"nep141:wrap.near",
+		"nep245:v2_1.omni.hot.tg:56_11111111111111111111",
+	])("does not support %s", async (tokenId) => {
+		const bridge = new PoaBridge({ env: "production" });
 
-			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(false);
-		},
-	);
+		await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(false);
+	});
 
-	it.each(["invalid_string", "nep141:unknown.omft.near"])(
-		"throws UnsupportedAssetIdError if invalid %s",
-		async (assetId) => {
-			const bridge = new PoaBridge({ env: "production" });
+	it.each([
+		// completely invalid tokenId
+		"invalid_string",
+		// matches POA bridge token pattern, but it is not supported
+		"nep141:unknown.omft.near",
+	])("throws UnsupportedAssetIdError if invalid %s", async (assetId) => {
+		const bridge = new PoaBridge({ env: "production" });
 
-			await expect(() => bridge.supports({ assetId })).rejects.toThrow(
-				UnsupportedAssetIdError,
-			);
+		await expect(bridge.supports({ assetId })).rejects.toThrow(
+			UnsupportedAssetIdError,
+		);
 
-			// It throws even if routeConfig is provided.
-			await expect(() =>
-				bridge.supports({
-					assetId,
-					routeConfig: createPoaBridgeRoute(Chains.Arbitrum),
-				}),
-			).rejects.toThrow(UnsupportedAssetIdError);
-		},
-	);
+		// It throws even if routeConfig is provided.
+		await expect(() =>
+			bridge.supports({
+				assetId,
+				routeConfig: createPoaBridgeRoute(Chains.Arbitrum),
+			}),
+		).rejects.toThrow(UnsupportedAssetIdError);
+	});
 
 	it.each([
 		"nep245:v2_1.omni.hot.tg:56_11111111111111111111",

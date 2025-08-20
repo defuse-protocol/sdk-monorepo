@@ -49,7 +49,7 @@ describe("HotBridge", () => {
 			}),
 		});
 
-		await expect(() => bridge.supports({ assetId: assetId })).rejects.toThrow(
+		await expect(bridge.supports({ assetId: assetId })).rejects.toThrow(
 			UnsupportedAssetIdError,
 		);
 

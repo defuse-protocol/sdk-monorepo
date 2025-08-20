@@ -36,7 +36,7 @@ describe("DirectBridge", () => {
 				nearProvider: {} as any,
 			});
 
-			await expect(() => bridge.supports({ assetId })).rejects.toThrow(
+			await expect(bridge.supports({ assetId })).rejects.toThrow(
 				UnsupportedAssetIdError,
 			);
 
