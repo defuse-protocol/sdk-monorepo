@@ -407,7 +407,7 @@ export class OmniBridge implements Bridge {
 		contractId: string,
 	): Promise<[MinStorageBalance, StorageDepositBalance]> {
 		const cached = this.storageDepositCache.get(contractId);
-		if (cached != null) {
+		if (cached) {
 			return cached;
 		}
 
@@ -438,7 +438,7 @@ export class OmniBridge implements Bridge {
 	): Promise<OmniAddress | null> {
 		const key = `${omniChainKind}:${contractId}`;
 		const cached = this.destinationChainAddressCache.get(key);
-		if (cached != null) {
+		if (cached) {
 			return cached;
 		}
 
