@@ -56,7 +56,7 @@ export {
 	createVirtualChainRoute,
 	createPoaBridgeRoute,
 	createHotBridgeRoute,
-	createOmniWithdrawalRoute,
+	createOmniBridgeRoute,
 } from "./src/lib/route-config-factory";
 
 // ============================================================================

@@ -18,7 +18,8 @@ export function createNearWithdrawalRoute(
 ): NearWithdrawalRouteConfig {
 	return { route: RouteEnum.NearWithdrawal, msg };
 }
-export function createOmniWithdrawalRoute(): OmniBridgeRouteConfig {
+
+export function createOmniBridgeRoute(): OmniBridgeRouteConfig {
 	return { route: RouteEnum.OmniBridge };
 }
 
