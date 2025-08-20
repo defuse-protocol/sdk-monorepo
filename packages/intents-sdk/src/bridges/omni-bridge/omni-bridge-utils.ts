@@ -65,3 +65,8 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return null;
 	}
 }
+
+// REPLACE BY OMNI SDK
+export function validateOmniToken(nearAddress: string): boolean {
+	return /\.(omdep\.near|factory\.bridge\.near)$/.test(nearAddress);
+}

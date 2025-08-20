@@ -52,6 +52,7 @@ import {
 	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentPrimitive,
+	validateOmniToken,
 } from "./omni-bridge-utils";
 
 type MinStorageBalance = bigint;
@@ -82,26 +83,54 @@ export class OmniBridge implements Bridge {
 		return routeConfig.route === RouteEnum.OmniBridge;
 	}
 
-	async supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): Promise<boolean> {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
 		// Non omni bridge route specified, abort.
 		if (params.routeConfig && !this.is(params.routeConfig)) {
 			return false;
 		}
 		const parsed = utils.parseDefuseAssetId(params.assetId);
+		// only nep141 supported
 		if (parsed.standard !== "nep141") return false;
 		// omni sdk to check if the token has any relation to omni bridge
-		if (parseOriginChain(parsed.contractId) === null) return false
-		// Transfer of an omni token to one of the supported chains.
+		if (validateOmniToken(parsed.contractId) === false) return false;
+		let omniChainKind: ChainKind | null = null;
+		let caip2Chain: Chain | null = null;
+		// Transfer to some specific chain specified in route config
 		if (this.targetChainSpecified(params.routeConfig)) {
-			const omniChainKind = caip2ToChainKind(params.routeConfig.chain);
+			omniChainKind = caip2ToChainKind(params.routeConfig.chain);
 			assert(
 				omniChainKind !== null,
 				`Chain ${params.routeConfig.chain} is not supported in Omni Bridge.`,
 			);
-			return true;
+			caip2Chain = params.routeConfig.chain;
+		} else {
+			// Transfer of an omni token to it's origin chain
+			omniChainKind = parseOriginChain(parsed.contractId);
+			assert(
+				omniChainKind !== null,
+				`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
+			);
+			caip2Chain = chainKindToCaip2(omniChainKind);
+			assert(
+				caip2Chain !== null,
+				`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
+			);
 		}
-		// Transfer of a bridged token to it's origin chain.
-		return this.parseAssetId(params.assetId) !== null;
+		const tokenOnDestinationNetwork =
+			await this.getCachedDestinationTokenAddress(
+				parsed.contractId,
+				omniChainKind,
+			);
+		if (tokenOnDestinationNetwork === null) {
+			throw new TokenNotFoundInDestinationChainError(
+				params.assetId,
+				caip2Chain,
+			);
+		}
+
+		return true;
 	}
 
 	targetChainSpecified(
@@ -109,8 +138,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 
@@ -128,7 +157,7 @@ export class OmniBridge implements Bridge {
 		});
 	}
 
-	async tokenSupported(assetId: string, routeConfig?: RouteConfig) {
+	makeAssetInfo(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = utils.parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
 		let omniChainKind = null;
@@ -142,15 +171,6 @@ export class OmniBridge implements Bridge {
 			blockchain = chainKindToCaip2(omniChainKind);
 		}
 		if (omniChainKind === null || blockchain === null) return null;
-		const tokenOnDestinationNetwork =
-			await this.getCachedDestinationTokenAddress(
-				parsed.contractId,
-				omniChainKind,
-			);
-
-		if (tokenOnDestinationNetwork === null) {
-			throw new TokenNotFoundInDestinationChainError(assetId, blockchain);
-		}
 
 		return Object.assign(parsed, {
 			blockchain,
@@ -164,13 +184,13 @@ export class OmniBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]> {
-		const assetInfo = await this.tokenSupported(
+		const assetInfo = this.makeAssetInfo(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
 		assert(
 			assetInfo !== null,
-			`Asset ${args.withdrawalParams.assetId} is not supported`,
+			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
 		);
 
 		const intents: IntentPrimitive[] = [];
@@ -191,7 +211,7 @@ export class OmniBridge implements Bridge {
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
 		assert(
 			omniChainKind !== null,
-			`Chain ${assetInfo.blockchain} is not supported by omni bridge`,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
 		const intent = createWithdrawIntentPrimitive({
@@ -218,8 +238,6 @@ export class OmniBridge implements Bridge {
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void> {
-		const assetInfo = await this.tokenSupported(args.assetId, args.routeConfig);
-		assert(assetInfo !== null, `Asset ${args.assetId} is not supported`);
 		assert(
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
@@ -235,19 +253,19 @@ export class OmniBridge implements Bridge {
 		quoteOptions?: { waitMs: number };
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
-		const assetInfo = await this.tokenSupported(
+		const assetInfo = this.makeAssetInfo(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
 		assert(
 			assetInfo !== null,
-			`Asset ${args.withdrawalParams.assetId} is not supported`,
+			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
 		);
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
 		assert(
 			omniChainKind !== null,
-			`Chain ${assetInfo.blockchain} is not supported by omni bridge`,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
 		const fee = await this.omniBridgeAPI.getFee(
