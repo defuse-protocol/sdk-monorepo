@@ -51,4 +51,4 @@ export function createHotBridgeRoute(chain: Chain): HotBridgeRouteConfig {
 	};
 }
 
-export function createDefaultRoute(): undefined {}
+export function createDefaultRoute(): undefined { }
