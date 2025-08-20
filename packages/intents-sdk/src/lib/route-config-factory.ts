@@ -18,9 +18,7 @@ export function createNearWithdrawalRoute(
 ): NearWithdrawalRouteConfig {
 	return { route: RouteEnum.NearWithdrawal, msg };
 }
-export function createOmniBridgeRoute(
-	chain?: Chain,
-): OmniBridgeRouteConfig {
+export function createOmniBridgeRoute(chain?: Chain): OmniBridgeRouteConfig {
 	const routeConfig = { route: RouteEnum.OmniBridge } as OmniBridgeRouteConfig;
 	if (chain) routeConfig.chain = chain;
 	return routeConfig;
@@ -51,4 +49,4 @@ export function createHotBridgeRoute(chain: Chain): HotBridgeRouteConfig {
 	};
 }
 
-export function createDefaultRoute(): undefined { }
+export function createDefaultRoute(): undefined {}
