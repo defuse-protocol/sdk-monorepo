@@ -46,14 +46,14 @@ export class AuroraEngineBridge implements Bridge {
 	async supports(
 		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
-		if (params.routeConfig != null && !this.is(params.routeConfig)) {
+		if (params.routeConfig == null || !this.is(params.routeConfig)) {
 			return false;
 		}
 
 		const assetInfo = parseDefuseAssetId(params.assetId);
 		const isValid = assetInfo.standard === "nep141";
 
-		if (params.routeConfig != null) {
+		if (!isValid) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
