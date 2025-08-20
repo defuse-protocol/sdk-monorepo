@@ -1,9 +1,4 @@
 import { describe, expect, it } from "vitest";
-// import { HotBridge } from "./hot-bridge";
-// import { UnsupportedAssetIdError } from "../../classes/errors";
-// import hotOmniSdk from "@hot-labs/omni-sdk";
-// import { createHotBridgeRoute } from "../../lib/route-config-factory";
-// import { Chains } from "../../lib/caip2";
 import { OmniBridge } from "./omni-bridge";
 import { validateOmniToken } from "./omni-bridge-utils";
 import { createOmniBridgeRoute } from "../../lib/route-config-factory";
@@ -33,7 +28,7 @@ describe("OmniBridge", () => {
 			"btc.omft.near",
 			"v3_1.omni.hot.tg:56_11111111111111111111",
 		])("validate", async (assetId) => {
-			expect(validateOmniToken(assetId)).toBe(true);
+			expect(validateOmniToken(assetId)).toBe(false);
 		});
 	});
 	describe.sequential("supports()", () => {
@@ -58,7 +53,7 @@ describe("OmniBridge", () => {
 				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			},
 		])(
-			"supports near native token withdrawals to specific chains",
+			"supports near native token withdrawals to specific chains where this token is deployed",
 			async ({ assetId, routeConfig }) => {
 				const bridge = new OmniBridge({
 					env: "production",
@@ -89,7 +84,6 @@ describe("OmniBridge", () => {
 		);
 
 		it.each([
-			"nep141:btc.omft.near",
 			"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 		])("doesn't support non omni tokens", async (assetId) => {
@@ -98,13 +92,17 @@ describe("OmniBridge", () => {
 				nearProvider: {} as any,
 			});
 
-			await expect(bridge.supports({ assetId: assetId })).resolves.toBe(true);
+			await expect(bridge.supports({ assetId: assetId })).resolves.toBe(false);
 		});
 
 		it.each([
 			{
 				assetId: "nep141:token.publicailab.near",
 				routeConfig: createOmniBridgeRoute(Chains.Dogecoin),
+			},
+			{
+				assetId: "nep141:nbtc.bridge.near",
+				routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
 			},
 		])(
 			"throws UnsupportedAssetIdError if trying to bridge a token to unsupported chain",
@@ -123,7 +121,7 @@ describe("OmniBridge", () => {
 		it.each([
 			{
 				assetId: "nep141:btc.omft.near",
-				routeConfig: createOmniBridgeRoute(Chains.Dogecoin),
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			},
 		])(
 			"throws TokenNotFoundInDestinationChainError if routeConfig passed, but assetId is not found in destination chain token",
