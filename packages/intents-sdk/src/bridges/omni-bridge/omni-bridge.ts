@@ -8,8 +8,8 @@ import {
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	solverRelay,
-	utils,
 } from "@defuse-protocol/internal-utils";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
 import { retry } from "@lifeomic/attempt";
 import type { providers } from "near-api-js";
@@ -91,7 +91,7 @@ export class OmniBridge implements Bridge {
 		if (params.routeConfig && !this.is(params.routeConfig)) {
 			return false;
 		}
-		const parsed = utils.parseDefuseAssetId(params.assetId);
+		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
 				params.routeConfig.route === RouteEnum.OmniBridge &&
@@ -178,7 +178,7 @@ export class OmniBridge implements Bridge {
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = utils.parseDefuseAssetId(assetId);
+		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
 		const omniChainKind = parseOriginChain(parsed.contractId);
 		if (omniChainKind === null) return null;
@@ -192,7 +192,7 @@ export class OmniBridge implements Bridge {
 	}
 
 	makeAssetInfo(assetId: string, routeConfig?: RouteConfig) {
-		const parsed = utils.parseDefuseAssetId(assetId);
+		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
 		let omniChainKind = null;
 		let blockchain = null;
