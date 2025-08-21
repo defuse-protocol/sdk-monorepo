@@ -407,7 +407,7 @@ export class OmniBridge implements Bridge {
 		contractId: string,
 	): Promise<[MinStorageBalance, StorageDepositBalance]> {
 		const cached = this.storageDepositCache.get(contractId);
-		if (cached) {
+		if (cached !== undefined) {
 			return cached;
 		}
 
