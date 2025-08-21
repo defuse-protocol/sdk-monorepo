@@ -804,7 +804,7 @@ try {
         console.log(`Omni Relayer cannot take the fee in ${error.token} for transfer finalization.`);
     }
     if (error instanceof TokenNotFoundInDestinationChainError) {
-        console.log(`Token ${error.token} was not found on ${error.chain}.`);
+        console.log(`Token ${error.token} was not found on ${error.destinationChain}.`);
     }
 }
 ```
