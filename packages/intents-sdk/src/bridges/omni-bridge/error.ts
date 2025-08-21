@@ -39,7 +39,7 @@ export type TokenNotFoundInDestinationChainErrorType =
 export class TokenNotFoundInDestinationChainError extends BaseError {
 	constructor(
 		public token: string,
-		destinationChain: Chain,
+		public destinationChain: Chain,
 	) {
 		super(
 			`The token ${token} doesn't exist in destination network ${destinationChain}`,
