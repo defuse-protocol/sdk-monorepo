@@ -1,4 +1,4 @@
-export interface OneCs {
+export interface OneCsAsset {
 	version: "v1";
 	chain: string; // 'sol'
 	namespace: string; // 'spl' | 'spl2022'

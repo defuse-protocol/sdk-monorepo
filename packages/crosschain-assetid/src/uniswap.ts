@@ -1,6 +1,6 @@
 import evmSlugRegistry from "./evm-slug-registry.json" with { type: "json" };
 import { stringify1cs } from "./stringify";
-import type { OneCs } from "./types";
+import type { OneCsAsset } from "./types";
 
 // minimal Uniswap token shape
 export interface UniToken {
@@ -18,7 +18,7 @@ export function fromUniswapToken(
 	if (chain == null) {
 		throw new Error(`Unsupported chainId = ${token.chainId}`);
 	}
-	const o: OneCs = {
+	const o: OneCsAsset = {
 		version: "v1",
 		chain,
 		namespace: "erc20",
