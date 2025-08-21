@@ -423,9 +423,7 @@ export class OmniBridge implements Bridge {
 			}),
 		]);
 
-		if (typeof data[0] === "bigint" && typeof data[1] === "bigint") {
-			this.storageDepositCache.set(contractId, data);
-		}
+		this.storageDepositCache.set(contractId, data);
 
 		return data;
 	}
