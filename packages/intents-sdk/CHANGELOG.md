@@ -1,5 +1,16 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.17.0
+
+### Minor Changes
+
+- 41b04ac: Rename `createOmniWithdrawalRoute()` to `createOmniBridgeRoute()`.
+- 9936458: Add stricter validation of `assetId`. Add new `UnsupportedAssetIdError` error.
+
+### Patch Changes
+
+- 9b41de4: When the fee token can't be obtained using exact_out strategy, then fallback to exact_in with x1.2 coef.
+
 ## 0.16.4
 
 ### Patch Changes
