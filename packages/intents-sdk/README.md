@@ -784,7 +784,7 @@ try {
         }
     });
 } catch (error) {
-    if (error instanceof TransferredTokenFeeNotSupportedByOmniRelayerError) {
+    if (error instanceof TokenNotSupportedByOmniRelayerError) {
         console.log(`Omni Relayer cannot take the fee in ${error.token} for transfer finalization.`);
     }
     if (error instanceof TokenNotFoundInDestinationChainError) {

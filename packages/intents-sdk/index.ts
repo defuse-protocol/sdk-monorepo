@@ -117,8 +117,8 @@ export {
 	type OmniTransferNotFoundErrorType,
 	OmniTransferDestinationChainHashNotFoundError,
 	type OmniTransferDestinationChainHashNotFoundErrorType,
-	TransferredTokenFeeNotSupportedByOmniRelayerError,
-	type TransferredTokenFeeNotSupportedByOmniRelayerErrorType,
+	TokenNotSupportedByOmniRelayerError,
+	type TokenNotSupportedByOmniRelayerErrorType,
 	TokenNotFoundInDestinationChainError,
 	type TokenNotFoundInDestinationChainErrorType,
 } from "./src/bridges/omni-bridge/error";

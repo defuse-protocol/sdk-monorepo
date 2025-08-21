@@ -42,7 +42,7 @@ import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
-	TransferredTokenFeeNotSupportedByOmniRelayerError,
+	TokenNotSupportedByOmniRelayerError,
 } from "./error";
 import {
 	NEAR_NATIVE_ASSET_ID,
@@ -309,7 +309,7 @@ export class OmniBridge implements Bridge {
 		);
 
 		if (fee.transferred_token_fee === null) {
-			throw new TransferredTokenFeeNotSupportedByOmniRelayerError(
+			throw new TokenNotSupportedByOmniRelayerError(
 				args.withdrawalParams.assetId,
 			);
 		}
