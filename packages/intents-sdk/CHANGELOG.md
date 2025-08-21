@@ -1,5 +1,53 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.16.4
+
+### Patch Changes
+
+- Updated dependencies [25d2e40]
+  - @defuse-protocol/internal-utils@0.8.2
+
+## 0.16.3
+
+### Patch Changes
+
+- ccab9ca: Temporary disable Omni Bridge.
+
+## 0.16.2
+
+### Patch Changes
+
+- Updated dependencies [3cbae8c]
+  - @defuse-protocol/internal-utils@0.8.1
+
+## 0.16.1
+
+### Patch Changes
+
+- 3c58f82: Update readme and add missing omni exports
+- Updated dependencies [200fc6f]
+- Updated dependencies [9b9d6a8]
+  - @defuse-protocol/internal-utils@0.8.0
+
+## 0.16.0
+
+### Minor Changes
+
+- 058ecec: Add withdrawal to specific chain via omni bridge
+
+## 0.15.0
+
+### Minor Changes
+
+- 7732be8: Adds omni bridge support
+
+### Patch Changes
+
+- Updated dependencies [f20577a]
+- Updated dependencies [7732be8]
+- Updated dependencies [9edf920]
+  - @defuse-protocol/internal-utils@0.7.0
+
 ## 0.14.0
 
 ### Minor Changes

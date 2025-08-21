@@ -83,3 +83,20 @@ export class TrustlineNotFoundError extends BaseError {
 		});
 	}
 }
+
+export type UnsupportedAssetIdErrorType = UnsupportedAssetIdError & {
+	name: "UnsupportedAssetIdError";
+};
+
+export class UnsupportedAssetIdError extends BaseError {
+	constructor(
+		public assetId: string,
+		details: string,
+	) {
+		super("Asset ID is not supported.", {
+			details,
+			metaMessages: [`Asset ID: ${assetId}`],
+			name: "UnsupportedAssetIdError",
+		});
+	}
+}

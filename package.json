@@ -8,6 +8,7 @@
 		"build": "turbo run build",
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",
+		"lint:fix": "turbo run lint:fix",
 		"format": "turbo run format",
 		"typecheck": "turbo run typecheck",
 		"changeset": "changeset",
@@ -15,6 +16,7 @@
 		"release": "turbo run build && changeset publish"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.2.0",
 		"@changesets/cli": "^2.29.5",
 		"turbo": "^2.5.5"
 	},

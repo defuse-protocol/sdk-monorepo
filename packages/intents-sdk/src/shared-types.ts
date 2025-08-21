@@ -190,12 +190,18 @@ export type HotBridgeRouteConfig = {
 	chain: Chain;
 };
 
+export type OmniBridgeRouteConfig = {
+	route: RouteEnum["OmniBridge"];
+	chain?: Chain;
+};
+
 export type RouteConfig =
 	| NearWithdrawalRouteConfig
 	| InternalTransferRouteConfig
 	| VirtualChainRouteConfig
 	| PoaBridgeRouteConfig
-	| HotBridgeRouteConfig;
+	| HotBridgeRouteConfig
+	| OmniBridgeRouteConfig;
 
 export interface FeeEstimation {
 	amount: bigint;
@@ -204,7 +210,9 @@ export interface FeeEstimation {
 
 export interface Bridge {
 	is(routeConfig: RouteConfig): boolean;
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean;
+	supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean>;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
 
 	/**
@@ -219,6 +227,8 @@ export interface Bridge {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
+		feeEstimation: FeeEstimation;
+		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void>;
 

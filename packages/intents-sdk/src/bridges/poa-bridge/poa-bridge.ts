@@ -8,7 +8,10 @@ import {
 	utils,
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
-import { MinWithdrawalAmountError } from "../../classes/errors";
+import {
+	MinWithdrawalAmountError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -26,6 +29,8 @@ import {
 	createWithdrawIntentPrimitive,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
+import type { Chain } from "../../lib/caip2";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -44,34 +49,50 @@ export class PoaBridge implements Bridge {
 		return routeConfig.route === RouteEnum.PoaBridge;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
-		let result = true;
-
-		if ("routeConfig" in params && params.routeConfig != null) {
-			result &&= this.is(params.routeConfig);
-		}
-
-		try {
-			return result && this.parseAssetId(params.assetId) != null;
-		} catch {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
+		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
 		}
+
+		const assetInfo = this.parseAssetId(params.assetId);
+		const isValid = assetInfo != null;
+
+		if (!isValid && params.routeConfig != null) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				"`assetId` does not match `routeConfig`.",
+			);
+		}
+		return isValid;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = utils.parseDefuseAssetId(assetId);
-		if (
-			parsed.contractId.endsWith(
-				`.${configsByEnvironment[this.env].poaTokenFactoryContractID}`,
-			)
-		) {
-			return Object.assign(parsed, {
-				blockchain: contractIdToCaip2(parsed.contractId),
-				bridgeName: BridgeNameEnum.Poa,
-				address: "", // todo: derive address (or native)
-			});
+		const parsed = parseDefuseAssetId(assetId);
+		const contractIdSatisfies = parsed.contractId.endsWith(
+			`.${configsByEnvironment[this.env].poaTokenFactoryContractID}`,
+		);
+
+		if (!contractIdSatisfies) {
+			return null;
 		}
-		return null;
+
+		let blockchain: Chain;
+		try {
+			blockchain = contractIdToCaip2(parsed.contractId);
+		} catch {
+			throw new UnsupportedAssetIdError(
+				assetId,
+				"Asset belongs to unknown blockchain.",
+			);
+		}
+
+		return Object.assign(parsed, {
+			blockchain,
+			bridgeName: BridgeNameEnum.Poa,
+			address: "", // todo: derive address (or native)
+		});
 	}
 
 	createWithdrawalIntents(args: {
