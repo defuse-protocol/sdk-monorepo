@@ -4,8 +4,6 @@ import {
 	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
-	configsByEnvironment,
-	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
@@ -43,6 +41,7 @@ import {
 	toHotNetworkId,
 } from "./hot-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { getFeeQuote } from "../../lib/estimate-fee";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -239,18 +238,13 @@ export class HotBridge implements Bridge {
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
 				? null
-				: await solverRelay.getQuote({
-						quoteParams: {
-							defuse_asset_identifier_in: args.withdrawalParams.assetId,
-							defuse_asset_identifier_out: feeAssetId,
-							exact_amount_out: feeAmount.toString(),
-							wait_ms: args.quoteOptions?.waitMs,
-						},
-						config: {
-							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-							logBalanceSufficient: false,
-							logger: args.logger,
-						},
+				: await getFeeQuote({
+						feeAmount,
+						feeAssetId,
+						tokenAssetId: args.withdrawalParams.assetId,
+						logger: args.logger,
+						env: this.env,
+						quoteOptions: args.quoteOptions,
 					});
 
 		return {
