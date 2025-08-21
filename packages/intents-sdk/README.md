@@ -790,6 +790,8 @@ trustline validation.
 Currently, in this SDK, Omni Bridge can be used only with tokens that are allowlisted by the Omni Relayer for fee payment. Additionally, before each transfer, the SDK verifies that the token exists on the destination chain.
 
 ```typescript
+import { TokenNotSupportedByOmniRelayerError,TokenNotFoundInDestinationChainError } from '@defuse-protocol/intents-sdk';
+
 try {
     const result = await sdk.processWithdrawal({
         withdrawalParams: {
