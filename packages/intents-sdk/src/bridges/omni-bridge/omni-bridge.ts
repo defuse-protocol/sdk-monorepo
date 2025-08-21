@@ -386,7 +386,7 @@ export class OmniBridge implements Bridge {
 				return { hash: txHash };
 			},
 			{
-				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
+				...(args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY),
 				handleError: (err, ctx) => {
 					if (
 						err instanceof OmniTransferNotFoundError ||
