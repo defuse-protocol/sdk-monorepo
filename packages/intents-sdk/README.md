@@ -769,6 +769,22 @@ try {
 }
 ```
 
+**What is a trustline?**
+On Stellar, accounts must explicitly create "trustlines" to hold non-native assets. Before receiving any token (except
+XLM), the destination address must:
+
+1. Create a trustline for that specific token
+2. Have sufficient XLM balance to maintain the trustline
+
+**Why this validation matters:**
+
+- Prevents failed withdrawals due to missing trustlines
+- Saves gas fees and reduces user frustration
+- Provides clear error messages for troubleshooting
+
+Note: This validation only applies to Stellar destinations via Hot Bridge. Other blockchains and routes don't require
+trustline validation.
+
 #### Omni Bridge Withdrawal Validation
 
 Currently, in this SDK, Omni Bridge can be used only with tokens that are allowlisted by the Omni Relayer for fee payment. Additionally, before each transfer, the SDK verifies that the token exists on the destination chain.
@@ -792,22 +808,6 @@ try {
     }
 }
 ```
-
-**What is a trustline?**
-On Stellar, accounts must explicitly create "trustlines" to hold non-native assets. Before receiving any token (except
-XLM), the destination address must:
-
-1. Create a trustline for that specific token
-2. Have sufficient XLM balance to maintain the trustline
-
-**Why this validation matters:**
-
-- Prevents failed withdrawals due to missing trustlines
-- Saves gas fees and reduces user frustration
-- Provides clear error messages for troubleshooting
-
-Note: This validation only applies to Stellar destinations via Hot Bridge. Other blockchains and routes don't require
-trustline validation.
 
 ## Supported Networks
 
