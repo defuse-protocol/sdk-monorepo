@@ -65,11 +65,11 @@ export class OmniBridge implements Bridge {
 	private storageDepositCache = new TTLCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ ttl: 86400000 }); // 86400000 - 1 day
+	>({ ttl: 86400000 }); // 10800000 - 3 hours
 	private destinationChainAddressCache = new TTLCache<
 		string,
 		OmniAddress | null
-	>({ ttl: 86400000 }); // 86400000 - 1 day
+	>({ ttl: 86400000 }); // 10800000 - 3 hours
 
 	constructor({
 		env,
@@ -423,7 +423,9 @@ export class OmniBridge implements Bridge {
 			}),
 		]);
 
-		this.storageDepositCache.set(contractId, data);
+		if (typeof data[0] === "bigint" && typeof data[1] === "bigint") {
+			this.storageDepositCache.set(contractId, data);
+		}
 
 		return data;
 	}
@@ -438,7 +440,7 @@ export class OmniBridge implements Bridge {
 	): Promise<OmniAddress | null> {
 		const key = `${omniChainKind}:${contractId}`;
 		const cached = this.destinationChainAddressCache.get(key);
-		if (cached) {
+		if (cached !== undefined) {
 			return cached;
 		}
 

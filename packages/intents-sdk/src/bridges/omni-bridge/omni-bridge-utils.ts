@@ -70,7 +70,7 @@ const CHAIN_PATTERNS: Record<string, ChainKind> = {
 	"eth.bridge.near": ChainKind.Eth,
 	"sol.omdep.near": ChainKind.Sol,
 	"base.omdep.near": ChainKind.Base,
-	"arb.omdep.near": ChainKind.Arb
+	"arb.omdep.near": ChainKind.Arb,
 };
 
 // REPLACE BY OMNI SDK
