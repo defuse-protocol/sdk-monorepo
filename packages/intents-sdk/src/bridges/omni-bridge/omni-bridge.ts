@@ -106,7 +106,7 @@ export class OmniBridge implements Bridge {
 		) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
-				`Non nep141 is not supported in Omni Bridge.`,
+				`Only NEP-141 tokens are supported by Omni Bridge.`,
 			);
 		}
 		if (nonValidStandard) return false;
@@ -140,7 +140,7 @@ export class OmniBridge implements Bridge {
 			if (omniChainKind === null) {
 				throw new UnsupportedAssetIdError(
 					params.assetId,
-					`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
+					`Withdrawal of ${parsed.contractId} to its origin chain is not supported in Omni Bridge.`,
 				);
 			}
 			caip2Chain = chainKindToCaip2(omniChainKind);
@@ -148,7 +148,7 @@ export class OmniBridge implements Bridge {
 			if (caip2Chain === null) {
 				throw new UnsupportedAssetIdError(
 					params.assetId,
-					`Withdrawal of ${parsed.contractId} to it's origin chain is not supported in Omni Bridge.`,
+					`Withdrawal of ${parsed.contractId} to its origin chain is not supported in Omni Bridge.`,
 				);
 			}
 		}
