@@ -93,8 +93,7 @@ It is designed to:
 
 ### 1. URL safety
 
-We encode `reference` and `selector` with `encodeURIComponent` so they are safe in URLs, JSON, filenames, and shell
-commands without extra quoting.
+We encode `reference` and `selector` with `encodeURIComponent` so they are safe in URLs.
 
 ### 2. Human-readable but unambiguous
 
@@ -102,15 +101,11 @@ commands without extra quoting.
 - Chain slug + namespace covers most identification needs without extra lookups.
 - Works for *both* blockchain and fiat.
 
-### 3. No registry dependency
- 
-We use direct, human-readable slugs for the chain and namespace over CAIP-2 identifiers for better debug.
-
-### 4. Multi-asset support
+### 3. Multi-asset support
 
 `selector` cleanly supports ERC-1155 IDs, Stellar asset codes, Cosmos token sub-denoms, Aptos/Sui struct names, etc.
 
-### 5. Bridged / wrapped assets
+### 4. Bridged / wrapped assets
 
 The ID identifies the *on-chain representation*. If you need to express the *origin*, bridge, issuer, or other
 metadata — pass it as **query params** or in your object model, not in the core ID.
@@ -122,7 +117,7 @@ metadata — pass it as **query params** or in your object model, not in the cor
 Parsing a `1cs_v1` string gives you:
 
 ```ts
-interface OneCs {
+interface OneCsAsset {
     version: "v1";
     chain: string;      // e.g. "eth", "near", "fiat"
     namespace: string;  // e.g. "erc20", "spl", "native"
@@ -134,12 +129,12 @@ interface OneCs {
 Example:
 
 ```
-1cs_v1:near:near-nft:apes.coolnft.near:series%3A1%2Fblue%3A42
+1cs_v1:near:nep171:apes.coolnft.near:series%3A1%2Fblue%3A42
 ↓
 {
   version: "v1",
   chain: "near",
-  namespace: "near-nft",
+  namespace: "nep171",
   reference: "apes.coolnft.near",
   selector: "series:1/blue:42"
 }
