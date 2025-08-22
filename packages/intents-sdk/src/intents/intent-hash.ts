@@ -35,8 +35,12 @@ export async function computeIntentHashBytes(
 			);
 
 		case "erc191":
+		case "tip191":
 			return computeErc191Hash(
-				multiPayload as Extract<MultiPayload, { standard: "erc191" }>,
+				multiPayload as Extract<
+					MultiPayload,
+					{ standard: "erc191" | "tip191" }
+				>,
 			);
 
 		default:
