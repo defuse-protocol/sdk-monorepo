@@ -27,6 +27,7 @@ describe("OmniBridge", () => {
 			"aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridgeomni.near",
 			"btc.omft.near",
 			"v3_1.omni.hot.tg:56_11111111111111111111",
+			"17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1", // USDC
 		])("validate", async (assetId) => {
 			expect(validateOmniToken(assetId)).toBe(false);
 		});
