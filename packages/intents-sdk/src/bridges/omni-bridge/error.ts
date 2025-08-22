@@ -42,7 +42,7 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 		public destinationChain: Chain,
 	) {
 		super(
-			`The token ${token} doesn't exist in destination network ${destinationChain}`,
+			`The token ${token} doesn't exist in destination chain ${destinationChain}`,
 			{
 				metaMessages: [
 					`Token: ${token}`,
