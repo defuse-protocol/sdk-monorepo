@@ -8,6 +8,7 @@ import type {
 import type { IntentsUserId } from "../types/intentsUserId";
 import { assert } from "./assert";
 import { stellarAddressToBytes } from "./stellarAddressToBytes";
+import { tronAddressToHex } from "./tronAddressToHex";
 import { parsePublicKey } from "./webAuthn";
 
 /**
@@ -81,6 +82,11 @@ export function authHandleToIntentsUserId(
 		case "stellar": {
 			const decoded = stellarAddressToBytes(authHandle.identifier);
 			return hex.encode(decoded) as IntentsUserId;
+		}
+
+		case "tron": {
+			const addressHex = tronAddressToHex(authHandle.identifier);
+			return `0x${addressHex.substring(2)}` as IntentsUserId;
 		}
 
 		default:
