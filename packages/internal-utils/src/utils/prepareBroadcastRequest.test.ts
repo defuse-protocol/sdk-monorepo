@@ -46,6 +46,9 @@ describe("prepareSwapSignedData()", () => {
 		},
 		WEBAUTHN: swapMessage.WEBAUTHN,
 		TON_CONNECT: swapMessage.TON_CONNECT,
+		TRON: {
+			message: JSON.stringify({ foo: "bar" }),
+		},
 	};
 
 	it("should return the correct signed data for a NEP141 signature", () => {
