@@ -1,5 +1,18 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.18.0
+
+### Minor Changes
+
+- c49717b: Add TIP-191 standard support for Tron wallet signatures.
+
+### Patch Changes
+
+- Updated dependencies [c49717b]
+- Updated dependencies [c49717b]
+  - @defuse-protocol/internal-utils@0.9.0
+  - @defuse-protocol/contract-types@0.1.0
+
 ## 0.17.1
 
 ### Patch Changes
