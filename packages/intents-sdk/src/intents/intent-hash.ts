@@ -65,7 +65,10 @@ async function computeNep413Hash(
 }
 
 function computeErc191Hash(
-	multiPayload: Pick<Extract<MultiPayload, { standard: "erc191" }>, "payload">,
+	multiPayload: Pick<
+		Extract<MultiPayload, { standard: "erc191" | "tip191" }>,
+		"payload"
+	>,
 ): Uint8Array {
 	// For ERC-191, the payload is the message that was signed
 	const message = multiPayload.payload;
