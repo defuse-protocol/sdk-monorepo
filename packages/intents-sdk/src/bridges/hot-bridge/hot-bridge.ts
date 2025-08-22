@@ -5,7 +5,7 @@ import {
 	RETRY_CONFIGS,
 	type RetryOptions,
 } from "@defuse-protocol/internal-utils";
-import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
+import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
 import {
@@ -78,7 +78,7 @@ export class HotBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 
-		const contractIdSatisfies = parsed.contractId === utils.OMNI_HOT_V2;
+		const contractIdSatisfies = parsed.contractId === OMNI_HOT_V2;
 
 		if (!contractIdSatisfies) {
 			return null;
@@ -228,10 +228,11 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
-			toHotNetworkId(assetInfo.blockchain),
-			args.withdrawalParams.destinationAddress,
-		);
+		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee({
+			chain: toHotNetworkId(assetInfo.blockchain),
+			token: "native" in assetInfo ? "native" : assetInfo.address,
+			receiver: args.withdrawalParams.destinationAddress,
+		});
 
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
