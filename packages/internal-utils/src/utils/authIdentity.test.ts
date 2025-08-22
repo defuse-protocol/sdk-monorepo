@@ -61,4 +61,12 @@ describe("authHandleToIntentsUserId", () => {
 			"10696dbddef262febc0f925b1ee571f45699f2676ae017f85368265d4b0dded6",
 		);
 	});
+
+	it("returns hex encoded Tron address for 'tron' chain type", () => {
+		const result = authHandleToIntentsUserId(
+			"THhqDYyRqYhpcf2rq2NSeF7otzXjnFgjm6",
+			"tron",
+		);
+		expect(result).toBe("0x54d894fc3354acf069e8eaca2f6bff4d3dbcd116");
+	});
 });

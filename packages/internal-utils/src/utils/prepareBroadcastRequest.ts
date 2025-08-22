@@ -98,6 +98,14 @@ export function prepareSwapSignedData(
 			};
 		}
 
+		case "TRON": {
+			return {
+				standard: "tip191",
+				payload: signature.signedData.message,
+				signature: transformERC191Signature(signature.signatureData), // TIP-191 is compatible with ERC191
+			};
+		}
+
 		default:
 			signatureType satisfies never;
 			throw new Error("exhaustive check failed");

@@ -4,7 +4,8 @@ export type AuthMethod =
 	| "solana"
 	| "webauthn"
 	| "ton"
-	| "stellar";
+	| "stellar"
+	| "tron";
 
 export const AuthMethod = {
 	Near: "near",

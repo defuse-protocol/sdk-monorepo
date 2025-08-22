@@ -124,6 +124,9 @@ export function makeSwapMessage({
 				text: JSON.stringify(payload, null, 2),
 			},
 		},
+		TRON: {
+			message: JSON.stringify(payload, null, 2),
+		},
 	};
 }
 
