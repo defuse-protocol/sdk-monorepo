@@ -2,10 +2,8 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
-	solverRelay,
 	utils,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
@@ -26,6 +24,7 @@ import {
 } from "./aurora-engine-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { UnsupportedAssetIdError } from "../../classes/errors";
+import { getFeeQuote } from "../../lib/estimate-fee";
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -155,18 +154,13 @@ export class AuroraEngineBridge implements Bridge {
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
 				? null
-				: await solverRelay.getQuote({
-						quoteParams: {
-							defuse_asset_identifier_in: args.withdrawalParams.assetId,
-							defuse_asset_identifier_out: feeAssetId,
-							exact_amount_out: feeAmount.toString(),
-							wait_ms: args.quoteOptions?.waitMs,
-						},
-						config: {
-							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-							logBalanceSufficient: false,
-							logger: args.logger,
-						},
+				: await getFeeQuote({
+						feeAmount,
+						feeAssetId,
+						tokenAssetId: args.withdrawalParams.assetId,
+						logger: args.logger,
+						env: this.env,
+						quoteOptions: args.quoteOptions,
 					});
 
 		return {
