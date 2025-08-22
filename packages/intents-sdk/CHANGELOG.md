@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.17.1
+
+### Patch Changes
+
+- 13217ad: Upgrade hot-omni-sdk dependency.
+
 ## 0.17.0
 
 ### Minor Changes
