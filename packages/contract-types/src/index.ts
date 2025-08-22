@@ -197,6 +197,12 @@ export type MultiPayload =
 			[k: string]: unknown;
 	  }
 	| {
+			payload: Erc191Payload;
+			signature: string;
+			standard: "tip191";
+			[k: string]: unknown;
+	  }
+	| {
 			payload: string;
 			public_key: string;
 			signature: string;
