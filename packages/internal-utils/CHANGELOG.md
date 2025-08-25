@@ -1,5 +1,16 @@
 # @defuse-protocol/internal-utils
 
+## 0.9.0
+
+### Minor Changes
+
+- c49717b: Add TIP-191 standard support for Tron wallet signatures.
+
+### Patch Changes
+
+- Updated dependencies [c49717b]
+  - @defuse-protocol/contract-types@0.1.0
+
 ## 0.8.2
 
 ### Patch Changes

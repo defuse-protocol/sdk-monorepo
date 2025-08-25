@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.1.0
+
+### Minor Changes
+
+- c49717b: Extend MultiPayload with TIP-191 support.
+
 ## 0.0.3
 
 ### Patch Changes
