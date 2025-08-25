@@ -1,5 +1,13 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.19.2
+
+### Patch Changes
+
+- 4543eb2: Add missing Tron authentication method to AuthMethod enum.
+- Updated dependencies [4543eb2]
+  - @defuse-protocol/internal-utils@0.9.1
+
 ## 0.19.1
 
 ### Patch Changes

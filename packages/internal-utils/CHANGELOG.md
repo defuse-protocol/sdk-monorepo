@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.9.1
+
+### Patch Changes
+
+- 4543eb2: Add missing Tron authentication method to AuthMethod enum.
+
 ## 0.9.0
 
 ### Minor Changes
