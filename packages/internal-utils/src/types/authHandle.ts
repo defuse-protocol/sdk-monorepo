@@ -14,6 +14,7 @@ export const AuthMethod = {
 	WebAuthn: "webauthn",
 	Ton: "ton",
 	Stellar: "stellar",
+	Tron: "tron",
 } as const;
 
 /**
