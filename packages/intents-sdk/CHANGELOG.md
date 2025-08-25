@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.19.0
+
+### Minor Changes
+
+- 1d9bba2: Return support for omni bridge and refactor it and fix bugs
+
 ## 0.18.0
 
 ### Minor Changes
