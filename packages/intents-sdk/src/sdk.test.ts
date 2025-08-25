@@ -8,11 +8,11 @@ import {
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
+import { RouteEnum } from "./constants/route-enum";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
-	createOmniBridgeRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
@@ -608,9 +608,40 @@ describe.concurrent("near_withdrawal", () => {
 			},
 		]);
 	});
+	it("createWithdrawalIntents(): should not be overriden by any other bridge", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		// This type of withdrawal is last in priority, so we need to make sure no other
+		// bridge could override an explicitly set route config.
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 700n,
+				destinationAddress: "hello.near",
+				feeInclusive: false,
+				routeConfig: {
+					route: RouteEnum.NearWithdrawal,
+				},
+			},
+			feeEstimation: {
+				amount: 0n,
+				quote: null,
+			},
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "nbtc.bridge.near",
+				receiver_id: "hello.near",
+				amount: "700",
+				storage_deposit: null,
+				msg: undefined,
+			},
+		]);
+	});
 });
 
-describe.concurrent.skip("omni_bridge", () => {
+describe.concurrent("omni_bridge", () => {
 	it("estimateWithdrawalFee(): should return fee", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
@@ -620,7 +651,6 @@ describe.concurrent.skip("omni_bridge", () => {
 				amount: 1000000000000000000n,
 				destinationAddress: zeroAddress,
 				feeInclusive: false,
-				routeConfig: createOmniBridgeRoute(),
 			},
 		});
 
@@ -637,7 +667,6 @@ describe.concurrent.skip("omni_bridge", () => {
 			amount: 1000000000000000000n,
 			destinationAddress: zeroAddress,
 			feeInclusive: false,
-			routeConfig: createOmniBridgeRoute(),
 		};
 		const feeEstimation = await sdk.estimateWithdrawalFee({
 			withdrawalParams,
@@ -670,7 +699,6 @@ describe.concurrent.skip("omni_bridge", () => {
 			amount: 1000000000000000000n,
 			destinationAddress: zeroAddress,
 			feeInclusive: true,
-			routeConfig: createOmniBridgeRoute(),
 		};
 		const feeEstimation = await sdk.estimateWithdrawalFee({
 			withdrawalParams,
@@ -705,7 +733,6 @@ describe.concurrent.skip("omni_bridge", () => {
 			amount: 1000000000000000000n,
 			destinationAddress: zeroAddress,
 			feeInclusive: true,
-			routeConfig: createOmniBridgeRoute(),
 		};
 
 		const feeEstimation = {
@@ -758,7 +785,6 @@ describe.concurrent.skip("omni_bridge", () => {
 				amount: 1n,
 				destinationAddress: zeroAddress,
 				feeInclusive: true,
-				routeConfig: createOmniBridgeRoute(),
 			},
 		});
 
@@ -784,7 +810,6 @@ describe("sdk.parseAssetId()", () => {
 			"nep245:v2_1.omni.hot.tg:1117_",
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
-		/* todo: uncomment when Omni is enabled
 		[
 			"nep141:sol.omdep.near",
 			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
@@ -797,11 +822,6 @@ describe("sdk.parseAssetId()", () => {
 			"nep141:eth.bridge.near",
 			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Ethereum },
 		],
-		[
-			"nep141:nbtc.bridge.near",
-			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Bitcoin },
-		],
-		 */
 		[
 			"nep141:wrap.near",
 			{ bridgeName: BridgeNameEnum.None, blockchain: Chains.Near },

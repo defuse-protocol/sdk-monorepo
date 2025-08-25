@@ -785,6 +785,32 @@ XLM), the destination address must:
 Note: This validation only applies to Stellar destinations via Hot Bridge. Other blockchains and routes don't require
 trustline validation.
 
+#### Omni Bridge Withdrawal Validation
+
+Currently, in this SDK, Omni Bridge can be used only with tokens that are allowlisted by the Omni Relayer for fee payment. Additionally, before each transfer, the SDK verifies that the token exists on the destination chain.
+
+```typescript
+import { TokenNotSupportedByOmniRelayerError,TokenNotFoundInDestinationChainError } from '@defuse-protocol/intents-sdk';
+
+try {
+    const result = await sdk.processWithdrawal({
+        withdrawalParams: {
+            assetId: 'nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near', // Aurora token
+            amount: 70000000000000000000n, // 70 Aurora (in smallest units)
+            destinationAddress: '0x741b0b0F27c4b4047ecFCcDf4690F749C6Cfd66c',
+            feeInclusive: false
+        }
+    });
+} catch (error) {
+    if (error instanceof TokenNotSupportedByOmniRelayerError) {
+        console.log(`Omni Relayer cannot take the fee in ${error.token} for transfer finalization.`);
+    }
+    if (error instanceof TokenNotFoundInDestinationChainError) {
+        console.log(`Token ${error.token} was not found on ${error.destinationChain}.`);
+    }
+}
+```
+
 ## Supported Networks
 
 For a list of supported chains, see
