@@ -1,5 +1,11 @@
 # @defuse-protocol/bridge-sdk
 
+## 0.19.1
+
+### Patch Changes
+
+- 9a9120a: Update to @hot-labs/omni-sdk@2.20.2
+
 ## 0.19.0
 
 ### Minor Changes
