@@ -44,12 +44,12 @@ This package exports the following TypeScript types:
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.2.16 or later)
+- [PNPM](https://pnpm.io) (v10.14.0)
 
 ### Build
 
 ```bash
-bun run build
+pnpm run build
 ```
 
 ### Generating Types
@@ -67,13 +67,13 @@ cd packages/contract-types
 ### Development Mode
 
 ```bash
-bun run dev
+pnpm run dev
 ```
 
 ### Lint
 
 ```bash
-bun run lint
+pnpm run lint
 ```
 
 ## License

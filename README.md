@@ -11,41 +11,41 @@ This is a monorepo for Defuse Protocol packages managed with Turborepo and Chang
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.2.16 or later)
+- [PNPM](https://pnpm.io) (v10.14.0)
 
 ### Setup
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 ```
 
 ### Build
 
 ```bash
 # Build all packages
-bun run build
+pnpm run build
 ```
 
 ### Development Mode
 
 ```bash
 # Run all packages in dev mode
-bun run dev
+pnpm run dev
 ```
 
 ### Lint
 
 ```bash
 # Lint all packages
-bun run lint
+pnpm run lint
 ```
 
 ### Format
 
 ```bash
 # Format all packages
-bun run format
+pnpm run format
 ```
 
 ## Release Process
@@ -57,7 +57,7 @@ This repository uses [Changesets](https://github.com/changesets/changesets) to m
 When making changes that should be released, create a changeset:
 
 ```bash
-bun run changeset
+pnpm run changeset
 ```
 
 This will prompt you to:
