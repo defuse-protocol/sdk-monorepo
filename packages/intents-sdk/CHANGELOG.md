@@ -1,4 +1,4 @@
-# @defuse-protocol/bridge-sdk
+# @defuse-protocol/intents-sdk
 
 ## 0.19.2
 

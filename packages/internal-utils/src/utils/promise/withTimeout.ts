@@ -31,7 +31,7 @@ export function withTimeout<data>(
 						} else {
 							reject(errorInstance);
 						}
-					}, timeout) as NodeJS.Timeout; // need to cast because bun globals.d.ts overrides @types/node
+					}, timeout);
 				}
 				resolve(await fn({ signal: signal ? controller.signal : null }));
 			} catch (err) {
