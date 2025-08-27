@@ -24,6 +24,7 @@ export function createWithdrawIntentPrimitive(params: {
 		amount: params.amount.toString(),
 		storage_deposit:
 			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
+		// generate BTC message
 		msg: JSON.stringify({
 			recipient: omniAddress(params.omniChainKind, params.destinationAddress),
 			fee: params.transferredTokenFee.toString(),
@@ -42,8 +43,8 @@ export function caip2ToChainKind(network: Chain): ChainKind | null {
 			return ChainKind.Arb;
 		case Chains.Solana:
 			return ChainKind.Sol;
-		// case Chains.Bitcoin:
-		// 	return ChainKind.Btc;
+		case Chains.Bitcoin:
+			return ChainKind.Btc;
 		default:
 			return null;
 	}
@@ -59,8 +60,8 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return Chains.Arbitrum;
 		case ChainKind.Sol:
 			return Chains.Solana;
-		// case ChainKind.Btc:
-		// 	return Chains.Bitcoin;
+		case ChainKind.Btc:
+			return Chains.Bitcoin;
 		default:
 			return null;
 	}
@@ -75,8 +76,5 @@ const CHAIN_PATTERNS: Record<string, ChainKind> = {
 
 // REPLACE BY OMNI SDK
 export function validateOmniToken(nearAddress: string): boolean {
-	return (
-		nearAddress in CHAIN_PATTERNS ||
-		/\.(omdep\.near|factory\.bridge\.near)$/.test(nearAddress)
-	);
+	return isBridgeToken()
 }
