@@ -94,8 +94,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -152,6 +152,7 @@ export class OmniBridge implements Bridge {
 				);
 			}
 		}
+		// HARDCODE FOR nbtc.bridge.near
 		const tokenOnDestinationNetwork =
 			await this.getCachedDestinationTokenAddress(
 				parsed.contractId,
@@ -172,8 +173,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -276,6 +277,7 @@ export class OmniBridge implements Bridge {
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
 		);
+		// Probably will have to add a special validation for btc here
 		return;
 	}
 
@@ -302,6 +304,7 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
+		// will have a different fee calc for BTC
 		const fee = await this.omniBridgeAPI.getFee(
 			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
 			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
@@ -360,12 +363,10 @@ export class OmniBridge implements Bridge {
 				}
 
 				const transfer = (
-					await this.omniBridgeAPI.findOmniTransfers({
-						transaction_id: args.tx.hash,
-						offset: args.index,
-						limit: 1,
+					await this.omniBridgeAPI.getTransfer({
+						transaction_hash: args.tx.hash,
 					})
-				)[0];
+				)[args.index];
 				if (!transfer) throw new OmniTransferNotFoundError(args.tx.hash);
 				const destinationChain = getChain(
 					transfer.transfer_message.recipient as OmniAddress,
@@ -442,6 +443,8 @@ export class OmniBridge implements Bridge {
 			return cached;
 		}
 
+		// SHOULD HANDLE nbtc.bridge.near -> BTC transfer properly
+		// should be a hardcode on omni side most likely
 		const tokenOnDestinationNetwork = await getBridgedToken(
 			omniAddress(ChainKind.Near, contractId),
 			omniChainKind,
