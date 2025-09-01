@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.19.3
+
+### Patch Changes
+
+- 7bf883a: fix wait for withdrawal completion retry stoppage
+
 ## 0.19.2
 
 ### Patch Changes
