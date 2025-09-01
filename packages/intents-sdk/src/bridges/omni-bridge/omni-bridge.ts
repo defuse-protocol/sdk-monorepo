@@ -388,10 +388,7 @@ export class OmniBridge implements Bridge {
 			{
 				...(args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY),
 				handleError: (err, ctx) => {
-					if (
-						err instanceof OmniTransferNotFoundError ||
-						err === args.signal?.reason
-					) {
+					if (err === args.signal?.reason) {
 						ctx.abort();
 					}
 				},
