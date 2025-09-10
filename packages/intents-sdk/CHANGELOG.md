@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.20.0
+
+### Minor Changes
+
+- 01aa81c: Remove STELLAR_RAW signature type support.
+
+### Patch Changes
+
+- Updated dependencies [01aa81c]
+  - @defuse-protocol/internal-utils@0.10.0
+
 ## 0.19.3
 
 ### Patch Changes
