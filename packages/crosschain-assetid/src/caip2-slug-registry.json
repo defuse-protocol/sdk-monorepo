@@ -1,0 +1,23 @@
+{
+	"eip155:1": "eth",
+	"eip155:10": "optimism",
+	"eip155:56": "bsc",
+	"eip155:100": "gnosis",
+	"eip155:137": "polygon",
+	"eip155:8453": "base",
+	"eip155:42161": "arbitrum",
+	"eip155:43114": "avalanche",
+	"eip155:80085": "berachain",
+	"bip122:000000000019d6689c085ae165831e93": "bitcoin",
+	"bip122:00040fe8ec8471911baa1db1266ea15d": "zcash",
+	"bip122:1a91e3dace36e2be3bf030a65679fe82": "doge",
+	"near:mainnet": "near",
+	"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp": "sol",
+	"tron:27Lqcw": "tron",
+	"xrpl:0": "xrpl",
+	"tvm:-239": "ton",
+	"sui:mainnet": "sui",
+	"aptos:mainnet": "aptos",
+	"stellar:pubnet": "stellar",
+	"cip34:1-764824073": "cardano"
+}

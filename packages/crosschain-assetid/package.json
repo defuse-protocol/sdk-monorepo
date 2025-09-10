@@ -1,0 +1,36 @@
+{
+	"name": "@defuse-protocol/crosschain-assetid",
+	"version": "0.0.0",
+	"private": false,
+	"type": "module",
+	"sideEffects": false,
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"default": "./dist/index.js"
+		},
+		"./schemas/1cs_v1-object.schema.json": "./schemas/1cs_v1-object.schema.json",
+		"./schemas/1cs_v1-string.schema.json": "./schemas/1cs_v1-string.schema.json"
+	},
+	"files": [
+		"dist",
+		"schemas"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"ajv": "^8.17.1",
+		"tsup": "^8.0.2",
+		"typescript": "^5.4.2"
+	}
+}

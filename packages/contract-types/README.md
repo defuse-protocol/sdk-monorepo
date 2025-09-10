@@ -5,17 +5,7 @@ This package provides TypeScript type definitions for Defuse Protocol contracts.
 ## Installation
 
 ```bash
-# Using npm
 npm install @defuse-protocol/contract-types
-
-# Using yarn
-yarn add @defuse-protocol/contract-types
-
-# Using pnpm
-pnpm add @defuse-protocol/contract-types
-
-# Using bun
-bun add @defuse-protocol/contract-types
 ```
 
 ## Usage
