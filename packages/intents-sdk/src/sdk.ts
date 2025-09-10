@@ -16,6 +16,7 @@ import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
 import { HotBridge } from "./bridges/hot-bridge/hot-bridge";
 import { HotBridgeEVMChains } from "./bridges/hot-bridge/hot-bridge-chains";
 import { IntentsBridge } from "./bridges/intents-bridge/intents-bridge";
+import { OmniBridge } from "./bridges/omni-bridge/omni-bridge";
 import { PoaBridge } from "./bridges/poa-bridge/poa-bridge";
 import { FeeExceedsAmountError } from "./classes/errors";
 import {
@@ -118,6 +119,10 @@ export class IntentsSDK implements IIntentsSDK {
 					},
 				}),
 			}),
+			new OmniBridge({
+				env: this.env,
+				nearProvider,
+			}),
 			new DirectBridge({
 				env: this.env,
 				nearProvider,
@@ -140,7 +145,7 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<IntentPrimitive[]> {
 		for (const bridge of this.bridges) {
-			if (bridge.supports(args.withdrawalParams)) {
+			if (await bridge.supports(args.withdrawalParams)) {
 				const actualAmount = args.withdrawalParams.feeInclusive
 					? args.withdrawalParams.amount - args.feeEstimation.amount
 					: args.withdrawalParams.amount;
@@ -149,6 +154,8 @@ export class IntentsSDK implements IIntentsSDK {
 					assetId: args.withdrawalParams.assetId,
 					amount: actualAmount,
 					destinationAddress: args.withdrawalParams.destinationAddress,
+					feeEstimation: args.feeEstimation,
+					routeConfig: args.withdrawalParams.routeConfig,
 					logger: args.logger,
 				});
 
@@ -208,7 +215,7 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
-			if (bridge.supports(args.withdrawalParams)) {
+			if (await bridge.supports(args.withdrawalParams)) {
 				const fee = await bridge.estimateWithdrawalFee({
 					withdrawalParams: args.withdrawalParams,
 					quoteOptions: args.quoteOptions,

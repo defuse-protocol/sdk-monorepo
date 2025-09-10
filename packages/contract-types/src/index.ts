@@ -198,6 +198,12 @@ export type MultiPayload =
 	  }
 	| {
 			payload: string;
+			signature: string;
+			standard: "tip191";
+			[k: string]: unknown;
+	  }
+	| {
+			payload: string;
 			public_key: string;
 			signature: string;
 			standard: "raw_ed25519";

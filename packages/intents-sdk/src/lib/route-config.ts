@@ -1,11 +1,15 @@
 import { BridgeNameEnum } from "../constants/bridge-name-enum";
-import { RouteEnum } from "../constants/route-enum";
 import type {
 	IIntentsSDK,
 	RouteConfig,
 	WithdrawalParams,
 } from "../shared-types";
-import { createNearWithdrawalRoute } from "./route-config-factory";
+import {
+	createHotBridgeRoute,
+	createNearWithdrawalRoute,
+	createOmniBridgeRoute,
+	createPoaBridgeRoute,
+} from "./route-config-factory";
 
 export function determineRouteConfig(
 	sdk: IIntentsSDK,
@@ -20,15 +24,11 @@ export function determineRouteConfig(
 	const bridgeName = parseAssetId.bridgeName;
 	switch (bridgeName) {
 		case BridgeNameEnum.Hot:
-			return {
-				route: RouteEnum.HotBridge,
-				chain: parseAssetId.blockchain,
-			};
+			return createHotBridgeRoute(parseAssetId.blockchain);
 		case BridgeNameEnum.Poa:
-			return {
-				route: RouteEnum.PoaBridge,
-				chain: parseAssetId.blockchain,
-			};
+			return createPoaBridgeRoute(parseAssetId.blockchain);
+		case BridgeNameEnum.Omni:
+			return createOmniBridgeRoute(parseAssetId.blockchain);
 		case BridgeNameEnum.None:
 			return createNearWithdrawalRoute();
 		default:

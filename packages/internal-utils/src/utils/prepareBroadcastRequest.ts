@@ -66,7 +66,7 @@ export function prepareSwapSignedData(
 			};
 		}
 
-		case "STELLAR": {
+		case "STELLAR_RAW": {
 			assert(
 				userInfo.userChainType === "stellar",
 				"User chain and signature chain must match",
@@ -79,6 +79,30 @@ export function prepareSwapSignedData(
 					stellarAddressToBytes(userInfo.userAddress),
 				)}`,
 				signature: transformED25519Signature(signature.signatureData),
+			};
+		}
+
+		case "STELLAR_SEP53": {
+			assert(
+				userInfo.userChainType === "stellar",
+				"User chain and signature chain must match",
+			);
+			return {
+				standard: "sep53",
+				payload: signature.signedData.message,
+				// We should encode the Stellar address to base58
+				public_key: `ed25519:${base58.encode(
+					stellarAddressToBytes(userInfo.userAddress),
+				)}`,
+				signature: transformED25519Signature(signature.signatureData),
+			};
+		}
+
+		case "TRON": {
+			return {
+				standard: "tip191",
+				payload: signature.signedData.message,
+				signature: transformERC191Signature(signature.signatureData), // TIP-191 is compatible with ERC191
 			};
 		}
 

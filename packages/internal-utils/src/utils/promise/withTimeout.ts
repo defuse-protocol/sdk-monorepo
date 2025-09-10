@@ -3,7 +3,9 @@ import { BaseError } from "../../errors/base";
 export function withTimeout<data>(
 	fn: ({
 		signal,
-	}: { signal: AbortController["signal"] | null }) => Promise<data>,
+	}: {
+		signal: AbortController["signal"] | null;
+	}) => Promise<data>,
 	{
 		errorInstance = new Error("timed out"),
 		timeout,
@@ -29,7 +31,7 @@ export function withTimeout<data>(
 						} else {
 							reject(errorInstance);
 						}
-					}, timeout) as NodeJS.Timeout; // need to cast because bun globals.d.ts overrides @types/node
+					}, timeout);
 				}
 				resolve(await fn({ signal: signal ? controller.signal : null }));
 			} catch (err) {

@@ -3,6 +3,7 @@ import type {
 	HotBridgeRouteConfig,
 	InternalTransferRouteConfig,
 	NearWithdrawalRouteConfig,
+	OmniBridgeRouteConfig,
 	PoaBridgeRouteConfig,
 	VirtualChainRouteConfig,
 } from "../shared-types";
@@ -16,6 +17,16 @@ export function createNearWithdrawalRoute(
 	msg?: string,
 ): NearWithdrawalRouteConfig {
 	return { route: RouteEnum.NearWithdrawal, msg };
+}
+
+/*
+ * @param chain - pass chain parameter to withdraw to a specific chain. Without this parameter the token will be withdrawn to its origin chain
+ * @returns
+ */
+export function createOmniBridgeRoute(chain?: Chain): OmniBridgeRouteConfig {
+	const routeConfig: OmniBridgeRouteConfig = { route: RouteEnum.OmniBridge };
+	if (chain) routeConfig.chain = chain;
+	return routeConfig;
 }
 
 export function createVirtualChainRoute(

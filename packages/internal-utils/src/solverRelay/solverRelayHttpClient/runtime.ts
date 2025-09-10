@@ -51,7 +51,9 @@ export async function jsonRPCRequest<
 ) {
 	// Use config.baseURL if provided, otherwise fall back to global config
 	const baseURL = config?.baseURL ?? globalConfig.env.solverRelayBaseURL;
-	const url = new URL("/rpc", baseURL);
+	const url = new URL("rpc", baseURL);
+	// Append method to URL for easy debugging on both sides (FE and BE)
+	url.searchParams.set("method", String(method));
 
 	const body = {
 		id: config?.requestId ?? "dontcare",

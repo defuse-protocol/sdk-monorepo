@@ -1,0 +1,451 @@
+import {
+	assert,
+	type ILogger,
+	type NearIntentsEnv,
+	RETRY_CONFIGS,
+	type RetryOptions,
+	configsByEnvironment,
+	getNearNep141MinStorageBalance,
+	getNearNep141StorageBalance,
+	solverRelay,
+} from "@defuse-protocol/internal-utils";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import TTLCache from "@isaacs/ttlcache";
+import { retry } from "@lifeomic/attempt";
+import type { providers } from "near-api-js";
+import {
+	ChainKind,
+	type OmniAddress,
+	OmniBridgeAPI,
+	getBridgedToken,
+	getChain,
+	isEvmChain,
+	omniAddress,
+	parseOriginChain,
+} from "omni-bridge-sdk";
+import { BridgeNameEnum } from "../../constants/bridge-name-enum";
+import { RouteEnum } from "../../constants/route-enum";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import type { Chain } from "../../lib/caip2";
+import type {
+	Bridge,
+	FeeEstimation,
+	NearTxInfo,
+	OmniBridgeRouteConfig,
+	ParsedAssetInfo,
+	RouteConfig,
+	TxInfo,
+	TxNoInfo,
+	WithdrawalParams,
+} from "../../shared-types";
+import {
+	OmniTransferDestinationChainHashNotFoundError,
+	OmniTransferNotFoundError,
+	TokenNotFoundInDestinationChainError,
+	TokenNotSupportedByOmniRelayerError,
+} from "./error";
+import {
+	NEAR_NATIVE_ASSET_ID,
+	OMNI_BRIDGE_CONTRACT,
+} from "./omni-bridge-constants";
+import {
+	caip2ToChainKind,
+	chainKindToCaip2,
+	createWithdrawIntentPrimitive,
+	validateOmniToken,
+} from "./omni-bridge-utils";
+import { UnsupportedAssetIdError } from "../../classes/errors";
+
+type MinStorageBalance = bigint;
+type StorageDepositBalance = bigint;
+export class OmniBridge implements Bridge {
+	protected env: NearIntentsEnv;
+	protected nearProvider: providers.Provider;
+	protected omniBridgeAPI: OmniBridgeAPI;
+	private storageDepositCache = new TTLCache<
+		string,
+		[MinStorageBalance, StorageDepositBalance]
+	>({ ttl: 10800000 }); // 10800000 - 3 hours
+	private destinationChainAddressCache = new TTLCache<
+		string,
+		OmniAddress | null
+	>({ ttl: 10800000 }); // 10800000 - 3 hours
+
+	constructor({
+		env,
+		nearProvider,
+	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
+		this.env = env;
+		this.nearProvider = nearProvider;
+		this.omniBridgeAPI = new OmniBridgeAPI();
+	}
+
+	is(routeConfig: RouteConfig): boolean {
+		return routeConfig.route === RouteEnum.OmniBridge;
+	}
+
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
+		// Non omni bridge route specified, abort.
+		if (params.routeConfig && !this.is(params.routeConfig)) {
+			return false;
+		}
+		const parsed = parseDefuseAssetId(params.assetId);
+		const omniBridgeSetWithNoChain = Boolean(
+			params.routeConfig &&
+				params.routeConfig.route === RouteEnum.OmniBridge &&
+				params.routeConfig.chain === undefined,
+		);
+		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
+		const nonValidStandard = parsed.standard !== "nep141";
+		// only nep141 supported
+		if (
+			nonValidStandard &&
+			(omniBridgeSetWithNoChain || targetChainSpecified)
+		) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				`Only NEP-141 tokens are supported by Omni Bridge.`,
+			);
+		}
+		if (nonValidStandard) return false;
+		// Should only allow tokens bridged from other networks unless a specific
+		// chain for withdrawal is set.
+		const nonValidToken = validateOmniToken(parsed.contractId) === false;
+		if (nonValidToken && omniBridgeSetWithNoChain) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				`Non valid omni contract id ${parsed.contractId}`,
+			);
+		}
+		if (!targetChainSpecified && nonValidToken) return false;
+
+		let omniChainKind: ChainKind | null = null;
+		let caip2Chain: Chain | null = null;
+		// Transfer to some specific chain specified in route config
+		if (this.targetChainSpecified(params.routeConfig)) {
+			omniChainKind = caip2ToChainKind(params.routeConfig.chain);
+			if (omniChainKind === null) {
+				throw new UnsupportedAssetIdError(
+					params.assetId,
+					`Chain ${params.routeConfig.chain} is not supported in Omni Bridge.`,
+				);
+			}
+			caip2Chain = params.routeConfig.chain;
+		} else {
+			// Transfer of an omni token to it's origin chain
+			omniChainKind = parseOriginChain(parsed.contractId);
+
+			if (omniChainKind === null) {
+				throw new UnsupportedAssetIdError(
+					params.assetId,
+					`Withdrawal of ${parsed.contractId} to its origin chain is not supported in Omni Bridge.`,
+				);
+			}
+			caip2Chain = chainKindToCaip2(omniChainKind);
+
+			if (caip2Chain === null) {
+				throw new UnsupportedAssetIdError(
+					params.assetId,
+					`Withdrawal of ${parsed.contractId} to its origin chain is not supported in Omni Bridge.`,
+				);
+			}
+		}
+		const tokenOnDestinationNetwork =
+			await this.getCachedDestinationTokenAddress(
+				parsed.contractId,
+				omniChainKind,
+			);
+		if (tokenOnDestinationNetwork === null) {
+			throw new TokenNotFoundInDestinationChainError(
+				params.assetId,
+				caip2Chain,
+			);
+		}
+
+		return true;
+	}
+
+	targetChainSpecified(
+		routeConfig?: RouteConfig,
+	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
+		return Boolean(
+			routeConfig?.route &&
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
+		);
+	}
+
+	parseAssetId(assetId: string): ParsedAssetInfo | null {
+		const parsed = parseDefuseAssetId(assetId);
+		if (parsed.standard !== "nep141") return null;
+		const omniChainKind = parseOriginChain(parsed.contractId);
+		if (omniChainKind === null) return null;
+		const blockchain = chainKindToCaip2(omniChainKind);
+		if (blockchain === null) return null;
+		return Object.assign(parsed, {
+			blockchain,
+			bridgeName: BridgeNameEnum.Omni,
+			address: parsed.contractId,
+		});
+	}
+
+	makeAssetInfo(assetId: string, routeConfig?: RouteConfig) {
+		const parsed = parseDefuseAssetId(assetId);
+		if (parsed.standard !== "nep141") return null;
+		let omniChainKind = null;
+		let blockchain = null;
+		if (this.targetChainSpecified(routeConfig)) {
+			omniChainKind = caip2ToChainKind(routeConfig.chain);
+			blockchain = routeConfig.chain;
+		} else {
+			omniChainKind = parseOriginChain(parsed.contractId);
+			if (omniChainKind === null) return null;
+			blockchain = chainKindToCaip2(omniChainKind);
+		}
+		if (omniChainKind === null || blockchain === null) return null;
+
+		return Object.assign(parsed, {
+			blockchain,
+			bridgeName: BridgeNameEnum.Omni,
+			address: parsed.contractId,
+		});
+	}
+
+	async createWithdrawalIntents(args: {
+		withdrawalParams: WithdrawalParams;
+		feeEstimation: FeeEstimation;
+		referral?: string;
+	}): Promise<IntentPrimitive[]> {
+		const assetInfo = this.makeAssetInfo(
+			args.withdrawalParams.assetId,
+			args.withdrawalParams.routeConfig,
+		);
+		assert(
+			assetInfo !== null,
+			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
+		);
+
+		const intents: IntentPrimitive[] = [];
+
+		if (args.feeEstimation.quote !== null) {
+			intents.push({
+				intent: "token_diff",
+				diff: {
+					[args.feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${args.feeEstimation.quote.amount_in}`,
+					[args.feeEstimation.quote.defuse_asset_identifier_out]:
+						args.feeEstimation.quote.amount_out,
+				},
+				referral: args.referral,
+			});
+		}
+
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
+		);
+
+		const intent = createWithdrawIntentPrimitive({
+			assetId: args.withdrawalParams.assetId,
+			destinationAddress: args.withdrawalParams.destinationAddress,
+			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
+			omniChainKind,
+			storageDeposit: args.feeEstimation.quote
+				? BigInt(args.feeEstimation.quote.amount_out)
+				: 0n,
+			transferredTokenFee: args.feeEstimation.amount,
+		});
+
+		intents.push(intent);
+
+		return Promise.resolve(intents);
+	}
+
+	async validateWithdrawal(args: {
+		assetId: string;
+		amount: bigint;
+		destinationAddress: string;
+		feeEstimation: FeeEstimation;
+		routeConfig?: RouteConfig;
+		logger?: ILogger;
+	}): Promise<void> {
+		assert(
+			args.feeEstimation.amount > 0n,
+			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
+		);
+		return;
+	}
+
+	async estimateWithdrawalFee(args: {
+		withdrawalParams: Pick<
+			WithdrawalParams,
+			"assetId" | "destinationAddress" | "routeConfig"
+		>;
+		quoteOptions?: { waitMs: number };
+		logger?: ILogger;
+	}): Promise<FeeEstimation> {
+		const assetInfo = this.makeAssetInfo(
+			args.withdrawalParams.assetId,
+			args.withdrawalParams.routeConfig,
+		);
+		assert(
+			assetInfo !== null,
+			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
+		);
+
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
+		);
+
+		const fee = await this.omniBridgeAPI.getFee(
+			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
+			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+			omniAddress(ChainKind.Near, assetInfo.contractId),
+		);
+
+		if (fee.transferred_token_fee === null) {
+			throw new TokenNotSupportedByOmniRelayerError(
+				args.withdrawalParams.assetId,
+			);
+		}
+
+		const [minStorageBalance, userStorageBalance] =
+			await this.getCachedStorageDepositValue(assetInfo.contractId);
+		// Handles the edge case where the omni contract lacks a storage_deposit for the received token.
+		// If storage isn't already covered, we pay the required storage_deposit.
+		if (minStorageBalance <= userStorageBalance) {
+			return {
+				amount: BigInt(fee.transferred_token_fee),
+				quote: null,
+			};
+		}
+
+		const feeAmount = minStorageBalance - userStorageBalance;
+
+		const feeQuote = await solverRelay.getQuote({
+			quoteParams: {
+				defuse_asset_identifier_in: args.withdrawalParams.assetId,
+				defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
+				exact_amount_out: feeAmount.toString(),
+				wait_ms: args.quoteOptions?.waitMs,
+			},
+			config: {
+				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				logBalanceSufficient: false,
+				logger: args.logger,
+			},
+		});
+		return {
+			amount: BigInt(fee.transferred_token_fee) + BigInt(feeQuote.amount_in),
+			quote: feeQuote,
+		};
+	}
+
+	async waitForWithdrawalCompletion(args: {
+		tx: NearTxInfo;
+		index: number;
+		routeConfig: RouteConfig;
+		signal?: AbortSignal;
+		retryOptions?: RetryOptions;
+	}): Promise<TxInfo | TxNoInfo> {
+		return retry(
+			async () => {
+				if (args.signal?.aborted) {
+					throw args.signal.reason;
+				}
+
+				const transfer = (
+					await this.omniBridgeAPI.findOmniTransfers({
+						transaction_id: args.tx.hash,
+						offset: args.index,
+						limit: 1,
+					})
+				)[0];
+				if (!transfer) throw new OmniTransferNotFoundError(args.tx.hash);
+				const destinationChain = getChain(
+					transfer.transfer_message.recipient as OmniAddress,
+				);
+				let txHash = null;
+				if (isEvmChain(destinationChain)) {
+					txHash = transfer.finalised?.EVMLog?.transaction_hash;
+				} else if (destinationChain === ChainKind.Sol) {
+					txHash = transfer.finalised?.Solana?.signature;
+				} else {
+					return { hash: null };
+				}
+				if (!txHash)
+					throw new OmniTransferDestinationChainHashNotFoundError(
+						args.tx.hash,
+						ChainKind[destinationChain].toLowerCase(),
+					);
+				return { hash: txHash };
+			},
+			{
+				...(args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY),
+				handleError: (err, ctx) => {
+					if (err === args.signal?.reason) {
+						ctx.abort();
+					}
+				},
+			},
+		);
+	}
+
+	/**
+	 * Gets storage deposit for a token to avoid frequent RPC calls.
+	 * Cache expires after one day using TTL cache.
+	 */
+	private async getCachedStorageDepositValue(
+		contractId: string,
+	): Promise<[MinStorageBalance, StorageDepositBalance]> {
+		const cached = this.storageDepositCache.get(contractId);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const data = await Promise.all([
+			getNearNep141MinStorageBalance({
+				contractId: contractId,
+				nearProvider: this.nearProvider,
+			}),
+			getNearNep141StorageBalance({
+				contractId: contractId,
+				accountId: OMNI_BRIDGE_CONTRACT,
+				nearProvider: this.nearProvider,
+			}),
+		]);
+
+		this.storageDepositCache.set(contractId, data);
+
+		return data;
+	}
+
+	/**
+	 * Gets cached token address on destination chain.
+	 * Cache expires after one day using TTL cache.
+	 */
+	private async getCachedDestinationTokenAddress(
+		contractId: string,
+		omniChainKind: ChainKind,
+	): Promise<OmniAddress | null> {
+		const key = `${omniChainKind}:${contractId}`;
+		const cached = this.destinationChainAddressCache.get(key);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const tokenOnDestinationNetwork = await getBridgedToken(
+			omniAddress(ChainKind.Near, contractId),
+			omniChainKind,
+		);
+
+		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+
+		return tokenOnDestinationNetwork;
+	}
+}

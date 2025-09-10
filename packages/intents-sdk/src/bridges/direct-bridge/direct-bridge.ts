@@ -2,10 +2,8 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
-	solverRelay,
 	utils,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
@@ -27,6 +25,9 @@ import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
+import { UnsupportedAssetIdError } from "../../classes/errors";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { getFeeQuote } from "../../lib/estimate-fee";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -44,22 +45,27 @@ export class DirectBridge implements Bridge {
 		return routeConfig.route === RouteEnum.NearWithdrawal;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
-		let result = true;
-
-		if ("routeConfig" in params && params.routeConfig != null) {
-			result &&= this.is(params.routeConfig);
-		}
-
-		try {
-			return result && this.parseAssetId(params.assetId) != null;
-		} catch {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
+		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
 		}
+
+		const assetInfo = this.parseAssetId(params.assetId);
+		const isValid = assetInfo != null;
+
+		if (!isValid && params.routeConfig != null) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				"`assetId` does not match `routeConfig`.",
+			);
+		}
+		return isValid;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = utils.parseDefuseAssetId(assetId);
+		const parsed = parseDefuseAssetId(assetId);
 
 		if (parsed.standard === "nep141") {
 			return Object.assign(parsed, {
@@ -172,18 +178,13 @@ export class DirectBridge implements Bridge {
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
 				? null
-				: await solverRelay.getQuote({
-						quoteParams: {
-							defuse_asset_identifier_in: args.withdrawalParams.assetId,
-							defuse_asset_identifier_out: feeAssetId,
-							exact_amount_out: feeAmount.toString(),
-							wait_ms: args.quoteOptions?.waitMs,
-						},
-						config: {
-							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-							logBalanceSufficient: false,
-							logger: args.logger,
-						},
+				: await getFeeQuote({
+						feeAmount,
+						feeAssetId,
+						tokenAssetId: args.withdrawalParams.assetId,
+						logger: args.logger,
+						env: this.env,
+						quoteOptions: args.quoteOptions,
 					});
 
 		return {

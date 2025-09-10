@@ -1,18 +1,22 @@
 import { zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it } from "vitest";
+import { OMNI_BRIDGE_CONTRACT } from "./bridges/omni-bridge/omni-bridge-constants";
 import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
+import { RouteEnum } from "./constants/route-enum";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
+import { Chains } from "./lib/caip2";
+import { BridgeNameEnum } from "./constants/bridge-name-enum";
 
 const intentSigner = createIntentSignerViem(
 	privateKeyToAccount(generatePrivateKey()),
@@ -224,7 +228,8 @@ describe.concurrent("hot_bridge", () => {
 		const stellarAddressWithoutTrustline =
 			"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU";
 
-		it("estimateWithdrawalFee(): returns fee", async () => {
+		// todo: unskip when HOT fixes the issue
+		it.skip("estimateWithdrawalFee(): returns fee", async () => {
 			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const fee = sdk.estimateWithdrawalFee({
@@ -341,7 +346,8 @@ describe.concurrent("hot_bridge", () => {
 			]);
 		});
 
-		it("createWithdrawalIntents(): rejects when destinationMemo is used with Stellar", async () => {
+		// todo: unskip when HOT fixes the issue
+		it.skip("createWithdrawalIntents(): rejects when destinationMemo is used with Stellar", async () => {
 			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 			const intents = sdk.createWithdrawalIntents({
@@ -601,5 +607,235 @@ describe.concurrent("near_withdrawal", () => {
 				receiver_id: "0x0000000000000000000000000000000000000000",
 			},
 		]);
+	});
+	it("createWithdrawalIntents(): should not be overriden by any other bridge", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		// This type of withdrawal is last in priority, so we need to make sure no other
+		// bridge could override an explicitly set route config.
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 700n,
+				destinationAddress: "hello.near",
+				feeInclusive: false,
+				routeConfig: {
+					route: RouteEnum.NearWithdrawal,
+				},
+			},
+			feeEstimation: {
+				amount: 0n,
+				quote: null,
+			},
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "nbtc.bridge.near",
+				receiver_id: "hello.near",
+				amount: "700",
+				storage_deposit: null,
+				msg: undefined,
+			},
+		]);
+	});
+});
+
+describe.concurrent("omni_bridge", () => {
+	it("estimateWithdrawalFee(): should return fee", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:eth.bridge.near",
+				amount: 1000000000000000000n,
+				destinationAddress: zeroAddress,
+				feeInclusive: false,
+			},
+		});
+
+		await expect(fee).resolves.toEqual({
+			amount: expect.any(BigInt),
+			quote: null,
+		});
+	});
+
+	it("createWithdrawalIntents(): returns intents array with feeInclusive = false", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		const withdrawalParams = {
+			assetId: "nep141:eth.bridge.near",
+			amount: 1000000000000000000n,
+			destinationAddress: zeroAddress,
+			feeInclusive: false,
+		};
+		const feeEstimation = await sdk.estimateWithdrawalFee({
+			withdrawalParams,
+		});
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "eth.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: String(withdrawalParams.amount + feeEstimation.amount),
+				storage_deposit: null,
+				msg: JSON.stringify({
+					recipient: `eth:${zeroAddress}`,
+					fee: feeEstimation.amount.toString(),
+					native_token_fee: "0",
+				}),
+			},
+		]);
+	});
+	it("createWithdrawalIntents(): returns intents array with feeInclusive = true", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		const withdrawalParams = {
+			assetId: "nep141:eth.bridge.near",
+			amount: 1000000000000000000n,
+			destinationAddress: zeroAddress,
+			feeInclusive: true,
+		};
+		const feeEstimation = await sdk.estimateWithdrawalFee({
+			withdrawalParams,
+		});
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "eth.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: withdrawalParams.amount.toString(),
+				storage_deposit: null,
+				msg: JSON.stringify({
+					recipient: `eth:${zeroAddress}`,
+					fee: feeEstimation.amount.toString(),
+					native_token_fee: "0",
+				}),
+			},
+		]);
+	});
+
+	it("createWithdrawalIntents(): returns intents array with storage swap", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const withdrawalParams = {
+			assetId: "nep141:eth.bridge.near",
+			amount: 1000000000000000000n,
+			destinationAddress: zeroAddress,
+			feeInclusive: true,
+		};
+
+		const feeEstimation = {
+			amount: 356349421707378n,
+			quote: {
+				defuse_asset_identifier_in: "nep141:eth.bridge.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "1000",
+				amount_out: "1250000000000000000000",
+				expiration_time: "2025-07-22T03:52:23.747Z",
+				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+			},
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				diff: {
+					"nep141:eth.bridge.near": "-1000",
+					"nep141:wrap.near": "1250000000000000000000",
+				},
+				intent: "token_diff",
+				referral: "",
+			},
+			{
+				intent: "ft_withdraw",
+				token: "eth.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: withdrawalParams.amount.toString(),
+				storage_deposit: "1250000000000000000000",
+				msg: JSON.stringify({
+					recipient: `eth:${zeroAddress}`,
+					fee: feeEstimation.amount.toString(),
+					native_token_fee: "0",
+				}),
+			},
+		]);
+	});
+
+	it("estimateWithdrawalFee(): rejects when amount is lower than fee", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:eth.bridge.near",
+				amount: 1n,
+				destinationAddress: zeroAddress,
+				feeInclusive: true,
+			},
+		});
+
+		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
+	});
+});
+
+describe("sdk.parseAssetId()", () => {
+	it.each([
+		[
+			"nep141:btc.omft.near",
+			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Bitcoin },
+		],
+		[
+			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Ethereum },
+		],
+		[
+			"nep245:v2_1.omni.hot.tg:137_3hpYoaLtt8MP1Z2GH1U473DMRKgr",
+			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.Polygon },
+		],
+		[
+			"nep245:v2_1.omni.hot.tg:1117_",
+			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
+		],
+		[
+			"nep141:sol.omdep.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
+		],
+		[
+			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Ethereum },
+		],
+		[
+			"nep141:eth.bridge.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Ethereum },
+		],
+		[
+			"nep141:wrap.near",
+			{ bridgeName: BridgeNameEnum.None, blockchain: Chains.Near },
+		],
+		/* Even though this is a valid `assetId`, but it's not supported in SDK yet.
+		[
+			"nep245:intents.near:nep141:wrap.near",
+			{ bridgeName: BridgeNameEnum.None, blockchain: Chains.Near },
+		],
+		*/
+	])("returns parsed asset info", (assetId, assetInfo) => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		expect(sdk.parseAssetId(assetId)).toEqual(
+			expect.objectContaining(assetInfo),
+		);
 	});
 });

@@ -55,7 +55,7 @@ export type StellarMessage = {
 };
 
 export type StellarSignatureData = {
-	type: "STELLAR";
+	type: "STELLAR_RAW" | "STELLAR_SEP53";
 	signatureData: Uint8Array;
 	signedData: StellarMessage;
 };
@@ -109,6 +109,17 @@ export type TonConnectSignatureData = {
 	signedData: TonConnectMessage;
 };
 
+// Message for TRON wallets (TIP-191)
+export type TronMessage = {
+	message: string;
+};
+
+export type TronSignatureData = {
+	type: "TRON";
+	signatureData: string;
+	signedData: TronMessage;
+};
+
 export type WalletMessage = {
 	ERC191: ERC191Message;
 	NEP413: NEP413Message;
@@ -116,6 +127,7 @@ export type WalletMessage = {
 	STELLAR: StellarMessage;
 	WEBAUTHN: WebAuthnMessage;
 	TON_CONNECT: TonConnectMessage;
+	TRON: TronMessage;
 };
 
 export type WalletSignatureResult =
@@ -124,4 +136,5 @@ export type WalletSignatureResult =
 	| SolanaSignatureData
 	| StellarSignatureData
 	| WebAuthnSignatureData
-	| TonConnectSignatureData;
+	| TonConnectSignatureData
+	| TronSignatureData;

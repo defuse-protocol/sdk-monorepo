@@ -1,6 +1,7 @@
 export const BridgeNameEnum = {
 	Hot: "hot",
 	Poa: "poa",
+	Omni: "omni",
 	None: null,
 } as const;
 

@@ -84,7 +84,7 @@ describe("sdk.estimateWithdrawalFee()", () => {
 	it("throws error when no bridge supports the withdrawal", async () => {
 		const { sdk, mockBridge } = setupMocks();
 
-		vi.mocked(mockBridge.supports).mockReturnValue(false);
+		vi.mocked(mockBridge.supports).mockResolvedValue(false);
 
 		const promise = sdk.estimateWithdrawalFee({
 			withdrawalParams: withdrawalParams,
@@ -215,7 +215,7 @@ function setupMocks() {
 			throw new Error("Not implemented.");
 		}
 
-		supports(): boolean {
+		async supports(): Promise<boolean> {
 			return true;
 		}
 

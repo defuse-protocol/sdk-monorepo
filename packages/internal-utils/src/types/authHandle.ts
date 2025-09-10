@@ -4,7 +4,8 @@ export type AuthMethod =
 	| "solana"
 	| "webauthn"
 	| "ton"
-	| "stellar";
+	| "stellar"
+	| "tron";
 
 export const AuthMethod = {
 	Near: "near",
@@ -13,6 +14,7 @@ export const AuthMethod = {
 	WebAuthn: "webauthn",
 	Ton: "ton",
 	Stellar: "stellar",
+	Tron: "tron",
 } as const;
 
 /**

@@ -11,6 +11,8 @@ export function nearFailoverRpcProvider({ urls }: { urls: string[] }) {
 
 export function createNearFailoverRpcProvider({
 	providers: list,
-}: { providers: providers.JsonRpcProvider[] }) {
+}: {
+	providers: providers.JsonRpcProvider[];
+}) {
 	return new providers.FailoverRpcProvider(list);
 }

@@ -1,4 +1,108 @@
-# @defuse-protocol/bridge-sdk
+# @defuse-protocol/intents-sdk
+
+## 0.19.3
+
+### Patch Changes
+
+- 7bf883a: fix wait for withdrawal completion retry stoppage
+
+## 0.19.2
+
+### Patch Changes
+
+- 4543eb2: Add missing Tron authentication method to AuthMethod enum.
+- Updated dependencies [4543eb2]
+  - @defuse-protocol/internal-utils@0.9.1
+
+## 0.19.1
+
+### Patch Changes
+
+- 9a9120a: Update to @hot-labs/omni-sdk@2.20.2
+
+## 0.19.0
+
+### Minor Changes
+
+- 1d9bba2: Return support for omni bridge and refactor it and fix bugs
+
+## 0.18.0
+
+### Minor Changes
+
+- c49717b: Add TIP-191 standard support for Tron wallet signatures.
+
+### Patch Changes
+
+- Updated dependencies [c49717b]
+- Updated dependencies [c49717b]
+  - @defuse-protocol/internal-utils@0.9.0
+  - @defuse-protocol/contract-types@0.1.0
+
+## 0.17.1
+
+### Patch Changes
+
+- 13217ad: Upgrade hot-omni-sdk dependency.
+
+## 0.17.0
+
+### Minor Changes
+
+- 41b04ac: Rename `createOmniWithdrawalRoute()` to `createOmniBridgeRoute()`.
+- 9936458: Add stricter validation of `assetId`. Add new `UnsupportedAssetIdError` error.
+
+### Patch Changes
+
+- 9b41de4: When the fee token can't be obtained using exact_out strategy, then fallback to exact_in with x1.2 coef.
+
+## 0.16.4
+
+### Patch Changes
+
+- Updated dependencies [25d2e40]
+  - @defuse-protocol/internal-utils@0.8.2
+
+## 0.16.3
+
+### Patch Changes
+
+- ccab9ca: Temporary disable Omni Bridge.
+
+## 0.16.2
+
+### Patch Changes
+
+- Updated dependencies [3cbae8c]
+  - @defuse-protocol/internal-utils@0.8.1
+
+## 0.16.1
+
+### Patch Changes
+
+- 3c58f82: Update readme and add missing omni exports
+- Updated dependencies [200fc6f]
+- Updated dependencies [9b9d6a8]
+  - @defuse-protocol/internal-utils@0.8.0
+
+## 0.16.0
+
+### Minor Changes
+
+- 058ecec: Add withdrawal to specific chain via omni bridge
+
+## 0.15.0
+
+### Minor Changes
+
+- 7732be8: Adds omni bridge support
+
+### Patch Changes
+
+- Updated dependencies [f20577a]
+- Updated dependencies [7732be8]
+- Updated dependencies [9edf920]
+  - @defuse-protocol/internal-utils@0.7.0
 
 ## 0.14.0
 

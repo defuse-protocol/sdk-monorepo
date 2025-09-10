@@ -46,6 +46,9 @@ describe("prepareSwapSignedData()", () => {
 		},
 		WEBAUTHN: swapMessage.WEBAUTHN,
 		TON_CONNECT: swapMessage.TON_CONNECT,
+		TRON: {
+			message: JSON.stringify({ foo: "bar" }),
+		},
 	};
 
 	it("should return the correct signed data for a NEP141 signature", () => {
@@ -99,7 +102,24 @@ describe("prepareSwapSignedData()", () => {
 
 	it("should return the correct signed data for a Stellar signature", () => {
 		const signature: StellarSignatureData = {
-			type: "STELLAR",
+			type: "STELLAR_RAW",
+			signatureData: Buffer.from("deadbeef1c", "hex"),
+			signedData: {
+				message: JSON.stringify({ foo: "bar" }),
+			},
+		};
+
+		expect(
+			prepareSwapSignedData(signature, {
+				userAddress: "GDZ7T36V5BBWLZTM7NGZYWJYRIYBFXFVYQT3EOGO7G4JCEO6DBYL7DC2",
+				userChainType: "stellar",
+			}),
+		).toMatchSnapshot();
+	});
+
+	it("should return the correct signed data for a Stellar SEP-0053 signature", () => {
+		const signature: StellarSignatureData = {
+			type: "STELLAR_SEP53",
 			signatureData: Buffer.from("deadbeef1c", "hex"),
 			signedData: {
 				message: JSON.stringify({ foo: "bar" }),

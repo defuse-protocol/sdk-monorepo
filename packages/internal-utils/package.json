@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/internal-utils",
-	"version": "0.6.0",
+	"version": "0.9.1",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -23,12 +23,12 @@
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
-		"@hot-labs/omni-sdk": "2.8.3",
 		"@lifeomic/attempt": "^3.0.0",
 		"@noble/hashes": "^1.7.1",
 		"@peculiar/asn1-ecc": "^2.0.0",

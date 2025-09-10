@@ -1,5 +1,55 @@
 # @defuse-protocol/internal-utils
 
+## 0.9.1
+
+### Patch Changes
+
+- 4543eb2: Add missing Tron authentication method to AuthMethod enum.
+
+## 0.9.0
+
+### Minor Changes
+
+- c49717b: Add TIP-191 standard support for Tron wallet signatures.
+
+### Patch Changes
+
+- Updated dependencies [c49717b]
+  - @defuse-protocol/contract-types@0.1.0
+
+## 0.8.2
+
+### Patch Changes
+
+- 25d2e40: Add `?method=xxx` to Intents RPC requests.
+
+## 0.8.1
+
+### Patch Changes
+
+- 3cbae8c: Remove `omniBridgeRelayerBaseUrl` from config.
+
+## 0.8.0
+
+### Minor Changes
+
+- 200fc6f: Add SEP-0053 standard support for Stellar wallet signatures.
+
+### Patch Changes
+
+- 9b9d6a8: Remove @hot-labs/omni-sdk package
+
+## 0.7.0
+
+### Minor Changes
+
+- 7732be8: Adds omni bridge support
+- 9edf920: Simplify `ILogger` interface to satisfy `console`.
+
+### Patch Changes
+
+- f20577a: Switch Aurora RPC endpoint to new URL for proper load balancing and multi-region failover.
+
 ## 0.6.0
 
 ### Minor Changes

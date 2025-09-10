@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.14.0",
+	"version": "0.19.3",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -23,6 +23,7 @@
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"typecheck": "npx tsc --noEmit"
 	},
@@ -32,16 +33,19 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@defuse-protocol/internal-utils": "workspace:*",
-		"@hot-labs/omni-sdk": "2.16.0",
+		"@hot-labs/omni-sdk": "2.20.2",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
 		"@scure/base": "^1.0.0",
 		"borsher": "^4.0.0",
 		"near-api-js": "^4.0.0 || ^5.0.0",
-		"viem": "^2.0.0"
+		"viem": "^2.0.0",
+		"omni-bridge-sdk": "0.13.1",
+		"@near-js/client": "^2.0.1",
+		"@near-js/accounts": "^2.0.1",
+		"@near-js/keystores": "^2.0.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
 		"tsup": "^8.5.0",
 		"vitest": "2.1.2"
 	}

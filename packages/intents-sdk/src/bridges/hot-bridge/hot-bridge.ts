@@ -4,21 +4,19 @@ import {
 	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
-	configsByEnvironment,
-	utils as internalUtils,
-	solverRelay,
 } from "@defuse-protocol/internal-utils";
-import type { HotBridge as HotSdk } from "@hot-labs/omni-sdk";
+import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
 import {
 	TrustlineNotFoundError,
+	UnsupportedAssetIdError,
 	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { Chains } from "../../lib/caip2";
+import { type Chain, Chains } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -42,6 +40,8 @@ import {
 	hotNetworkIdToCAIP2,
 	toHotNetworkId,
 } from "./hot-bridge-utils";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { getFeeQuote } from "../../lib/estimate-fee";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -56,43 +56,68 @@ export class HotBridge implements Bridge {
 		return routeConfig.route === RouteEnum.HotBridge;
 	}
 
-	supports(params: Pick<WithdrawalParams, "assetId" | "routeConfig">): boolean {
-		let result = true;
-
-		if ("routeConfig" in params && params.routeConfig != null) {
-			result &&= this.is(params.routeConfig);
-		}
-
-		try {
-			return result && this.parseAssetId(params.assetId) != null;
-		} catch {
+	async supports(
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+	): Promise<boolean> {
+		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
 		}
+
+		const assetInfo = this.parseAssetId(params.assetId);
+		const isValid = assetInfo != null;
+
+		if (!isValid && params.routeConfig != null) {
+			throw new UnsupportedAssetIdError(
+				params.assetId,
+				"`assetId` does not match `routeConfig`.",
+			);
+		}
+		return isValid;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
-		const parsed = internalUtils.parseDefuseAssetId(assetId);
-		if (parsed.contractId === utils.OMNI_HOT_V2) {
-			assert(
-				parsed.standard === "nep245",
-				"NEP-245 is supported only for HOT bridge",
-			);
-			const [chainId, address] = utils.fromOmni(parsed.tokenId).split(":");
-			assert(chainId != null, "Chain ID is not found");
-			assert(address != null, "Address is not found");
+		const parsed = parseDefuseAssetId(assetId);
 
-			return Object.assign(
-				parsed,
-				{
-					blockchain: hotNetworkIdToCAIP2(chainId),
-					bridgeName: BridgeNameEnum.Hot,
-				},
-				(address === "native" ? { native: true } : { address }) as
-					| { native: true }
-					| { address: string },
+		const contractIdSatisfies = parsed.contractId === OMNI_HOT_V2;
+
+		if (!contractIdSatisfies) {
+			return null;
+		}
+
+		if (parsed.standard !== "nep245") {
+			throw new UnsupportedAssetIdError(
+				assetId,
+				'Should start with "nep245:".',
 			);
 		}
-		return null;
+		const [chainId, address] = utils.fromOmni(parsed.tokenId).split(":");
+		if (chainId == null || address == null) {
+			throw new UnsupportedAssetIdError(
+				assetId,
+				"Asset has invalid token id format.",
+			);
+		}
+
+		let blockchain: Chain;
+		try {
+			blockchain = hotNetworkIdToCAIP2(chainId);
+		} catch {
+			throw new UnsupportedAssetIdError(
+				assetId,
+				"Asset belongs to unknown blockchain.",
+			);
+		}
+
+		return Object.assign(
+			parsed,
+			{
+				blockchain,
+				bridgeName: BridgeNameEnum.Hot,
+			},
+			(address === "native" ? { native: true } : { address }) as
+				| { native: true }
+				| { address: string },
+		);
 	}
 
 	async createWithdrawalIntents(args: {
@@ -203,28 +228,24 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee(
-			toHotNetworkId(assetInfo.blockchain),
-			args.withdrawalParams.destinationAddress,
-		);
+		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee({
+			chain: toHotNetworkId(assetInfo.blockchain),
+			token: "native" in assetInfo ? "native" : assetInfo.address,
+			receiver: args.withdrawalParams.destinationAddress,
+		});
 
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
 				? null
-				: await solverRelay.getQuote({
-						quoteParams: {
-							defuse_asset_identifier_in: args.withdrawalParams.assetId,
-							defuse_asset_identifier_out: feeAssetId,
-							exact_amount_out: feeAmount.toString(),
-							wait_ms: args.quoteOptions?.waitMs,
-						},
-						config: {
-							baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-							logBalanceSufficient: false,
-							logger: args.logger,
-						},
+				: await getFeeQuote({
+						feeAmount,
+						feeAssetId,
+						tokenAssetId: args.withdrawalParams.assetId,
+						logger: args.logger,
+						env: this.env,
+						quoteOptions: args.quoteOptions,
 					});
 
 		return {
@@ -269,7 +290,8 @@ export class HotBridge implements Bridge {
 				if (typeof status === "string") {
 					return {
 						hash:
-							"chain" in args.routeConfig
+							"chain" in args.routeConfig &&
+							args.routeConfig.chain !== undefined
 								? formatTxHash(status, args.routeConfig.chain)
 								: status,
 					};
