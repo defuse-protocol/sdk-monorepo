@@ -55,7 +55,7 @@ export type StellarMessage = {
 };
 
 export type StellarSignatureData = {
-	type: "STELLAR_RAW" | "STELLAR_SEP53";
+	type: "STELLAR_SEP53";
 	signatureData: Uint8Array;
 	signedData: StellarMessage;
 };
