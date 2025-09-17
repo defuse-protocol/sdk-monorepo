@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.20.1
+
+### Patch Changes
+
+- 1cc303b: Bump omni-bridge-sdk from 0.13.1 to 0.17.5
+
 ## 0.20.0
 
 ### Minor Changes
