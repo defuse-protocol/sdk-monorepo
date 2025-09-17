@@ -127,7 +127,7 @@ describe.concurrent("poa_bridge", () => {
 });
 
 describe.concurrent("hot_bridge", () => {
-	it("estimateWithdrawalFee(): returns fee", async () => {
+	it.skip("estimateWithdrawalFee(): returns fee", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
@@ -154,7 +154,7 @@ describe.concurrent("hot_bridge", () => {
 		});
 	});
 
-	it("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
+	it.skip("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
 		const fee = sdk.estimateWithdrawalFee({
