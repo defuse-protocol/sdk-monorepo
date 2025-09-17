@@ -366,7 +366,8 @@ export class OmniBridge implements Bridge {
 						limit: 1,
 					})
 				)[0];
-				if (!transfer) throw new OmniTransferNotFoundError(args.tx.hash);
+				if (transfer == null || transfer.transfer_message == null)
+					throw new OmniTransferNotFoundError(args.tx.hash);
 				const destinationChain = getChain(
 					transfer.transfer_message.recipient as OmniAddress,
 				);
