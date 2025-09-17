@@ -127,47 +127,57 @@ describe.concurrent("poa_bridge", () => {
 });
 
 describe.concurrent("hot_bridge", () => {
-	it("estimateWithdrawalFee(): returns fee", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
+	it(
+		"estimateWithdrawalFee(): returns fee",
+		async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const fee = sdk.estimateWithdrawalFee({
-			withdrawalParams: {
-				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
-				amount: 1n,
-				destinationAddress: zeroAddress,
-				feeInclusive: false,
-			},
-		});
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+					amount: 1n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				quoteOptions: { waitMs: 5000 },
+			});
 
-		await expect(fee).resolves.toEqual({
-			amount: expect.any(BigInt),
-			quote: {
-				amount_in: expect.any(String),
-				amount_out: expect.any(String),
-				defuse_asset_identifier_in:
-					"nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
-				defuse_asset_identifier_out:
-					"nep245:v2_1.omni.hot.tg:137_11111111111111111111",
-				expiration_time: expect.any(String),
-				quote_hash: expect.any(String),
-			},
-		});
-	});
+			await expect(fee).resolves.toEqual({
+				amount: expect.any(BigInt),
+				quote: {
+					amount_in: expect.any(String),
+					amount_out: expect.any(String),
+					defuse_asset_identifier_in:
+						"nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+					defuse_asset_identifier_out:
+						"nep245:v2_1.omni.hot.tg:137_11111111111111111111",
+					expiration_time: expect.any(String),
+					quote_hash: expect.any(String),
+				},
+			});
+		},
+		{ timeout: 20000 },
+	);
 
-	it("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
+	it(
+		"estimateWithdrawalFee(): rejects when fee is higher than amount",
+		async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const fee = sdk.estimateWithdrawalFee({
-			withdrawalParams: {
-				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
-				amount: 1n,
-				destinationAddress: zeroAddress,
-				feeInclusive: true,
-			},
-		});
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+					amount: 1n,
+					destinationAddress: zeroAddress,
+					feeInclusive: true,
+				},
+				quoteOptions: { waitMs: 10000 },
+			});
 
-		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
-	});
+			await expect(fee).rejects.toThrow(FeeExceedsAmountError);
+		},
+		{ timeout: 60000 },
+	);
 
 	it("createWithdrawalIntents(): returns intents array", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
