@@ -89,4 +89,4 @@ Once that PR is merged, the GitHub Action will automatically:
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © 2025 NEAR Foundation
