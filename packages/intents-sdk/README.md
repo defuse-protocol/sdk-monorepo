@@ -871,4 +871,4 @@ This package is part of Near Intents SDK monorepo. Please refer to the main repo
 
 ## License
 
-MIT
+MIT License © 2025 NEAR Foundation

@@ -68,4 +68,4 @@ pnpm run lint
 
 ## License
 
-MIT
+MIT License © 2025 NEAR Foundation
