@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.20.2
+
+### Patch Changes
+
+- 4a930e0: use omni-sdk isBridgeToken for omni token address validation
+
 ## 0.20.1
 
 ### Patch Changes
