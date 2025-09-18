@@ -1,5 +1,5 @@
 import { assert, utils } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress } from "omni-bridge-sdk";
+import { ChainKind, omniAddress, isBridgeToken } from "omni-bridge-sdk";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
@@ -65,18 +65,9 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return null;
 	}
 }
-const CHAIN_PATTERNS: Record<string, ChainKind> = {
-	"nbtc.bridge.near": ChainKind.Btc,
-	"eth.bridge.near": ChainKind.Eth,
-	"sol.omdep.near": ChainKind.Sol,
-	"base.omdep.near": ChainKind.Base,
-	"arb.omdep.near": ChainKind.Arb,
-};
 
-// REPLACE BY OMNI SDK
 export function validateOmniToken(nearAddress: string): boolean {
-	return (
-		nearAddress in CHAIN_PATTERNS ||
-		/\.(omdep\.near|factory\.bridge\.near)$/.test(nearAddress)
-	);
+	// omni bridge function allows testnet tokens, we should not let them pass since we work only with mainnet ones
+	if (nearAddress.endsWith(".testnet")) return false;
+	return isBridgeToken(nearAddress);
 }
