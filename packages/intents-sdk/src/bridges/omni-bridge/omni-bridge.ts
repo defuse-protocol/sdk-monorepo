@@ -19,9 +19,12 @@ import {
 	OmniBridgeAPI,
 	getBridgedToken,
 	getChain,
+	getMinimumTransferableAmount,
+	getTokenDecimals,
 	isEvmChain,
 	omniAddress,
 	parseOriginChain,
+	verifyTransferAmount,
 } from "omni-bridge-sdk";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
@@ -39,6 +42,7 @@ import type {
 	WithdrawalParams,
 } from "../../shared-types";
 import {
+	OmniTokenNormalisationCheckError,
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
@@ -276,6 +280,53 @@ export class OmniBridge implements Bridge {
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
 		);
+
+		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
+
+		assert(
+			assetInfo !== null,
+			`Asset ${args.assetId} is not supported by Omni Bridge`,
+		);
+
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
+		);
+
+		const destTokenAddress = await this.getCachedDestinationTokenAddress(
+			assetInfo.contractId,
+			omniChainKind,
+		);
+		if (destTokenAddress === null) {
+			throw new TokenNotFoundInDestinationChainError(
+				args.assetId,
+				assetInfo.blockchain,
+			);
+		}
+
+		const decimals = await getTokenDecimals(
+			OMNI_BRIDGE_CONTRACT,
+			destTokenAddress,
+		);
+		const normalisationCheckSucceeded = verifyTransferAmount(
+			// args.amount - here amount is an actual amount so we need to add fee amount here
+			args.amount + args.feeEstimation.amount,
+			args.feeEstimation.amount,
+			decimals.origin_decimals,
+			decimals.decimals,
+		);
+		if (normalisationCheckSucceeded === false) {
+			const minAmount = getMinimumTransferableAmount(
+				decimals.origin_decimals,
+				decimals.decimals,
+			);
+			throw new OmniTokenNormalisationCheckError(
+				args.assetId,
+				destTokenAddress,
+				minAmount,
+			);
+		}
 		return;
 	}
 

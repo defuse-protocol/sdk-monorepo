@@ -66,3 +66,27 @@ export class TokenNotSupportedByOmniRelayerError extends BaseError {
 		});
 	}
 }
+
+export type OmniTokenNormalisationCheckErrorType =
+	OmniTokenNormalisationCheckError & {
+		name: "OmniTokenNormalisationCheckError";
+	};
+export class OmniTokenNormalisationCheckError extends BaseError {
+	constructor(
+		public tokenIn: string,
+		public destinationToken: string,
+		public minAmount: bigint,
+	) {
+		super(
+			`Transfer amount too small - would result in 0 after decimal normalisation. Minimum transferable amount (not including fee) is ${minAmount}.`,
+			{
+				metaMessages: [
+					`TokenIn: ${tokenIn}`,
+					`DestinationToken: ${destinationToken}`,
+					`MinAmount: ${minAmount}`,
+				],
+				name: "OmniTokenNormalisationCheckError",
+			},
+		);
+	}
+}
