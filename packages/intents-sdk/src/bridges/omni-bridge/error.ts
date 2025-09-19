@@ -76,14 +76,16 @@ export class OmniTokenNormalisationCheckError extends BaseError {
 		public tokenIn: string,
 		public destinationToken: string,
 		public minAmount: bigint,
+		public fee: bigint,
 	) {
 		super(
-			`Transfer amount too small - would result in 0 after decimal normalisation. Minimum transferable amount (not including fee) is ${minAmount}.`,
+			`Transfer amount sent to relayer is too small - would result in 0 after decimal normalisation. Minimum transferable amount if feeInclusive=false is >= ${minAmount}. Minimum transferable amount if feeInclusive=true is >= ${minAmount + fee}.`,
 			{
 				metaMessages: [
 					`TokenIn: ${tokenIn}`,
 					`DestinationToken: ${destinationToken}`,
 					`MinAmount: ${minAmount}`,
+					`fee: ${fee}`,
 				],
 				name: "OmniTokenNormalisationCheckError",
 			},

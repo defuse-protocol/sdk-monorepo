@@ -311,7 +311,7 @@ export class OmniBridge implements Bridge {
 
 		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
 		const normalisationCheckSucceeded = verifyTransferAmount(
-			// args.amount - here amount is an actual amount so we need to add fee amount here
+			// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
 			args.amount + args.feeEstimation.amount,
 			args.feeEstimation.amount,
 			decimals.origin_decimals,
@@ -326,6 +326,7 @@ export class OmniBridge implements Bridge {
 				args.assetId,
 				destTokenAddress,
 				minAmount,
+				args.feeEstimation.amount,
 			);
 		}
 		return;
