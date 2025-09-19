@@ -17,6 +17,7 @@ import {
 	ChainKind,
 	type OmniAddress,
 	OmniBridgeAPI,
+	type TokenDecimals,
 	getBridgedToken,
 	getChain,
 	getMinimumTransferableAmount,
@@ -74,6 +75,9 @@ export class OmniBridge implements Bridge {
 		string,
 		OmniAddress | null
 	>({ ttl: 10800000 }); // 10800000 - 3 hours
+	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
+		ttl: 10800000,
+	}); // 10800000 - 3 hours
 
 	constructor({
 		env,
@@ -305,10 +309,7 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		const decimals = await getTokenDecimals(
-			OMNI_BRIDGE_CONTRACT,
-			destTokenAddress,
-		);
+		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
 		const normalisationCheckSucceeded = verifyTransferAmount(
 			// args.amount - here amount is an actual amount so we need to add fee amount here
 			args.amount + args.feeEstimation.amount,
@@ -450,7 +451,6 @@ export class OmniBridge implements Bridge {
 
 	/**
 	 * Gets storage deposit for a token to avoid frequent RPC calls.
-	 * Cache expires after one day using TTL cache.
 	 */
 	private async getCachedStorageDepositValue(
 		contractId: string,
@@ -479,7 +479,6 @@ export class OmniBridge implements Bridge {
 
 	/**
 	 * Gets cached token address on destination chain.
-	 * Cache expires after one day using TTL cache.
 	 */
 	private async getCachedDestinationTokenAddress(
 		contractId: string,
@@ -499,5 +498,26 @@ export class OmniBridge implements Bridge {
 		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
 
 		return tokenOnDestinationNetwork;
+	}
+
+	/**
+	 * Gets cached token decimals on destination chain and on near.
+	 */
+	private async getCachedTokenDecimals(
+		omniAddress: OmniAddress,
+	): Promise<TokenDecimals> {
+		const cached = this.tokenDecimalsCache.get(omniAddress);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const tokenDecimals = await getTokenDecimals(
+			OMNI_BRIDGE_CONTRACT,
+			omniAddress,
+		);
+
+		this.tokenDecimalsCache.set(omniAddress, tokenDecimals);
+
+		return tokenDecimals;
 	}
 }
