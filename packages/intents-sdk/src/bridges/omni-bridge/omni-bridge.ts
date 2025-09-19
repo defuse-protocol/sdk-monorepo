@@ -59,7 +59,10 @@ import {
 	createWithdrawIntentPrimitive,
 	validateOmniToken,
 } from "./omni-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	MinWithdrawalAmountError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -284,7 +287,6 @@ export class OmniBridge implements Bridge {
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
 		);
-
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
 
 		assert(
@@ -310,6 +312,16 @@ export class OmniBridge implements Bridge {
 		}
 
 		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
+
+		const minAmount = getMinimumTransferableAmount(
+			decimals.origin_decimals,
+			decimals.decimals,
+		);
+
+		if (args.amount < minAmount) {
+			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
+		}
+
 		const normalisationCheckSucceeded = verifyTransferAmount(
 			// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
 			args.amount + args.feeEstimation.amount,
@@ -318,10 +330,6 @@ export class OmniBridge implements Bridge {
 			decimals.decimals,
 		);
 		if (normalisationCheckSucceeded === false) {
-			const minAmount = getMinimumTransferableAmount(
-				decimals.origin_decimals,
-				decimals.decimals,
-			);
 			throw new OmniTokenNormalisationCheckError(
 				args.assetId,
 				destTokenAddress,
