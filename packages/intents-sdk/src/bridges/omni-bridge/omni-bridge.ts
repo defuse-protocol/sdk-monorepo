@@ -51,7 +51,7 @@ import {
 import {
 	caip2ToChainKind,
 	chainKindToCaip2,
-	createWithdrawIntentPrimitive,
+	createWithdrawIntentsPrimitive,
 	validateOmniToken,
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
@@ -94,8 +94,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -172,8 +172,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -229,18 +229,20 @@ export class OmniBridge implements Bridge {
 
 		const intents: IntentPrimitive[] = [];
 
-		if (args.feeEstimation.quote !== null) {
-			intents.push({
-				intent: "token_diff",
-				diff: {
-					[args.feeEstimation.quote.defuse_asset_identifier_in]:
-						`-${args.feeEstimation.quote.amount_in}`,
-					[args.feeEstimation.quote.defuse_asset_identifier_out]:
-						args.feeEstimation.quote.amount_out,
-				},
-				referral: args.referral,
-			});
-		}
+		// if we want to take care of storage deposit fee we need several
+		// fee objects  to understand how much  args.feeEstimation.quote.amount_out is needed
+		// if (args.feeEstimation.quote !== null) {
+		// 	intents.push({
+		// 		intent: "token_diff",
+		// 		diff: {
+		// 			[args.feeEstimation.quote.defuse_asset_identifier_in]:
+		// 				`-${args.feeEstimation.quote.amount_in}`,
+		// 			[args.feeEstimation.quote.defuse_asset_identifier_out]:
+		// 				args.feeEstimation.quote.amount_out,
+		// 		},
+		// 		referral: args.referral,
+		// 	});
+		// }
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
 		assert(
@@ -248,20 +250,15 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
-		const intent = createWithdrawIntentPrimitive({
+		const withdrawalIntents: IntentPrimitive[] = createWithdrawIntentsPrimitive({
 			assetId: args.withdrawalParams.assetId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
 			omniChainKind,
-			storageDeposit: args.feeEstimation.quote
-				? BigInt(args.feeEstimation.quote.amount_out)
-				: 0n,
-			transferredTokenFee: args.feeEstimation.amount,
+			fee: args.feeEstimation.amount
 		});
 
-		intents.push(intent);
-
-		return Promise.resolve(intents);
+		return Promise.resolve(intents.concat(withdrawalIntents));
 	}
 
 	async validateWithdrawal(args: {
@@ -308,42 +305,82 @@ export class OmniBridge implements Bridge {
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
-		if (fee.transferred_token_fee === null) {
+		if (fee.native_token_fee === null) {
 			throw new TokenNotSupportedByOmniRelayerError(
 				args.withdrawalParams.assetId,
 			);
 		}
 
-		const [minStorageBalance, userStorageBalance] =
-			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		// Handles the edge case where the omni contract lacks a storage_deposit for the received token.
-		// If storage isn't already covered, we pay the required storage_deposit.
-		if (minStorageBalance <= userStorageBalance) {
-			return {
-				amount: BigInt(fee.transferred_token_fee),
-				quote: null,
-			};
-		}
+		const quote = args.withdrawalParams.assetId !== NEAR_NATIVE_ASSET_ID ?
+			await solverRelay.getQuote({
+				quoteParams: {
+					defuse_asset_identifier_in: args.withdrawalParams.assetId,
+					defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
+					exact_amount_out: fee.native_token_fee.toString(),
+					wait_ms: args.quoteOptions?.waitMs,
+				},
+				config: {
+					baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+					logBalanceSufficient: false,
+					logger: args.logger,
+				}
+			}) : null
 
-		const feeAmount = minStorageBalance - userStorageBalance;
 
-		const feeQuote = await solverRelay.getQuote({
-			quoteParams: {
-				defuse_asset_identifier_in: args.withdrawalParams.assetId,
-				defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
-				exact_amount_out: feeAmount.toString(),
-				wait_ms: args.quoteOptions?.waitMs,
-			},
-			config: {
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-				logBalanceSufficient: false,
-				logger: args.logger,
-			},
-		});
+
 		return {
-			amount: BigInt(fee.transferred_token_fee) + BigInt(feeQuote.amount_in),
-			quote: feeQuote,
+			amount: quote !== null ? BigInt(quote.amount_in) : fee.native_token_fee,
+			quote,
 		};
+		// if (fee.native_token_fee === null) {
+		// 	throw new TokenNotSupportedByOmniRelayerError(
+		// 		args.withdrawalParams.assetId,
+		// 	);
+		// }
+
+		// const [minStorageBalance, userStorageBalance] =
+		// 	await this.getCachedStorageDepositValue(assetInfo.contractId);
+
+		// const [feeQuote, storageDepositFeeQuote] = await Promise.all([
+		// 	args.withdrawalParams.assetId !== NEAR_NATIVE_ASSET_ID ?
+		// 		solverRelay.getQuote({
+		// 			quoteParams: {
+		// 				defuse_asset_identifier_in: args.withdrawalParams.assetId,
+		// 				defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
+		// 				exact_amount_out: fee.native_token_fee.toString(),
+		// 				wait_ms: args.quoteOptions?.waitMs,
+		// 			},
+		// 			config: {
+		// 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+		// 				logBalanceSufficient: false,
+		// 				logger: args.logger,
+		// 			}
+		// 		}) : null,
+		// 	// Handles the edge case where the omni contract lacks a storage_deposit for the received token.
+		// 	// If storage isn't already covered, we pay the required storage_deposit.
+		// 	minStorageBalance > userStorageBalance ?
+		// 		solverRelay.getQuote({
+		// 			quoteParams: {
+		// 				defuse_asset_identifier_in: args.withdrawalParams.assetId,
+		// 				defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
+		// 				exact_amount_out: (minStorageBalance - userStorageBalance).toString(),
+		// 				wait_ms: args.quoteOptions?.waitMs,
+		// 			},
+		// 			config: {
+		// 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+		// 				logBalanceSufficient: false,
+		// 				logger: args.logger,
+		// 			}
+		// 		}) : null,
+		// ])
+
+		// const relayerFee = feeQuote !== null ? BigInt(feeQuote.amount_in) : fee.native_token_fee
+		// const storageDepositFee = storageDepositFeeQuote !== null ? BigInt(storageDepositFeeQuote.amount_in) : 0n
+
+		// return {
+		// 	amount: relayerFee + storageDepositFee,
+		// 	quote: storageDepositFeeQuote,
+		// };
 	}
 
 	async waitForWithdrawalCompletion(args: {
