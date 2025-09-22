@@ -312,7 +312,8 @@ export class OmniBridge implements Bridge {
 		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
 		assert(
 			decimals !== null,
-			`Can't query decimals for ${destTokenAddress} from Omni Bridge contract.`,
+			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
+  Ensure the token is supported and the address is correct.`,
 		);
 		const normalisationCheckSucceeded = verifyTransferAmount(
 			// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
