@@ -792,7 +792,7 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 	});
-	it("validateWithdrawal(): blocks transfers that would result in 0 after decimal normalisation", async () => {
+	it("validateWithdrawal(): prevents transfers that normalize to zero after decimal adjustment", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 		// The NEP-141 token (token.publicailab.near) uses 18 decimals on NEAR,
 		// while its Solana equivalent uses 9 decimals.
