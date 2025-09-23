@@ -13,10 +13,12 @@ import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
+	createOmniBridgeRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
+import { OmniTokenNormalisationCheckError } from "./bridges/omni-bridge/error";
 
 const intentSigner = createIntentSignerViem(
 	privateKeyToAccount(generatePrivateKey()),
@@ -789,6 +791,32 @@ describe.concurrent("omni_bridge", () => {
 		});
 
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
+	});
+	it("validateWithdrawal(): blocks transfers that would result in 0 after decimal normalisation", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		// The NEP-141 token (token.publicailab.near) uses 18 decimals on NEAR,
+		// while its Solana equivalent uses 9 decimals.
+		// When normalizing from 18 → 9 decimals, any value < 1 * 10^9
+		// will be rounded down to zero.
+		// we must block such transfers to avoid fund loss.
+		const withdrawalParams = {
+			assetId: "nep141:token.publicailab.near",
+			amount: 999_999_999n,
+			destinationAddress: "GHmxsR3YypjSQMVgxM2btNZjeqSumefph4DCVNft7eGN",
+			feeInclusive: false,
+			routeConfig: createOmniBridgeRoute(Chains.Solana),
+		};
+
+		const feeEstimation = await sdk.estimateWithdrawalFee({
+			withdrawalParams,
+		});
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		await expect(intents).rejects.toThrow(OmniTokenNormalisationCheckError);
 	});
 });
 
