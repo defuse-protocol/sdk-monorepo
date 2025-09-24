@@ -16,7 +16,7 @@ export interface ExpirableNonce {
 
 export function generateExpirableNonce(deadline: Date): ExpirableNonce {
 	return {
-		deadline: BigInt(deadline.getTime() * 1_000_000),
+		deadline: BigInt(deadline.getTime()) * 1_000_000n,
 		nonce: crypto.getRandomValues(new Uint8Array(20)),
 	};
 }
@@ -57,7 +57,7 @@ export function isNonceExpired(
 	nonce: ExpirableNonce,
 	now: Date = new Date(),
 ): boolean {
-	const nowNs = BigInt(now.getTime() * 1_000_000);
+	const nowNs = BigInt(now.getTime()) * 1_000_000n;
 	return nowNs >= nonce.deadline;
 }
 

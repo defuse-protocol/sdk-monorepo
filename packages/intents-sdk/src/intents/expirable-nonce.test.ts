@@ -16,7 +16,7 @@ describe("expirable nonce", () => {
 		expect(typeof nonce.deadline).toBe("bigint");
 		expect(nonce.nonce).toBeInstanceOf(Uint8Array);
 		expect(nonce.nonce.length).toBe(20);
-		expect(nonce.deadline).toBe(BigInt(deadline.getTime() * 1_000_000));
+		expect(nonce.deadline).toBe(BigInt(deadline.getTime()) * 1_000_000n);
 	});
 
 	it("roundtrip encode/decode", () => {
