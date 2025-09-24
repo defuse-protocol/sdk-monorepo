@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.22.0
+
+### Minor Changes
+
+- 8849ffb: Add `retryOptions` argument to orchestrated `processWithdrawal()`.
+
 ## 0.21.0
 
 ### Minor Changes
