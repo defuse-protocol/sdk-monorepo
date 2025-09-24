@@ -17,11 +17,15 @@ import {
 	ChainKind,
 	type OmniAddress,
 	OmniBridgeAPI,
+	type TokenDecimals,
 	getBridgedToken,
 	getChain,
+	getMinimumTransferableAmount,
+	getTokenDecimals,
 	isEvmChain,
 	omniAddress,
 	parseOriginChain,
+	verifyTransferAmount,
 } from "omni-bridge-sdk";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
@@ -39,6 +43,7 @@ import type {
 	WithdrawalParams,
 } from "../../shared-types";
 import {
+	OmniTokenNormalisationCheckError,
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
@@ -70,6 +75,9 @@ export class OmniBridge implements Bridge {
 		string,
 		OmniAddress | null
 	>({ ttl: 10800000 }); // 10800000 - 3 hours
+	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
+		ttl: 10800000,
+	}); // 10800000 - 3 hours
 
 	constructor({
 		env,
@@ -276,6 +284,56 @@ export class OmniBridge implements Bridge {
 			args.feeEstimation.amount > 0n,
 			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
 		);
+
+		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
+
+		assert(
+			assetInfo !== null,
+			`Asset ${args.assetId} is not supported by Omni Bridge`,
+		);
+
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
+		);
+
+		const destTokenAddress = await this.getCachedDestinationTokenAddress(
+			assetInfo.contractId,
+			omniChainKind,
+		);
+		if (destTokenAddress === null) {
+			throw new TokenNotFoundInDestinationChainError(
+				args.assetId,
+				assetInfo.blockchain,
+			);
+		}
+
+		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
+		assert(
+			decimals !== null,
+			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
+  Ensure the token is supported and the address is correct.`,
+		);
+		const normalisationCheckSucceeded = verifyTransferAmount(
+			// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
+			args.amount + args.feeEstimation.amount,
+			args.feeEstimation.amount,
+			decimals.origin_decimals,
+			decimals.decimals,
+		);
+		if (normalisationCheckSucceeded === false) {
+			const minAmount = getMinimumTransferableAmount(
+				decimals.origin_decimals,
+				decimals.decimals,
+			);
+			throw new OmniTokenNormalisationCheckError(
+				args.assetId,
+				destTokenAddress,
+				minAmount,
+				args.feeEstimation.amount,
+			);
+		}
 		return;
 	}
 
@@ -399,7 +457,6 @@ export class OmniBridge implements Bridge {
 
 	/**
 	 * Gets storage deposit for a token to avoid frequent RPC calls.
-	 * Cache expires after one day using TTL cache.
 	 */
 	private async getCachedStorageDepositValue(
 		contractId: string,
@@ -428,7 +485,6 @@ export class OmniBridge implements Bridge {
 
 	/**
 	 * Gets cached token address on destination chain.
-	 * Cache expires after one day using TTL cache.
 	 */
 	private async getCachedDestinationTokenAddress(
 		contractId: string,
@@ -448,5 +504,26 @@ export class OmniBridge implements Bridge {
 		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
 
 		return tokenOnDestinationNetwork;
+	}
+
+	/**
+	 * Gets cached token decimals on destination chain and on near.
+	 */
+	private async getCachedTokenDecimals(
+		omniAddress: OmniAddress,
+	): Promise<TokenDecimals | null> {
+		const cached = this.tokenDecimalsCache.get(omniAddress);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const tokenDecimals = await getTokenDecimals(
+			OMNI_BRIDGE_CONTRACT,
+			omniAddress,
+		);
+
+		this.tokenDecimalsCache.set(omniAddress, tokenDecimals);
+
+		return tokenDecimals;
 	}
 }
