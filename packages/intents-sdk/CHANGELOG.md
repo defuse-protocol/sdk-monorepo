@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.21.0
+
+### Minor Changes
+
+- 5c87173: Add normalisation check
+
 ## 0.20.2
 
 ### Patch Changes
