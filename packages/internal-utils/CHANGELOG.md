@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.11.0
+
+### Minor Changes
+
+- b56e8c8: Allow overriding preset environment config using `configureSDK()`.
+
 ## 0.10.0
 
 ### Minor Changes
