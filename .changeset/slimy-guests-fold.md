@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Make `retryOptions` configurable in orchestrated `processWithdrawal()`.
+Add `retryOptions` argument to orchestrated `processWithdrawal()`.
