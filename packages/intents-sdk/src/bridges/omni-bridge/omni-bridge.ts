@@ -247,20 +247,19 @@ export class OmniBridge implements Bridge {
 				? minStorageBalance - currentStorageBalance
 				: 0n;
 
-		const intents: IntentPrimitive[] =
-			args.feeEstimation.quote === null
-				? []
-				: [
-						{
-							intent: "token_diff",
-							diff: {
-								[args.feeEstimation.quote.defuse_asset_identifier_in]:
-									`-${args.feeEstimation.quote.amount_in}`,
-								[args.feeEstimation.quote.defuse_asset_identifier_out]:
-									args.feeEstimation.quote.amount_out,
-							},
-						},
-					];
+		const intents: IntentPrimitive[] = [];
+
+		if (args.feeEstimation.quote !== null) {
+			intents.push({
+				intent: "token_diff",
+				diff: {
+					[args.feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${args.feeEstimation.quote.amount_in}`,
+					[args.feeEstimation.quote.defuse_asset_identifier_out]:
+						args.feeEstimation.quote.amount_out,
+				},
+			});
+		}
 
 		intents.push(
 			...createWithdrawIntentsPrimitive({
