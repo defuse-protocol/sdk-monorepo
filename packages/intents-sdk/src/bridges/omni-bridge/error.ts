@@ -97,11 +97,11 @@ export type IntentsNearOmniAvailableBalanceTooLowErrorType =
 		name: "IntentsNearOmniAvailableBalanceTooLowError";
 	};
 export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
-	constructor() {
+	constructor(public balance: string) {
 		super(
-			`The available Omni storage balance for intents.near is too low to complete this transaction safely. Please top up the balance before retrying.`,
+			`The available Omni storage balance for intents.near is ${balance}, which is too low to complete this transaction safely. Please top up the balance before retrying.`,
 			{
-				metaMessages: [],
+				metaMessages: [`Balance: ${balance}`],
 				name: "IntentsNearOmniAvailableBalanceTooLowError",
 			},
 		);

@@ -354,7 +354,9 @@ export class OmniBridge implements Bridge {
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents.near account instead of the original withdrawing account.
 		if (BigInt(storageBalance.available) <= 500000000000000000000000n) {
-			throw new IntentsNearOmniAvailableBalanceTooLowError();
+			throw new IntentsNearOmniAvailableBalanceTooLowError(
+				storageBalance.available,
+			);
 		}
 
 		return;
