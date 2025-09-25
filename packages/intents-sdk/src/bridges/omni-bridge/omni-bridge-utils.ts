@@ -9,6 +9,8 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
+import type { providers } from "near-api-js";
+import type { CodeResult } from "near-api-js/lib/providers/provider";
 
 export function createWithdrawIntentsPrimitive(params: {
 	assetId: string;
@@ -101,4 +103,23 @@ export function validateOmniToken(nearAddress: string): boolean {
 	// omni bridge function allows testnet tokens, we should not let them pass since we work only with mainnet ones
 	if (nearAddress.endsWith(".testnet")) return false;
 	return isBridgeToken(nearAddress);
+}
+
+export async function getIntentsOmniStorageBalance(
+	nearProvider: providers.Provider,
+): Promise<{
+	total: string;
+	available: string;
+}> {
+	const storageBalanceRequest = await nearProvider.query<CodeResult>({
+		request_type: "call_function",
+		account_id: OMNI_BRIDGE_CONTRACT,
+		method_name: "storage_balance_of",
+		args_base64: Buffer.from(
+			JSON.stringify({ account_id: "intents.near" }),
+		).toString("base64"),
+		finality: "optimistic",
+	});
+
+	return JSON.parse(Buffer.from(storageBalanceRequest.result).toString());
 }

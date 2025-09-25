@@ -48,6 +48,7 @@ import {
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
 	FailedToFetchFeeError,
+	IntentsNearOmniAvailableBalanceTooLowError,
 } from "./error";
 import {
 	NEAR_NATIVE_ASSET_ID,
@@ -57,6 +58,7 @@ import {
 	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentsPrimitive,
+	getIntentsOmniStorageBalance,
 	validateOmniToken,
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
@@ -344,6 +346,16 @@ export class OmniBridge implements Bridge {
 				args.feeEstimation.amount,
 			);
 		}
+
+		const storageBalance = await getIntentsOmniStorageBalance(
+			this.nearProvider,
+		);
+		// check if available storage balance greated than 0.5 near
+		// if less transfer should not go through because the funds will be refunded to intents.near account
+		if (BigInt(storageBalance.available) <= 500000000000000000000000n) {
+			throw new IntentsNearOmniAvailableBalanceTooLowError();
+		}
+
 		return;
 	}
 

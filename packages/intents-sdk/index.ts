@@ -123,6 +123,8 @@ export {
 	type TokenNotFoundInDestinationChainErrorType,
 	OmniTokenNormalisationCheckError,
 	type OmniTokenNormalisationCheckErrorType,
+	IntentsNearOmniAvailableBalanceTooLowError,
+	type IntentsNearOmniAvailableBalanceTooLowErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors
