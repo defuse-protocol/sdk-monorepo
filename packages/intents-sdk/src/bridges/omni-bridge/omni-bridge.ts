@@ -350,8 +350,9 @@ export class OmniBridge implements Bridge {
 		const storageBalance = await getIntentsOmniStorageBalance(
 			this.nearProvider,
 		);
-		// check if available storage balance greated than 0.5 near
-		// if less transfer should not go through because the funds will be refunded to intents.near account
+		// Ensure available storage balance is > 0.5 NEAR.
+		// If it’s lower, block the transfer—otherwise the funds will be refunded
+		// to the intents.near account instead of the original withdrawing account.
 		if (BigInt(storageBalance.available) <= 500000000000000000000000n) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError();
 		}
