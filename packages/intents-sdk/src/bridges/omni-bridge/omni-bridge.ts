@@ -60,6 +60,7 @@ import {
 	validateOmniToken,
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
+import { LRUCache } from "lru-cache";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -67,10 +68,10 @@ export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
-	private storageDepositCache = new TTLCache<
+	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ ttl: 10800000 }); // 10800000 - 3 hours
+	>({ max: 100 });
 	private destinationChainAddressCache = new TTLCache<
 		string,
 		OmniAddress | null
@@ -239,11 +240,11 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-		const [minStorageBalance, userStorageBalance] =
+		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
 		const storageDepositAmount =
-			minStorageBalance > userStorageBalance
-				? minStorageBalance - userStorageBalance
+			minStorageBalance > currentStorageBalance
+				? minStorageBalance - currentStorageBalance
 				: 0n;
 
 		const intents: IntentPrimitive[] =
@@ -380,12 +381,12 @@ export class OmniBridge implements Bridge {
 			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
 		}
 
-		const [minStorageBalance, userStorageBalance] =
+		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
 		const totalAmountToQuote =
 			fee.native_token_fee +
-			(minStorageBalance > userStorageBalance
-				? minStorageBalance - userStorageBalance
+			(minStorageBalance > currentStorageBalance
+				? minStorageBalance - currentStorageBalance
 				: 0n);
 		// withdraw of nep141:wrap.near
 		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
@@ -478,7 +479,7 @@ export class OmniBridge implements Bridge {
 			return cached;
 		}
 
-		const data = await Promise.all([
+		const [minStorageBalance, storageDepositBalance] = await Promise.all([
 			getNearNep141MinStorageBalance({
 				contractId: contractId,
 				nearProvider: this.nearProvider,
@@ -490,9 +491,14 @@ export class OmniBridge implements Bridge {
 			}),
 		]);
 
-		this.storageDepositCache.set(contractId, data);
+		if (storageDepositBalance >= minStorageBalance) {
+			this.storageDepositCache.set(contractId, [
+				minStorageBalance,
+				storageDepositBalance,
+			]);
+		}
 
-		return data;
+		return [minStorageBalance, storageDepositBalance];
 	}
 
 	/**
