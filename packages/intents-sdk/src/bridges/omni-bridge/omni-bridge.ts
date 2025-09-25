@@ -18,10 +18,8 @@ import {
 	type OmniAddress,
 	OmniBridgeAPI,
 	type TokenDecimals,
-	getBridgedToken,
 	getChain,
 	getMinimumTransferableAmount,
-	getTokenDecimals,
 	isEvmChain,
 	omniAddress,
 	parseOriginChain,
@@ -58,7 +56,9 @@ import {
 	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentsPrimitive,
+	getBridgedToken,
 	getIntentsOmniStorageBalance,
+	getTokenDecimals,
 	validateOmniToken,
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
@@ -529,6 +529,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const tokenOnDestinationNetwork = await getBridgedToken(
+			this.nearProvider,
 			omniAddress(ChainKind.Near, contractId),
 			omniChainKind,
 		);
@@ -550,7 +551,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const tokenDecimals = await getTokenDecimals(
-			OMNI_BRIDGE_CONTRACT,
+			this.nearProvider,
 			omniAddress,
 		);
 
