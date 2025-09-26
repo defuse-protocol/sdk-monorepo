@@ -19,6 +19,11 @@ import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
 import { OmniTokenNormalisationCheckError } from "./bridges/omni-bridge/error";
+import {
+	calculateStorageAccountId,
+	ChainKind,
+	omniAddress,
+} from "omni-bridge-sdk";
 
 const intentSigner = createIntentSignerViem(
 	privateKeyToAccount(generatePrivateKey()),
@@ -658,6 +663,31 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(fee).resolves.toEqual({
 			amount: expect.any(BigInt),
+			quote: {
+				defuse_asset_identifier_in: "nep141:eth.bridge.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: expect.any(String),
+				amount_out: expect.any(String),
+				expiration_time: expect.any(String),
+				quote_hash: expect.any(String),
+			},
+		});
+	});
+	it("estimateWithdrawalFee(): should return fee without quote for withdrawal of nep141:wrap.near", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:wrap.near",
+				amount: 1000000000000000000n,
+				destinationAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+				feeInclusive: false,
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			},
+		});
+
+		await expect(fee).resolves.toEqual({
+			amount: expect.any(BigInt),
 			quote: null,
 		});
 	});
@@ -670,40 +700,31 @@ describe.concurrent("omni_bridge", () => {
 			destinationAddress: zeroAddress,
 			feeInclusive: false,
 		};
-		const feeEstimation = await sdk.estimateWithdrawalFee({
-			withdrawalParams,
-		});
 
-		const intents = sdk.createWithdrawalIntents({
-			withdrawalParams,
-			feeEstimation,
-		});
-
-		await expect(intents).resolves.toEqual([
-			{
-				intent: "ft_withdraw",
-				token: "eth.bridge.near",
-				receiver_id: OMNI_BRIDGE_CONTRACT,
-				amount: String(withdrawalParams.amount + feeEstimation.amount),
-				storage_deposit: null,
-				msg: JSON.stringify({
-					recipient: `eth:${zeroAddress}`,
-					fee: feeEstimation.amount.toString(),
-					native_token_fee: "0",
-				}),
+		const feeEstimation = {
+			amount: 22414784010685n,
+			quote: {
+				defuse_asset_identifier_in: "nep141:eth.bridge.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "22414784010685",
+				amount_out: "32692131726749337649152",
+				expiration_time: "2025-09-26T06:41:05.827Z",
+				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
 			},
-		]);
-	});
-	it("createWithdrawalIntents(): returns intents array with feeInclusive = true", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
-		const withdrawalParams = {
-			assetId: "nep141:eth.bridge.near",
-			amount: 1000000000000000000n,
-			destinationAddress: zeroAddress,
-			feeInclusive: true,
 		};
-		const feeEstimation = await sdk.estimateWithdrawalFee({
-			withdrawalParams,
+
+		const recipient = omniAddress(ChainKind.Eth, zeroAddress);
+		const actualAmount = withdrawalParams.amount;
+		const implicitAccount = calculateStorageAccountId({
+			token: "near:eth.bridge.near",
+			amount: actualAmount,
+			recipient,
+			fee: {
+				fee: 0n,
+				native_fee: BigInt(feeEstimation.quote.amount_out),
+			},
+			sender: "near:intents.near",
+			msg: "",
 		});
 
 		const intents = sdk.createWithdrawalIntents({
@@ -713,23 +734,36 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(intents).resolves.toEqual([
 			{
+				intent: "token_diff",
+				diff: {
+					[feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${feeEstimation.quote.amount_in}`,
+					[feeEstimation.quote.defuse_asset_identifier_out]:
+						feeEstimation.quote.amount_out,
+				},
+			},
+			{
+				account_id: implicitAccount,
+				amount: feeEstimation.quote.amount_out,
+				contract_id: OMNI_BRIDGE_CONTRACT,
+				intent: "storage_deposit",
+			},
+			{
 				intent: "ft_withdraw",
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
-				amount: withdrawalParams.amount.toString(),
+				amount: actualAmount.toString(),
 				storage_deposit: null,
 				msg: JSON.stringify({
-					recipient: `eth:${zeroAddress}`,
-					fee: feeEstimation.amount.toString(),
-					native_token_fee: "0",
+					recipient,
+					fee: "0",
+					native_token_fee: feeEstimation.quote.amount_out,
 				}),
 			},
 		]);
 	});
-
-	it("createWithdrawalIntents(): returns intents array with storage swap", async () => {
+	it("createWithdrawalIntents(): returns valid intents array with feeInclusive = true", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
-
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
@@ -738,16 +772,30 @@ describe.concurrent("omni_bridge", () => {
 		};
 
 		const feeEstimation = {
-			amount: 356349421707378n,
+			amount: 22414784010685n,
 			quote: {
 				defuse_asset_identifier_in: "nep141:eth.bridge.near",
 				defuse_asset_identifier_out: "nep141:wrap.near",
-				amount_in: "1000",
-				amount_out: "1250000000000000000000",
-				expiration_time: "2025-07-22T03:52:23.747Z",
-				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+				amount_in: "22414784010685",
+				amount_out: "32692131726749337649152",
+				expiration_time: "2025-09-26T06:41:05.827Z",
+				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
 			},
 		};
+
+		const recipient = omniAddress(ChainKind.Eth, zeroAddress);
+		const actualAmount = withdrawalParams.amount - feeEstimation.amount;
+		const implicitAccount = calculateStorageAccountId({
+			token: "near:eth.bridge.near",
+			amount: actualAmount,
+			recipient,
+			fee: {
+				fee: 0n,
+				native_fee: BigInt(feeEstimation.quote.amount_out),
+			},
+			sender: "near:intents.near",
+			msg: "",
+		});
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,
@@ -756,23 +804,30 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(intents).resolves.toEqual([
 			{
-				diff: {
-					"nep141:eth.bridge.near": "-1000",
-					"nep141:wrap.near": "1250000000000000000000",
-				},
 				intent: "token_diff",
-				referral: "",
+				diff: {
+					[feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${feeEstimation.quote.amount_in}`,
+					[feeEstimation.quote.defuse_asset_identifier_out]:
+						feeEstimation.quote.amount_out,
+				},
+			},
+			{
+				account_id: implicitAccount,
+				amount: feeEstimation.quote.amount_out,
+				contract_id: OMNI_BRIDGE_CONTRACT,
+				intent: "storage_deposit",
 			},
 			{
 				intent: "ft_withdraw",
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
-				amount: withdrawalParams.amount.toString(),
-				storage_deposit: "1250000000000000000000",
+				amount: actualAmount.toString(),
+				storage_deposit: null,
 				msg: JSON.stringify({
-					recipient: `eth:${zeroAddress}`,
-					fee: feeEstimation.amount.toString(),
-					native_token_fee: "0",
+					recipient,
+					fee: "0",
+					native_token_fee: feeEstimation.quote.amount_out,
 				}),
 			},
 		]);
@@ -807,9 +862,17 @@ describe.concurrent("omni_bridge", () => {
 			routeConfig: createOmniBridgeRoute(Chains.Solana),
 		};
 
-		const feeEstimation = await sdk.estimateWithdrawalFee({
-			withdrawalParams,
-		});
+		const feeEstimation = {
+			amount: 9510172421483097730n,
+			quote: {
+				defuse_asset_identifier_in: "nep141:token.publicailab.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "9510172421483097730",
+				amount_out: "195753412200812731432960",
+				expiration_time: "2025-09-26T07:22:24.708Z",
+				quote_hash: "BTUmMusz94gpRVaVanpoM1gcyjS2rT3iDpwoyqrSQEG5",
+			},
+		};
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,

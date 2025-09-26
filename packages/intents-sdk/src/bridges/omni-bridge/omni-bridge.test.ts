@@ -5,8 +5,13 @@ import { createOmniBridgeRoute } from "../../lib/route-config-factory";
 import { Chains } from "../../lib/caip2";
 import { UnsupportedAssetIdError } from "../../classes/errors";
 import { TokenNotFoundInDestinationChainError } from "./error";
+import {
+	nearFailoverRpcProvider,
+	PUBLIC_NEAR_RPC_URLS,
+} from "@defuse-protocol/internal-utils";
 
 describe("OmniBridge", () => {
+	const nearProvider = nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS });
 	describe("validateOmniToken() works for valid token formats", () => {
 		it.each([
 			"eth.bridge.near",
@@ -42,7 +47,7 @@ describe("OmniBridge", () => {
 		])("supports basic omni tokens", async (assetId) => {
 			const bridge = new OmniBridge({
 				env: "production",
-				nearProvider: {} as any,
+				nearProvider,
 			});
 
 			await expect(bridge.supports({ assetId: assetId })).resolves.toBe(true);
@@ -58,7 +63,7 @@ describe("OmniBridge", () => {
 			async ({ assetId, routeConfig }) => {
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				await expect(bridge.supports({ assetId, routeConfig })).resolves.toBe(
@@ -77,7 +82,7 @@ describe("OmniBridge", () => {
 			async ({ assetId, routeConfig }) => {
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
@@ -96,7 +101,7 @@ describe("OmniBridge", () => {
 			async ({ assetId, routeConfig }) => {
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
@@ -115,7 +120,7 @@ describe("OmniBridge", () => {
 			async (assetId) => {
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				await expect(bridge.supports({ assetId })).resolves.toBe(false);
@@ -128,7 +133,7 @@ describe("OmniBridge", () => {
 		])("doesn't support non omni tokens", async (assetId) => {
 			const bridge = new OmniBridge({
 				env: "production",
-				nearProvider: {} as any,
+				nearProvider,
 			});
 
 			await expect(bridge.supports({ assetId: assetId })).resolves.toBe(false);
@@ -148,7 +153,7 @@ describe("OmniBridge", () => {
 			async ({ assetId, routeConfig }) => {
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
@@ -167,7 +172,7 @@ describe("OmniBridge", () => {
 			async ({ assetId, routeConfig }) => {
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
