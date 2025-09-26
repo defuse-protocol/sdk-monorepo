@@ -445,13 +445,10 @@ export class OmniBridge implements Bridge {
 				}
 
 				const transfer = (
-					await this.omniBridgeAPI.findOmniTransfers({
-						transaction_id: args.tx.hash,
-						offset: args.index,
-						limit: 1,
+					await this.omniBridgeAPI.getTransfer({
+						transactionHash: args.tx.hash,
 					})
-				)[0];
-
+				)[args.index];
 				if (transfer == null || transfer.transfer_message == null)
 					throw new OmniTransferNotFoundError(args.tx.hash);
 				const destinationChain = getChain(
