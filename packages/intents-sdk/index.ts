@@ -117,12 +117,14 @@ export {
 	type OmniTransferNotFoundErrorType,
 	OmniTransferDestinationChainHashNotFoundError,
 	type OmniTransferDestinationChainHashNotFoundErrorType,
-	TokenNotSupportedByOmniRelayerError,
-	type TokenNotSupportedByOmniRelayerErrorType,
+	FailedToFetchFeeError,
+	type FailedToFetchFeeErrorType,
 	TokenNotFoundInDestinationChainError,
 	type TokenNotFoundInDestinationChainErrorType,
 	OmniTokenNormalisationCheckError,
 	type OmniTokenNormalisationCheckErrorType,
+	IntentsNearOmniAvailableBalanceTooLowError,
+	type IntentsNearOmniAvailableBalanceTooLowErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors

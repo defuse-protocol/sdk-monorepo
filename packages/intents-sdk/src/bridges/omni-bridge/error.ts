@@ -54,15 +54,14 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 	}
 }
 
-export type TokenNotSupportedByOmniRelayerErrorType =
-	TokenNotSupportedByOmniRelayerError & {
-		name: "TokenNotSupportedByOmniRelayerError";
-	};
-export class TokenNotSupportedByOmniRelayerError extends BaseError {
+export type FailedToFetchFeeErrorType = FailedToFetchFeeError & {
+	name: "FailedToFetchFeeError";
+};
+export class FailedToFetchFeeError extends BaseError {
 	constructor(public token: string) {
-		super(`Omni Relayer doesn't accept fee in the transferred token ${token}`, {
+		super(`Failed to fetch fee data for ${token}`, {
 			metaMessages: [`Token: ${token}`],
-			name: "TokenNotSupportedByOmniRelayerError",
+			name: "FailedToFetchFeeError",
 		});
 	}
 }
@@ -88,6 +87,22 @@ export class OmniTokenNormalisationCheckError extends BaseError {
 					`fee: ${fee}`,
 				],
 				name: "OmniTokenNormalisationCheckError",
+			},
+		);
+	}
+}
+
+export type IntentsNearOmniAvailableBalanceTooLowErrorType =
+	IntentsNearOmniAvailableBalanceTooLowError & {
+		name: "IntentsNearOmniAvailableBalanceTooLowError";
+	};
+export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
+	constructor(public balance: string) {
+		super(
+			`The available Omni storage balance for intents.near is ${balance}, which is too low to complete this transaction safely. The balance needs to be topped up before retrying.`,
+			{
+				metaMessages: [`Balance: ${balance}`],
+				name: "IntentsNearOmniAvailableBalanceTooLowError",
 			},
 		);
 	}
