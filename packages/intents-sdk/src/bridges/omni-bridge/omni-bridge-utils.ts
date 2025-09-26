@@ -129,8 +129,7 @@ export async function getIntentsOmniStorageBalance(
 
 /**
  * Converts a token address from one chain to its equivalent on another chain.
- * For non-NEAR to non-NEAR conversions, the process goes through NEAR as an intermediary.
- * @param nearProvider near provider used for querying the contract
+ * @param nearProvider Near provider used for querying the contract
  * @param tokenAddress The source token address to convert
  * @param destinationChain The target chain for the conversion
  * @returns Promise resolving to the equivalent token address on the destination chain
@@ -139,9 +138,6 @@ export async function getIntentsOmniStorageBalance(
  * @example
  * // Convert NEAR token to ETH
  * const ethAddress = await getBridgedToken("near:token123", ChainKind.Ethereum)
- *
- * // Convert ETH token to Solana (goes through NEAR)
- * const solAddress = await getBridgedToken("eth:0x123...", ChainKind.Sol)
  */
 export async function getBridgedToken(
 	nearProvider: providers.Provider,
@@ -165,7 +161,7 @@ export async function getBridgedToken(
 
 /**
  * Gets token decimals from the NEAR contract
- * @param nearProvider near provider used for querying the contract
+ * @param nearProvider Near provider used for querying the contract
  * @param tokenAddress The Omni token address to check
  * @returns Promise resolving to the token's decimal information
  */

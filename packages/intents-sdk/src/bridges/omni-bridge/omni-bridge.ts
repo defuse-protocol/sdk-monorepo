@@ -493,7 +493,7 @@ export class OmniBridge implements Bridge {
 			return cached;
 		}
 
-		const [minStorageBalance, storageDepositBalance] = await Promise.all([
+		const result = await Promise.all([
 			getNearNep141MinStorageBalance({
 				contractId: contractId,
 				nearProvider: this.nearProvider,
@@ -505,14 +505,11 @@ export class OmniBridge implements Bridge {
 			}),
 		]);
 
-		if (storageDepositBalance >= minStorageBalance) {
-			this.storageDepositCache.set(contractId, [
-				minStorageBalance,
-				storageDepositBalance,
-			]);
+		if (result[1] >= result[0]) {
+			this.storageDepositCache.set(contractId, result);
 		}
 
-		return [minStorageBalance, storageDepositBalance];
+		return result;
 	}
 
 	/**
