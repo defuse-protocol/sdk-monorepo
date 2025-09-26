@@ -693,7 +693,8 @@ describe.concurrent("omni_bridge", () => {
 	});
 
 	it("createWithdrawalIntents(): returns intents array with feeInclusive = false", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		const referral = "";
+		const sdk = new IntentsSDK({ referral, intentSigner });
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
@@ -741,6 +742,7 @@ describe.concurrent("omni_bridge", () => {
 					[feeEstimation.quote.defuse_asset_identifier_out]:
 						feeEstimation.quote.amount_out,
 				},
+				referral,
 			},
 			{
 				account_id: implicitAccount,
@@ -763,7 +765,8 @@ describe.concurrent("omni_bridge", () => {
 		]);
 	});
 	it("createWithdrawalIntents(): returns valid intents array with feeInclusive = true", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		const referral = "";
+		const sdk = new IntentsSDK({ referral, intentSigner });
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
@@ -811,6 +814,7 @@ describe.concurrent("omni_bridge", () => {
 					[feeEstimation.quote.defuse_asset_identifier_out]:
 						feeEstimation.quote.amount_out,
 				},
+				referral,
 			},
 			{
 				account_id: implicitAccount,

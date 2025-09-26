@@ -260,6 +260,7 @@ export class OmniBridge implements Bridge {
 					[args.feeEstimation.quote.defuse_asset_identifier_out]:
 						args.feeEstimation.quote.amount_out,
 				},
+				referral: args.referral,
 			});
 		}
 
