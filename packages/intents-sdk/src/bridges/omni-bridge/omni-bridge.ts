@@ -402,7 +402,9 @@ export class OmniBridge implements Bridge {
 			fee.native_token_fee +
 			(minStorageBalance > currentStorageBalance
 				? minStorageBalance - currentStorageBalance
-				: 0n);
+				: 0n) +
+			1410000000000000000000n +
+			4040000000000000000000n;
 		// withdraw of nep141:wrap.near
 		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
