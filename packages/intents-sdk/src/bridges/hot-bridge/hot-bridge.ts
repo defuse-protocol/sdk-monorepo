@@ -9,6 +9,7 @@ import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
 import {
+	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
 	UnsupportedDestinationMemoError,
@@ -42,6 +43,7 @@ import {
 } from "./hot-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -57,22 +59,37 @@ export class HotBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+		params: Pick<
+			WithdrawalParams,
+			"assetId" | "routeConfig" | "destinationAddress"
+		>,
 	): Promise<boolean> {
 		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
 		}
 
 		const assetInfo = this.parseAssetId(params.assetId);
-		const isValid = assetInfo != null;
 
-		if (!isValid && params.routeConfig != null) {
+		if (assetInfo === null && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-		return isValid;
+
+		if (assetInfo === null) {
+			return false;
+		}
+
+		if (validateAddress(params.destinationAddress, assetInfo.blockchain)) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				BridgeNameEnum.Hot,
+				assetInfo.blockchain,
+			);
+		}
+
+		return true;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {

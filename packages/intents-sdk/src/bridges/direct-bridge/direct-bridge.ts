@@ -25,9 +25,13 @@ import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -46,22 +50,37 @@ export class DirectBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+		params: Pick<
+			WithdrawalParams,
+			"assetId" | "routeConfig" | "destinationAddress"
+		>,
 	): Promise<boolean> {
 		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
 		}
 
 		const assetInfo = this.parseAssetId(params.assetId);
-		const isValid = assetInfo != null;
 
-		if (!isValid && params.routeConfig != null) {
+		if (assetInfo === null && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-		return isValid;
+
+		if (assetInfo === null) {
+			return false;
+		}
+
+		if (validateAddress(params.destinationAddress, Chains.Near)) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				"direct-bridge",
+				Chains.Near,
+			);
+		}
+
+		return true;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {

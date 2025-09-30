@@ -9,6 +9,9 @@ import type {
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { validateAddress } from "../../lib/validateAddress";
+import { Chains } from "../../lib/caip2";
+import { InvalidDestinationAddressForWithdrawalError } from "../../classes/errors";
 
 export class IntentsBridge implements Bridge {
 	is(routeConfig: RouteConfig) {
@@ -16,11 +19,20 @@ export class IntentsBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "routeConfig">,
+		params: Pick<WithdrawalParams, "routeConfig" | "destinationAddress">,
 	): Promise<boolean> {
 		if ("routeConfig" in params && params.routeConfig != null) {
 			return this.is(params.routeConfig);
 		}
+
+		if (validateAddress(params.destinationAddress, Chains.Near)) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				"intents-bridge",
+				"intents",
+			);
+		}
+
 		return false;
 	}
 

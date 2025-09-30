@@ -62,8 +62,12 @@ import {
 	getAccountOmniStorageBalance,
 	getTokenDecimals,
 } from "./omni-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
 import { LRUCache } from "lru-cache";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
+import { validateAddress } from "../../lib/validateAddress";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -97,7 +101,10 @@ export class OmniBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+		params: Pick<
+			WithdrawalParams,
+			"assetId" | "routeConfig" | "destinationAddress"
+		>,
 	): Promise<boolean> {
 		// Non omni bridge route specified, abort.
 		if (params.routeConfig && !this.is(params.routeConfig)) {
@@ -106,8 +113,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -176,6 +183,14 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
+		if (validateAddress(params.destinationAddress, caip2Chain)) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				BridgeNameEnum.Omni,
+				caip2Chain,
+			);
+		}
+
 		return true;
 	}
 
@@ -184,8 +199,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 

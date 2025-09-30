@@ -23,8 +23,13 @@ import {
 	withdrawalParamsInvariant,
 } from "./aurora-engine-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
+import { Chains } from "../../lib/caip2";
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -43,22 +48,33 @@ export class AuroraEngineBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+		params: Pick<
+			WithdrawalParams,
+			"assetId" | "routeConfig" | "destinationAddress"
+		>,
 	): Promise<boolean> {
 		if (params.routeConfig == null || !this.is(params.routeConfig)) {
 			return false;
 		}
 
 		const assetInfo = parseDefuseAssetId(params.assetId);
-		const isValid = assetInfo.standard === "nep141";
 
-		if (!isValid) {
+		if (assetInfo.standard !== "nep141") {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-		return isValid;
+
+		if (validateAddress(params.destinationAddress, Chains.Ethereum)) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				"virtual-chain-bridge",
+				"virtual chain",
+			);
+		}
+
+		return true;
 	}
 
 	parseAssetId(): null {
