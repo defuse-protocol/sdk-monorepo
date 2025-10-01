@@ -49,6 +49,7 @@ import {
 	IntentsNearOmniAvailableBalanceTooLowError,
 } from "./error";
 import {
+	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 } from "./omni-bridge-constants";
@@ -73,14 +74,14 @@ export class OmniBridge implements Bridge {
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ max: 100 });
+	>({ max: 100, ttl: 3600000 });
 	private destinationChainAddressCache = new TTLCache<
 		string,
 		OmniAddress | null
-	>({ ttl: 10800000 }); // 10800000 - 3 hours
+	>({ ttl: 3600000 });
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
-		ttl: 10800000,
-	}); // 10800000 - 3 hours
+		ttl: 3600000,
+	});
 
 	constructor({
 		env,
@@ -105,8 +106,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -183,8 +184,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -347,7 +348,9 @@ export class OmniBridge implements Bridge {
 		// Ensure available storage balance is > 0.5 NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents.near account instead of the original withdrawing account.
-		if (intentsNearStorageBalance <= 500000000000000000000000n) {
+		if (
+			intentsNearStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
+		) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError(
 				intentsNearStorageBalance.toString(),
 			);
