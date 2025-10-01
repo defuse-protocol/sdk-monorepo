@@ -46,12 +46,12 @@ describe("Contract query utils", () => {
 	const nearProvider = nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS });
 	describe("getIntentsOmniStorageBalance()", () => {
 		it("fetches omni storage balance and parses it successfully", async () => {
-			await expect(
-				await getIntentsOmniStorageBalance(nearProvider),
-			).resolves.toEqual({
-				total: expect.any(String),
-				available: expect.any(String),
-			});
+			await expect(getIntentsOmniStorageBalance(nearProvider)).resolves.toEqual(
+				{
+					total: expect.any(String),
+					available: expect.any(String),
+				},
+			);
 		});
 	});
 	describe("getBridgedToken()", () => {
@@ -116,7 +116,7 @@ describe("Contract query utils", () => {
 	describe("getTokenDecimals()", () => {
 		it("resolves tokens decimals from NEAR to SOL directly", async () => {
 			await expect(
-				await getTokenDecimals(
+				getTokenDecimals(
 					nearProvider,
 					omniAddress(
 						ChainKind.Sol,
@@ -130,7 +130,7 @@ describe("Contract query utils", () => {
 		});
 		it("returns null for non existing token", async () => {
 			await expect(
-				await getTokenDecimals(
+				getTokenDecimals(
 					nearProvider,
 					omniAddress(
 						ChainKind.Sol,
