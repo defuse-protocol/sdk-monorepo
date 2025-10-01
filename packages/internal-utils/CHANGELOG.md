@@ -1,5 +1,13 @@
 # @defuse-protocol/internal-utils
 
+## 0.11.1
+
+### Patch Changes
+
+- e5d9a9c: Do not bundle into single file. Use `tsdown` for transpiling.
+- Updated dependencies [e5d9a9c]
+  - @defuse-protocol/contract-types@0.1.1
+
 ## 0.11.0
 
 ### Minor Changes
