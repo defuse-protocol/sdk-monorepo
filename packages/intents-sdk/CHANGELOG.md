@@ -1,5 +1,14 @@
 # @defuse-protocol/intents-sdk
 
+## 0.22.2
+
+### Patch Changes
+
+- e5d9a9c: Do not bundle into single file. Use `tsdown` for transpiling.
+- Updated dependencies [e5d9a9c]
+  - @defuse-protocol/contract-types@0.1.1
+  - @defuse-protocol/internal-utils@0.11.1
+
 ## 0.22.1
 
 ### Patch Changes
