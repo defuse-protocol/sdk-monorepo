@@ -92,3 +92,19 @@ export class OmniTokenNormalisationCheckError extends BaseError {
 		);
 	}
 }
+
+export type IntentsNearOmniAvailableBalanceTooLowErrorType =
+	IntentsNearOmniAvailableBalanceTooLowError & {
+		name: "IntentsNearOmniAvailableBalanceTooLowError";
+	};
+export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
+	constructor(public balance: string) {
+		super(
+			`The available Omni storage balance for intents.near is ${balance}, which is too low to complete this transaction safely. The balance needs to be topped up before retrying.`,
+			{
+				metaMessages: [`Balance: ${balance}`],
+				name: "IntentsNearOmniAvailableBalanceTooLowError",
+			},
+		);
+	}
+}
