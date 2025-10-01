@@ -522,7 +522,9 @@ export class OmniBridge implements Bridge {
 			omniChainKind,
 		);
 
-		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+		if (tokenOnDestinationNetwork !== null) {
+			this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+		}
 
 		return tokenOnDestinationNetwork;
 	}
