@@ -4,13 +4,21 @@ import { createOmniBridgeRoute } from "../../lib/route-config-factory";
 import { Chains } from "../../lib/caip2";
 import { UnsupportedAssetIdError } from "../../classes/errors";
 import { TokenNotFoundInDestinationChainError } from "./error";
+import {
+	nearFailoverRpcProvider,
+	PUBLIC_NEAR_RPC_URLS,
+} from "@defuse-protocol/internal-utils";
 
 describe("OmniBridge", () => {
 	describe("without routeConfig", () => {
 		it("supports if assetId matches omni pattern (token created by specific factories)", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
 			const bridge = new OmniBridge({
 				env: "production",
-				nearProvider: {} as any,
+				nearProvider,
 			});
 
 			const assetIds = [
@@ -27,9 +35,13 @@ describe("OmniBridge", () => {
 		});
 
 		it("doesn't support if assetId doesn't match omni pattern", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
 			const bridge = new OmniBridge({
 				env: "production",
-				nearProvider: {} as any,
+				nearProvider,
 			});
 
 			const assetIds = [
@@ -50,9 +62,13 @@ describe("OmniBridge", () => {
 	describe("supports()", () => {
 		describe("with routeConfig", () => {
 			it("supports if token with origin on NEAR has a bridged version on other chain", async () => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				const assetId = "nep141:token.publicailab.near";
@@ -64,9 +80,13 @@ describe("OmniBridge", () => {
 			});
 
 			it("throws UnsupportedAssetIdError if assetId not nep141 standard", async () => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				const assetId = "nep245:v3_1.omni.hot.tg:56_11111111111111111111";
@@ -78,9 +98,13 @@ describe("OmniBridge", () => {
 			});
 
 			it("throws UnsupportedAssetIdError if assetId doesn't match omni pattern", async () => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
 				const bridge = new OmniBridge({
 					env: "production",
-					nearProvider: {} as any,
+					nearProvider,
 				});
 
 				const assetId = "nep141:eth.bridge.fake.near";
@@ -103,9 +127,13 @@ describe("OmniBridge", () => {
 			])(
 				"throws UnsupportedAssetIdError if trying to bridge a token to unsupported chain",
 				async ({ assetId, routeConfig }) => {
+					const nearProvider = nearFailoverRpcProvider({
+						urls: PUBLIC_NEAR_RPC_URLS,
+					});
+
 					const bridge = new OmniBridge({
 						env: "production",
-						nearProvider: {} as any,
+						nearProvider,
 					});
 
 					await expect(
@@ -122,9 +150,13 @@ describe("OmniBridge", () => {
 			])(
 				"throws TokenNotFoundInDestinationChainError if routeConfig passed, but assetId is not found in destination chain token",
 				async ({ assetId, routeConfig }) => {
+					const nearProvider = nearFailoverRpcProvider({
+						urls: PUBLIC_NEAR_RPC_URLS,
+					});
+
 					const bridge = new OmniBridge({
 						env: "production",
-						nearProvider: {} as any,
+						nearProvider,
 					});
 
 					await expect(

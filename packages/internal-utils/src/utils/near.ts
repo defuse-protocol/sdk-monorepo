@@ -43,13 +43,19 @@ function getBlockReference({
 	return { finality: "optimistic" };
 }
 
-export async function queryContract({
+export async function queryContract<
+	T extends v.BaseSchema<TInput, TOutput, TIssue>,
+	TInput,
+	TOutput,
+	TIssue extends v.BaseIssue<unknown>,
+>({
 	nearClient,
 	contractId,
 	methodName,
 	args,
 	blockId,
 	finality,
+	schema,
 }: {
 	nearClient: providers.Provider;
 	contractId: string;
@@ -57,7 +63,8 @@ export async function queryContract({
 	args: Record<string, unknown>;
 	blockId?: BlockId;
 	finality?: Finality;
-}): Promise<unknown> {
+	schema: T;
+}): Promise<v.InferOutput<T>> {
 	const response = await nearClient.query({
 		request_type: "call_function",
 		account_id: contractId,
@@ -66,7 +73,7 @@ export async function queryContract({
 		...getBlockReference({ blockId, finality }),
 	});
 
-	return decodeQueryResult(response, v.unknown());
+	return decodeQueryResult(response, schema);
 }
 
 // Copied from https://github.com/mynearwallet/my-near-wallet/blob/3b1a6c6e5c62a0235f5e32d370f803fa2180c6f8/packages/frontend/src/utils/wallet.ts#L75
