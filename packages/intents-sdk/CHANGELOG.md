@@ -1,5 +1,20 @@
 # @defuse-protocol/intents-sdk
 
+## 0.23.0
+
+### Minor Changes
+
+- db94b03: Add storage_balance_of check before withdrawing
+  Use custom near provider for near requests
+  LRU cache for storage deposit
+  Cache only successful non-null results
+  Export and adjust queryContract from internal-utils package
+
+### Patch Changes
+
+- Updated dependencies [db94b03]
+  - @defuse-protocol/internal-utils@0.12.0
+
 ## 0.22.2
 
 ### Patch Changes

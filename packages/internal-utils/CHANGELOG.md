@@ -1,5 +1,15 @@
 # @defuse-protocol/internal-utils
 
+## 0.12.0
+
+### Minor Changes
+
+- db94b03: Add storage_balance_of check before withdrawing
+  Use custom near provider for near requests
+  LRU cache for storage deposit
+  Cache only successful non-null results
+  Export and adjust queryContract from internal-utils package
+
 ## 0.11.1
 
 ### Patch Changes
