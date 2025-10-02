@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	getBridgedToken,
-	getIntentsOmniStorageBalance,
+	getAccountOmniStorageBalance,
 	getTokenDecimals,
 	validateOmniToken,
 } from "./omni-bridge-utils";
@@ -44,14 +44,14 @@ describe("validateOmniToken()", () => {
 
 describe("Contract query utils", () => {
 	const nearProvider = nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS });
-	describe("getIntentsOmniStorageBalance()", () => {
+	describe("getAccountOmniStorageBalance()", () => {
 		it("fetches omni storage balance and parses it successfully", async () => {
-			await expect(getIntentsOmniStorageBalance(nearProvider)).resolves.toEqual(
-				{
-					total: expect.any(String),
-					available: expect.any(String),
-				},
-			);
+			await expect(
+				getAccountOmniStorageBalance(nearProvider, "intents.near"),
+			).resolves.toEqual({
+				total: expect.any(String),
+				available: expect.any(String),
+			});
 		});
 	});
 	describe("getBridgedToken()", () => {

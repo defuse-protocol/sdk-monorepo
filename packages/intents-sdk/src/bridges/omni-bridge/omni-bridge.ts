@@ -59,7 +59,7 @@ import {
 	createWithdrawIntentPrimitive,
 	validateOmniToken,
 	getBridgedToken,
-	getIntentsOmniStorageBalance,
+	getAccountOmniStorageBalance,
 	getTokenDecimals,
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
@@ -339,15 +339,16 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		const storageBalance = await getIntentsOmniStorageBalance(
+		const storageBalance = await getAccountOmniStorageBalance(
 			this.nearProvider,
+			configsByEnvironment[this.env].contractID,
 		);
 
 		const intentsNearStorageBalance =
 			storageBalance === null ? 0n : BigInt(storageBalance.available);
 		// Ensure available storage balance is > 0.5 NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
-		// to the intents.near account instead of the original withdrawing account.
+		// to the intents contract account instead of the original withdrawing account.
 		if (
 			intentsNearStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
 		) {

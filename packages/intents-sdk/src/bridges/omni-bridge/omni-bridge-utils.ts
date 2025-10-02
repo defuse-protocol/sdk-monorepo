@@ -81,8 +81,9 @@ export function validateOmniToken(nearAddress: string): boolean {
 	return isBridgeToken(nearAddress);
 }
 
-export async function getIntentsOmniStorageBalance(
+export async function getAccountOmniStorageBalance(
 	nearProvider: providers.Provider,
+	accountId: string,
 ): Promise<{
 	total: string;
 	available: string;
@@ -92,7 +93,7 @@ export async function getIntentsOmniStorageBalance(
 		account_id: OMNI_BRIDGE_CONTRACT,
 		method_name: "storage_balance_of",
 		args_base64: Buffer.from(
-			JSON.stringify({ account_id: "intents.near" }),
+			JSON.stringify({ account_id: accountId }),
 		).toString("base64"),
 		finality: "optimistic",
 	});
