@@ -346,7 +346,7 @@ export class OmniBridge implements Bridge {
 
 		const intentsNearStorageBalance =
 			storageBalance === null ? 0n : BigInt(storageBalance.available);
-		// Ensure available storage balance is > 0.5 NEAR.
+		// Ensure available storage balance is > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents contract account instead of the original withdrawing account.
 		if (
