@@ -100,10 +100,11 @@ export type IntentsNearOmniAvailableBalanceTooLowErrorType =
 export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
 	constructor(public balance: string) {
 		super(
-			`The available Omni storage balance for intents contract is ${balance}, which is too low to complete this transaction safely. The balance needs to be topped up before retrying.`,
+			`Omni storage balance of intents contract is too low to complete this transaction safely.`,
 			{
 				metaMessages: [`Balance: ${balance}`],
 				name: "IntentsNearOmniAvailableBalanceTooLowError",
+				details: `The available Omni storage balance for intents contract is ${balance}, which is too low to complete this transaction safely. The balance needs to be topped up before retrying.`,
 			},
 		);
 	}
