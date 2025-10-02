@@ -48,9 +48,23 @@ export let config: SDKConfig = {
 export interface ConfigureSDKArgs {
 	env?: EnvConfig | NearIntentsEnv;
 	features?: { [K in keyof SDKConfig["features"]]?: boolean };
+	environments?: Record<NearIntentsEnv, Partial<EnvConfig>>;
 }
 
-export function configureSDK({ env, features }: ConfigureSDKArgs): void {
+export function configureSDK({
+	env,
+	features,
+	environments,
+}: ConfigureSDKArgs): void {
+	if (environments) {
+		for (const [key, value] of Object.entries(environments)) {
+			configsByEnvironment[key as NearIntentsEnv] = {
+				...configsByEnvironment[key as NearIntentsEnv],
+				...value,
+			};
+		}
+	}
+
 	if (typeof env === "string") {
 		config = { ...config, env: configsByEnvironment[env] };
 	} else if (env) {

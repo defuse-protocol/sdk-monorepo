@@ -499,8 +499,8 @@ export class IntentsSDK implements IIntentsSDK {
 		const destinationTx = await this.waitForWithdrawalCompletion({
 			withdrawalParams,
 			intentTx,
+			retryOptions: args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY,
 			logger: args.logger,
-			retryOptions: RETRY_CONFIGS.FIVE_MINS_STEADY,
 		});
 
 		if (!Array.isArray(args.withdrawalParams)) {

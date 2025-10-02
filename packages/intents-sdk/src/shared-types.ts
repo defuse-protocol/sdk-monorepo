@@ -69,6 +69,7 @@ export type ProcessWithdrawalArgs<
 		onBeforePublishIntent?: OnBeforePublishIntentHook;
 	};
 	referral?: string;
+	retryOptions?: RetryOptions;
 	logger?: ILogger;
 };
 

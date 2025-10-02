@@ -1,5 +1,29 @@
 # @defuse-protocol/internal-utils
 
+## 0.12.0
+
+### Minor Changes
+
+- db94b03: Add storage_balance_of check before withdrawing
+  Use custom near provider for near requests
+  LRU cache for storage deposit
+  Cache only successful non-null results
+  Export and adjust queryContract from internal-utils package
+
+## 0.11.1
+
+### Patch Changes
+
+- e5d9a9c: Do not bundle into single file. Use `tsdown` for transpiling.
+- Updated dependencies [e5d9a9c]
+  - @defuse-protocol/contract-types@0.1.1
+
+## 0.11.0
+
+### Minor Changes
+
+- b56e8c8: Allow overriding preset environment config using `configureSDK()`.
+
 ## 0.10.0
 
 ### Minor Changes

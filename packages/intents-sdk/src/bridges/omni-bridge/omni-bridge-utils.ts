@@ -13,7 +13,7 @@ import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 import type { providers } from "near-api-js";
-import type { CodeResult } from "near-api-js/lib/providers/provider";
+import * as v from "valibot";
 
 export function createWithdrawIntentsPrimitive(params: {
 	assetId: string;
@@ -108,25 +108,38 @@ export function validateOmniToken(nearAddress: string): boolean {
 	return isBridgeToken(nearAddress);
 }
 
-export async function getIntentsOmniStorageBalance(
+export async function getAccountOmniStorageBalance(
 	nearProvider: providers.Provider,
+	accountId: string,
 ): Promise<{
 	total: string;
 	available: string;
-}> {
-	const storageBalanceRequest = await nearProvider.query<CodeResult>({
-		request_type: "call_function",
-		account_id: OMNI_BRIDGE_CONTRACT,
-		method_name: "storage_balance_of",
-		args_base64: Buffer.from(
-			JSON.stringify({ account_id: "intents.near" }),
-		).toString("base64"),
+} | null> {
+	return utils.queryContract({
+		contractId: OMNI_BRIDGE_CONTRACT,
+		methodName: "storage_balance_of",
+		args: { account_id: accountId },
 		finality: "optimistic",
+		nearClient: nearProvider,
+		schema: v.union([
+			v.null(),
+			v.object({ total: v.string(), available: v.string() }),
+		]),
 	});
-
-	return JSON.parse(Buffer.from(storageBalanceRequest.result).toString());
 }
 
+const OmniAddressSchema = v.custom<OmniAddress>(
+	(input): input is OmniAddress =>
+		typeof input === "string" &&
+		(input.startsWith("eth:") ||
+			input.startsWith("near:") ||
+			input.startsWith("sol:") ||
+			input.startsWith("arb:") ||
+			input.startsWith("base:") ||
+			input.startsWith("btc:") ||
+			input.startsWith("bnb:")),
+	"Must comply with omni address schema",
+);
 /**
  * Converts a token address from one chain to its equivalent on another chain.
  * @param nearProvider Near provider used for querying the contract
@@ -144,19 +157,17 @@ export async function getBridgedToken(
 	tokenAddress: OmniAddress,
 	destinationChain: ChainKind,
 ): Promise<OmniAddress | null> {
-	const getBridgedTokenResult = await nearProvider.query<CodeResult>({
-		request_type: "call_function",
-		account_id: OMNI_BRIDGE_CONTRACT,
-		method_name: "get_bridged_token",
-		args_base64: Buffer.from(
-			JSON.stringify({
-				chain: ChainKind[destinationChain].toString(),
-				address: tokenAddress,
-			}),
-		).toString("base64"),
+	return utils.queryContract({
+		contractId: OMNI_BRIDGE_CONTRACT,
+		methodName: "get_bridged_token",
+		args: {
+			chain: ChainKind[destinationChain].toString(),
+			address: tokenAddress,
+		},
 		finality: "optimistic",
+		nearClient: nearProvider,
+		schema: v.union([v.null(), OmniAddressSchema]),
 	});
-	return JSON.parse(Buffer.from(getBridgedTokenResult.result).toString());
 }
 
 /**
@@ -168,7 +179,7 @@ export async function getBridgedToken(
 export async function getTokenDecimals(
 	nearProvider: providers.Provider,
 	tokenAddress: OmniAddress,
-): Promise<TokenDecimals> {
+): Promise<TokenDecimals | null> {
 	// NEAR tokens don't have decimals stored directly under their NEAR addresses
 	// Instead, decimals are stored under their foreign chain representations
 	//
@@ -185,17 +196,15 @@ export async function getTokenDecimals(
 		);
 	}
 
-	const getTokenDecimalsResult = await nearProvider.query<CodeResult>({
-		request_type: "call_function",
-		account_id: OMNI_BRIDGE_CONTRACT,
-		method_name: "get_token_decimals",
-		args_base64: Buffer.from(
-			JSON.stringify({
-				address: tokenAddress,
-			}),
-		).toString("base64"),
+	return utils.queryContract({
+		contractId: OMNI_BRIDGE_CONTRACT,
+		methodName: "get_token_decimals",
+		args: { address: tokenAddress },
 		finality: "optimistic",
+		nearClient: nearProvider,
+		schema: v.union([
+			v.null(),
+			v.object({ decimals: v.number(), origin_decimals: v.number() }),
+		]),
 	});
-
-	return JSON.parse(Buffer.from(getTokenDecimalsResult.result).toString());
 }

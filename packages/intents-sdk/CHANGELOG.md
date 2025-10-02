@@ -1,5 +1,42 @@
 # @defuse-protocol/intents-sdk
 
+## 0.23.0
+
+### Minor Changes
+
+- db94b03: Add storage_balance_of check before withdrawing
+  Use custom near provider for near requests
+  LRU cache for storage deposit
+  Cache only successful non-null results
+  Export and adjust queryContract from internal-utils package
+
+### Patch Changes
+
+- Updated dependencies [db94b03]
+  - @defuse-protocol/internal-utils@0.12.0
+
+## 0.22.2
+
+### Patch Changes
+
+- e5d9a9c: Do not bundle into single file. Use `tsdown` for transpiling.
+- Updated dependencies [e5d9a9c]
+  - @defuse-protocol/contract-types@0.1.1
+  - @defuse-protocol/internal-utils@0.11.1
+
+## 0.22.1
+
+### Patch Changes
+
+- Updated dependencies [b56e8c8]
+  - @defuse-protocol/internal-utils@0.11.0
+
+## 0.22.0
+
+### Minor Changes
+
+- 8849ffb: Add `retryOptions` argument to orchestrated `processWithdrawal()`.
+
 ## 0.21.0
 
 ### Minor Changes

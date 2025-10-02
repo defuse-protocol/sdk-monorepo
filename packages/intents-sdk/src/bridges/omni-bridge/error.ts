@@ -77,16 +77,31 @@ export class OmniTokenNormalisationCheckError extends BaseError {
 		public minAmount: bigint,
 		public fee: bigint,
 	) {
+		super(`Transfer too small — normalizes to 0.`, {
+			metaMessages: [
+				`TokenIn: ${tokenIn}`,
+				`DestinationToken: ${destinationToken}`,
+				`MinAmount: ${minAmount}`,
+				`fee: ${fee}`,
+			],
+			name: "OmniTokenNormalisationCheckError",
+			details: `Transfer amount sent to relayer is too small - would result in 0 after decimal normalisation. Minimum transferable amount if feeInclusive=false is >= ${minAmount}. Minimum transferable amount if feeInclusive=true is >= ${minAmount + fee}.`,
+		});
+	}
+}
+
+export type IntentsNearOmniAvailableBalanceTooLowErrorType =
+	IntentsNearOmniAvailableBalanceTooLowError & {
+		name: "IntentsNearOmniAvailableBalanceTooLowError";
+	};
+export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
+	constructor(public balance: string) {
 		super(
-			`Transfer amount sent to relayer is too small - would result in 0 after decimal normalisation. Minimum transferable amount if feeInclusive=false is >= ${minAmount}. Minimum transferable amount if feeInclusive=true is >= ${minAmount + fee}.`,
+			`Omni storage balance of intents contract is too low to complete this transaction safely.`,
 			{
-				metaMessages: [
-					`TokenIn: ${tokenIn}`,
-					`DestinationToken: ${destinationToken}`,
-					`MinAmount: ${minAmount}`,
-					`fee: ${fee}`,
-				],
-				name: "OmniTokenNormalisationCheckError",
+				metaMessages: [`Balance: ${balance}`],
+				name: "IntentsNearOmniAvailableBalanceTooLowError",
+				details: `The available Omni storage balance for intents contract is ${balance}, which is too low to complete this transaction safely. The balance needs to be topped up before retrying.`,
 			},
 		);
 	}

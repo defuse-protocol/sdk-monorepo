@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/crosschain-assetid",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -22,15 +22,15 @@
 		"schemas"
 	],
 	"scripts": {
-		"build": "tsup",
-		"dev": "tsup --watch",
+		"build": "tsdown",
+		"dev": "tsdown --watch",
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"ajv": "^8.17.1",
-		"tsup": "^8.0.2",
+		"tsdown": "0.15.5",
 		"typescript": "^5.4.2"
 	}
 }

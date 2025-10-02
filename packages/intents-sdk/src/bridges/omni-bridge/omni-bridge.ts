@@ -49,6 +49,7 @@ import {
 	IntentsNearOmniAvailableBalanceTooLowError,
 } from "./error";
 import {
+	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 } from "./omni-bridge-constants";
@@ -60,6 +61,9 @@ import {
 	getIntentsOmniStorageBalance,
 	getTokenDecimals,
 	validateOmniToken,
+	getBridgedToken,
+	getAccountOmniStorageBalance,
+	getTokenDecimals,
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
 import { LRUCache } from "lru-cache";
@@ -73,14 +77,14 @@ export class OmniBridge implements Bridge {
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ max: 100 });
+	>({ max: 100, ttl: 3600000 });
 	private destinationChainAddressCache = new TTLCache<
 		string,
 		OmniAddress | null
-	>({ ttl: 10800000 }); // 10800000 - 3 hours
+	>({ ttl: 3600000 });
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
-		ttl: 10800000,
-	}); // 10800000 - 3 hours
+		ttl: 3600000,
+	});
 
 	constructor({
 		env,
@@ -105,8 +109,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -183,8 +187,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -348,18 +352,23 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		const storageBalance = await getIntentsOmniStorageBalance(
+		const storageBalance = await getAccountOmniStorageBalance(
 			this.nearProvider,
+			configsByEnvironment[this.env].contractID,
 		);
-		// Ensure available storage balance is > 0.5 NEAR.
+
+		const intentsNearStorageBalance =
+			storageBalance === null ? 0n : BigInt(storageBalance.available);
+		// Ensure available storage balance is > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
-		// to the intents.near account instead of the original withdrawing account.
-		if (BigInt(storageBalance.available) <= 500000000000000000000000n) {
+		// to the intents contract account instead of the original withdrawing account.
+		if (
+			intentsNearStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
+		) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError(
-				storageBalance.available,
+				intentsNearStorageBalance.toString(),
 			);
 		}
-
 		return;
 	}
 
@@ -418,15 +427,14 @@ export class OmniBridge implements Bridge {
 				exact_amount_out: totalAmountToQuote.toString(),
 				wait_ms: args.quoteOptions?.waitMs,
 			},
-			config: {
+			config:
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-				logBalanceSufficient: false,
-				logger: args.logger,
-			},
+			logBalanceSufficient: false,
+			logger: args.logger,,
 		});
 
 		return {
-			amount: BigInt(quote.amount_in),
+			amount: bigint(quote.amount_in),
 			quote,
 		};
 	}
@@ -529,7 +537,9 @@ export class OmniBridge implements Bridge {
 			omniChainKind,
 		);
 
-		this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+		if (tokenOnDestinationNetwork !== null) {
+			this.destinationChainAddressCache.set(key, tokenOnDestinationNetwork);
+		}
 
 		return tokenOnDestinationNetwork;
 	}
@@ -550,7 +560,9 @@ export class OmniBridge implements Bridge {
 			omniAddress,
 		);
 
-		this.tokenDecimalsCache.set(omniAddress, tokenDecimals);
+		if (tokenDecimals !== null) {
+			this.tokenDecimalsCache.set(omniAddress, tokenDecimals);
+		}
 
 		return tokenDecimals;
 	}
