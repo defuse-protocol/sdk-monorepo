@@ -9,7 +9,7 @@ import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 
 export function validateAddress(address: string, blockchain: Chain): boolean {
-	if (blockchain.startsWith("eip:")) {
+	if (blockchain.startsWith("eip155:")) {
 		return validateEthAddress(address);
 	}
 	switch (blockchain) {
