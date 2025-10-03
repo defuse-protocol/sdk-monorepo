@@ -62,8 +62,12 @@ import {
 	getAccountOmniStorageBalance,
 	getTokenDecimals,
 } from "./omni-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
 import { LRUCache } from "lru-cache";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
+import { validateAddress } from "../../lib/validateAddress";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -97,7 +101,10 @@ export class OmniBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+		params: Pick<
+			WithdrawalParams,
+			"assetId" | "routeConfig" | "destinationAddress"
+		>,
 	): Promise<boolean> {
 		// Non omni bridge route specified, abort.
 		if (params.routeConfig && !this.is(params.routeConfig)) {
@@ -172,6 +179,14 @@ export class OmniBridge implements Bridge {
 		if (tokenOnDestinationNetwork === null) {
 			throw new TokenNotFoundInDestinationChainError(
 				params.assetId,
+				caip2Chain,
+			);
+		}
+
+		if (validateAddress(params.destinationAddress, caip2Chain) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				BridgeNameEnum.Omni,
 				caip2Chain,
 			);
 		}
