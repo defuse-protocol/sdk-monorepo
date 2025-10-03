@@ -81,7 +81,9 @@ export class HotBridge implements Bridge {
 			return false;
 		}
 
-		if (validateAddress(params.destinationAddress, assetInfo.blockchain)) {
+		if (
+			validateAddress(params.destinationAddress, assetInfo.blockchain) === false
+		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
 				BridgeNameEnum.Hot,

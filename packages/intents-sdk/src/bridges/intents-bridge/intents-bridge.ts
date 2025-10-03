@@ -25,7 +25,7 @@ export class IntentsBridge implements Bridge {
 			return this.is(params.routeConfig);
 		}
 
-		if (validateAddress(params.destinationAddress, Chains.Near)) {
+		if (validateAddress(params.destinationAddress, Chains.Near) === false) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
 				"intents-bridge",

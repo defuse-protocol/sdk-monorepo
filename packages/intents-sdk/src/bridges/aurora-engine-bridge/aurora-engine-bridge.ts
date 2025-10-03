@@ -66,7 +66,7 @@ export class AuroraEngineBridge implements Bridge {
 			);
 		}
 
-		if (validateAddress(params.destinationAddress, Chains.Ethereum)) {
+		if (validateAddress(params.destinationAddress, Chains.Ethereum) === false) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
 				"virtual-chain-bridge",

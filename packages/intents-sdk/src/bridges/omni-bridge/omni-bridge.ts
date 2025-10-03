@@ -183,7 +183,7 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		if (validateAddress(params.destinationAddress, caip2Chain)) {
+		if (validateAddress(params.destinationAddress, caip2Chain) === false) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
 				BridgeNameEnum.Omni,
