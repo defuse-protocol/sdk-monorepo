@@ -22,6 +22,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	nativeFee: bigint;
 	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
+	intentsContract: string;
 }): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -38,7 +39,7 @@ export function createWithdrawIntentsPrimitive(params: {
 			fee: 0n,
 			native_fee: params.nativeFee,
 		},
-		sender: "near:intents.near",
+		sender: `near:${params.intentsContract}`,
 		msg: "",
 	});
 	assert(standard === "nep141", "Only NEP-141 is supported");

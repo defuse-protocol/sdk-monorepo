@@ -271,6 +271,7 @@ export class OmniBridge implements Bridge {
 				destinationAddress: args.withdrawalParams.destinationAddress,
 				amount: args.withdrawalParams.amount,
 				omniChainKind,
+				intentsContract: configsByEnvironment[this.env].contractID,
 				// we need to calculate relayer fee
 				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
 				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
