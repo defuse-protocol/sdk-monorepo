@@ -9,28 +9,12 @@ import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 
 export function validateAddress(address: string, blockchain: Chain): boolean {
+	if (blockchain.startsWith("eip:")) {
+		return validateEthAddress(address);
+	}
 	switch (blockchain) {
 		case Chains.Near:
 			return isLegitAccountId(address);
-		case Chains.Ethereum:
-		case Chains.Base:
-		case Chains.Arbitrum:
-		case Chains.Gnosis:
-		case Chains.Berachain:
-		case Chains.Polygon:
-		case Chains.BNB:
-		case Chains.Optimism:
-		case Chains.Avalanche:
-			// TODO - handle these chains somehow
-			// case "turbochain":
-			// case "tuxappchain":
-			// case "vertex":
-			// case "optima":
-			// case "easychain":
-			// case "aurora":
-			// case "aurora_devnet":
-			// case "hyperliquid":
-			return validateEthAddress(address);
 		case Chains.Bitcoin:
 			return validateBtcAddress(address);
 		case Chains.Solana:
@@ -64,7 +48,6 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateCardanoAddress(address);
 
 		default:
-			blockchain satisfies never;
 			return false;
 	}
 }
