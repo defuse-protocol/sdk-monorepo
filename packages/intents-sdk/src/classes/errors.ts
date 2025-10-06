@@ -112,16 +112,14 @@ export class InvalidDestinationAddressForWithdrawalError extends BaseError {
 		public bridgeName: string,
 		public chainName: string,
 	) {
-		super(
-			`Destination address ${destinationAddress} is not valid for withdrawal to ${chainName} using ${bridgeName}.`,
-			{
-				metaMessages: [
-					`Destination address: ${destinationAddress}`,
-					`Bridge: ${bridgeName}`,
-					`Chain: ${chainName}`,
-				],
-				name: "InvalidDestinationAddressForWithdrawalError",
-			},
-		);
+		super(`Invalid destination address.`, {
+			metaMessages: [
+				`Destination address: ${destinationAddress}`,
+				`Bridge: ${bridgeName}`,
+				`Chain: ${chainName}`,
+			],
+			name: "InvalidDestinationAddressForWithdrawalError",
+			details: `Destination address ${destinationAddress} is not valid for withdrawal to ${chainName} using ${bridgeName}.`,
+		});
 	}
 }
