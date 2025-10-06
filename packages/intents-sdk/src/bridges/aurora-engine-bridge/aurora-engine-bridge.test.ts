@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { UnsupportedAssetIdError } from "../../classes/errors";
 import { createVirtualChainRoute } from "../../lib/route-config-factory";
 import { AuroraEngineBridge } from "./aurora-engine-bridge";
+import { zeroAddress } from "viem";
 
 describe("AuroraEngineBridge", () => {
 	describe("supports()", () => {
@@ -19,6 +20,7 @@ describe("AuroraEngineBridge", () => {
 				bridge.supports({
 					assetId: tokenId,
 					routeConfig: createVirtualChainRoute("", null),
+					destinationAddress: zeroAddress,
 				}),
 			).resolves.toBe(true);
 		});
@@ -36,6 +38,7 @@ describe("AuroraEngineBridge", () => {
 			await expect(
 				bridge.supports({
 					assetId: tokenId,
+					destinationAddress: zeroAddress,
 				}),
 			).resolves.toBe(false);
 		});
@@ -55,6 +58,7 @@ describe("AuroraEngineBridge", () => {
 					bridge.supports({
 						assetId: assetId,
 						routeConfig: createVirtualChainRoute("", null),
+						destinationAddress: zeroAddress,
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},

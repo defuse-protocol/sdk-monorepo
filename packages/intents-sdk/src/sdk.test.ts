@@ -32,7 +32,7 @@ describe.concurrent("poa_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
-				destinationAddress: zeroAddress,
+				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				feeInclusive: false,
 			},
 		});
@@ -50,7 +50,7 @@ describe.concurrent("poa_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
-				destinationAddress: zeroAddress,
+				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				feeInclusive: true,
 			},
 		});
@@ -65,7 +65,7 @@ describe.concurrent("poa_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 100_000_000n, // 1.0
-				destinationAddress: zeroAddress,
+				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				feeInclusive: false,
 			},
 			feeEstimation: {
@@ -78,7 +78,7 @@ describe.concurrent("poa_bridge", () => {
 			{
 				amount: "100001500",
 				intent: "ft_withdraw",
-				memo: "WITHDRAW_TO:0x0000000000000000000000000000000000000000",
+				memo: "WITHDRAW_TO:bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				receiver_id: "btc.omft.near",
 				token: "btc.omft.near",
 			},
@@ -88,7 +88,7 @@ describe.concurrent("poa_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 100_000_000n, // 1.0
-				destinationAddress: zeroAddress,
+				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				feeInclusive: true,
 			},
 			feeEstimation: {
@@ -101,7 +101,7 @@ describe.concurrent("poa_bridge", () => {
 			{
 				amount: "100000000",
 				intent: "ft_withdraw",
-				memo: "WITHDRAW_TO:0x0000000000000000000000000000000000000000",
+				memo: "WITHDRAW_TO:bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				receiver_id: "btc.omft.near",
 				token: "btc.omft.near",
 			},
@@ -115,7 +115,7 @@ describe.concurrent("poa_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
-				destinationAddress: zeroAddress,
+				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				feeInclusive: false,
 			},
 			feeEstimation: {

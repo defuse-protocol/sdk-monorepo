@@ -9,6 +9,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import {
+	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
@@ -31,6 +32,7 @@ import {
 } from "./poa-bridge-utils";
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -50,7 +52,10 @@ export class PoaBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
+		params: Pick<
+			WithdrawalParams,
+			"assetId" | "routeConfig" | "destinationAddress"
+		>,
 	): Promise<boolean> {
 		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
@@ -65,6 +70,18 @@ export class PoaBridge implements Bridge {
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
+
+		if (
+			isValid &&
+			validateAddress(params.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				params.destinationAddress,
+				BridgeNameEnum.Poa,
+				assetInfo.blockchain,
+			);
+		}
+
 		return isValid;
 	}
 

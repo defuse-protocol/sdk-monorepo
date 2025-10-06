@@ -14,11 +14,14 @@ describe("DirectBridge", () => {
 				nearProvider: {} as any,
 			});
 
-			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(true);
+			await expect(
+				bridge.supports({ assetId: tokenId, destinationAddress: "test.near" }),
+			).resolves.toBe(true);
 			await expect(
 				bridge.supports({
 					assetId: tokenId,
 					routeConfig: createNearWithdrawalRoute(),
+					destinationAddress: "test.near",
 				}),
 			).resolves.toBe(true);
 		});
@@ -31,9 +34,12 @@ describe("DirectBridge", () => {
 					nearProvider: {} as any,
 				});
 
-				await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(
-					false,
-				);
+				await expect(
+					bridge.supports({
+						assetId: tokenId,
+						destinationAddress: "test.near",
+					}),
+				).resolves.toBe(false);
 			},
 		);
 
@@ -52,6 +58,7 @@ describe("DirectBridge", () => {
 					bridge.supports({
 						assetId,
 						routeConfig: createNearWithdrawalRoute(),
+						destinationAddress: "test.near",
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
