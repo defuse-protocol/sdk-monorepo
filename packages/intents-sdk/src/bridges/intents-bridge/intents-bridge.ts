@@ -22,15 +22,18 @@ export class IntentsBridge implements Bridge {
 		params: Pick<WithdrawalParams, "routeConfig" | "destinationAddress">,
 	): Promise<boolean> {
 		if ("routeConfig" in params && params.routeConfig != null) {
-			if (this.is(params.routeConfig) === false) return false;
-			if (validateAddress(params.destinationAddress, Chains.Near) === false) {
+			const isValid = this.is(params.routeConfig);
+			if (
+				isValid &&
+				validateAddress(params.destinationAddress, Chains.Near) === false
+			) {
 				throw new InvalidDestinationAddressForWithdrawalError(
 					params.destinationAddress,
 					"intents-bridge",
 					"intents",
 				);
 			}
-			return true;
+			return isValid;
 		}
 
 		return false;

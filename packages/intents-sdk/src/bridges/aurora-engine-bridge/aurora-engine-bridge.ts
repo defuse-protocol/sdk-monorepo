@@ -58,15 +58,18 @@ export class AuroraEngineBridge implements Bridge {
 		}
 
 		const assetInfo = parseDefuseAssetId(params.assetId);
-
-		if (assetInfo.standard !== "nep141") {
+		const isValid = assetInfo.standard === "nep141";
+		if (!isValid) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
 
-		if (validateAddress(params.destinationAddress, Chains.Ethereum) === false) {
+		if (
+			isValid &&
+			validateAddress(params.destinationAddress, Chains.Ethereum) === false
+		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
 				"virtual-chain-bridge",
@@ -74,7 +77,7 @@ export class AuroraEngineBridge implements Bridge {
 			);
 		}
 
-		return true;
+		return isValid;
 	}
 
 	parseAssetId(): null {

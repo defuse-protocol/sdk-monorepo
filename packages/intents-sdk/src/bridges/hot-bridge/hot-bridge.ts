@@ -69,19 +69,16 @@ export class HotBridge implements Bridge {
 		}
 
 		const assetInfo = this.parseAssetId(params.assetId);
-
-		if (assetInfo === null && params.routeConfig != null) {
+		const isValid = assetInfo != null;
+		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
 
-		if (assetInfo === null) {
-			return false;
-		}
-
 		if (
+			isValid &&
 			validateAddress(params.destinationAddress, assetInfo.blockchain) === false
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
@@ -91,7 +88,7 @@ export class HotBridge implements Bridge {
 			);
 		}
 
-		return true;
+		return isValid;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {

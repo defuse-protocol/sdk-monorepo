@@ -60,19 +60,19 @@ export class DirectBridge implements Bridge {
 		}
 
 		const assetInfo = this.parseAssetId(params.assetId);
+		const isValid = assetInfo != null;
 
-		if (assetInfo === null && params.routeConfig != null) {
+		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
 
-		if (assetInfo === null) {
-			return false;
-		}
-
-		if (validateAddress(params.destinationAddress, Chains.Near) === false) {
+		if (
+			isValid &&
+			validateAddress(params.destinationAddress, Chains.Near) === false
+		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
 				"direct-bridge",
@@ -80,7 +80,7 @@ export class DirectBridge implements Bridge {
 			);
 		}
 
-		return true;
+		return isValid;
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
