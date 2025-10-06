@@ -8,7 +8,6 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { zeroAddress } from "viem";
 
 describe("OmniBridge", () => {
 	describe("without routeConfig", () => {
@@ -22,23 +21,16 @@ describe("OmniBridge", () => {
 				nearProvider,
 			});
 
-			const params = [
-				{ assetId: "nep141:eth.bridge.near", destinationAddress: zeroAddress },
-				{
-					assetId: "nep141:sol.omdep.near",
-					destinationAddress: "HuTshmtwcQkWBLzgW3m4uwcmik7Lmz4YFpYcTqMJpXiP",
-				},
-				{ assetId: "nep141:base.omdep.near", destinationAddress: zeroAddress },
-				{ assetId: "nep141:arb.omdep.near", destinationAddress: zeroAddress },
-				{
-					assetId:
-						"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
-					destinationAddress: zeroAddress,
-				},
+			const assetIds = [
+				"nep141:eth.bridge.near",
+				"nep141:sol.omdep.near",
+				"nep141:base.omdep.near",
+				"nep141:arb.omdep.near",
+				"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
 			];
 
-			for (const param of params) {
-				await expect(bridge.supports(param)).resolves.toBe(true);
+			for (const assetId of assetIds) {
+				await expect(bridge.supports({ assetId })).resolves.toBe(true);
 			}
 		});
 
@@ -52,30 +44,17 @@ describe("OmniBridge", () => {
 				nearProvider,
 			});
 
-			const params = [
-				{
-					assetId: "nep141:btc.omft.near",
-					destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
-				},
-				{ assetId: "nep141:wrap.near", destinationAddress: zeroAddress },
-				{
-					assetId: "nep141:token.publicailab.near",
-					destinationAddress: zeroAddress,
-				},
-				{ assetId: "nep141:token.sweat", destinationAddress: zeroAddress },
-				{
-					assetId: "nep245:v3_1.omni.hot.tg:56_11111111111111111111",
-					destinationAddress: zeroAddress,
-				},
-				{
-					assetId:
-						"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
-					destinationAddress: zeroAddress,
-				},
+			const assetIds = [
+				"nep141:btc.omft.near",
+				"nep141:wrap.near",
+				"nep141:token.publicailab.near",
+				"nep141:token.sweat",
+				"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
+				"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 			];
 
-			for (const param of params) {
-				await expect(bridge.supports(param)).resolves.toBe(false);
+			for (const assetId of assetIds) {
+				await expect(bridge.supports({ assetId })).resolves.toBe(false);
 			}
 		});
 	});
@@ -95,13 +74,9 @@ describe("OmniBridge", () => {
 				const assetId = "nep141:token.publicailab.near";
 				const routeConfig = createOmniBridgeRoute(Chains.Solana);
 
-				await expect(
-					bridge.supports({
-						assetId,
-						routeConfig,
-						destinationAddress: "HuTshmtwcQkWBLzgW3m4uwcmik7Lmz4YFpYcTqMJpXiP",
-					}),
-				).resolves.toBe(true);
+				await expect(bridge.supports({ assetId, routeConfig })).resolves.toBe(
+					true,
+				);
 			});
 
 			it("throws UnsupportedAssetIdError if assetId not nep141 standard", async () => {
@@ -117,13 +92,9 @@ describe("OmniBridge", () => {
 				const assetId = "nep245:v3_1.omni.hot.tg:56_11111111111111111111";
 				const routeConfig = createOmniBridgeRoute();
 
-				await expect(
-					bridge.supports({
-						assetId,
-						routeConfig,
-						destinationAddress: zeroAddress,
-					}),
-				).rejects.toThrow(UnsupportedAssetIdError);
+				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
+					UnsupportedAssetIdError,
+				);
 			});
 
 			it("throws UnsupportedAssetIdError if assetId doesn't match omni pattern", async () => {
@@ -139,29 +110,23 @@ describe("OmniBridge", () => {
 				const assetId = "nep141:eth.bridge.fake.near";
 				const routeConfig = createOmniBridgeRoute();
 
-				await expect(
-					bridge.supports({
-						assetId,
-						routeConfig,
-						destinationAddress: zeroAddress,
-					}),
-				).rejects.toThrow(UnsupportedAssetIdError);
+				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
+					UnsupportedAssetIdError,
+				);
 			});
 
 			it.each([
 				{
 					assetId: "nep141:token.publicailab.near",
 					routeConfig: createOmniBridgeRoute(Chains.Dogecoin),
-					destinationAddress: "DH5yaieqoZN36fDVciNyRueRGvGLR3mr7L",
 				},
 				{
 					assetId: "nep141:nbtc.bridge.near",
 					routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
-					destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				},
 			])(
 				"throws UnsupportedAssetIdError if trying to bridge a token to unsupported chain",
-				async ({ assetId, routeConfig, destinationAddress }) => {
+				async ({ assetId, routeConfig }) => {
 					const nearProvider = nearFailoverRpcProvider({
 						urls: PUBLIC_NEAR_RPC_URLS,
 					});
@@ -172,7 +137,7 @@ describe("OmniBridge", () => {
 					});
 
 					await expect(
-						bridge.supports({ assetId, routeConfig, destinationAddress }),
+						bridge.supports({ assetId, routeConfig }),
 					).rejects.toThrow(UnsupportedAssetIdError);
 				},
 			);
@@ -181,11 +146,10 @@ describe("OmniBridge", () => {
 				{
 					assetId: "nep141:btc.omft.near",
 					routeConfig: createOmniBridgeRoute(Chains.Solana),
-					destinationAddress: "HuTshmtwcQkWBLzgW3m4uwcmik7Lmz4YFpYcTqMJpXiP",
 				},
 			])(
 				"throws TokenNotFoundInDestinationChainError if routeConfig passed, but assetId is not found in destination chain token",
-				async ({ assetId, routeConfig, destinationAddress }) => {
+				async ({ assetId, routeConfig }) => {
 					const nearProvider = nearFailoverRpcProvider({
 						urls: PUBLIC_NEAR_RPC_URLS,
 					});
@@ -196,7 +160,7 @@ describe("OmniBridge", () => {
 					});
 
 					await expect(
-						bridge.supports({ assetId, routeConfig, destinationAddress }),
+						bridge.supports({ assetId, routeConfig }),
 					).rejects.toThrow(TokenNotFoundInDestinationChainError);
 				},
 			);

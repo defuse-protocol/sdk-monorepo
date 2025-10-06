@@ -52,10 +52,7 @@ export class PoaBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<
-			WithdrawalParams,
-			"assetId" | "routeConfig" | "destinationAddress"
-		>,
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
 		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
@@ -68,17 +65,6 @@ export class PoaBridge implements Bridge {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
-			);
-		}
-
-		if (
-			isValid &&
-			validateAddress(params.destinationAddress, assetInfo.blockchain) === false
-		) {
-			throw new InvalidDestinationAddressForWithdrawalError(
-				params.destinationAddress,
-				BridgeNameEnum.Poa,
-				assetInfo.blockchain,
 			);
 		}
 
@@ -138,6 +124,16 @@ export class PoaBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				BridgeNameEnum.Poa,
+				assetInfo.blockchain,
+			);
+		}
 
 		// Use cached getSupportedTokens to avoid frequent API calls
 		const { tokens } = await this.getCachedSupportedTokens(

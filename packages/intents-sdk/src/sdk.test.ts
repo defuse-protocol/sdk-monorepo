@@ -50,7 +50,7 @@ describe.concurrent("poa_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
-				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
+				destinationAddress: zeroAddress,
 				feeInclusive: true,
 			},
 		});

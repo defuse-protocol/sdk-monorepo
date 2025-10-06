@@ -19,21 +19,10 @@ export class IntentsBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<WithdrawalParams, "routeConfig" | "destinationAddress">,
+		params: Pick<WithdrawalParams, "routeConfig">,
 	): Promise<boolean> {
 		if ("routeConfig" in params && params.routeConfig != null) {
-			const isValid = this.is(params.routeConfig);
-			if (
-				isValid &&
-				validateAddress(params.destinationAddress, Chains.Near) === false
-			) {
-				throw new InvalidDestinationAddressForWithdrawalError(
-					params.destinationAddress,
-					"withdrawal to intents",
-					"near-intents",
-				);
-			}
-			return isValid;
+			return this.is(params.routeConfig);
 		}
 
 		return false;
@@ -64,12 +53,19 @@ export class IntentsBridge implements Bridge {
 	/**
 	 * Intents bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				"withdrawal to intents",
+				"near-intents",
+			);
+		}
 		return;
 	}
 

@@ -48,10 +48,7 @@ export class AuroraEngineBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<
-			WithdrawalParams,
-			"assetId" | "routeConfig" | "destinationAddress"
-		>,
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
 		if (params.routeConfig == null || !this.is(params.routeConfig)) {
 			return false;
@@ -63,17 +60,6 @@ export class AuroraEngineBridge implements Bridge {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
-			);
-		}
-
-		if (
-			isValid &&
-			validateAddress(params.destinationAddress, Chains.Ethereum) === false
-		) {
-			throw new InvalidDestinationAddressForWithdrawalError(
-				params.destinationAddress,
-				"virtual chain withdrawal",
-				"virtual chain",
 			);
 		}
 
@@ -127,12 +113,20 @@ export class AuroraEngineBridge implements Bridge {
 	/**
 	 * Aurora Engine bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Ethereum) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				"virtual-chain-bridge",
+				"virtual-chain",
+			);
+		}
+
 		return;
 	}
 

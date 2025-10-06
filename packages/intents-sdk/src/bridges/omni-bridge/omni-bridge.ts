@@ -101,10 +101,7 @@ export class OmniBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<
-			WithdrawalParams,
-			"assetId" | "routeConfig" | "destinationAddress"
-		>,
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
 		// Non omni bridge route specified, abort.
 		if (params.routeConfig && !this.is(params.routeConfig)) {
@@ -179,14 +176,6 @@ export class OmniBridge implements Bridge {
 		if (tokenOnDestinationNetwork === null) {
 			throw new TokenNotFoundInDestinationChainError(
 				params.assetId,
-				caip2Chain,
-			);
-		}
-
-		if (validateAddress(params.destinationAddress, caip2Chain) === false) {
-			throw new InvalidDestinationAddressForWithdrawalError(
-				params.destinationAddress,
-				BridgeNameEnum.Omni,
 				caip2Chain,
 			);
 		}
@@ -310,6 +299,16 @@ export class OmniBridge implements Bridge {
 			assetInfo !== null,
 			`Asset ${args.assetId} is not supported by Omni Bridge`,
 		);
+
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				BridgeNameEnum.Omni,
+				assetInfo.blockchain,
+			);
+		}
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
 		assert(

@@ -50,10 +50,7 @@ export class DirectBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<
-			WithdrawalParams,
-			"assetId" | "routeConfig" | "destinationAddress"
-		>,
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
 		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
@@ -66,17 +63,6 @@ export class DirectBridge implements Bridge {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
-			);
-		}
-
-		if (
-			isValid &&
-			validateAddress(params.destinationAddress, Chains.Near) === false
-		) {
-			throw new InvalidDestinationAddressForWithdrawalError(
-				params.destinationAddress,
-				"direct withdrawal",
-				Chains.Near,
 			);
 		}
 
@@ -137,12 +123,20 @@ export class DirectBridge implements Bridge {
 	/**
 	 * Direct bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				"direct-bridge",
+				Chains.Near,
+			);
+		}
+
 		return;
 	}
 

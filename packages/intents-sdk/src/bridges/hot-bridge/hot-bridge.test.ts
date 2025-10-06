@@ -4,7 +4,6 @@ import { UnsupportedAssetIdError } from "../../classes/errors";
 import hotOmniSdk from "@hot-labs/omni-sdk";
 import { createHotBridgeRoute } from "../../lib/route-config-factory";
 import { Chains } from "../../lib/caip2";
-import { zeroAddress } from "viem";
 
 describe("HotBridge", () => {
 	describe("supports()", () => {
@@ -21,14 +20,11 @@ describe("HotBridge", () => {
 				}),
 			});
 
-			await expect(
-				bridge.supports({ assetId: tokenId, destinationAddress: zeroAddress }),
-			).resolves.toBe(true);
+			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(true);
 			await expect(
 				bridge.supports({
 					assetId: tokenId,
-					routeConfig: createHotBridgeRoute(Chains.BNB),
-					destinationAddress: zeroAddress,
+					routeConfig: createHotBridgeRoute(Chains.TON),
 				}),
 			).resolves.toBe(true);
 		});
@@ -45,9 +41,7 @@ describe("HotBridge", () => {
 					},
 				}),
 			});
-			await expect(
-				bridge.supports({ assetId: tokenId, destinationAddress: "test" }),
-			).resolves.toBe(false);
+			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(false);
 		});
 
 		it.each([
@@ -66,17 +60,15 @@ describe("HotBridge", () => {
 					}),
 				});
 
-				await expect(
-					bridge.supports({ assetId: assetId, destinationAddress: "test" }),
-				).rejects.toThrow(UnsupportedAssetIdError);
+				await expect(bridge.supports({ assetId: assetId })).rejects.toThrow(
+					UnsupportedAssetIdError,
+				);
 
 				// It throws even if routeConfig is provided.
 				await expect(
 					bridge.supports({
 						assetId: assetId,
 						routeConfig: createHotBridgeRoute(Chains.TON),
-						destinationAddress:
-							"UQCMOXxD-f8LSWWbXQowKxqTr3zMY-X1wMTyWp3B-LR6syif",
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
@@ -98,8 +90,6 @@ describe("HotBridge", () => {
 					bridge.supports({
 						assetId,
 						routeConfig: createHotBridgeRoute(Chains.TON),
-						destinationAddress:
-							"UQCMOXxD-f8LSWWbXQowKxqTr3zMY-X1wMTyWp3B-LR6syif",
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},

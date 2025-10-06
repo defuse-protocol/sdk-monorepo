@@ -212,10 +212,7 @@ export interface FeeEstimation {
 export interface Bridge {
 	is(routeConfig: RouteConfig): boolean;
 	supports(
-		params: Pick<
-			WithdrawalParams,
-			"assetId" | "routeConfig" | "destinationAddress"
-		>,
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean>;
 	parseAssetId(assetId: string): ParsedAssetInfo | null;
 

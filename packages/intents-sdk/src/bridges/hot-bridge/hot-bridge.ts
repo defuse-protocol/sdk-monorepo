@@ -59,10 +59,7 @@ export class HotBridge implements Bridge {
 	}
 
 	async supports(
-		params: Pick<
-			WithdrawalParams,
-			"assetId" | "routeConfig" | "destinationAddress"
-		>,
+		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean> {
 		if (params.routeConfig != null && !this.is(params.routeConfig)) {
 			return false;
@@ -74,17 +71,6 @@ export class HotBridge implements Bridge {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
-			);
-		}
-
-		if (
-			isValid &&
-			validateAddress(params.destinationAddress, assetInfo.blockchain) === false
-		) {
-			throw new InvalidDestinationAddressForWithdrawalError(
-				params.destinationAddress,
-				BridgeNameEnum.Hot,
-				assetInfo.blockchain,
 			);
 		}
 
@@ -215,6 +201,16 @@ export class HotBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
+
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				BridgeNameEnum.Hot,
+				assetInfo.blockchain,
+			);
+		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
 			const token = "native" in assetInfo ? "native" : assetInfo.address;
