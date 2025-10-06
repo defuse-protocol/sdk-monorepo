@@ -23,25 +23,42 @@ export type WaitForIntentSettlementErrorType =
 	| IntentSettlementErrorType
 	| types.JSONRPCErrorType;
 
+export type IntentSettlementCallbacks = {
+	/** Fires once when tx hash first becomes available */
+	onTxHashKnown?: (txHash: string) => void;
+};
+
 export async function waitForIntentSettlement({
 	intentHash,
 	signal,
 	baseURL,
 	retryOptions = RETRY_CONFIGS.TWO_MINS_GRADUAL,
 	logger,
+	...events
 }: {
 	intentHash: string;
 	signal: AbortSignal;
 	baseURL?: string;
 	retryOptions?: RetryOptions;
 	logger?: ILogger;
-}): Promise<WaitForIntentSettlementReturnType> {
+} & IntentSettlementCallbacks): Promise<WaitForIntentSettlementReturnType> {
+	let txHashEmitted = false;
+
 	return retry(
 		async () => {
 			const res = await solverRelayClient.getStatus(
 				{ intent_hash: intentHash },
 				{ baseURL, fetchOptions: { signal }, logger },
 			);
+
+			// Emit tx hash once when first known
+			if (
+				!txHashEmitted &&
+				(res.status === "TX_BROADCASTED" || res.status === "SETTLED")
+			) {
+				txHashEmitted = true;
+				events.onTxHashKnown?.(res.data.hash);
+			}
 
 			if (res.status === "SETTLED") {
 				return {
