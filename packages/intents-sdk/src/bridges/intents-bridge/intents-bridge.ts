@@ -29,8 +29,8 @@ export class IntentsBridge implements Bridge {
 			) {
 				throw new InvalidDestinationAddressForWithdrawalError(
 					params.destinationAddress,
-					"intents-bridge",
-					"intents",
+					"withdrawal to intents",
+					"near-intents",
 				);
 			}
 			return isValid;

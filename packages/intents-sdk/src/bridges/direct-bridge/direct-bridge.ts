@@ -75,7 +75,7 @@ export class DirectBridge implements Bridge {
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
-				"direct-bridge",
+				"direct withdrawal",
 				Chains.Near,
 			);
 		}

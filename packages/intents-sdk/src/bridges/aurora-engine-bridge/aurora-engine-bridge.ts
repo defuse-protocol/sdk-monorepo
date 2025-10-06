@@ -72,7 +72,7 @@ export class AuroraEngineBridge implements Bridge {
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				params.destinationAddress,
-				"virtual-chain-bridge",
+				"virtual chain withdrawal",
 				"virtual chain",
 			);
 		}
