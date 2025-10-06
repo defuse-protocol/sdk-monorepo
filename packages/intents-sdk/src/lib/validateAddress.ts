@@ -7,6 +7,7 @@ import {
 } from "ripple-address-codec";
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
+import { isLegitAccountId } from "../../../internal-utils/dist/utils/near";
 
 export function validateAddress(address: string, blockchain: Chain): boolean {
 	if (blockchain.startsWith("eip155:")) {
@@ -192,17 +193,4 @@ export function validateCardanoAddress(address: string) {
 	} catch {
 		return false;
 	}
-}
-
-const ACCOUNT_ID_REGEX =
-	/^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
-
-function isLegitAccountId(accountId: string): boolean {
-	// EVM-like account check
-	if (isAddress(accountId) && accountId === accountId.toLowerCase()) {
-		return true;
-	}
-
-	// Explicit and implicit account check
-	return ACCOUNT_ID_REGEX.test(accountId);
 }
