@@ -24,7 +24,6 @@ export class IntentsBridge implements Bridge {
 		if ("routeConfig" in params && params.routeConfig != null) {
 			return this.is(params.routeConfig);
 		}
-
 		return false;
 	}
 

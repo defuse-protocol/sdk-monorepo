@@ -56,13 +56,13 @@ export class AuroraEngineBridge implements Bridge {
 
 		const assetInfo = parseDefuseAssetId(params.assetId);
 		const isValid = assetInfo.standard === "nep141";
+
 		if (!isValid) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-
 		return isValid;
 	}
 

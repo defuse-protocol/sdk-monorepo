@@ -67,13 +67,13 @@ export class HotBridge implements Bridge {
 
 		const assetInfo = this.parseAssetId(params.assetId);
 		const isValid = assetInfo != null;
+
 		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-
 		return isValid;
 	}
 

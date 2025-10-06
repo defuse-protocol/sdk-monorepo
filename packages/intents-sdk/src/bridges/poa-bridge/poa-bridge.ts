@@ -67,7 +67,6 @@ export class PoaBridge implements Bridge {
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-
 		return isValid;
 	}
 
