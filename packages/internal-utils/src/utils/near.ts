@@ -84,6 +84,10 @@ const ACCOUNT_ID_REGEX =
 const IMPLICIT_ACCOUNT_MAX_LENGTH = 64;
 
 export function isLegitAccountId(accountId: string): boolean {
+	// NEAR account must be at least 2 characters long
+	if (accountId.length < 2) {
+		return false;
+	}
 	// EVM-like account check
 	if (isAddress(accountId) && accountId === accountId.toLowerCase()) {
 		return true;
