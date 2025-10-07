@@ -129,7 +129,6 @@ export class PoaBridge implements Bridge {
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				BridgeNameEnum.Poa,
 				assetInfo.blockchain,
 			);
 		}

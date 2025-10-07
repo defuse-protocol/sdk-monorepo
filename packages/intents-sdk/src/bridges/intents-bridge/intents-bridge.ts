@@ -61,7 +61,6 @@ export class IntentsBridge implements Bridge {
 		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				"withdrawal to intents",
 				"near-intents",
 			);
 		}

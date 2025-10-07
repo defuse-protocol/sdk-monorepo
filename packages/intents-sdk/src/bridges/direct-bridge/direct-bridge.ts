@@ -132,7 +132,6 @@ export class DirectBridge implements Bridge {
 		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				"direct-bridge",
 				Chains.Near,
 			);
 		}

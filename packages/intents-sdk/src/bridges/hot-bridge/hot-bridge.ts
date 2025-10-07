@@ -207,7 +207,6 @@ export class HotBridge implements Bridge {
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				BridgeNameEnum.Hot,
 				assetInfo.blockchain,
 			);
 		}

@@ -305,7 +305,6 @@ export class OmniBridge implements Bridge {
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				BridgeNameEnum.Omni,
 				assetInfo.blockchain,
 			);
 		}
