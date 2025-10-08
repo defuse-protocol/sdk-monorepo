@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 import { OmniBridge } from "./omni-bridge";
 import { createOmniBridgeRoute } from "../../lib/route-config-factory";
 import { Chains } from "../../lib/caip2";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { TokenNotFoundInDestinationChainError } from "./error";
 import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
+import { zeroAddress } from "viem";
 
 describe("OmniBridge", () => {
 	describe("without routeConfig", () => {
@@ -165,5 +169,84 @@ describe("OmniBridge", () => {
 				},
 			);
 		});
+	});
+
+	describe("validateWithdrawals()", () => {
+		it.each([
+			{
+				assetId:
+					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+				destinationAddress: zeroAddress,
+				routeConfig: undefined,
+			}, // Aurora token
+			{
+				assetId: "nep141:token.publicailab.near",
+				destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			}, // Public ai
+		])(
+			"allows correct addresses",
+			async ({ assetId, destinationAddress, routeConfig }) => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					env: "production",
+					nearProvider,
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						amount: 1000000000000000n,
+						assetId,
+						destinationAddress,
+						feeEstimation: {
+							amount: 25_000_000_000n,
+							quote: null,
+						},
+						routeConfig,
+					}),
+				).resolves.not.toThrow();
+			},
+		);
+		it.each([
+			{
+				assetId:
+					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+				destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
+				routeConfig: undefined,
+			}, // Aurora token
+			{
+				assetId: "nep141:token.publicailab.near",
+				destinationAddress: zeroAddress,
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			}, // Public ai
+		])(
+			"blocks non corresponding addresses",
+			async ({ assetId, destinationAddress, routeConfig }) => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					env: "production",
+					nearProvider,
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						amount: 1000000000000000n,
+						assetId,
+						destinationAddress,
+						feeEstimation: {
+							amount: 25_000_000_000n,
+							quote: null,
+						},
+						routeConfig,
+					}),
+				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
+			},
+		);
 	});
 });
