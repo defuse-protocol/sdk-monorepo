@@ -3,8 +3,8 @@ import { InvalidDestinationAddressForWithdrawalError } from "../../classes/error
 import { zeroAddress } from "viem";
 import { IntentsBridge } from "./intents-bridge";
 
-describe("DirectBridge", () => {
-	describe("validateWithdrawals()", () => {
+describe("IntentsBridge", () => {
+	describe("validateWithdrawal()", () => {
 		it.each(["user.near", "aurora", zeroAddress])(
 			"allows EVM and regular addresses",
 			async (destinationAddress) => {
@@ -16,7 +16,7 @@ describe("DirectBridge", () => {
 						amount: 1n,
 						destinationAddress,
 					}),
-				).resolves.not.toThrow();
+				).resolves.toBeUndefined();
 			},
 		);
 		it.each([

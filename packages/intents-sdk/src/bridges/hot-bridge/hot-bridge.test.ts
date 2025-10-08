@@ -110,7 +110,7 @@ describe("HotBridge", () => {
 		);
 	});
 
-	describe("validateWithdrawals()", () => {
+	describe("validateWithdrawal()", () => {
 		it.each([
 			{
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
@@ -161,7 +161,7 @@ describe("HotBridge", () => {
 					assetId,
 					destinationAddress,
 				}),
-			).resolves.not.toThrow();
+			).resolves.toBeUndefined();
 		});
 		it.each([
 			{

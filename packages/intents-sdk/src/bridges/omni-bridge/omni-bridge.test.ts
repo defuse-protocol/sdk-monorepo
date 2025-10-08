@@ -171,7 +171,7 @@ describe("OmniBridge", () => {
 		});
 	});
 
-	describe("validateWithdrawals()", () => {
+	describe("validateWithdrawal()", () => {
 		it.each([
 			{
 				assetId:
@@ -207,7 +207,7 @@ describe("OmniBridge", () => {
 						},
 						routeConfig,
 					}),
-				).resolves.not.toThrow();
+				).resolves.toBeUndefined();
 			},
 		);
 		it.each([

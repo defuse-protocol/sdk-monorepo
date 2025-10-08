@@ -71,7 +71,7 @@ describe("PoaBridge", () => {
 			},
 		);
 	});
-	describe("validateWithdrawals()", () => {
+	describe("validateWithdrawal()", () => {
 		it.each([
 			{
 				assetId:
@@ -126,7 +126,7 @@ describe("PoaBridge", () => {
 					assetId,
 					destinationAddress,
 				}),
-			).resolves.not.toThrow();
+			).resolves.toBeUndefined();
 		});
 		it.each([
 			{

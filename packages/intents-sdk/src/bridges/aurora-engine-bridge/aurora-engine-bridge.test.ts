@@ -64,7 +64,7 @@ describe("AuroraEngineBridge", () => {
 			},
 		);
 	});
-	describe("validateWithdrawals()", () => {
+	describe("validateWithdrawal()", () => {
 		it.each([zeroAddress])(
 			"allows EVM addresses",
 			async (destinationAddress) => {
@@ -79,7 +79,7 @@ describe("AuroraEngineBridge", () => {
 						amount: 1n,
 						destinationAddress,
 					}),
-				).resolves.not.toThrow();
+				).resolves.toBeUndefined();
 			},
 		);
 		it.each([

@@ -63,7 +63,7 @@ describe("DirectBridge", () => {
 			},
 		);
 	});
-	describe("validateWithdrawals()", () => {
+	describe("validateWithdrawal()", () => {
 		it.each(["user.near", "aurora", zeroAddress])(
 			"allows EVM and regular addresses",
 			async (destinationAddress) => {
@@ -78,7 +78,7 @@ describe("DirectBridge", () => {
 						amount: 1n,
 						destinationAddress,
 					}),
-				).resolves.not.toThrow();
+				).resolves.toBeUndefined();
 			},
 		);
 		it.each([
