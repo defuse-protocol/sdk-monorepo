@@ -65,7 +65,6 @@ export class DirectBridge implements Bridge {
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-
 		return isValid;
 	}
 
