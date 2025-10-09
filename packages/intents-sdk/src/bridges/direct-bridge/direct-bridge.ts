@@ -25,9 +25,13 @@ import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -118,12 +122,19 @@ export class DirectBridge implements Bridge {
 	/**
 	 * Direct bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				Chains.Near,
+			);
+		}
+
 		return;
 	}
 

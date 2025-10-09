@@ -62,8 +62,12 @@ import {
 	getAccountOmniStorageBalance,
 	getTokenDecimals,
 } from "./omni-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
 import { LRUCache } from "lru-cache";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
+import { validateAddress } from "../../lib/validateAddress";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -295,6 +299,15 @@ export class OmniBridge implements Bridge {
 			assetInfo !== null,
 			`Asset ${args.assetId} is not supported by Omni Bridge`,
 		);
+
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				assetInfo.blockchain,
+			);
+		}
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
 		assert(

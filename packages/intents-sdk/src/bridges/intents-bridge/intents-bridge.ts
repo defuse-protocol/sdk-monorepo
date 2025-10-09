@@ -9,6 +9,9 @@ import type {
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { validateAddress } from "../../lib/validateAddress";
+import { Chains } from "../../lib/caip2";
+import { InvalidDestinationAddressForWithdrawalError } from "../../classes/errors";
 
 export class IntentsBridge implements Bridge {
 	is(routeConfig: RouteConfig) {
@@ -49,12 +52,18 @@ export class IntentsBridge implements Bridge {
 	/**
 	 * Intents bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				"near-intents",
+			);
+		}
 		return;
 	}
 
