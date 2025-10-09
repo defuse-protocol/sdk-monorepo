@@ -20,9 +20,9 @@ import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
 import { OmniTokenNormalisationCheckError } from "./bridges/omni-bridge/error";
 
-const intentSigner = createIntentSignerViem(
-	privateKeyToAccount(generatePrivateKey()),
-);
+const intentSigner = createIntentSignerViem({
+	signer: privateKeyToAccount(generatePrivateKey()),
+});
 
 describe.concurrent("poa_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {

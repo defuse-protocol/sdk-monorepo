@@ -164,12 +164,12 @@ describe("IntentExecuter", () => {
 });
 
 function setupMocks() {
-	const intentSigner = createIntentSignerViem(
-		privateKeyToAccount(
+	const intentSigner = createIntentSignerViem({
+		signer: privateKeyToAccount(
 			// random private key
 			"0x8dc677035d99f1ce679131376ca7acda01a51ce6e77ec5d7a2cf4a1ab37a8499",
 		),
-	);
+	});
 	vi.spyOn(intentSigner, "signIntent");
 
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });
