@@ -1,5 +1,16 @@
 # @defuse-protocol/internal-utils
 
+## 0.13.0
+
+### Minor Changes
+
+- 322977c: Add `onTxHashKnown` parameter to `waitForIntentSettlement()`. The callback is called with the intent's tx hash as soon it's known.
+
+### Patch Changes
+
+- 79d0bcd: Change default list of NEAR RPCs.
+- aa221dc: Change intent status polling to be more aggressive.
+
 ## 0.12.0
 
 ### Minor Changes
