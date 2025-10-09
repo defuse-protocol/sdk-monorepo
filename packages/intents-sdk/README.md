@@ -57,7 +57,7 @@ import {KeyPair} from 'near-api-js';
 const sdk = new IntentsSDK({
     referral: 'your-referral-code', // Only referral is required
     intentSigner: createIntentSignerNearKeyPair({
-        keypair: KeyPair.fromString('your-private-key'),
+        signer: KeyPair.fromString('your-private-key'),
         accountId: 'your-account.near'
     })
 });
@@ -131,7 +131,7 @@ You must set an intent signer before processing withdrawals:
 ```typescript
 // Example: Set up a NEAR KeyPair signer
 const signer = createIntentSignerNearKeyPair({
-    keypair: KeyPair.fromString('your-private-key'),
+    signer: KeyPair.fromString('your-private-key'),
     accountId: 'your-account.near'
 });
 sdk.setIntentSigner(signer);
@@ -367,7 +367,7 @@ import {KeyPair} from 'near-api-js';
 
 const keyPair = KeyPair.fromString('your-private-key');
 const signer = createIntentSignerNearKeyPair({
-    keypair: keyPair,
+    signer: keyPair,
     accountId: 'your-account.near'
 });
 ```
@@ -396,7 +396,7 @@ import {createIntentSignerViem} from '@defuse-protocol/intents-sdk';
 import {privateKeyToAccount} from 'viem/accounts';
 
 const account = privateKeyToAccount('0x...');
-const signer = createIntentSignerViem(account);
+const signer = createIntentSignerViem({ signer: account });
 
 // Set the signer at runtime
 sdk.setIntentSigner(signer);
