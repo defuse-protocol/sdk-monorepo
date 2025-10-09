@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { createNearWithdrawalRoute } from "../../lib/route-config-factory";
 import { DirectBridge } from "./direct-bridge";
+import { zeroAddress } from "viem";
 
 describe("DirectBridge", () => {
 	describe("supports()", () => {
@@ -31,9 +35,11 @@ describe("DirectBridge", () => {
 					nearProvider: {} as any,
 				});
 
-				await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(
-					false,
-				);
+				await expect(
+					bridge.supports({
+						assetId: tokenId,
+					}),
+				).resolves.toBe(false);
 			},
 		);
 
@@ -56,5 +62,43 @@ describe("DirectBridge", () => {
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
 		);
+	});
+	describe("validateWithdrawal()", () => {
+		it.each(["user.near", "aurora", zeroAddress])(
+			"allows EVM and regular addresses",
+			async (destinationAddress) => {
+				const bridge = new DirectBridge({
+					env: "production",
+					nearProvider: {} as any,
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						assetId: "nep141:wrap.near",
+						amount: 1n,
+						destinationAddress,
+					}),
+				).resolves.toBeUndefined();
+			},
+		);
+		it.each([
+			"a", // Invalid NEAR address (less than two characters)
+			// Any string with no uppercase is technically a valid NEAR address (if it is at least two characters long)
+			// so I leave only one solana address here
+			"9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R", // Solana
+		])("blocks non NEAR addresses", async (destinationAddress) => {
+			const bridge = new DirectBridge({
+				env: "production",
+				nearProvider: {} as any,
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:wrap.near",
+					amount: 1n,
+					destinationAddress,
+				}),
+			).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
+		});
 	});
 });

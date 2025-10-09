@@ -9,6 +9,7 @@ import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
 import {
+	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
 	UnsupportedDestinationMemoError,
@@ -42,6 +43,7 @@ import {
 } from "./hot-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -199,6 +201,15 @@ export class HotBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
+
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				assetInfo.blockchain,
+			);
+		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
 			const token = "native" in assetInfo ? "native" : assetInfo.address;
