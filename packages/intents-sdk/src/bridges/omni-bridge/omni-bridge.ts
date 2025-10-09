@@ -71,6 +71,7 @@ export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
+	protected solverRelayApiKey: string | undefined;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -86,10 +87,16 @@ export class OmniBridge implements Bridge {
 	constructor({
 		env,
 		nearProvider,
-	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
+		solverRelayApiKey,
+	}: {
+		env: NearIntentsEnv;
+		nearProvider: providers.Provider;
+		solverRelayApiKey?: string;
+	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -418,6 +425,7 @@ export class OmniBridge implements Bridge {
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: args.logger,
+				solverRelayApiKey: this.solverRelayApiKey,
 			},
 		});
 		return {

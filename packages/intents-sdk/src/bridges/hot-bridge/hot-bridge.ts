@@ -46,10 +46,16 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected hotSdk: HotSdk;
+	protected solverRelayApiKey: string | undefined;
 
-	constructor({ env, hotSdk }: { env: NearIntentsEnv; hotSdk: HotSdk }) {
+	constructor({
+		env,
+		hotSdk,
+		solverRelayApiKey,
+	}: { env: NearIntentsEnv; hotSdk: HotSdk; solverRelayApiKey?: string }) {
 		this.env = env;
 		this.hotSdk = hotSdk;
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -246,6 +252,7 @@ export class HotBridge implements Bridge {
 						logger: args.logger,
 						env: this.env,
 						quoteOptions: args.quoteOptions,
+						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
 		return {

@@ -11,6 +11,7 @@ export type RequestConfig = {
 	baseURL?: string | undefined;
 	retryOptions?: RetryOptions;
 	logger?: ILogger;
+	solverRelayApiKey?: string;
 };
 
 export type JSONRPCRequest<Method, Params> = {
