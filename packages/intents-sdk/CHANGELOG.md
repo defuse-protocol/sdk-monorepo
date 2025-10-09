@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.24.0
+
+### Minor Changes
+
+- 040251a: Add address validation to validateWithdrawal step
+
+### Patch Changes
+
+- Updated dependencies [040251a]
+  - @defuse-protocol/internal-utils@0.14.0
+
 ## 0.23.1
 
 ### Patch Changes
