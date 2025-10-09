@@ -7,7 +7,6 @@ import {
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
-	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -64,6 +63,7 @@ import {
 } from "./omni-bridge-utils";
 import { UnsupportedAssetIdError } from "../../classes/errors";
 import { LRUCache } from "lru-cache";
+import { getFeeQuote } from "../../lib/estimate-fee";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -418,18 +418,13 @@ export class OmniBridge implements Bridge {
 			};
 		}
 
-		const quote = await solverRelay.getQuote({
-			quoteParams: {
-				defuse_asset_identifier_in: args.withdrawalParams.assetId,
-				defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
-				exact_amount_out: totalAmountToQuote.toString(),
-				wait_ms: args.quoteOptions?.waitMs,
-			},
-			config: {
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-				logBalanceSufficient: false,
-				logger: args.logger,
-			},
+		const quote = await getFeeQuote({
+			feeAmount: totalAmountToQuote,
+			feeAssetId: NEAR_NATIVE_ASSET_ID,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			env: this.env,
+			quoteOptions: args.quoteOptions,
 		});
 
 		return {
