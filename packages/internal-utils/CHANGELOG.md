@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.14.0
+
+### Minor Changes
+
+- 040251a: Add address validation to validateWithdrawal step
+
 ## 0.13.0
 
 ### Minor Changes
