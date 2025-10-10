@@ -53,7 +53,6 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		},
 		ctx: { logger?: ILogger } = {},
 	): Promise<IntentHash[]> {
-		solverRelay.httpClient;
 		const result = await solverRelay.publishIntents(
 			{
 				quote_hashes: quoteHashes,
