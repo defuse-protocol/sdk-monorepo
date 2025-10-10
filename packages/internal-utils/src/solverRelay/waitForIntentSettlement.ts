@@ -52,6 +52,7 @@ export async function waitForIntentSettlement({
 	baseURL,
 	retryOptions = aggressiveRetryOptions,
 	logger,
+	solverRelayApiKey,
 	...events
 }: {
 	intentHash: string;
@@ -59,6 +60,7 @@ export async function waitForIntentSettlement({
 	baseURL?: string;
 	retryOptions?: RetryOptions;
 	logger?: ILogger;
+	solverRelayApiKey?: string;
 } & IntentSettlementCallbacks): Promise<WaitForIntentSettlementReturnType> {
 	let txHashEmitted = false;
 
@@ -66,7 +68,7 @@ export async function waitForIntentSettlement({
 		async () => {
 			const res = await solverRelayClient.getStatus(
 				{ intent_hash: intentHash },
-				{ baseURL, fetchOptions: { signal }, logger },
+				{ baseURL, fetchOptions: { signal }, logger, solverRelayApiKey },
 			);
 
 			// Emit tx hash once when first known

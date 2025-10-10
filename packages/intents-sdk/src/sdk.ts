@@ -65,6 +65,7 @@ export interface IntentsSDKConfig {
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
+	solverRelayApiKey?: string;
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -73,10 +74,12 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
+	protected solverRelayApiKey: string | undefined;
 
 	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
+		this.solverRelayApiKey = args.solverRelayApiKey;
 
 		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
 		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
@@ -102,10 +105,14 @@ export class IntentsSDK implements IIntentsSDK {
 			new AuroraEngineBridge({
 				env: this.env,
 				nearProvider,
+				solverRelayApiKey: this.solverRelayApiKey,
 			}),
-			new PoaBridge({ env: this.env }),
+			new PoaBridge({
+				env: this.env,
+			}),
 			new HotBridge({
 				env: this.env,
+				solverRelayApiKey: this.solverRelayApiKey,
 				hotSdk: new hotOmniSdk.HotBridge({
 					logger: console,
 					evmRpc: evmRpcUrls,
@@ -122,14 +129,19 @@ export class IntentsSDK implements IIntentsSDK {
 			new OmniBridge({
 				env: this.env,
 				nearProvider,
+				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 			new DirectBridge({
 				env: this.env,
 				nearProvider,
+				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 		];
 
-		this.intentRelayer = new IntentRelayerPublic({ env: this.env });
+		this.intentRelayer = new IntentRelayerPublic({
+			env: this.env,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		this.intentSigner = args.intentSigner;
 	}
@@ -445,6 +457,7 @@ export class IntentsSDK implements IIntentsSDK {
 			{
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger,
+				solverRelayApiKey: this.solverRelayApiKey,
 			},
 		);
 	}

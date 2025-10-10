@@ -34,13 +34,20 @@ import { Chains } from "../../lib/caip2";
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
+	protected solverRelayApiKey: string | undefined;
 
 	constructor({
 		env,
 		nearProvider,
-	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
+		solverRelayApiKey,
+	}: {
+		env: NearIntentsEnv;
+		nearProvider: providers.Provider;
+		solverRelayApiKey?: string;
+	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -173,6 +180,7 @@ export class AuroraEngineBridge implements Bridge {
 						logger: args.logger,
 						env: this.env,
 						quoteOptions: args.quoteOptions,
+						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
 		return {

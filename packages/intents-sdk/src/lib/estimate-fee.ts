@@ -17,6 +17,7 @@ export async function getFeeQuote({
 	quoteOptions,
 	env,
 	logger,
+	solverRelayApiKey,
 }: {
 	feeAmount: bigint;
 	feeAssetId: string;
@@ -24,6 +25,7 @@ export async function getFeeQuote({
 	quoteOptions?: { waitMs: number };
 	env: NearIntentsEnv;
 	logger?: ILogger;
+	solverRelayApiKey?: string;
 }): Promise<solverRelay.Quote> {
 	try {
 		return await solverRelay.getQuote({
@@ -37,6 +39,7 @@ export async function getFeeQuote({
 				baseURL: configsByEnvironment[env].solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: logger,
+				solverRelayApiKey,
 			},
 		});
 	} catch (err: unknown) {
@@ -90,6 +93,7 @@ export async function getFeeQuote({
 				baseURL: configsByEnvironment[env].solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: logger,
+				solverRelayApiKey,
 			},
 		});
 
