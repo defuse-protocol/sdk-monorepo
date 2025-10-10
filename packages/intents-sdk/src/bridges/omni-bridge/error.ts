@@ -54,15 +54,14 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 	}
 }
 
-export type TokenNotSupportedByOmniRelayerErrorType =
-	TokenNotSupportedByOmniRelayerError & {
-		name: "TokenNotSupportedByOmniRelayerError";
-	};
-export class TokenNotSupportedByOmniRelayerError extends BaseError {
+export type FailedToFetchFeeErrorType = FailedToFetchFeeError & {
+	name: "FailedToFetchFeeError";
+};
+export class FailedToFetchFeeError extends BaseError {
 	constructor(public token: string) {
-		super(`Omni Relayer doesn't accept fee in the transferred token ${token}`, {
+		super(`Failed to fetch fee data for ${token}`, {
 			metaMessages: [`Token: ${token}`],
-			name: "TokenNotSupportedByOmniRelayerError",
+			name: "FailedToFetchFeeError",
 		});
 	}
 }

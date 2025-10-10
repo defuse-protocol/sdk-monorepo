@@ -7,7 +7,6 @@ import {
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
-	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -45,7 +44,7 @@ import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
-	TokenNotSupportedByOmniRelayerError,
+	FailedToFetchFeeError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 } from "./error";
 import {
@@ -56,13 +55,14 @@ import {
 import {
 	caip2ToChainKind,
 	chainKindToCaip2,
-	createWithdrawIntentPrimitive,
-	validateOmniToken,
+	createWithdrawIntentsPrimitive,
 	getBridgedToken,
 	getAccountOmniStorageBalance,
+	validateOmniToken,
 	getTokenDecimals,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
+import { getFeeQuote } from "../../lib/estimate-fee";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
@@ -249,6 +249,17 @@ export class OmniBridge implements Bridge {
 			assetInfo !== null,
 			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
 		);
+		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
+		assert(
+			omniChainKind !== null,
+			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
+		);
+		const [minStorageBalance, currentStorageBalance] =
+			await this.getCachedStorageDepositValue(assetInfo.contractId);
+		const storageDepositAmount =
+			minStorageBalance > currentStorageBalance
+				? minStorageBalance - currentStorageBalance
+				: 0n;
 
 		const intents: IntentPrimitive[] = [];
 
@@ -265,24 +276,24 @@ export class OmniBridge implements Bridge {
 			});
 		}
 
-		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(
-			omniChainKind !== null,
-			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
+		intents.push(
+			...createWithdrawIntentsPrimitive({
+				assetId: args.withdrawalParams.assetId,
+				destinationAddress: args.withdrawalParams.destinationAddress,
+				amount: args.withdrawalParams.amount,
+				omniChainKind,
+				intentsContract: configsByEnvironment[this.env].contractID,
+				// we need to calculate relayer fee
+				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
+				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
+				nativeFee:
+					(args.feeEstimation.quote === null
+						? args.feeEstimation.amount
+						: BigInt(args.feeEstimation.quote.amount_out)) -
+					storageDepositAmount,
+				storageDepositAmount,
+			}),
 		);
-
-		const intent = createWithdrawIntentPrimitive({
-			assetId: args.withdrawalParams.assetId,
-			destinationAddress: args.withdrawalParams.destinationAddress,
-			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
-			omniChainKind,
-			storageDeposit: args.feeEstimation.quote
-				? BigInt(args.feeEstimation.quote.amount_out)
-				: 0n,
-			transferredTokenFee: args.feeEstimation.amount,
-		});
-
-		intents.push(intent);
 
 		return Promise.resolve(intents);
 	}
@@ -408,42 +419,38 @@ export class OmniBridge implements Bridge {
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
-		if (fee.transferred_token_fee === null) {
-			throw new TokenNotSupportedByOmniRelayerError(
-				args.withdrawalParams.assetId,
-			);
+		if (fee.native_token_fee === null) {
+			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
 		}
 
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		// Handles the edge case where the omni contract lacks a storage_deposit for the received token.
-		// If storage isn't already covered, we pay the required storage_deposit.
-		if (minStorageBalance <= currentStorageBalance) {
+		const totalAmountToQuote =
+			fee.native_token_fee +
+			(minStorageBalance > currentStorageBalance
+				? minStorageBalance - currentStorageBalance
+				: 0n);
+		// withdraw of nep141:wrap.near
+		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
-				amount: BigInt(fee.transferred_token_fee),
+				amount: totalAmountToQuote,
 				quote: null,
 			};
 		}
 
-		const feeAmount = minStorageBalance - currentStorageBalance;
-
-		const feeQuote = await solverRelay.getQuote({
-			quoteParams: {
-				defuse_asset_identifier_in: args.withdrawalParams.assetId,
-				defuse_asset_identifier_out: NEAR_NATIVE_ASSET_ID,
-				exact_amount_out: feeAmount.toString(),
-				wait_ms: args.quoteOptions?.waitMs,
-			},
-			config: {
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
-				logBalanceSufficient: false,
-				logger: args.logger,
-				solverRelayApiKey: this.solverRelayApiKey,
-			},
+		const quote = await getFeeQuote({
+			feeAmount: totalAmountToQuote,
+			feeAssetId: NEAR_NATIVE_ASSET_ID,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			env: this.env,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
 		});
+
 		return {
-			amount: BigInt(fee.transferred_token_fee) + BigInt(feeQuote.amount_in),
-			quote: feeQuote,
+			amount: BigInt(quote.amount_in),
+			quote,
 		};
 	}
 
@@ -461,12 +468,10 @@ export class OmniBridge implements Bridge {
 				}
 
 				const transfer = (
-					await this.omniBridgeAPI.findOmniTransfers({
-						transaction_id: args.tx.hash,
-						offset: args.index,
-						limit: 1,
+					await this.omniBridgeAPI.getTransfer({
+						transactionHash: args.tx.hash,
 					})
-				)[0];
+				)[args.index];
 				if (transfer == null || transfer.transfer_message == null)
 					throw new OmniTransferNotFoundError(args.tx.hash);
 				const destinationChain = getChain(
