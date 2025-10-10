@@ -41,6 +41,7 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	protected intentSigner: IIntentSigner;
 	protected intentRelayer: IIntentRelayer<Ticket>;
 	protected onBeforePublishIntent: OnBeforePublishIntentHook | undefined;
+
 	constructor(args: {
 		env: NearIntentsEnv;
 		logger?: ILogger;
