@@ -92,20 +92,20 @@ describe("sdk.signAndSendWithdrawalIntent()", () => {
 });
 
 function setupMocks() {
-	const defaultIntentSigner = createIntentSignerViem(
-		privateKeyToAccount(
+	const defaultIntentSigner = createIntentSignerViem({
+		signer: privateKeyToAccount(
 			// random private key
 			"0x8dc677035d99f1ce679131376ca7acda01a51ce6e77ec5d7a2cf4a1ab37a8499",
 		),
-	);
+	});
 	vi.spyOn(defaultIntentSigner, "signIntent");
 
-	const intentSigner2 = createIntentSignerViem(
-		privateKeyToAccount(
+	const intentSigner2 = createIntentSignerViem({
+		signer: privateKeyToAccount(
 			// random private key
 			"0x8dc677035d99f1ce679131376ca7acda01a51ce6e77ec5d7a2cf4a1ab37a8499",
 		),
-	);
+	});
 	vi.spyOn(intentSigner2, "signIntent");
 
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });

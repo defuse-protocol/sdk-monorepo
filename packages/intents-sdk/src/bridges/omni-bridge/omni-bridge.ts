@@ -61,9 +61,13 @@ import {
 	validateOmniToken,
 	getTokenDecimals,
 } from "./omni-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
+import { validateAddress } from "../../lib/validateAddress";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -71,6 +75,7 @@ export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
+	protected solverRelayApiKey: string | undefined;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -86,10 +91,16 @@ export class OmniBridge implements Bridge {
 	constructor({
 		env,
 		nearProvider,
-	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
+		solverRelayApiKey,
+	}: {
+		env: NearIntentsEnv;
+		nearProvider: providers.Provider;
+		solverRelayApiKey?: string;
+	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -106,8 +117,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -184,8 +195,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -307,6 +318,15 @@ export class OmniBridge implements Bridge {
 			`Asset ${args.assetId} is not supported by Omni Bridge`,
 		);
 
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				assetInfo.blockchain,
+			);
+		}
+
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
 		assert(
 			omniChainKind !== null,
@@ -425,6 +445,7 @@ export class OmniBridge implements Bridge {
 			logger: args.logger,
 			env: this.env,
 			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
 		});
 
 		return {

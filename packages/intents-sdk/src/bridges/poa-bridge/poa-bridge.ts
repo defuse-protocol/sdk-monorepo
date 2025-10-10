@@ -9,6 +9,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import {
+	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
@@ -31,6 +32,7 @@ import {
 } from "./poa-bridge-utils";
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -121,6 +123,15 @@ export class PoaBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				assetInfo.blockchain,
+			);
+		}
 
 		// Use cached getSupportedTokens to avoid frequent API calls
 		const { tokens } = await this.getCachedSupportedTokens(

@@ -10,9 +10,14 @@ import type { IntentHash, MultiPayload } from "../shared-types";
 
 export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 	protected env: NearIntentsEnv;
+	protected solverRelayApiKey: string | undefined;
 
-	constructor({ env }: { env: NearIntentsEnv }) {
+	constructor({
+		env,
+		solverRelayApiKey,
+	}: { env: NearIntentsEnv; solverRelayApiKey?: string }) {
 		this.env = env;
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	async publishIntent(
@@ -37,7 +42,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		)[0]!;
 	}
 
-	// как прокидывать доп. параметры, например, quoteHashes (или специфичные параметры для каждого релея?)
+	// how to pass additional params like quoteHashes or some relay specific params ?
 	async publishIntents(
 		{
 			multiPayloads,
@@ -48,7 +53,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		},
 		ctx: { logger?: ILogger } = {},
 	): Promise<IntentHash[]> {
-		const a = await solverRelay.publishIntents(
+		const result = await solverRelay.publishIntents(
 			{
 				quote_hashes: quoteHashes,
 				signed_datas: multiPayloads,
@@ -56,13 +61,14 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 			{
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger: ctx.logger,
+				solverRelayApiKey: this.solverRelayApiKey,
 			},
 		);
-		if (a.isOk()) {
-			return a.unwrap() as IntentHash[];
+		if (result.isOk()) {
+			return result.unwrap() as IntentHash[];
 		}
 
-		throw a.unwrapErr();
+		throw result.unwrapErr();
 	}
 
 	async waitForSettlement(
@@ -74,6 +80,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 			signal: new AbortController().signal,
 			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 			logger: ctx.logger,
+			solverRelayApiKey: this.solverRelayApiKey,
 		});
 		return {
 			tx: {

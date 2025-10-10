@@ -1,5 +1,39 @@
 # @defuse-protocol/intents-sdk
 
+## 0.25.0
+
+### Minor Changes
+
+- 4ae37e3: - Allow specifying `accountId` for viem signer in `createIntentSignerViem()` factory.
+  - Change signatures of `createIntentSignerNearKeyPair()` and `createIntentSignerViem()`.
+- f0fcc2f: Add support for solver api authorization key
+
+### Patch Changes
+
+- Updated dependencies [f0fcc2f]
+- Updated dependencies [84f800a]
+  - @defuse-protocol/internal-utils@0.15.0
+
+## 0.24.0
+
+### Minor Changes
+
+- 040251a: Add address validation to validateWithdrawal step
+
+### Patch Changes
+
+- Updated dependencies [040251a]
+  - @defuse-protocol/internal-utils@0.14.0
+
+## 0.23.1
+
+### Patch Changes
+
+- Updated dependencies [79d0bcd]
+- Updated dependencies [322977c]
+- Updated dependencies [aa221dc]
+  - @defuse-protocol/internal-utils@0.13.0
+
 ## 0.23.0
 
 ### Minor Changes

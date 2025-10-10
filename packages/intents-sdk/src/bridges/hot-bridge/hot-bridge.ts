@@ -9,6 +9,7 @@ import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { retry } from "@lifeomic/attempt";
 import {
+	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
 	UnsupportedDestinationMemoError,
@@ -42,14 +43,21 @@ import {
 } from "./hot-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected hotSdk: HotSdk;
+	protected solverRelayApiKey: string | undefined;
 
-	constructor({ env, hotSdk }: { env: NearIntentsEnv; hotSdk: HotSdk }) {
+	constructor({
+		env,
+		hotSdk,
+		solverRelayApiKey,
+	}: { env: NearIntentsEnv; hotSdk: HotSdk; solverRelayApiKey?: string }) {
 		this.env = env;
 		this.hotSdk = hotSdk;
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -200,6 +208,15 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
+		if (
+			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+		) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				assetInfo.blockchain,
+			);
+		}
+
 		if (assetInfo.blockchain === Chains.Stellar) {
 			const token = "native" in assetInfo ? "native" : assetInfo.address;
 
@@ -246,6 +263,7 @@ export class HotBridge implements Bridge {
 						logger: args.logger,
 						env: this.env,
 						quoteOptions: args.quoteOptions,
+						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
 		return {
