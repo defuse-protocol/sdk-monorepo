@@ -103,7 +103,7 @@ async function request_({
 
 	try {
 		const headers = new Headers(customHeaders);
-		headers.append("Content-Type", "application/json");
+		headers.set("Content-Type", "application/json");
 		const response = await withTimeout(
 			({ signal }) => {
 				return fetch(url, {
