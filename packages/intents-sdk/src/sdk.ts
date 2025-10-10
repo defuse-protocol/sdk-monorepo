@@ -74,7 +74,7 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
-	protected solverRelayApiKey?: string;
+	protected solverRelayApiKey: string | undefined;
 
 	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
