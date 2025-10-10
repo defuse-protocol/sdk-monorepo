@@ -1,5 +1,15 @@
 # @defuse-protocol/internal-utils
 
+## 0.15.0
+
+### Minor Changes
+
+- f0fcc2f: Add support for solver api authorization key
+
+### Patch Changes
+
+- 84f800a: Make intent status polling less aggressive but longer.
+
 ## 0.14.0
 
 ### Minor Changes
