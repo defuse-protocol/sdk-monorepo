@@ -32,17 +32,17 @@ export type IntentSettlementCallbacks = {
  * Aggressive retry for status polling (expects 3 changes in ~1.5s, ~500ms each)
  *
  * - initialDelay (250ms): Skip period where status never changes
- * - delay (200ms) + factor (1.15): Fast polling first 2.5s (<400ms intervals),
+ * - delay (300ms) + factor (1.15): Fast polling first 2.5s (<500ms intervals),
  *   then exponential backoff for edge cases
- * - maxAttempts (15): ~10s total coverage
+ * - maxAttempts (21): ~30s total coverage
  * - jitter: Prevents simultaneous requests from multiple clients
  */
 const aggressiveRetryOptions = {
 	initialDelay: 250,
-	delay: 200,
-	minDelay: 200,
+	delay: 300,
+	minDelay: 300,
 	factor: 1.15,
-	maxAttempts: 15,
+	maxAttempts: 21,
 	jitter: true,
 } satisfies RetryOptions;
 
