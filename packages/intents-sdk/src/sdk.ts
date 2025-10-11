@@ -183,7 +183,9 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		throw new Error(
-			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
+			`Cannot determine bridge for withdrawal = ${stringify(
+				args.withdrawalParams,
+			)}`,
 		);
 	}
 
@@ -245,7 +247,9 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		throw new Error(
-			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
+			`Cannot determine bridge for withdrawal = ${stringify(
+				args.withdrawalParams,
+			)}`,
 		);
 	}
 
