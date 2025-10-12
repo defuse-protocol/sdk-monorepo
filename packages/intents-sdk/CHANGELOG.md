@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.26.3
+
+### Patch Changes
+
+- dc84a3e: Fix import HotBridge from @hot-labs/omni-sdk.
+
 ## 0.26.2
 
 ### Patch Changes
