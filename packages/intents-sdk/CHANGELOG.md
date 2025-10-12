@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.26.2
+
+### Patch Changes
+
+- 7087b55: Fix Intents SDK build.
+
 ## 0.26.1
 
 ### Patch Changes
