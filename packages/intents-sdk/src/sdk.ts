@@ -9,7 +9,7 @@ import {
 	nearFailoverRpcProvider,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
-import hotOmniSdk from "@hot-labs/omni-sdk";
+import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
@@ -113,7 +113,7 @@ export class IntentsSDK implements IIntentsSDK {
 			new HotBridge({
 				env: this.env,
 				solverRelayApiKey: this.solverRelayApiKey,
-				hotSdk: new hotOmniSdk.HotBridge({
+				hotSdk: new hotLabsOmniSdk_HotBridge({
 					logger: console,
 					evmRpc: evmRpcUrls,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
