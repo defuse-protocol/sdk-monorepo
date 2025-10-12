@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.26.0
+
+### Minor Changes
+
+- da2558d: Enable withdrawing any bridgable token using Omni Bridge, not just whitelisted by Omni Bridge relayer.
+
 ## 0.25.0
 
 ### Minor Changes
