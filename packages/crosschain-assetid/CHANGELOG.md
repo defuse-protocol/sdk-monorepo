@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.0.2
+
+### Patch Changes
+
+- c7248dc: Fix running libs in browsers.
+
 ## 1.0.1
 
 ### Patch Changes
