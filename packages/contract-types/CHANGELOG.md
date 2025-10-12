@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.1.2
+
+### Patch Changes
+
+- c7248dc: Fix running libs in browsers.
+
 ## 0.1.1
 
 ### Patch Changes

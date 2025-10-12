@@ -1,5 +1,13 @@
 # @defuse-protocol/internal-utils
 
+## 0.15.1
+
+### Patch Changes
+
+- c7248dc: Fix running libs in browsers.
+- Updated dependencies [c7248dc]
+  - @defuse-protocol/contract-types@0.1.2
+
 ## 0.15.0
 
 ### Minor Changes
