@@ -41,12 +41,14 @@
 		"@near-js/keystores": "^2.0.1",
 		"@noble/hashes": "^1.7.1",
 		"@scure/base": "^1.0.0",
+		"@solana/web3.js": "^1.0.0",
 		"borsher": "^4.0.0",
+		"lru-cache": "^11",
 		"near-api-js": "^4.0.0 || ^5.0.0",
 		"omni-bridge-sdk": "0.18.0",
-		"viem": "^2.0.0",
-		"lru-cache": "^11",
-		"ripple-address-codec": "^5.0.0"
+		"ripple-address-codec": "^5.0.0",
+		"valibot": "^1.0.0",
+		"viem": "^2.0.0"
 	},
 	"devDependencies": {
 		"tsdown": "0.15.5",

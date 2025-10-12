@@ -7,7 +7,7 @@ import {
 } from "ripple-address-codec";
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
-import { isLegitAccountId } from "../../../internal-utils/dist/utils/near";
+import { utils } from "@defuse-protocol/internal-utils";
 
 export function validateAddress(address: string, blockchain: Chain): boolean {
 	if (blockchain.startsWith("eip155:")) {
@@ -15,7 +15,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 	}
 	switch (blockchain) {
 		case Chains.Near:
-			return isLegitAccountId(address);
+			return utils.isLegitAccountId(address);
 		case Chains.Bitcoin:
 			return validateBtcAddress(address);
 		case Chains.Solana:
