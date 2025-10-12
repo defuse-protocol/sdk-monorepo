@@ -3,6 +3,7 @@ import {
 	ChainKind,
 	omniAddress,
 	isBridgeToken,
+	calculateStorageAccountId,
 	type OmniAddress,
 	type TokenDecimals,
 	getChain,
@@ -14,31 +15,58 @@ import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 import type { providers } from "near-api-js";
 import * as v from "valibot";
 
-export function createWithdrawIntentPrimitive(params: {
+export function createWithdrawIntentsPrimitive(params: {
 	assetId: string;
 	destinationAddress: string;
 	amount: bigint;
-	storageDeposit: bigint;
+	nativeFee: bigint;
+	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
-	transferredTokenFee: bigint;
-}): IntentPrimitive {
+	intentsContract: string;
+}): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
 	);
+	const recipient = omniAddress(
+		params.omniChainKind,
+		params.destinationAddress,
+	);
+	const implicitAccount = calculateStorageAccountId({
+		token: `near:${tokenAccountId}`,
+		amount: params.amount,
+		recipient,
+		fee: {
+			fee: 0n,
+			native_fee: params.nativeFee,
+		},
+		sender: `near:${params.intentsContract}`,
+		msg: "",
+	});
 	assert(standard === "nep141", "Only NEP-141 is supported");
-	return {
-		intent: "ft_withdraw",
-		token: tokenAccountId,
-		receiver_id: OMNI_BRIDGE_CONTRACT,
-		amount: params.amount.toString(),
-		storage_deposit:
-			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
-		msg: JSON.stringify({
-			recipient: omniAddress(params.omniChainKind, params.destinationAddress),
-			fee: params.transferredTokenFee.toString(),
-			native_token_fee: "0",
-		}),
-	};
+
+	return [
+		{
+			account_id: implicitAccount,
+			amount: params.nativeFee.toString(),
+			contract_id: OMNI_BRIDGE_CONTRACT,
+			intent: "storage_deposit",
+		},
+		{
+			intent: "ft_withdraw",
+			token: tokenAccountId,
+			receiver_id: OMNI_BRIDGE_CONTRACT,
+			amount: params.amount.toString(),
+			storage_deposit:
+				params.storageDepositAmount > 0n
+					? params.storageDepositAmount.toString()
+					: null,
+			msg: JSON.stringify({
+				recipient,
+				fee: "0",
+				native_token_fee: params.nativeFee.toString(),
+			}),
+		},
+	];
 }
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
