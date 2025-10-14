@@ -13,6 +13,7 @@ import type {
 	IntentPayloadFactory,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
+	MultiPayload,
 } from "./intents/shared-types";
 import type { Chain, Chains } from "./lib/caip2";
 
@@ -36,6 +37,42 @@ export interface BatchWithdrawalResult {
 
 export type IntentSettlementStatus = solverRelay.GetStatusReturnType;
 
+/**
+ * Configuration for composing multiple intents into an atomic batch.
+ *
+ * Intents can be attached in two ways:
+ * - `prepend`: Pre-signed intents that will be added before the new intents
+ * - `append`: Pre-signed intents that will be added after the new intents
+ *
+ * The order matters for transaction execution on-chain.
+ *
+ * @example
+ * ```typescript
+ * // Attach pre-signed intents from other users
+ * const composition: IntentComposition = {
+ *   prepend: [signedIntent1, signedIntent2],
+ * };
+ *
+ * await sdk.signAndSendIntent({
+ *   intents: [myNewIntent],
+ *   composition,
+ * });
+ * ```
+ */
+export interface IntentComposition {
+	/**
+	 * Pre-signed intents (MultiPayload) to execute before the new intents.
+	 * Useful for dependencies that must be executed first.
+	 */
+	prepend?: MultiPayload[];
+
+	/**
+	 * Pre-signed intents (MultiPayload) to execute after the new intents.
+	 * Useful for cleanup or follow-up actions.
+	 */
+	append?: MultiPayload[];
+}
+
 export interface SignAndSendArgs {
 	intents: IntentPrimitive[];
 	payload?: IntentPayloadFactory;
@@ -43,6 +80,11 @@ export interface SignAndSendArgs {
 	signer?: IIntentSigner;
 	onBeforePublishIntent?: OnBeforePublishIntentHook;
 	logger?: ILogger;
+	/**
+	 * Compose this intent with other pre-signed intents for atomic execution.
+	 * All intents will be executed together or not at all.
+	 */
+	composition?: IntentComposition;
 }
 
 export type SignAndSendWithdrawalArgs<
@@ -67,6 +109,11 @@ export type ProcessWithdrawalArgs<
 		relayParams?: IntentRelayParamsFactory;
 		signer?: IIntentSigner;
 		onBeforePublishIntent?: OnBeforePublishIntentHook;
+		/**
+		 * Compose this withdrawal intent with other pre-signed intents for atomic execution.
+		 * All intents will be executed together or not at all.
+		 */
+		composition?: IntentComposition;
 	};
 	referral?: string;
 	retryOptions?: RetryOptions;

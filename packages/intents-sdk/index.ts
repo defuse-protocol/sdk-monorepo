@@ -21,12 +21,14 @@ export type {
 	// Intent-specific
 	IntentPublishResult,
 	IntentSettlementStatus,
+	IntentComposition,
 	// Main withdrawal interfaces
 	WithdrawalParams,
 	FeeEstimation,
 	WithdrawalIdentifier,
 	ProcessWithdrawalArgs,
 	SignAndSendWithdrawalArgs,
+	SignAndSendArgs,
 	// Route configurations
 	RouteConfig,
 	NearWithdrawalRouteConfig,
