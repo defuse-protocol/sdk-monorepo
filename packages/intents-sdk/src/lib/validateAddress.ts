@@ -15,7 +15,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 	}
 	switch (blockchain) {
 		case Chains.Near:
-			return utils.isLegitAccountId(address);
+			return utils.validateNearAddress(address);
 		case Chains.Bitcoin:
 			return validateBtcAddress(address);
 		case Chains.Solana:
