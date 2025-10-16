@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.27.0
+
+### Minor Changes
+
+- 83aee66: Allow prepending and appending other signed intents, so that all of them are executed atomically.
+
 ## 0.26.4
 
 ### Patch Changes
