@@ -26,7 +26,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
     - [Error Handling](#error-handling)
-    - [Intent Composition (Atomic Multi-Intent Publishing)](#intent-composition-atomic-multi-intent-publishing)
+    - [Attaching Pre-Signed Intents (Atomic Multi-Intent Publishing)](#attaching-pre-signed-intents-atomic-multi-intent-publishing)
 - [Supported Networks](#supported-networks)
 - [Development](#development)
 
@@ -809,140 +809,38 @@ try {
 }
 ```
 
-### Intent Composition (Atomic Multi-Intent Publishing)
+### Atomic Multi-Intent Publishing
 
-Intent Composition allows you to atomically publish multiple pre-signed intents together with a newly created intent. This is useful for coordinating actions across multiple users or ensuring specific intents execute together in a guaranteed order.
-
-**Use Cases:**
-- Multi-user coordination (e.g., atomic swaps between users)
-- Conditional execution (prepend authorization intents)
-- Batch operations with dependencies
-- Cross-account workflows
-
-#### Basic Intent Composition
-
-You can prepend and/or append pre-signed intents to your new intent:
+Include pre-signed intents (from other users or prior operations) to be published atomically with your new intent. 
+Useful for multi-user coordination and batch operations.
 
 ```typescript
 import type { MultiPayload } from '@defuse-protocol/intents-sdk';
 
-// Pre-signed intents from other users or previous operations
-const preSigned1: MultiPayload = {
-    payload: "intent-payload-1",
-    signature: "signature-1",
-    standard: "nep413",
-    public_key: "ed25519:..."
-};
-
-const preSigned2: MultiPayload = {
-    payload: "intent-payload-2", 
-    signature: "signature-2",
-    standard: "nep413",
-    public_key: "ed25519:..."
-};
-
-// Publish them atomically with a new intent
-const result = await sdk.signAndSendIntent({
-    intents: [
-        {
-            intent: "transfer",
-            receiver_id: "recipient.near",
-            tokens: { "usdt.tether-token.near": "1000000" }
-        }
-    ],
-    composition: {
-        prepend: [preSigned1],  // Execute before new intent
-        append: [preSigned2]    // Execute after new intent
+// Include pre-signed intents before/after your new intent
+await sdk.signAndSendIntent({
+    intents: [{ intent: "transfer", receiver_id: "alice.near", tokens: {...} }],
+    signedIntents: {
+        before: [preSigned1],  // Execute before new intent
+        after: [preSigned2]    // Execute after new intent
     }
 });
 
-// Result contains the hash of YOUR newly created intent
-console.log('New intent hash:', result.ticket);
-```
-
-**Execution Order:**
-1. Prepended intents execute first (in array order)
-2. Your newly created intent executes
-3. Appended intents execute last (in array order)
-
-#### Intent Composition with Withdrawals
-
-Composition also works with withdrawal methods:
-
-```typescript
-// Functional API with composition
-const result = await sdk.processWithdrawal({
-    withdrawalParams: {
-        assetId: 'nep141:usdt.tether-token.near',
-        amount: 1000000n,
-        destinationAddress: '0x742d35Cc...',
-        feeInclusive: false
-    },
+// Also works with withdrawals
+await sdk.processWithdrawal({
+    withdrawalParams: {...},
     intent: {
-        composition: {
-            prepend: [authorizationIntent], // e.g., authorization from another user
-            append: [cleanupIntent]          // e.g., cleanup operations
-        }
-    }
-});
-
-// Granular API with composition
-const { intentHash } = await sdk.signAndSendWithdrawalIntent({
-    withdrawalParams: { /* ... */ },
-    feeEstimation: fee,
-    intent: {
-        composition: {
-            prepend: [preSigned1, preSigned2],
-            append: [preSigned3]
+        signedIntents: {
+            before: [preSigned1],
+            after: [preSigned2]
         }
     }
 });
 ```
 
-#### Multi-User Coordination Example
-
-Coordinate an atomic swap between two users:
-
-```typescript
-// User A signs their intent WITHOUT publishing it
-// (just get the intent signer to create a MultiPayload)
-const userAIntentPayload = {
-    intents: [{
-        intent: "transfer",
-        receiver_id: "escrow.near",
-        tokens: { "wrap.near": "10000000" } // 10 NEAR
-    }],
-    deadline: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-    nonce: base64.encode(crypto.getRandomValues(new Uint8Array(32))),
-    verifying_contract: "intents.near"
-};
-
-// Sign the intent (doesn't publish)
-const userAMultiPayload = await intentSignerA.signIntent(userAIntentPayload);
-
-// User B coordinates the swap by prepending User A's intent
-const result = await sdkUserB.signAndSendIntent({
-    intents: [{
-        intent: "transfer",
-        receiver_id: "escrow.near", 
-        tokens: { "usdt.tether-token.near": "50000000" } // 50 USDC
-    }],
-    composition: {
-        prepend: [userAMultiPayload] // User A's intent executes first
-    }
-});
-
-// Both intents are now published atomically
-console.log('Atomic swap completed:', result.ticket);
-```
-
-**Important Notes:**
-
-1. **Atomicity**: All intents in a composition are published together in a single transaction
-2. **Order Guarantee**: Execution order is guaranteed: prepend → new → append
-3. **Hash Return**: The returned `intentHash` is always YOUR newly created intent, not the prepended ones
-4. **Pre-signing**: Prepended/appended intents must be fully signed `MultiPayload` objects
-5. **Quote Hashes**: Quote hashes are shared across all composed intents
+**Key Points:**
+- All intents execute atomically in order: `before` → new intent → `after`
+- Returned `intentHash` is for your newly created intent, not the included ones
 
 ## Supported Networks
 

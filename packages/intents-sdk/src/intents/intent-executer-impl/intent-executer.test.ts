@@ -213,20 +213,18 @@ describe("IntentExecuter", () => {
 				intentSigner,
 			});
 
-			const result = await exec.signAndSendIntent({
-				intents: [
-					{
-						intent: "transfer",
-						receiver_id: "alice.near",
-						tokens: { "wrap.near": "1000" },
-					},
-				],
-				composition: {
-					prepend: [prependIntent1, prependIntent2],
+		const result = await exec.signAndSendIntent({
+			intents: [
+				{
+					intent: "transfer",
+					receiver_id: "alice.near",
+					tokens: { "wrap.near": "1000" },
 				},
-			});
-
-			// Should return the hash of the newly created intent (at index 2)
+			],
+			signedIntents: {
+				before: [prependIntent1, prependIntent2],
+			},
+		});			// Should return the hash of the newly created intent (at index 2)
 			expect(result.ticket).toBe("hash-new-intent");
 
 			// Should call publishIntents with all 3 payloads with correct order
@@ -265,20 +263,18 @@ describe("IntentExecuter", () => {
 				intentSigner,
 			});
 
-			const result = await exec.signAndSendIntent({
-				intents: [
-					{
-						intent: "transfer",
-						receiver_id: "bob.near",
-						tokens: { "usdc.near": "5000" },
-					},
-				],
-				composition: {
-					append: [appendIntent1, appendIntent2],
+		const result = await exec.signAndSendIntent({
+			intents: [
+				{
+					intent: "transfer",
+					receiver_id: "bob.near",
+					tokens: { "usdc.near": "5000" },
 				},
-			});
-
-			// Should return the hash of the newly created intent (at index 0)
+			],
+			signedIntents: {
+				after: [appendIntent1, appendIntent2],
+			},
+		});			// Should return the hash of the newly created intent (at index 0)
 			expect(result.ticket).toBe("hash-new-intent");
 
 			// Should call publishIntents with all 3 payloads with correct order
@@ -324,21 +320,19 @@ describe("IntentExecuter", () => {
 				intentSigner,
 			});
 
-			const result = await exec.signAndSendIntent({
-				intents: [
-					{
-						intent: "transfer",
-						receiver_id: "charlie.near",
-						tokens: {},
-					},
-				],
-				composition: {
-					prepend: [prependIntent],
-					append: [appendIntent],
+		const result = await exec.signAndSendIntent({
+			intents: [
+				{
+					intent: "transfer",
+					receiver_id: "charlie.near",
+					tokens: {},
 				},
-			});
-
-			// Should return the hash of the newly created intent (at index 1)
+			],
+			signedIntents: {
+				before: [prependIntent],
+				after: [appendIntent],
+			},
+		});			// Should return the hash of the newly created intent (at index 1)
 			expect(result.ticket).toBe("hash-new-intent");
 
 			// Verify order: prepend → new intent → append
@@ -363,20 +357,18 @@ describe("IntentExecuter", () => {
 				intentSigner,
 			});
 
-			const result = await exec.signAndSendIntent({
-				intents: [
-					{
-						intent: "transfer",
-						receiver_id: "dave.near",
-						tokens: {},
-					},
-				],
-				composition: {
-					prepend: [], // Empty array
+		const result = await exec.signAndSendIntent({
+			intents: [
+				{
+					intent: "transfer",
+					receiver_id: "dave.near",
+					tokens: {},
 				},
-			});
-
-			// Should use single intent publishing
+			],
+			signedIntents: {
+				before: [], // Empty array
+			},
+		});			// Should use single intent publishing
 			expect(result.ticket).toBe("ticket-456");
 			expect(intentRelayer.publishIntent).toHaveBeenCalledOnce();
 			expect(intentRelayer.publishIntents).not.toHaveBeenCalled();
@@ -393,18 +385,16 @@ describe("IntentExecuter", () => {
 				intentSigner,
 			});
 
-			const result = await exec.signAndSendIntent({
-				intents: [
-					{
-						intent: "transfer",
-						receiver_id: "eve.near",
-						tokens: {},
-					},
-				],
-				composition: undefined,
-			});
-
-			// Should use single intent publishing
+		const result = await exec.signAndSendIntent({
+			intents: [
+				{
+					intent: "transfer",
+					receiver_id: "eve.near",
+					tokens: {},
+				},
+			],
+			signedIntents: undefined,
+		});			// Should use single intent publishing
 			expect(result.ticket).toBe("ticket-789");
 			expect(intentRelayer.publishIntent).toHaveBeenCalledOnce();
 			expect(intentRelayer.publishIntents).not.toHaveBeenCalled();
@@ -431,17 +421,15 @@ describe("IntentExecuter", () => {
 				intentSigner,
 			});
 
-			await exec.signAndSendIntent({
-				intents: [],
-				composition: {
-					prepend: [prependIntent],
-				},
-				relayParams: async () => ({
-					quoteHashes: ["quote-hash-1", "quote-hash-2"],
-				}),
-			});
-
-			expect(intentRelayer.publishIntents).toHaveBeenCalledWith(
+		await exec.signAndSendIntent({
+			intents: [],
+			signedIntents: {
+				before: [prependIntent],
+			},
+			relayParams: async () => ({
+				quoteHashes: ["quote-hash-1", "quote-hash-2"],
+			}),
+		});			expect(intentRelayer.publishIntents).toHaveBeenCalledWith(
 				expect.objectContaining({
 					quoteHashes: ["quote-hash-1", "quote-hash-2"],
 				}),

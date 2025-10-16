@@ -3,7 +3,7 @@ import {
 	type NearIntentsEnv,
 	configsByEnvironment,
 } from "@defuse-protocol/internal-utils";
-import type { IntentComposition, NearTxInfo } from "../../shared-types";
+import type { SignedIntentsComposition, NearTxInfo } from "../../shared-types";
 import { computeIntentHash } from "../intent-hash";
 import { defaultIntentPayloadFactory } from "../intent-payload-factory";
 import type { IIntentExecuter } from "../interfaces/intent-executer";
@@ -60,11 +60,11 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 
 	async signAndSendIntent({
 		relayParams: relayParamsFactory,
-		composition,
+		signedIntents,
 		...intentParams
 	}: {
 		relayParams?: IntentRelayParamsFactory;
-		composition?: IntentComposition;
+		signedIntents?: SignedIntentsComposition;
 	} & Partial<Parameters<IntentPayloadFactory>[0]>): Promise<{
 		ticket: Ticket;
 	}> {
@@ -97,9 +97,9 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 		}
 
 		// Compose with pre-signed intents if provided
-		const composedPayloads = composeMultiPayloads(multiPayload, composition);
+		const composedPayloads = composeMultiPayloads(multiPayload, signedIntents);
 
-		// If we have multiple payloads (composition), publish them atomically
+		// If we have multiple payloads (with signed intents), publish them atomically
 		if (composedPayloads.length > 1) {
 			const quoteHashes =
 				(relayParams as { quoteHashes?: string[] }).quoteHashes ?? [];
@@ -114,9 +114,9 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 			);
 
 			// Calculate the index of the newly created intent
-			// Order is: [prepend...] -> newPayload -> [append...]
-			const prependCount = composition?.prepend?.length ?? 0;
-			const newIntentTicket = tickets[prependCount];
+			// Order is: [before...] -> newPayload -> [after...]
+			const beforeCount = signedIntents?.before?.length ?? 0;
+			const newIntentTicket = tickets[beforeCount];
 
 			// Return the ticket for the newly created intent
 			// Note: All composed intents execute atomically, but we return the main one
@@ -159,34 +159,33 @@ async function mergeIntentPayloads(
 }
 
 /**
- * Composes a newly signed MultiPayload with pre-signed intents.
- * Returns an array of MultiPayloads ordered for atomic execution.
+ * Composes a new MultiPayload with pre-signed intents for atomic execution.
  *
  * @param newPayload - The newly signed MultiPayload
- * @param composition - Optional composition configuration with prepend/append intents
- * @returns Array of MultiPayloads in execution order
+ * @param signedIntents - Optional configuration with before/after intents
+ * @returns Array of MultiPayloads in execution order: [before...] -> newPayload -> [after...]
  */
 function composeMultiPayloads(
 	newPayload: MultiPayload,
-	composition?: IntentComposition,
+	signedIntents?: SignedIntentsComposition,
 ): MultiPayload[] {
-	if (!composition) {
+	if (!signedIntents) {
 		return [newPayload];
 	}
 
 	const result: MultiPayload[] = [];
 
-	// Add prepended intents first
-	if (composition.prepend && composition.prepend.length > 0) {
-		result.push(...composition.prepend);
+	// Add "before" intents first
+	if (signedIntents.before && signedIntents.before.length > 0) {
+		result.push(...signedIntents.before);
 	}
 
 	// Add the new payload
 	result.push(newPayload);
 
-	// Add appended intents last
-	if (composition.append && composition.append.length > 0) {
-		result.push(...composition.append);
+	// Add "after" intents last
+	if (signedIntents.after && signedIntents.after.length > 0) {
+		result.push(...signedIntents.after);
 	}
 
 	return result;

@@ -21,7 +21,7 @@ export type {
 	// Intent-specific
 	IntentPublishResult,
 	IntentSettlementStatus,
-	IntentComposition,
+	SignedIntentsComposition,
 	// Main withdrawal interfaces
 	WithdrawalParams,
 	FeeEstimation,
