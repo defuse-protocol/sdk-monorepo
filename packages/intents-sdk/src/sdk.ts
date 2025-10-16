@@ -369,6 +369,7 @@ export class IntentsSDK implements IIntentsSDK {
 		const { ticket } = await intentExecuter.signAndSendIntent({
 			intents: args.intents,
 			relayParams: args.relayParams,
+			signedIntents: args.signedIntents,
 		});
 		return { intentHash: ticket };
 	}
@@ -425,6 +426,7 @@ export class IntentsSDK implements IIntentsSDK {
 			relayParams: relayParamsFn,
 			payload: args.intent?.payload,
 			logger: args.logger,
+			signedIntents: args.intent?.signedIntents,
 		});
 	}
 

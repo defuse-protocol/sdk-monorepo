@@ -13,6 +13,7 @@ import type {
 	IntentPayloadFactory,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
+	MultiPayload,
 } from "./intents/shared-types";
 import type { Chain, Chains } from "./lib/caip2";
 
@@ -36,12 +37,65 @@ export interface BatchWithdrawalResult {
 
 export type IntentSettlementStatus = solverRelay.GetStatusReturnType;
 
+/**
+ * Configuration for including pre-signed intents to be published atomically.
+ *
+ * Pre-signed intents can be included in two ways:
+ * - `before`: Pre-signed intents that execute before the newly created intent
+ * - `after`: Pre-signed intents that execute after the newly created intent
+ *
+ * The execution order is guaranteed: before → new intent → after
+ *
+ * @example
+ * ```typescript
+ * // Include pre-signed intents from other users
+ * const signedIntents: SignedIntents = {
+ *   before: [signedIntent1, signedIntent2],
+ *   after: [cleanupIntent],
+ * };
+ *
+ * await sdk.signAndSendIntent({
+ *   intents: [myNewIntent],
+ *   signedIntents,
+ * });
+ * ```
+ */
+export interface SignedIntentsComposition {
+	/**
+	 * Pre-signed intents (MultiPayload) to execute before the newly created intent.
+	 * Useful for dependencies that must be executed first.
+	 */
+	before?: MultiPayload[];
+
+	/**
+	 * Pre-signed intents (MultiPayload) to execute after the newly created intent.
+	 * Useful for cleanup or follow-up actions.
+	 */
+	after?: MultiPayload[];
+}
+
 export interface SignAndSendArgs {
 	intents: IntentPrimitive[];
+	/**
+	 * Factory function to modify the intent payload draft before signing.
+	 * Use this to add or modify intent primitives in the payload.
+	 *
+	 * @example
+	 * ```typescript
+	 * payload: (draft) => ({
+	 *   intents: [...draft.intents, { intent: "transfer", ... }]
+	 * })
+	 * ```
+	 */
 	payload?: IntentPayloadFactory;
 	relayParams?: IntentRelayParamsFactory;
 	signer?: IIntentSigner;
 	onBeforePublishIntent?: OnBeforePublishIntentHook;
+	/**
+	 * Pre-signed intents for atomic execution.
+	 * The newly created intent will be published together with these pre-signed intents.
+	 */
+	signedIntents?: SignedIntentsComposition;
 	logger?: ILogger;
 }
 
@@ -63,10 +117,16 @@ export type ProcessWithdrawalArgs<
 		? FeeEstimation[]
 		: FeeEstimation;
 	intent?: {
+		/** @see SignAndSendArgs.payload */
 		payload?: IntentPayloadFactory;
+		/** @see SignAndSendArgs.relayParams */
 		relayParams?: IntentRelayParamsFactory;
+		/** @see SignAndSendArgs.signer */
 		signer?: IIntentSigner;
+		/** @see SignAndSendArgs.onBeforePublishIntent */
 		onBeforePublishIntent?: OnBeforePublishIntentHook;
+		/** @see SignAndSendArgs.signedIntents */
+		signedIntents?: SignedIntentsComposition;
 	};
 	referral?: string;
 	retryOptions?: RetryOptions;

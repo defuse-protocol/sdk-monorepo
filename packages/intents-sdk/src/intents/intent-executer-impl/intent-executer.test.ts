@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "../intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "../intent-signer-impl/factories";
 import { IntentExecuter } from "./intent-executer";
+import { defaultIntentPayloadFactory } from "../intent-payload-factory";
 
 describe("IntentExecuter", () => {
 	it("appends argument intents to factory produced intents", async () => {
@@ -161,6 +162,138 @@ describe("IntentExecuter", () => {
 			relayParams: {},
 		});
 	});
+
+	describe("Intent Composition", () => {
+		it("publishes single intent without composition", async () => {
+			const { intentSigner, intentRelayer } = setupMocks();
+
+			vi.mocked(intentRelayer.publishIntent).mockResolvedValue("ticket-123");
+
+			const exec = new IntentExecuter({
+				env: "production",
+				intentRelayer,
+				intentSigner,
+			});
+
+			const result = await exec.signAndSendIntent({
+				intents: [
+					{
+						intent: "transfer",
+						receiver_id: "alice.near",
+						tokens: { "wrap.near": "1000" },
+					},
+				],
+			});
+
+			expect(result.ticket).toBe("ticket-123");
+			expect(intentRelayer.publishIntent).toHaveBeenCalledOnce();
+			expect(intentRelayer.publishIntents).not.toHaveBeenCalled();
+		});
+
+		it("composes intents with prepend only", async () => {
+			const { intentSigner, intentRelayer } = setupMocks();
+
+			const prependIntent1 = await intentSigner.signIntent(
+				defaultIntentPayloadFactory({ verifying_contract: "" }),
+			);
+			const prependIntent2 = await intentSigner.signIntent(
+				defaultIntentPayloadFactory({ verifying_contract: "" }),
+			);
+
+			vi.mocked(intentRelayer.publishIntents).mockResolvedValue([
+				"hash-prepend-1",
+				"hash-prepend-2",
+				"hash-new-intent",
+			]);
+
+			const exec = new IntentExecuter({
+				env: "production",
+				intentRelayer,
+				intentSigner,
+			});
+
+			const result = await exec.signAndSendIntent({
+				intents: [
+					{
+						intent: "transfer",
+						receiver_id: "alice.near",
+						tokens: { "wrap.near": "1000" },
+					},
+				],
+				signedIntents: {
+					before: [prependIntent1, prependIntent2],
+				},
+			});
+
+			// Should return the hash of the newly created intent (at index 2)
+			expect(result.ticket).toBe("hash-new-intent");
+
+			// Should call publishIntents with all 3 payloads with correct order
+			expect(intentRelayer.publishIntents).toHaveBeenCalledOnce();
+			expect(intentRelayer.publishIntents).toHaveBeenCalledWith(
+				expect.objectContaining({
+					multiPayloads: [
+						prependIntent1,
+						prependIntent2,
+						expect.objectContaining({ standard: "erc191" }),
+					],
+				}),
+				expect.any(Object),
+			);
+		});
+
+		it("composes intents with append only", async () => {
+			const { intentSigner, intentRelayer } = setupMocks();
+
+			const appendIntent1 = await intentSigner.signIntent(
+				defaultIntentPayloadFactory({ verifying_contract: "" }),
+			);
+			const appendIntent2 = await intentSigner.signIntent(
+				defaultIntentPayloadFactory({ verifying_contract: "" }),
+			);
+
+			vi.mocked(intentRelayer.publishIntents).mockResolvedValue([
+				"hash-new-intent",
+				"hash-append-1",
+				"hash-append-2",
+			]);
+
+			const exec = new IntentExecuter({
+				env: "production",
+				intentRelayer,
+				intentSigner,
+			});
+
+			const result = await exec.signAndSendIntent({
+				intents: [
+					{
+						intent: "transfer",
+						receiver_id: "bob.near",
+						tokens: { "usdc.near": "5000" },
+					},
+				],
+				signedIntents: {
+					after: [appendIntent1, appendIntent2],
+				},
+			});
+
+			// Should return the hash of the newly created intent (at index 0)
+			expect(result.ticket).toBe("hash-new-intent");
+
+			// Should call publishIntents with all 3 payloads with correct order
+			expect(intentRelayer.publishIntents).toHaveBeenCalledOnce();
+			expect(intentRelayer.publishIntents).toHaveBeenCalledWith(
+				expect.objectContaining({
+					multiPayloads: [
+						expect.objectContaining({ standard: "erc191" }),
+						appendIntent1,
+						appendIntent2,
+					],
+				}),
+				expect.any(Object),
+			);
+		});
+	});
 });
 
 function setupMocks() {
@@ -174,6 +307,7 @@ function setupMocks() {
 
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });
 	vi.spyOn(intentRelayer, "publishIntent");
+	vi.spyOn(intentRelayer, "publishIntents");
 
 	return { intentSigner, intentRelayer };
 }

@@ -26,6 +26,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
     - [Error Handling](#error-handling)
+    - [Atomic Multi-Intent Publishing](#atomic-multi-intent-publishing)
 - [Supported Networks](#supported-networks)
 - [Development](#development)
 
@@ -807,6 +808,39 @@ try {
     }
 }
 ```
+
+### Atomic Multi-Intent Publishing
+
+Include pre-signed intents (from other users or prior operations) to be published atomically with your new intent. 
+Useful for multi-user coordination and batch operations.
+
+```typescript
+import type { MultiPayload } from '@defuse-protocol/intents-sdk';
+
+// Include pre-signed intents before/after your new intent
+await sdk.signAndSendIntent({
+    intents: [{ intent: "transfer", receiver_id: "alice.near", tokens: {...} }],
+    signedIntents: {
+        before: [preSigned1],  // Execute before new intent
+        after: [preSigned2]    // Execute after new intent
+    }
+});
+
+// Also works with withdrawals
+await sdk.processWithdrawal({
+    withdrawalParams: {...},
+    intent: {
+        signedIntents: {
+            before: [preSigned1],
+            after: [preSigned2]
+        }
+    }
+});
+```
+
+**Key Points:**
+- All intents execute atomically in order: `before` → new intent → `after`
+- Returned `intentHash` is for your newly created intent, not the included ones
 
 ## Supported Networks
 

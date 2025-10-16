@@ -30,7 +30,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		},
 		ctx: { logger?: ILogger } = {},
 	): Promise<IntentHash> {
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: Array is guaranteed to have at least one element
 		return (
 			await this.publishIntents(
 				{
