@@ -120,9 +120,8 @@ function isNearImplicit(accountId: string): boolean {
 
 export function isImplicitAccount(accountId: string): boolean {
 	return (
-		(isEthImplicitAccount(accountId) ||
-			isNearImplicit(accountId) ||
-			isNearDeterministic(accountId)) &&
-		!accountId.includes(".")
+		isEthImplicitAccount(accountId) ||
+		isNearImplicit(accountId) ||
+		isNearDeterministic(accountId)
 	);
 }
