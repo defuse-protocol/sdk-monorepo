@@ -1,5 +1,19 @@
 # @defuse-protocol/intents-sdk
 
+## 0.26.4
+
+### Patch Changes
+
+- 160a024: Enhance NEAR address validation with improved support for different account types
+
+  - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
+  - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
+  - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
+  - Improve validation for standard NEAR implicit accounts (64 hex chars)
+
+- Updated dependencies [160a024]
+  - @defuse-protocol/internal-utils@0.15.2
+
 ## 0.26.3
 
 ### Patch Changes
