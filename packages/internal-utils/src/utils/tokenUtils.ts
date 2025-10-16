@@ -4,7 +4,7 @@ import type {
 	UnifiedTokenInfo,
 } from "../types/base";
 import { assert, type AssertErrorType } from "./assert";
-import { isLegitAccountId } from "./near";
+import { validateNearAddress } from "./near";
 import { isBaseToken } from "./token";
 
 type BalanceMapping = Record<string, bigint>;
@@ -407,7 +407,7 @@ export function parseDefuseAssetId(
 	const [tokenStandard, tokenContractId, multiTokenId] = assetId.split(":");
 
 	assert(
-		tokenContractId != null && isLegitAccountId(tokenContractId),
+		tokenContractId != null && validateNearAddress(tokenContractId),
 		"Incorrect format of assetId",
 	);
 
