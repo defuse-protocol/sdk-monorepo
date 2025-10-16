@@ -26,7 +26,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
     - [Error Handling](#error-handling)
-    - [Attaching Pre-Signed Intents (Atomic Multi-Intent Publishing)](#attaching-pre-signed-intents-atomic-multi-intent-publishing)
+    - [Atomic Multi-Intent Publishing](#atomic-multi-intent-publishing)
 - [Supported Networks](#supported-networks)
 - [Development](#development)
 
