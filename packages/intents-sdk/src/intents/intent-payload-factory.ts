@@ -1,4 +1,4 @@
-import { base64 } from "@scure/base";
+import { buildAndEncodeExpirableNonce } from "./expirable-nonce";
 import type { IntentPayload } from "./shared-types";
 
 export function defaultIntentPayloadFactory({
@@ -12,10 +12,11 @@ export function defaultIntentPayloadFactory({
 		Object.entries(params).filter(([, value]) => value !== undefined),
 	);
 
+	let deadline = new Date(Date.now() + 60 * 1000);
 	return {
 		verifying_contract,
-		deadline: new Date(Date.now() + 60 * 1000).toISOString(),
-		nonce: base64.encode(crypto.getRandomValues(new Uint8Array(32))),
+		deadline: deadline.toISOString(),
+		nonce: buildAndEncodeExpirableNonce(deadline),
 		intents: intents == null ? [] : intents,
 		signer_id: undefined, // or you can specify intent user id
 		...params,
