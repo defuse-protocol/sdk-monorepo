@@ -163,6 +163,30 @@ describe("IntentExecuter", () => {
 		});
 	});
 
+	it("throws if onBeforePublishIntent hook throws", async () => {
+		const { intentSigner, intentRelayer } = setupMocks();
+
+		const onBeforePublishIntent = async () => {
+			throw new Error("dummy error");
+		};
+
+		const exec = new IntentExecuter({
+			env: "production",
+			intentRelayer,
+			intentSigner,
+			onBeforePublishIntent,
+		});
+
+		const result = exec.signAndSendIntent({
+			intents: [],
+			deadline: "2025-07-30T12:57:16.264Z",
+			nonce: base64.encode(new Uint8Array(32)),
+		});
+
+		await expect(result).rejects.toThrow("dummy error");
+		expect(intentRelayer.publishIntent).not.toHaveBeenCalled();
+	});
+
 	describe("Intent Composition", () => {
 		it("publishes single intent without composition", async () => {
 			const { intentSigner, intentRelayer } = setupMocks();
