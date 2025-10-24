@@ -22,6 +22,7 @@ import type {
 } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 import {
+	accountExistsInNEAR,
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
@@ -32,6 +33,7 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import { DestinationNearAccountDoesntExistError } from "./error";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -140,6 +142,15 @@ export class DirectBridge implements Bridge {
 				args.destinationAddress,
 				Chains.Near,
 			);
+		}
+
+		if (
+			(await accountExistsInNEAR(
+				this.nearProvider,
+				args.destinationAddress,
+			)) === false
+		) {
+			throw new DestinationNearAccountDoesntExistError(args.destinationAddress);
 		}
 
 		return;
