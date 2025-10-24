@@ -3,7 +3,11 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
-import { TypedError, type Provider } from "near-api-js/lib/providers";
+import {
+	FailoverRpcProvider,
+	TypedError,
+	type Provider,
+} from "near-api-js/lib/providers";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -62,19 +66,28 @@ export async function accountExistsInNEAR(
 	accountId: string,
 ): Promise<boolean> {
 	try {
-		await provider.query({
+		const client = unwrapProvider(provider);
+		await client.query({
 			request_type: "view_account",
 			account_id: accountId,
 			finality: "final",
 		});
 		return true;
 	} catch (error) {
-		if (
-			error instanceof TypedError &&
-			(error.type === "AccountDoesNotExist" || error.type === "RetriesExceeded")
-		) {
+		if (error instanceof TypedError && error.type === "AccountDoesNotExist") {
 			return false;
 		}
 		throw error;
 	}
+}
+
+function unwrapProvider(provider: Provider): Provider {
+	if (
+		provider instanceof FailoverRpcProvider &&
+		provider.providers.length > 0 &&
+		provider.providers[0]
+	) {
+		return provider.providers[0];
+	}
+	return provider;
 }
