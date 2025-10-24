@@ -232,7 +232,8 @@ export class DirectBridge implements Bridge {
 		contractId: string,
 		accountId: string,
 	): Promise<[MinStorageBalance, StorageDepositBalance]> {
-		const cached = this.storageDepositCache.get(contractId);
+		const key = `${contractId}${accountId}`;
+		const cached = this.storageDepositCache.get(key);
 		if (cached !== undefined) {
 			return cached;
 		}
@@ -250,14 +251,14 @@ export class DirectBridge implements Bridge {
 		]);
 
 		if (result[1] >= result[0]) {
-			this.storageDepositCache.set(contractId, result);
+			this.storageDepositCache.set(key, result);
 		}
 
 		return result;
 	}
 
 	/**
-	 * Gets storage deposit for a token to avoid frequent RPC calls.
+	 * Checks account existence to avoid frequent RPC calls.
 	 */
 	private async getCachedAccountExistenceCheck(
 		accountId: string,

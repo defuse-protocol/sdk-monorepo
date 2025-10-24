@@ -108,7 +108,7 @@ describe("DirectBridge", () => {
 			).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 		});
 		it.each(["redcroco345"])(
-			"blocks account that do not exist on NEAR",
+			"blocks accounts that do not exist on NEAR",
 			async (destinationAddress) => {
 				const bridge = new DirectBridge({
 					env: "production",
