@@ -103,6 +103,12 @@ export {
 	type UnsupportedAssetIdErrorType,
 } from "./src/classes/errors";
 
+// Direct Bridge Errors
+export {
+	DestinationNearAccountDoesntExistError,
+	type DestinationNearAccountDoesntExistErrorType,
+} from "./src/bridges/direct-bridge/error";
+
 // Hot Bridge Errors
 export {
 	HotWithdrawalPendingError,
