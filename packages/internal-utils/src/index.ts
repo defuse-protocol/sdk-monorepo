@@ -21,7 +21,10 @@ export { BlockchainEnum } from "./poaBridge/constants/blockchains";
 export { withTimeout } from "./utils/promise/withTimeout";
 export { request, type RequestErrorType } from "./utils/request";
 export { serialize } from "./utils/serialize";
-export { nearFailoverRpcProvider } from "./utils/failover";
+export {
+	nearFailoverRpcProvider,
+	unwrapNearFailoverRpcProvider,
+} from "./utils/failover";
 export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";
 export { AuthMethod } from "./types/authHandle";
 

@@ -1,10 +1,13 @@
-import { assert, utils } from "@defuse-protocol/internal-utils";
+import {
+	assert,
+	unwrapNearFailoverRpcProvider,
+	utils,
+} from "@defuse-protocol/internal-utils";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 import { TypedError, type Provider } from "near-api-js/lib/providers";
-import unwrapNearFailoverProvider from "../../lib/unwrapNearFailoverProvider";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -63,7 +66,7 @@ export async function accountExistsInNEAR(
 	accountId: string,
 ): Promise<boolean> {
 	try {
-		const client = unwrapNearFailoverProvider(provider);
+		const client = unwrapNearFailoverRpcProvider(provider);
 		await client.query({
 			request_type: "view_account",
 			account_id: accountId,

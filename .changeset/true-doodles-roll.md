@@ -1,5 +1,6 @@
 ---
 "@defuse-protocol/intents-sdk": minor
+"@defuse-protocol/internal-utils": minor
 ---
 
 Add account existence check for direct bridge
