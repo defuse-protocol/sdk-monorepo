@@ -69,7 +69,10 @@ export async function accountExistsInNEAR(
 		});
 		return true;
 	} catch (error) {
-		if (error instanceof TypedError && error.type === "AccountDoesNotExist") {
+		if (
+			error instanceof TypedError &&
+			(error.type === "AccountDoesNotExist" || error.type === "RetriesExceeded")
+		) {
 			return false;
 		}
 		throw error;
