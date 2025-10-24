@@ -3,11 +3,8 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
-import {
-	FailoverRpcProvider,
-	TypedError,
-	type Provider,
-} from "near-api-js/lib/providers";
+import { TypedError, type Provider } from "near-api-js/lib/providers";
+import unwrapNearFailoverProvider from "../../lib/unwrapNearFailoverProvider";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -66,7 +63,7 @@ export async function accountExistsInNEAR(
 	accountId: string,
 ): Promise<boolean> {
 	try {
-		const client = unwrapProvider(provider);
+		const client = unwrapNearFailoverProvider(provider);
 		await client.query({
 			request_type: "view_account",
 			account_id: accountId,
@@ -79,15 +76,4 @@ export async function accountExistsInNEAR(
 		}
 		throw error;
 	}
-}
-
-function unwrapProvider(provider: Provider): Provider {
-	if (
-		provider instanceof FailoverRpcProvider &&
-		provider.providers.length > 0 &&
-		provider.providers[0]
-	) {
-		return provider.providers[0];
-	}
-	return provider;
 }
