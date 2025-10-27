@@ -9,7 +9,7 @@ import {
 	nearFailoverRpcProvider,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
-import hotOmniSdk from "@hot-labs/omni-sdk";
+import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
@@ -51,6 +51,7 @@ import type {
 	ParsedAssetInfo,
 	PartialRPCEndpointMap,
 	ProcessWithdrawalArgs,
+	QuoteOptions,
 	SignAndSendArgs,
 	SignAndSendWithdrawalArgs,
 	TxInfo,
@@ -65,6 +66,7 @@ export interface IntentsSDKConfig {
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
+	solverRelayApiKey?: string;
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -73,10 +75,12 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
+	protected solverRelayApiKey: string | undefined;
 
 	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
+		this.solverRelayApiKey = args.solverRelayApiKey;
 
 		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
 		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
@@ -102,11 +106,15 @@ export class IntentsSDK implements IIntentsSDK {
 			new AuroraEngineBridge({
 				env: this.env,
 				nearProvider,
+				solverRelayApiKey: this.solverRelayApiKey,
 			}),
-			new PoaBridge({ env: this.env }),
+			new PoaBridge({
+				env: this.env,
+			}),
 			new HotBridge({
 				env: this.env,
-				hotSdk: new hotOmniSdk.HotBridge({
+				solverRelayApiKey: this.solverRelayApiKey,
+				hotSdk: new hotLabsOmniSdk_HotBridge({
 					logger: console,
 					evmRpc: evmRpcUrls,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
@@ -122,14 +130,19 @@ export class IntentsSDK implements IIntentsSDK {
 			new OmniBridge({
 				env: this.env,
 				nearProvider,
+				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 			new DirectBridge({
 				env: this.env,
 				nearProvider,
+				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 		];
 
-		this.intentRelayer = new IntentRelayerPublic({ env: this.env });
+		this.intentRelayer = new IntentRelayerPublic({
+			env: this.env,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		this.intentSigner = args.intentSigner;
 	}
@@ -179,19 +192,19 @@ export class IntentsSDK implements IIntentsSDK {
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation>;
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation[]>;
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams | WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation | FeeEstimation[]> {
 		if (!Array.isArray(args.withdrawalParams)) {
@@ -213,7 +226,7 @@ export class IntentsSDK implements IIntentsSDK {
 
 	protected async _estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
@@ -362,6 +375,7 @@ export class IntentsSDK implements IIntentsSDK {
 			intents: args.intents,
 			salt: 123,
 			relayParams: args.relayParams,
+			signedIntents: args.signedIntents,
 		});
 		return { intentHash: ticket };
 	}
@@ -418,6 +432,7 @@ export class IntentsSDK implements IIntentsSDK {
 			relayParams: relayParamsFn,
 			payload: args.intent?.payload,
 			logger: args.logger,
+			signedIntents: args.intent?.signedIntents,
 		});
 	}
 
@@ -450,6 +465,7 @@ export class IntentsSDK implements IIntentsSDK {
 			{
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger,
+				solverRelayApiKey: this.solverRelayApiKey,
 			},
 		);
 	}
@@ -504,8 +520,8 @@ export class IntentsSDK implements IIntentsSDK {
 		const destinationTx = await this.waitForWithdrawalCompletion({
 			withdrawalParams,
 			intentTx,
+			retryOptions: args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY,
 			logger: args.logger,
-			retryOptions: RETRY_CONFIGS.FIVE_MINS_STEADY,
 		});
 
 		if (!Array.isArray(args.withdrawalParams)) {

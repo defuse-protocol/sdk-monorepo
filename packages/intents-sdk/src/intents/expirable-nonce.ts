@@ -9,98 +9,107 @@ export const LATEST_VERSION = 1;
 export type Salt = number;
 
 class ExpirableNonce {
-  constructor(public deadline: bigint, public nonce: Uint8Array) {
-    if (nonce.length !== 15) {
-      throw new Error("Random nonce part must be exactly 15 bytes");
-    }
-  }
+	constructor(
+		public deadline: bigint,
+		public nonce: Uint8Array,
+	) {
+		if (nonce.length !== 15) {
+			throw new Error("Random nonce part must be exactly 15 bytes");
+		}
+	}
 }
 
 class SaltedNonce {
-  constructor(public salt: Salt, public inner: ExpirableNonce) {}
+	constructor(
+		public salt: Salt,
+		public inner: ExpirableNonce,
+	) {}
 }
 
 class VersionedNonce {
-  constructor(public version: number, public value: any) {}
+	constructor(
+		public version: number,
+		public value: any,
+	) {}
 
-  static latest(saltedNonce: SaltedNonce): VersionedNonce {
-    return new VersionedNonce(LATEST_VERSION, saltedNonce);
-  }
+	static latest(saltedNonce: SaltedNonce): VersionedNonce {
+		return new VersionedNonce(LATEST_VERSION, saltedNonce);
+	}
 
-  isExpired(time: Date = new Date()): boolean {
-    const nowNs = BigInt(time.getTime()) * 1_000_000n;
-    return this.value.inner.deadline <= nowNs;
-  }
+	isExpired(time: Date = new Date()): boolean {
+		const nowNs = BigInt(time.getTime()) * 1_000_000n;
+		return this.value.inner.deadline <= nowNs;
+	}
 }
 
 const SALTED_NONCE_BORSH_SCHEMA: Schema = {
-  struct: {
-    salt: "u32",
-    inner: {
-      struct: {
-        deadline: "u64",
-        nonce: { array: { type: "u8", len: 15 } },
-      },
-    },
-  },
+	struct: {
+		salt: "u32",
+		inner: {
+			struct: {
+				deadline: "u64",
+				nonce: { array: { type: "u8", len: 15 } },
+			},
+		},
+	},
 };
 
 export namespace VersionedNonceBuilder {
-  export function encodeNonce(salt: Salt, deadline: Date): string {
-    const expirableNonce = {
-      deadline: BigInt(deadline.getTime()) * 1_000_000n,
-      nonce: crypto.getRandomValues(new Uint8Array(15)),
-    };
+	export function encodeNonce(salt: Salt, deadline: Date): string {
+		const expirableNonce = {
+			deadline: BigInt(deadline.getTime()) * 1_000_000n,
+			nonce: crypto.getRandomValues(new Uint8Array(15)),
+		};
 
-    let nonce = VersionedNonce.latest(new SaltedNonce(salt, expirableNonce));
-    let encoded = VersionedNonceBuilder.serializeNonce(nonce);
+		let nonce = VersionedNonce.latest(new SaltedNonce(salt, expirableNonce));
+		let encoded = VersionedNonceBuilder.serializeNonce(nonce);
 
-    return base64.encode(encoded);
-  }
+		return base64.encode(encoded);
+	}
 
-  export function decodeNonce(encoded: string): VersionedNonce {
-    const bytes = base64.decode(encoded);
-    return VersionedNonceBuilder.deserializeNonce(bytes);
-  }
+	export function decodeNonce(encoded: string): VersionedNonce {
+		const bytes = base64.decode(encoded);
+		return VersionedNonceBuilder.deserializeNonce(bytes);
+	}
 
-  export function serializeNonce(versionedNonce: VersionedNonce): Uint8Array {
-    const borshBytes = serialize(
-      SALTED_NONCE_BORSH_SCHEMA,
-      versionedNonce.value
-    );
+	export function serializeNonce(versionedNonce: VersionedNonce): Uint8Array {
+		const borshBytes = serialize(
+			SALTED_NONCE_BORSH_SCHEMA,
+			versionedNonce.value,
+		);
 
-    // Serializing in full format: MAGIC_PREFIX (4) | VERSION (1) | NONCE_BYTES (27)
-    const result = new Uint8Array(4 + 1 + borshBytes.length);
-    result.set(VERSIONED_MAGIC_PREFIX, 0);
-    result.set([versionedNonce.version], 4);
-    result.set(borshBytes, 5);
+		// Serializing in full format: MAGIC_PREFIX (4) | VERSION (1) | NONCE_BYTES (27)
+		const result = new Uint8Array(4 + 1 + borshBytes.length);
+		result.set(VERSIONED_MAGIC_PREFIX, 0);
+		result.set([versionedNonce.version], 4);
+		result.set(borshBytes, 5);
 
-    return result;
-  }
+		return result;
+	}
 
-  export function deserializeNonce(bytes: Uint8Array): VersionedNonce {
-    if (bytes.length != 32) {
-      throw new Error("Nonce too short");
-    }
+	export function deserializeNonce(bytes: Uint8Array): VersionedNonce {
+		if (bytes.length != 32) {
+			throw new Error("Nonce too short");
+		}
 
-    // Check magic prefix
-    const prefix = bytes.slice(0, 4);
-    if (!(prefix.toString() === VERSIONED_MAGIC_PREFIX.toString())) {
-      throw new Error("Invalid magic prefix");
-    }
+		// Check magic prefix
+		const prefix = bytes.slice(0, 4);
+		if (!(prefix.toString() === VERSIONED_MAGIC_PREFIX.toString())) {
+			throw new Error("Invalid magic prefix");
+		}
 
-    // Check version
-    const version = bytes[4];
-    if (version !== LATEST_VERSION) {
-      throw new Error(`Unsupported version: ${version}`);
-    }
+		// Check version
+		const version = bytes[4];
+		if (version !== LATEST_VERSION) {
+			throw new Error(`Unsupported version: ${version}`);
+		}
 
-    const borshData = bytes.slice(5);
-    let value = deserialize(
-      SALTED_NONCE_BORSH_SCHEMA,
-      borshData
-    ) as SaltedNonce;
+		const borshData = bytes.slice(5);
+		let value = deserialize(
+			SALTED_NONCE_BORSH_SCHEMA,
+			borshData,
+		) as SaltedNonce;
 
-    return new VersionedNonce(version, value);
-  }
+		return new VersionedNonce(version, value);
+	}
 }

@@ -100,3 +100,24 @@ export class UnsupportedAssetIdError extends BaseError {
 		});
 	}
 }
+
+export type InvalidDestinationAddressForWithdrawalErrorType =
+	InvalidDestinationAddressForWithdrawalError & {
+		name: "InvalidDestinationAddressForWithdrawalError";
+	};
+
+export class InvalidDestinationAddressForWithdrawalError extends BaseError {
+	constructor(
+		public destinationAddress: string,
+		public destinationChain: string,
+	) {
+		super(`Invalid destination address.`, {
+			metaMessages: [
+				`Destination address: ${destinationAddress}`,
+				`Destination chain: ${destinationChain}`,
+			],
+			name: "InvalidDestinationAddressForWithdrawalError",
+			details: `Destination address ${destinationAddress} is not valid for withdrawal to ${destinationChain}.`,
+		});
+	}
+}

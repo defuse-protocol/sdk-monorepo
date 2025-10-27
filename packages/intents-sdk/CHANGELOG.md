@@ -1,5 +1,135 @@
 # @defuse-protocol/intents-sdk
 
+## 0.27.0
+
+### Minor Changes
+
+- 8bf4c85: Add new quote params - minWaitMs, maxWaitMs, trustedMetadata.
+- 83aee66: Allow prepending and appending other signed intents, so that all of them are executed atomically.
+
+### Patch Changes
+
+- Updated dependencies [8bf4c85]
+  - @defuse-protocol/internal-utils@0.16.0
+
+## 0.26.4
+
+### Patch Changes
+
+- 160a024: Enhance NEAR address validation with improved support for different account types
+
+  - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
+  - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
+  - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
+  - Improve validation for standard NEAR implicit accounts (64 hex chars)
+
+- Updated dependencies [160a024]
+  - @defuse-protocol/internal-utils@0.15.2
+
+## 0.26.3
+
+### Patch Changes
+
+- dc84a3e: Fix import HotBridge from @hot-labs/omni-sdk.
+
+## 0.26.2
+
+### Patch Changes
+
+- 7087b55: Fix Intents SDK build.
+
+## 0.26.1
+
+### Patch Changes
+
+- c7248dc: Fix running libs in browsers.
+- Updated dependencies [c7248dc]
+  - @defuse-protocol/contract-types@0.1.2
+  - @defuse-protocol/internal-utils@0.15.1
+
+## 0.26.0
+
+### Minor Changes
+
+- da2558d: Enable withdrawing any bridgable token using Omni Bridge, not just whitelisted by Omni Bridge relayer.
+
+## 0.25.0
+
+### Minor Changes
+
+- 4ae37e3: - Allow specifying `accountId` for viem signer in `createIntentSignerViem()` factory.
+  - Change signatures of `createIntentSignerNearKeyPair()` and `createIntentSignerViem()`.
+- f0fcc2f: Add support for solver api authorization key
+
+### Patch Changes
+
+- Updated dependencies [f0fcc2f]
+- Updated dependencies [84f800a]
+  - @defuse-protocol/internal-utils@0.15.0
+
+## 0.24.0
+
+### Minor Changes
+
+- 040251a: Add address validation to validateWithdrawal step
+
+### Patch Changes
+
+- Updated dependencies [040251a]
+  - @defuse-protocol/internal-utils@0.14.0
+
+## 0.23.1
+
+### Patch Changes
+
+- Updated dependencies [79d0bcd]
+- Updated dependencies [322977c]
+- Updated dependencies [aa221dc]
+  - @defuse-protocol/internal-utils@0.13.0
+
+## 0.23.0
+
+### Minor Changes
+
+- db94b03: Add storage_balance_of check before withdrawing
+  Use custom near provider for near requests
+  LRU cache for storage deposit
+  Cache only successful non-null results
+  Export and adjust queryContract from internal-utils package
+
+### Patch Changes
+
+- Updated dependencies [db94b03]
+  - @defuse-protocol/internal-utils@0.12.0
+
+## 0.22.2
+
+### Patch Changes
+
+- e5d9a9c: Do not bundle into single file. Use `tsdown` for transpiling.
+- Updated dependencies [e5d9a9c]
+  - @defuse-protocol/contract-types@0.1.1
+  - @defuse-protocol/internal-utils@0.11.1
+
+## 0.22.1
+
+### Patch Changes
+
+- Updated dependencies [b56e8c8]
+  - @defuse-protocol/internal-utils@0.11.0
+
+## 0.22.0
+
+### Minor Changes
+
+- 8849ffb: Add `retryOptions` argument to orchestrated `processWithdrawal()`.
+
+## 0.21.0
+
+### Minor Changes
+
+- 5c87173: Add normalisation check
+
 ## 0.20.2
 
 ### Patch Changes

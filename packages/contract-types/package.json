@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/contract-types",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -19,15 +19,15 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "tsup",
-		"dev": "tsup --watch",
+		"build": "tsdown",
+		"dev": "tsdown --watch",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"tsup": "^8.0.2",
+		"tsdown": "0.15.5",
 		"typescript": "^5.4.2"
 	}
 }

@@ -13,6 +13,7 @@ import type {
 	Bridge,
 	FeeEstimation,
 	NearTxInfo,
+	QuoteOptions,
 	RouteConfig,
 	TxNoInfo,
 	WithdrawalParams,
@@ -23,19 +24,31 @@ import {
 	withdrawalParamsInvariant,
 } from "./aurora-engine-bridge-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
+import { Chains } from "../../lib/caip2";
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
+	protected solverRelayApiKey: string | undefined;
 
 	constructor({
 		env,
 		nearProvider,
-	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
+		solverRelayApiKey,
+	}: {
+		env: NearIntentsEnv;
+		nearProvider: providers.Provider;
+		solverRelayApiKey?: string;
+	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -108,18 +121,25 @@ export class AuroraEngineBridge implements Bridge {
 	/**
 	 * Aurora Engine bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Ethereum) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				"virtual-chain",
+			);
+		}
+
 		return;
 	}
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "routeConfig">;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
@@ -161,6 +181,7 @@ export class AuroraEngineBridge implements Bridge {
 						logger: args.logger,
 						env: this.env,
 						quoteOptions: args.quoteOptions,
+						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
 		return {

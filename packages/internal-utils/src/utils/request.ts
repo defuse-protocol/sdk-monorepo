@@ -95,18 +95,21 @@ async function request_({
 	timeout?: number | undefined;
 	fetchOptions?: Omit<RequestInit, "body"> | undefined;
 }): Promise<Response> {
-	const { headers, method, signal: signal_ } = fetchOptions ?? {};
+	const {
+		headers: customHeaders,
+		method,
+		signal: signal_,
+	} = fetchOptions ?? {};
 
 	try {
+		const headers = new Headers(customHeaders);
+		headers.set("Content-Type", "application/json");
 		const response = await withTimeout(
 			({ signal }) => {
 				return fetch(url, {
 					...fetchOptions,
 					method: method,
-					headers: {
-						"Content-Type": "application/json",
-						...headers,
-					},
+					headers,
 					body: JSON.stringify(body),
 					signal: mergeAbortSignals(
 						[signal_, timeout > 0 ? signal : null].filter(

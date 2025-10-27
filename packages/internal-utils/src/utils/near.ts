@@ -5,7 +5,6 @@ import type {
 	Finality,
 } from "near-api-js/lib/providers/provider";
 import * as v from "valibot";
-import { isAddress } from "viem";
 
 /**
  * Use this function to decode a raw response from `nearClient.query()`
@@ -43,13 +42,19 @@ function getBlockReference({
 	return { finality: "optimistic" };
 }
 
-export async function queryContract({
+export async function queryContract<
+	T extends v.BaseSchema<TInput, TOutput, TIssue>,
+	TInput,
+	TOutput,
+	TIssue extends v.BaseIssue<unknown>,
+>({
 	nearClient,
 	contractId,
 	methodName,
 	args,
 	blockId,
 	finality,
+	schema,
 }: {
 	nearClient: providers.Provider;
 	contractId: string;
@@ -57,7 +62,8 @@ export async function queryContract({
 	args: Record<string, unknown>;
 	blockId?: BlockId;
 	finality?: Finality;
-}): Promise<unknown> {
+	schema: T;
+}): Promise<v.InferOutput<T>> {
 	const response = await nearClient.query({
 		request_type: "call_function",
 		account_id: contractId,
@@ -66,28 +72,56 @@ export async function queryContract({
 		...getBlockReference({ blockId, finality }),
 	});
 
-	return decodeQueryResult(response, v.unknown());
+	return decodeQueryResult(response, schema);
 }
 
-// Copied from https://github.com/mynearwallet/my-near-wallet/blob/3b1a6c6e5c62a0235f5e32d370f803fa2180c6f8/packages/frontend/src/utils/wallet.ts#L75
-
+// Copied from https://github.com/near/near-account-id-rs/blob/8174b47afdc608feefc0949d23c9c14bb810b544/src/validation.rs#L58C42-L58C97
 const ACCOUNT_ID_REGEX =
 	/^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
+const MIN_ACCOUNT_ID_LENGTH = 2;
+const ETH_IMPLICIT_ACCOUNT_LENGTH = 42;
+const NEAR_IMPLICIT_ACCOUNT_LENGTH = 64;
 
-const IMPLICIT_ACCOUNT_MAX_LENGTH = 64;
-
-export function isLegitAccountId(accountId: string): boolean {
-	// EVM-like account check
-	if (isAddress(accountId) && accountId === accountId.toLowerCase()) {
+export function validateNearAddress(accountId: string): boolean {
+	if (
+		accountId.length < MIN_ACCOUNT_ID_LENGTH ||
+		accountId.length > NEAR_IMPLICIT_ACCOUNT_LENGTH
+	) {
+		return false;
+	}
+	if (isImplicitAccount(accountId)) {
 		return true;
 	}
-
-	// Explicit and implicit account check
 	return ACCOUNT_ID_REGEX.test(accountId);
+}
+
+function isEthImplicitAccount(accountId: string): boolean {
+	return (
+		accountId.length === ETH_IMPLICIT_ACCOUNT_LENGTH &&
+		accountId.startsWith("0x") &&
+		/^[0-9a-f]+$/i.test(accountId.slice(2))
+	);
+}
+
+function isNearDeterministic(accountId: string): boolean {
+	return (
+		accountId.length === ETH_IMPLICIT_ACCOUNT_LENGTH &&
+		accountId.startsWith("0s") &&
+		/^[0-9a-f]+$/i.test(accountId.slice(2))
+	);
+}
+
+function isNearImplicit(accountId: string): boolean {
+	return (
+		accountId.length === NEAR_IMPLICIT_ACCOUNT_LENGTH &&
+		/^[0-9a-f]+$/i.test(accountId)
+	);
 }
 
 export function isImplicitAccount(accountId: string): boolean {
 	return (
-		accountId.length === IMPLICIT_ACCOUNT_MAX_LENGTH && !accountId.includes(".")
+		isEthImplicitAccount(accountId) ||
+		isNearImplicit(accountId) ||
+		isNearDeterministic(accountId)
 	);
 }

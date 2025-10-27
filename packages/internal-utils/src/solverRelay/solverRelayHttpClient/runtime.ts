@@ -62,14 +62,24 @@ export async function jsonRPCRequest<
 		params: params !== undefined ? [params] : undefined,
 	};
 
+	const fetchOptions = {
+		...config?.fetchOptions,
+		method: "POST",
+		headers: new Headers(config?.fetchOptions?.headers),
+	};
+
+	if (config?.solverRelayApiKey) {
+		fetchOptions.headers.append(
+			"Authorization",
+			`Bearer ${config.solverRelayApiKey}`,
+		);
+	}
+
 	const response = await request({
 		url,
 		body,
 		...config,
-		fetchOptions: {
-			...config?.fetchOptions,
-			method: "POST",
-		},
+		fetchOptions,
 		retryOptions: config?.retryOptions ?? RETRY_CONFIGS.THIRTY_SECS_AGGRESSIVE,
 		logger: config?.logger,
 	});

@@ -16,6 +16,7 @@ import type {
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
+	QuoteOptions,
 	RouteConfig,
 	TxInfo,
 	WithdrawalParams,
@@ -25,20 +26,31 @@ import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
-import { UnsupportedAssetIdError } from "../../classes/errors";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
+import { validateAddress } from "../../lib/validateAddress";
 
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
+	protected solverRelayApiKey: string | undefined;
 
 	constructor({
 		env,
 		nearProvider,
-	}: { env: NearIntentsEnv; nearProvider: providers.Provider }) {
+		solverRelayApiKey,
+	}: {
+		env: NearIntentsEnv;
+		nearProvider: providers.Provider;
+		solverRelayApiKey?: string;
+	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
+		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
 	is(routeConfig: RouteConfig) {
@@ -118,12 +130,19 @@ export class DirectBridge implements Bridge {
 	/**
 	 * Direct bridge doesn't have withdrawal restrictions.
 	 */
-	async validateWithdrawal(_args: {
+	async validateWithdrawal(args: {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
 	}): Promise<void> {
+		if (validateAddress(args.destinationAddress, Chains.Near) === false) {
+			throw new InvalidDestinationAddressForWithdrawalError(
+				args.destinationAddress,
+				Chains.Near,
+			);
+		}
+
 		return;
 	}
 
@@ -132,7 +151,7 @@ export class DirectBridge implements Bridge {
 			WithdrawalParams,
 			"assetId" | "destinationAddress" | "routeConfig"
 		>;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
@@ -185,6 +204,7 @@ export class DirectBridge implements Bridge {
 						logger: args.logger,
 						env: this.env,
 						quoteOptions: args.quoteOptions,
+						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
 		return {

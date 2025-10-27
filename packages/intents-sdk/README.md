@@ -26,6 +26,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
     - [Error Handling](#error-handling)
+    - [Atomic Multi-Intent Publishing](#atomic-multi-intent-publishing)
 - [Supported Networks](#supported-networks)
 - [Development](#development)
 
@@ -57,7 +58,7 @@ import {KeyPair} from 'near-api-js';
 const sdk = new IntentsSDK({
     referral: 'your-referral-code', // Only referral is required
     intentSigner: createIntentSignerNearKeyPair({
-        keypair: KeyPair.fromString('your-private-key'),
+        signer: KeyPair.fromString('your-private-key'),
         accountId: 'your-account.near'
     })
 });
@@ -131,7 +132,7 @@ You must set an intent signer before processing withdrawals:
 ```typescript
 // Example: Set up a NEAR KeyPair signer
 const signer = createIntentSignerNearKeyPair({
-    keypair: KeyPair.fromString('your-private-key'),
+    signer: KeyPair.fromString('your-private-key'),
     accountId: 'your-account.near'
 });
 sdk.setIntentSigner(signer);
@@ -367,7 +368,7 @@ import {KeyPair} from 'near-api-js';
 
 const keyPair = KeyPair.fromString('your-private-key');
 const signer = createIntentSignerNearKeyPair({
-    keypair: keyPair,
+    signer: keyPair,
     accountId: 'your-account.near'
 });
 ```
@@ -396,7 +397,7 @@ import {createIntentSignerViem} from '@defuse-protocol/intents-sdk';
 import {privateKeyToAccount} from 'viem/accounts';
 
 const account = privateKeyToAccount('0x...');
-const signer = createIntentSignerViem(account);
+const signer = createIntentSignerViem({ signer: account });
 
 // Set the signer at runtime
 sdk.setIntentSigner(signer);
@@ -787,10 +788,10 @@ trustline validation.
 
 #### Omni Bridge Withdrawal Validation
 
-Currently, in this SDK, Omni Bridge can be used only with tokens that are allowlisted by the Omni Relayer for fee payment. Additionally, before each transfer, the SDK verifies that the token exists on the destination chain.
+SDK verifies that the token exists on the destination chain.
 
 ```typescript
-import { TokenNotSupportedByOmniRelayerError,TokenNotFoundInDestinationChainError } from '@defuse-protocol/intents-sdk';
+import { TokenNotFoundInDestinationChainError } from '@defuse-protocol/intents-sdk';
 
 try {
     const result = await sdk.processWithdrawal({
@@ -802,14 +803,44 @@ try {
         }
     });
 } catch (error) {
-    if (error instanceof TokenNotSupportedByOmniRelayerError) {
-        console.log(`Omni Relayer cannot take the fee in ${error.token} for transfer finalization.`);
-    }
     if (error instanceof TokenNotFoundInDestinationChainError) {
         console.log(`Token ${error.token} was not found on ${error.destinationChain}.`);
     }
 }
 ```
+
+### Atomic Multi-Intent Publishing
+
+Include pre-signed intents (from other users or prior operations) to be published atomically with your new intent. 
+Useful for multi-user coordination and batch operations.
+
+```typescript
+import type { MultiPayload } from '@defuse-protocol/intents-sdk';
+
+// Include pre-signed intents before/after your new intent
+await sdk.signAndSendIntent({
+    intents: [{ intent: "transfer", receiver_id: "alice.near", tokens: {...} }],
+    signedIntents: {
+        before: [preSigned1],  // Execute before new intent
+        after: [preSigned2]    // Execute after new intent
+    }
+});
+
+// Also works with withdrawals
+await sdk.processWithdrawal({
+    withdrawalParams: {...},
+    intent: {
+        signedIntents: {
+            before: [preSigned1],
+            after: [preSigned2]
+        }
+    }
+});
+```
+
+**Key Points:**
+- All intents execute atomically in order: `before` → new intent → `after`
+- Returned `intentHash` is for your newly created intent, not the included ones
 
 ## Supported Networks
 

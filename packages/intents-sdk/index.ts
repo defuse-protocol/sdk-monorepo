@@ -21,12 +21,14 @@ export type {
 	// Intent-specific
 	IntentPublishResult,
 	IntentSettlementStatus,
+	SignedIntentsComposition,
 	// Main withdrawal interfaces
 	WithdrawalParams,
 	FeeEstimation,
 	WithdrawalIdentifier,
 	ProcessWithdrawalArgs,
 	SignAndSendWithdrawalArgs,
+	SignAndSendArgs,
 	// Route configurations
 	RouteConfig,
 	NearWithdrawalRouteConfig,
@@ -108,10 +110,14 @@ export {
 	type OmniTransferNotFoundErrorType,
 	OmniTransferDestinationChainHashNotFoundError,
 	type OmniTransferDestinationChainHashNotFoundErrorType,
-	TokenNotSupportedByOmniRelayerError,
-	type TokenNotSupportedByOmniRelayerErrorType,
+	FailedToFetchFeeError,
+	type FailedToFetchFeeErrorType,
 	TokenNotFoundInDestinationChainError,
 	type TokenNotFoundInDestinationChainErrorType,
+	OmniTokenNormalisationCheckError,
+	type OmniTokenNormalisationCheckErrorType,
+	IntentsNearOmniAvailableBalanceTooLowError,
+	type IntentsNearOmniAvailableBalanceTooLowErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors

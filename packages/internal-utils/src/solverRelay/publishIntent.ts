@@ -8,6 +8,7 @@ import {
 	type PublishIntentsReturnType,
 	publishIntents,
 } from "./publishIntents";
+import type { solverRelay } from "..";
 
 export type PublishIntentReturnType = PublishIntentsReturnType[number];
 export type PublishIntentErrorType = PublishIntentsErrorType;
@@ -16,11 +17,15 @@ export function publishIntent(
 	signatureData: WalletSignatureResult,
 	userInfo: { userAddress: string; userChainType: AuthMethod },
 	quoteHashes: string[],
+	config: solverRelay.httpClient.RequestConfig = {},
 ): Promise<Result<PublishIntentReturnType, PublishIntentErrorType>> {
-	return publishIntents({
-		signed_datas: [prepareSwapSignedData(signatureData, userInfo)],
-		quote_hashes: quoteHashes,
-	}).then((result) => {
+	return publishIntents(
+		{
+			signed_datas: [prepareSwapSignedData(signatureData, userInfo)],
+			quote_hashes: quoteHashes,
+		},
+		config,
+	).then((result) => {
 		return result.map((intentHashes) => {
 			const intentHash = intentHashes[0];
 			assert(intentHash != null, "Should include at least one intent hash");

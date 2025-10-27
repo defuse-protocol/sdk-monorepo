@@ -6,6 +6,7 @@ import {
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import { tokens } from "./tokensUsdPricesHttpClient";
+import type { QuoteOptions } from "../shared-types";
 
 /**
  * ExactIn fallback with 1.2x multiplier
@@ -17,13 +18,15 @@ export async function getFeeQuote({
 	quoteOptions,
 	env,
 	logger,
+	solverRelayApiKey,
 }: {
 	feeAmount: bigint;
 	feeAssetId: string;
 	tokenAssetId: string;
-	quoteOptions?: { waitMs: number };
+	quoteOptions?: QuoteOptions;
 	env: NearIntentsEnv;
 	logger?: ILogger;
+	solverRelayApiKey?: string;
 }): Promise<solverRelay.Quote> {
 	try {
 		return await solverRelay.getQuote({
@@ -32,11 +35,15 @@ export async function getFeeQuote({
 				defuse_asset_identifier_out: feeAssetId,
 				exact_amount_out: feeAmount.toString(),
 				wait_ms: quoteOptions?.waitMs,
+				min_wait_ms: quoteOptions?.minWaitMs,
+				max_wait_ms: quoteOptions?.maxWaitMs,
+				trusted_metadata: quoteOptions?.trustedMetadata,
 			},
 			config: {
 				baseURL: configsByEnvironment[env].solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: logger,
+				solverRelayApiKey,
 			},
 		});
 	} catch (err: unknown) {
@@ -85,11 +92,15 @@ export async function getFeeQuote({
 				defuse_asset_identifier_out: feeAssetId,
 				exact_amount_in: exactAmountIn.toString(),
 				wait_ms: quoteOptions?.waitMs,
+				min_wait_ms: quoteOptions?.minWaitMs,
+				max_wait_ms: quoteOptions?.maxWaitMs,
+				trusted_metadata: quoteOptions?.trustedMetadata,
 			},
 			config: {
 				baseURL: configsByEnvironment[env].solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: logger,
+				solverRelayApiKey,
 			},
 		});
 

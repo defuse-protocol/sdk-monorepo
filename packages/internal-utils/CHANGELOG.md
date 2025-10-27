@@ -1,5 +1,81 @@
 # @defuse-protocol/internal-utils
 
+## 0.16.0
+
+### Minor Changes
+
+- 8bf4c85: Add new quote params - minWaitMs, maxWaitMs, trustedMetadata.
+
+## 0.15.2
+
+### Patch Changes
+
+- 160a024: Enhance NEAR address validation with improved support for different account types
+
+  - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
+  - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
+  - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
+  - Improve validation for standard NEAR implicit accounts (64 hex chars)
+
+## 0.15.1
+
+### Patch Changes
+
+- c7248dc: Fix running libs in browsers.
+- Updated dependencies [c7248dc]
+  - @defuse-protocol/contract-types@0.1.2
+
+## 0.15.0
+
+### Minor Changes
+
+- f0fcc2f: Add support for solver api authorization key
+
+### Patch Changes
+
+- 84f800a: Make intent status polling less aggressive but longer.
+
+## 0.14.0
+
+### Minor Changes
+
+- 040251a: Add address validation to validateWithdrawal step
+
+## 0.13.0
+
+### Minor Changes
+
+- 322977c: Add `onTxHashKnown` parameter to `waitForIntentSettlement()`. The callback is called with the intent's tx hash as soon it's known.
+
+### Patch Changes
+
+- 79d0bcd: Change default list of NEAR RPCs.
+- aa221dc: Change intent status polling to be more aggressive.
+
+## 0.12.0
+
+### Minor Changes
+
+- db94b03: Add storage_balance_of check before withdrawing
+  Use custom near provider for near requests
+  LRU cache for storage deposit
+  Cache only successful non-null results
+  Export and adjust queryContract from internal-utils package
+
+## 0.11.1
+
+### Patch Changes
+
+- e5d9a9c: Do not bundle into single file. Use `tsdown` for transpiling.
+- Updated dependencies [e5d9a9c]
+  - @defuse-protocol/contract-types@0.1.1
+
+## 0.11.0
+
+### Minor Changes
+
+- b56e8c8: Allow overriding preset environment config using `configureSDK()`.
+
 ## 0.10.0
 
 ### Minor Changes

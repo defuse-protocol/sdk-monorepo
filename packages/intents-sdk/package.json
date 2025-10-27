@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.20.2",
+	"version": "0.27.0",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -20,8 +20,8 @@
 	],
 	"scripts": {
 		"test": "vitest --passWithNoTests",
-		"build": "tsup",
-		"dev": "tsup --watch",
+		"build": "tsdown",
+		"dev": "tsdown --watch",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
@@ -39,14 +39,19 @@
 		"@near-js/accounts": "^2.0.1",
 		"@near-js/client": "^2.0.1",
 		"@near-js/keystores": "^2.0.1",
+		"@noble/hashes": "^1.7.1",
 		"@scure/base": "^1.0.0",
+		"@solana/web3.js": "^1.0.0",
 		"borsher": "^4.0.0",
+		"lru-cache": "^11",
 		"near-api-js": "^4.0.0 || ^5.0.0",
-		"omni-bridge-sdk": "0.17.5",
+		"omni-bridge-sdk": "0.18.0",
+		"ripple-address-codec": "^5.0.0",
+		"valibot": "^1.0.0",
 		"viem": "^2.0.0"
 	},
 	"devDependencies": {
-		"tsup": "^8.5.0",
+		"tsdown": "0.15.5",
 		"vitest": "2.1.2"
 	}
 }
