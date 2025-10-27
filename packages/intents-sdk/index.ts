@@ -175,12 +175,4 @@ export type { OnBeforePublishIntentHook } from "./src/intents/intent-executer-im
 // ============================================================================
 // Nonce helpers
 // ============================================================================
-export {
-	generateExpirableNonce,
-	encodeNonce,
-	decodeNonce,
-	isNonceExpired,
-	buildAndEncodeExpirableNonce,
-	EXPIRABLE_NONCE_PREFIX,
-} from "./src/intents/expirable-nonce";
-export type { ExpirableNonce } from "./src/intents/expirable-nonce";
+export { VersionedNonceBuilder } from "./src/intents/expirable-nonce";

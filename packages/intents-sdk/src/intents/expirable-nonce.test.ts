@@ -1,52 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { base64, hex } from "@scure/base";
 import {
-	EXPIRABLE_NONCE_PREFIX,
-	decodeNonce,
-	encodeNonce,
-	generateExpirableNonce,
-	isNonceExpired,
+	LATEST_VERSION,
+	VERSIONED_MAGIC_PREFIX,
+	VersionedNonceBuilder,
 } from "./expirable-nonce";
+import { serialize } from "near-api-js/lib/utils/serialize";
 
 describe("expirable nonce", () => {
-	it("should generate valid nonce", () => {
-		const deadline = new Date();
-		const nonce = generateExpirableNonce(deadline);
-
-		expect(typeof nonce.deadline).toBe("bigint");
-		expect(nonce.nonce).toBeInstanceOf(Uint8Array);
-		expect(nonce.nonce.length).toBe(20);
-		expect(nonce.deadline).toBe(BigInt(deadline.getTime()) * 1_000_000n);
-	});
-
 	it("roundtrip encode/decode", () => {
 		const deadline = new Date();
-		const original = generateExpirableNonce(deadline);
-		const encoded = encodeNonce(original);
-		const decoded = decodeNonce(encoded);
+		let salt = 123456789;
 
-		expect(decoded.deadline).toBe(original.deadline);
-		expect(decoded.nonce).toEqual(original.nonce);
+		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
+		const decoded = VersionedNonceBuilder.decodeNonce(encoded);
+
+		expect(decoded.version).toBe(LATEST_VERSION);
+		expect(decoded.value.salt).toBe(salt);
+		expect(decoded.value.inner.nonce.length).toBe(15);
+		expect(decoded.value.inner.deadline).toBe(
+			BigInt(deadline.getTime()) * 1_000_000n,
+		);
 	});
 
 	it("encoded payload is valid", () => {
 		const deadline = new Date();
-		const nonce = generateExpirableNonce(deadline);
-		const encoded = encodeNonce(nonce);
-
+		let salt = 123456789;
+		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
 		const bytes = base64.decode(encoded);
+
 		expect(bytes.length).toBe(32);
 
-		expect(bytes.slice(0, 4)).toEqual(EXPIRABLE_NONCE_PREFIX);
-		expect(hex.encode(bytes.slice(4, 12))).toEqual(
-			nonce.deadline.toString(16).padStart(16, "0"),
+		expect(bytes.slice(0, 4)).toEqual(VERSIONED_MAGIC_PREFIX);
+		expect(bytes[4]).toBe(LATEST_VERSION);
+		expect(bytes.slice(5, 9)).toEqual(serialize("u32", salt));
+		expect(bytes.slice(9, 17)).toEqual(
+			serialize("u64", BigInt(deadline.getTime()) * 1_000_000n),
 		);
-		expect(bytes.slice(12, 32)).toEqual(nonce.nonce);
 	});
 
 	it("rejects invalid prefix", () => {
-		const d = new Date();
-		const encoded = encodeNonce(generateExpirableNonce(d));
+		const deadline = new Date();
+		let salt = 123456789;
+		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
 		const bytes = base64.decode(encoded);
 
 		expect(bytes.length).toBe(32);
@@ -56,26 +52,22 @@ describe("expirable nonce", () => {
 
 		const corruptedEncoded = base64.encode(corrupted);
 
-		expect(() => decodeNonce(corruptedEncoded)).toThrowError(
-			/Invalid expirable nonce: wrong prefix|incorrect length/,
-		);
+		expect(() =>
+			VersionedNonceBuilder.decodeNonce(corruptedEncoded),
+		).toThrowError(/Invalid magic prefix/);
 	});
 
 	it("detects expiration correctly", () => {
 		const deadline = new Date("2026-01-01T00:01:00.000Z");
-		const nonce = generateExpirableNonce(deadline);
+		let salt = 123456789;
+		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
+		const nonce = VersionedNonceBuilder.decodeNonce(encoded);
 
 		// before deadline
-		expect(isNonceExpired(nonce, new Date("2025-01-01T00:01:00.000Z"))).toBe(
-			false,
-		);
+		expect(nonce.isExpired(new Date("2025-01-01T00:01:00.000Z"))).toBe(false);
 		// at deadline
-		expect(isNonceExpired(nonce, new Date("2026-01-01T00:01:00.000Z"))).toBe(
-			true,
-		);
+		expect(nonce.isExpired(new Date("2026-01-01T00:01:00.000Z"))).toBe(true);
 		// after deadline
-		expect(isNonceExpired(nonce, new Date("2027-01-01T00:01:00.000Z"))).toBe(
-			true,
-		);
+		expect(nonce.isExpired(new Date("2027-01-01T00:01:00.000Z"))).toBe(true);
 	});
 });

@@ -1,66 +1,106 @@
 import { base64 } from "@scure/base";
-import { sha256 } from "@noble/hashes/sha2";
+import { serialize, deserialize } from "near-api-js/lib/utils/serialize";
+import type { Schema } from "near-api-js/lib/utils/serialize";
 
-const EXPIRABLE_NONCE_PREFIX_BYTESIZE = 4;
-export const EXPIRABLE_NONCE_PREFIX = sha256("expirable_nonce").subarray(
-	0,
-	EXPIRABLE_NONCE_PREFIX_BYTESIZE,
-);
+//  Magic prefix (first 4 bytes of `sha256(<versioned_nonce>)`) used to mark versioned nonces
+export const VERSIONED_MAGIC_PREFIX = new Uint8Array([0x56, 0x28, 0xf6, 0xc6]);
+export const LATEST_VERSION = 1;
 
-export interface ExpirableNonce {
-	// Deadline in nanoseconds
-	deadline: bigint;
-	// 20 bytes random nonce
-	nonce: Uint8Array;
+export type Salt = number;
+
+class ExpirableNonce {
+  constructor(public deadline: bigint, public nonce: Uint8Array) {
+    if (nonce.length !== 15) {
+      throw new Error("Random nonce part must be exactly 15 bytes");
+    }
+  }
 }
 
-export function generateExpirableNonce(deadline: Date): ExpirableNonce {
-	return {
-		deadline: BigInt(deadline.getTime()) * 1_000_000n,
-		nonce: crypto.getRandomValues(new Uint8Array(20)),
-	};
+class SaltedNonce {
+  constructor(public salt: Salt, public inner: ExpirableNonce) {}
 }
 
-export function encodeNonce(nonce: ExpirableNonce): string {
-	const result = new Uint8Array(32);
+class VersionedNonce {
+  constructor(public version: number, public value: any) {}
 
-	result.set(EXPIRABLE_NONCE_PREFIX, 0);
-	new DataView(result.buffer).setBigUint64(
-		EXPIRABLE_NONCE_PREFIX_BYTESIZE,
-		nonce.deadline,
-		false,
-	);
-	result.set(nonce.nonce, EXPIRABLE_NONCE_PREFIX_BYTESIZE + 8);
+  static latest(saltedNonce: SaltedNonce): VersionedNonce {
+    return new VersionedNonce(LATEST_VERSION, saltedNonce);
+  }
 
-	return base64.encode(result);
+  isExpired(time: Date = new Date()): boolean {
+    const nowNs = BigInt(time.getTime()) * 1_000_000n;
+    return this.value.inner.deadline <= nowNs;
+  }
 }
 
-export function decodeNonce(encoded: string): ExpirableNonce {
-	const bytes = base64.decode(encoded);
-	if (bytes.length !== 32) {
-		throw new Error("Invalid expirable nonce: incorrect length");
-	}
-	for (let i = 0; i < EXPIRABLE_NONCE_PREFIX_BYTESIZE; i++) {
-		if (bytes[i] !== EXPIRABLE_NONCE_PREFIX[i]) {
-			throw new Error("Invalid expirable nonce: wrong prefix");
-		}
-	}
-	const deadline = new DataView(bytes.buffer).getBigUint64(
-		EXPIRABLE_NONCE_PREFIX_BYTESIZE,
-		false,
-	);
-	const nonce = bytes.slice(EXPIRABLE_NONCE_PREFIX_BYTESIZE + 8);
-	return { deadline, nonce };
-}
+const SALTED_NONCE_BORSH_SCHEMA: Schema = {
+  struct: {
+    salt: "u32",
+    inner: {
+      struct: {
+        deadline: "u64",
+        nonce: { array: { type: "u8", len: 15 } },
+      },
+    },
+  },
+};
 
-export function isNonceExpired(
-	nonce: ExpirableNonce,
-	now: Date = new Date(),
-): boolean {
-	const nowNs = BigInt(now.getTime()) * 1_000_000n;
-	return nowNs >= nonce.deadline;
-}
+export namespace VersionedNonceBuilder {
+  export function encodeNonce(salt: Salt, deadline: Date): string {
+    const expirableNonce = {
+      deadline: BigInt(deadline.getTime()) * 1_000_000n,
+      nonce: crypto.getRandomValues(new Uint8Array(15)),
+    };
 
-export function buildAndEncodeExpirableNonce(deadline: Date): string {
-	return encodeNonce(generateExpirableNonce(deadline));
+    let nonce = VersionedNonce.latest(new SaltedNonce(salt, expirableNonce));
+    let encoded = VersionedNonceBuilder.serializeNonce(nonce);
+
+    return base64.encode(encoded);
+  }
+
+  export function decodeNonce(encoded: string): VersionedNonce {
+    const bytes = base64.decode(encoded);
+    return VersionedNonceBuilder.deserializeNonce(bytes);
+  }
+
+  export function serializeNonce(versionedNonce: VersionedNonce): Uint8Array {
+    const borshBytes = serialize(
+      SALTED_NONCE_BORSH_SCHEMA,
+      versionedNonce.value
+    );
+
+    // Serializing in full format: MAGIC_PREFIX (4) | VERSION (1) | NONCE_BYTES (27)
+    const result = new Uint8Array(4 + 1 + borshBytes.length);
+    result.set(VERSIONED_MAGIC_PREFIX, 0);
+    result.set([versionedNonce.version], 4);
+    result.set(borshBytes, 5);
+
+    return result;
+  }
+
+  export function deserializeNonce(bytes: Uint8Array): VersionedNonce {
+    if (bytes.length != 32) {
+      throw new Error("Nonce too short");
+    }
+
+    // Check magic prefix
+    const prefix = bytes.slice(0, 4);
+    if (!(prefix.toString() === VERSIONED_MAGIC_PREFIX.toString())) {
+      throw new Error("Invalid magic prefix");
+    }
+
+    // Check version
+    const version = bytes[4];
+    if (version !== LATEST_VERSION) {
+      throw new Error(`Unsupported version: ${version}`);
+    }
+
+    const borshData = bytes.slice(5);
+    let value = deserialize(
+      SALTED_NONCE_BORSH_SCHEMA,
+      borshData
+    ) as SaltedNonce;
+
+    return new VersionedNonce(version, value);
+  }
 }

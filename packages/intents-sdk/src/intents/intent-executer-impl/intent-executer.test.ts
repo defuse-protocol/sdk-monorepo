@@ -37,6 +37,7 @@ describe("IntentExecuter", () => {
 					tokens: {},
 				},
 			],
+			salt: 123456789,
 		});
 
 		await vi.waitFor(() =>
@@ -93,6 +94,7 @@ describe("IntentExecuter", () => {
 					tokens: {},
 				},
 			],
+			salt: 123456789,
 		});
 
 		await vi.waitFor(() =>
@@ -135,6 +137,7 @@ describe("IntentExecuter", () => {
 
 		void exec.signAndSendIntent({
 			intents: [],
+			salt: 123456789,
 			deadline: "2025-07-30T12:57:16.264Z",
 			nonce: base64.encode(new Uint8Array(32)),
 		});

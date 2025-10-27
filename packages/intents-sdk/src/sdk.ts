@@ -360,6 +360,7 @@ export class IntentsSDK implements IIntentsSDK {
 
 		const { ticket } = await intentExecuter.signAndSendIntent({
 			intents: args.intents,
+			salt: 123,
 			relayParams: args.relayParams,
 		});
 		return { intentHash: ticket };
