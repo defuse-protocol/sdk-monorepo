@@ -23,6 +23,7 @@ import type {
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
+	QuoteOptions,
 	RouteConfig,
 	TxInfo,
 	TxNoInfo,
@@ -238,7 +239,7 @@ export class HotBridge implements Bridge {
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "destinationAddress">;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);

@@ -51,6 +51,7 @@ import type {
 	ParsedAssetInfo,
 	PartialRPCEndpointMap,
 	ProcessWithdrawalArgs,
+	QuoteOptions,
 	SignAndSendArgs,
 	SignAndSendWithdrawalArgs,
 	TxInfo,
@@ -189,19 +190,19 @@ export class IntentsSDK implements IIntentsSDK {
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation>;
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation[]>;
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams | WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation | FeeEstimation[]> {
 		if (!Array.isArray(args.withdrawalParams)) {
@@ -223,7 +224,7 @@ export class IntentsSDK implements IIntentsSDK {
 
 	protected async _estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {

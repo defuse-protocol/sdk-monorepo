@@ -34,6 +34,7 @@ import type {
 	NearTxInfo,
 	OmniBridgeRouteConfig,
 	ParsedAssetInfo,
+	QuoteOptions,
 	RouteConfig,
 	TxInfo,
 	TxNoInfo,
@@ -395,7 +396,7 @@ export class OmniBridge implements Bridge {
 			WithdrawalParams,
 			"assetId" | "destinationAddress" | "routeConfig"
 		>;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.makeAssetInfo(

@@ -150,13 +150,13 @@ export interface IIntentsSDK {
 
 	estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation>;
 
 	estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation[]>;
 
@@ -199,6 +199,13 @@ export interface IIntentsSDK {
 	processWithdrawal(
 		args: ProcessWithdrawalArgs<WithdrawalParams[]>,
 	): Promise<BatchWithdrawalResult>;
+}
+
+export interface QuoteOptions {
+	waitMs?: number;
+	minWaitMs?: number;
+	maxWaitMs?: number;
+	trustedMetadata?: unknown;
 }
 
 export interface NearTxInfo {
@@ -300,7 +307,7 @@ export interface Bridge {
 		>,
 	>(args: {
 		withdrawalParams: T;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation>;
 	createWithdrawalIntents(args: {

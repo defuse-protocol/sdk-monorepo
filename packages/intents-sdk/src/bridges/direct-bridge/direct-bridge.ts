@@ -16,6 +16,7 @@ import type {
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
+	QuoteOptions,
 	RouteConfig,
 	TxInfo,
 	WithdrawalParams,
@@ -150,7 +151,7 @@ export class DirectBridge implements Bridge {
 			WithdrawalParams,
 			"assetId" | "destinationAddress" | "routeConfig"
 		>;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);
