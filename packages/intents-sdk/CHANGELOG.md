@@ -1,5 +1,17 @@
 # @defuse-protocol/intents-sdk
 
+## 0.27.0
+
+### Minor Changes
+
+- 8bf4c85: Add new quote params - minWaitMs, maxWaitMs, trustedMetadata.
+- 83aee66: Allow prepending and appending other signed intents, so that all of them are executed atomically.
+
+### Patch Changes
+
+- Updated dependencies [8bf4c85]
+  - @defuse-protocol/internal-utils@0.16.0
+
 ## 0.26.4
 
 ### Patch Changes
