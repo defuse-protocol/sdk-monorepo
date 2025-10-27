@@ -60,6 +60,8 @@ import type {
 	WithdrawalParams,
 	WithdrawalResult,
 } from "./shared-types";
+import type { ISaltManager } from "./intents/interfaces/salt-manager";
+import { SaltManager } from "./intents/salt-manager";
 
 export interface IntentsSDKConfig {
 	env?: NearIntentsEnv;
@@ -76,6 +78,7 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 	protected solverRelayApiKey: string | undefined;
+	protected saltManager: ISaltManager;
 
 	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
@@ -145,6 +148,11 @@ export class IntentsSDK implements IIntentsSDK {
 		});
 
 		this.intentSigner = args.intentSigner;
+
+		this.saltManager = new SaltManager({
+			env: this.env,
+			nearProvider,
+		});
 	}
 
 	public setIntentSigner(signer: IIntentSigner) {
@@ -373,7 +381,7 @@ export class IntentsSDK implements IIntentsSDK {
 
 		const { ticket } = await intentExecuter.signAndSendIntent({
 			intents: args.intents,
-			salt: 123,
+			salt: await this.saltManager.getCachedSalt(),
 			relayParams: args.relayParams,
 			signedIntents: args.signedIntents,
 		});

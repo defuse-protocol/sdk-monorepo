@@ -24,6 +24,8 @@ import {
 	ChainKind,
 	omniAddress,
 } from "omni-bridge-sdk";
+import type { ISaltManager } from "./intents/interfaces/salt-manager";
+import type { Salt } from "./intents/expirable-nonce";
 
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
@@ -934,3 +936,9 @@ describe("sdk.parseAssetId()", () => {
 		);
 	});
 });
+
+export class MockSaltManager implements ISaltManager {
+	async getCachedSalt(): Promise<Salt> {
+		return 123456789;
+	}
+}

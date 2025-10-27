@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { IntentsSDK } from "./sdk";
+import { MockSaltManager } from "./sdk.test";
 
 describe("sdk.signAndSendIntent()", () => {
 	it("signs with default signer", async () => {
@@ -75,10 +76,13 @@ function setupMocks() {
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });
 	vi.spyOn(intentRelayer, "publishIntent");
 
+	const saltManager = new MockSaltManager();
+
 	class MockSDK extends IntentsSDK {
 		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.intentRelayer = intentRelayer;
+			this.saltManager = saltManager;
 		}
 	}
 
