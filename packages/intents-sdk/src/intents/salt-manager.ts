@@ -9,7 +9,7 @@ import * as v from "valibot";
 
 import { utils } from "@defuse-protocol/internal-utils";
 
-const SALT_TTL_SEC = 30 * 1000; // 30 seconds
+export const SALT_TTL_SEC = 30 * 1000; // 30 seconds
 
 export class SaltManager implements ISaltManager {
 	protected intentsContract: string;
@@ -84,12 +84,14 @@ export async function fetchSalt(
 	nearProvider: providers.Provider,
 	contractId: string,
 ): Promise<Salt> {
-	return utils.queryContract({
+	const hex = await utils.queryContract({
 		contractId,
 		methodName: "current_salt",
 		args: {},
 		finality: "optimistic",
 		nearClient: nearProvider,
-		schema: v.number(),
+		schema: v.string(),
 	});
+
+	return parseInt(hex, 16);
 }

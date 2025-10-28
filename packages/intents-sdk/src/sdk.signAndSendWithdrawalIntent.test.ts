@@ -5,8 +5,6 @@ import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relaye
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { createInternalTransferRoute } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
-import type { ISaltManager } from "./intents/interfaces/salt-manager";
-import type { Salt } from "./intents/expirable-nonce";
 import { MockSaltManager } from "./sdk.test";
 
 describe("sdk.signAndSendWithdrawalIntent()", () => {
