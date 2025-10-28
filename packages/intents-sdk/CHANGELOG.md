@@ -1,5 +1,17 @@
 # @defuse-protocol/intents-sdk
 
+## 0.28.0
+
+### Minor Changes
+
+- 2ebddf9: Add account existence check for explicit(named accounts) for direct bridge
+  Add storage deposit cache for direct bridge
+
+### Patch Changes
+
+- Updated dependencies [2ebddf9]
+  - @defuse-protocol/internal-utils@0.17.0
+
 ## 0.27.0
 
 ### Minor Changes

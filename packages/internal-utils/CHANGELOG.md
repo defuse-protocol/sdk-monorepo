@@ -1,5 +1,12 @@
 # @defuse-protocol/internal-utils
 
+## 0.17.0
+
+### Minor Changes
+
+- 2ebddf9: Add account existence check for explicit(named accounts) for direct bridge
+  Add storage deposit cache for direct bridge
+
 ## 0.16.0
 
 ### Minor Changes
