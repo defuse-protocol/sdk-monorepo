@@ -23,6 +23,7 @@ import type {
 } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 import {
+	accountExistsInNEAR,
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
@@ -33,12 +34,23 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import { DestinationExplicitNearAccountDoesntExistError } from "./error";
+import { LRUCache } from "lru-cache";
 
+type MinStorageBalance = bigint;
+type StorageDepositBalance = bigint;
 export class DirectBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
-
+	private storageDepositCache = new LRUCache<
+		string,
+		[MinStorageBalance, StorageDepositBalance]
+	>({ max: 100, ttl: 3600000 });
+	private accountExistenceCache = new LRUCache<string, true>({
+		max: 100,
+		ttl: 3600000,
+	});
 	constructor({
 		env,
 		nearProvider,
@@ -143,6 +155,17 @@ export class DirectBridge implements Bridge {
 			);
 		}
 
+		// Only check account existence for explicit (named) accounts
+		if (
+			utils.isImplicitAccount(args.destinationAddress) === false &&
+			(await this.getCachedAccountExistenceCheck(args.destinationAddress)) ===
+				false
+		) {
+			throw new DestinationExplicitNearAccountDoesntExistError(
+				args.destinationAddress,
+			);
+		}
+
 		return;
 	}
 
@@ -172,17 +195,11 @@ export class DirectBridge implements Bridge {
 				quote: null,
 			};
 
-		const [minStorageBalance, userStorageBalance] = await Promise.all([
-			getNearNep141MinStorageBalance({
-				contractId: tokenAccountId,
-				nearProvider: this.nearProvider,
-			}),
-			getNearNep141StorageBalance({
-				contractId: tokenAccountId,
-				accountId: args.withdrawalParams.destinationAddress,
-				nearProvider: this.nearProvider,
-			}),
-		]);
+		const [minStorageBalance, userStorageBalance] =
+			await this.getCachedStorageDepositValue(
+				tokenAccountId,
+				args.withdrawalParams.destinationAddress,
+			);
 
 		if (minStorageBalance <= userStorageBalance) {
 			return {
@@ -211,6 +228,57 @@ export class DirectBridge implements Bridge {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
 			quote: feeQuote,
 		};
+	}
+
+	/**
+	 * Gets storage deposit for a token to avoid frequent RPC calls.
+	 */
+	private async getCachedStorageDepositValue(
+		contractId: string,
+		accountId: string,
+	): Promise<[MinStorageBalance, StorageDepositBalance]> {
+		const key = `${contractId}${accountId}`;
+		const cached = this.storageDepositCache.get(key);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const result = await Promise.all([
+			getNearNep141MinStorageBalance({
+				contractId: contractId,
+				nearProvider: this.nearProvider,
+			}),
+			getNearNep141StorageBalance({
+				contractId: contractId,
+				accountId: accountId,
+				nearProvider: this.nearProvider,
+			}),
+		]);
+
+		if (result[1] >= result[0]) {
+			this.storageDepositCache.set(key, result);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Checks account existence to avoid frequent RPC calls.
+	 */
+	private async getCachedAccountExistenceCheck(
+		accountId: string,
+	): Promise<boolean> {
+		const cached = this.accountExistenceCache.get(accountId);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const exist = await accountExistsInNEAR(this.nearProvider, accountId);
+		if (exist) {
+			this.accountExistenceCache.set(accountId, exist);
+		}
+
+		return exist;
 	}
 
 	async waitForWithdrawalCompletion(args: {
