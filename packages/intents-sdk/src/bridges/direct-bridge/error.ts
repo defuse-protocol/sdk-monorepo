@@ -1,14 +1,14 @@
 import { BaseError } from "@defuse-protocol/internal-utils";
 
-export type DestinationNearAccountDoesntExistErrorType =
-	DestinationNearAccountDoesntExistError & {
-		name: "DestinationNearAccountDoesntExistError";
+export type DestinationExplicitNearAccountDoesntExistErrorType =
+	DestinationExplicitNearAccountDoesntExistError & {
+		name: "DestinationExplicitNearAccountDoesntExistError";
 	};
-export class DestinationNearAccountDoesntExistError extends BaseError {
+export class DestinationExplicitNearAccountDoesntExistError extends BaseError {
 	constructor(public accountId: string) {
-		super("Destination NEAR account doesn't exist.", {
+		super("Destination explicit NEAR account doesn't exist.", {
 			metaMessages: [`Account Id: ${accountId}`],
-			name: "DestinationNearAccountDoesntExistError",
+			name: "DestinationExplicitNearAccountDoesntExistError",
 		});
 	}
 }

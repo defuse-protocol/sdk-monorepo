@@ -6,7 +6,7 @@ import {
 import { createNearWithdrawalRoute } from "../../lib/route-config-factory";
 import { DirectBridge } from "./direct-bridge";
 import { zeroAddress } from "viem";
-import { DestinationNearAccountDoesntExistError } from "./error";
+import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
@@ -108,7 +108,7 @@ describe("DirectBridge", () => {
 			).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 		});
 		it.each(["redcroco345"])(
-			"blocks accounts that do not exist on NEAR",
+			"blocks withdrawal to explicit accounts that do not exist (not funded) on NEAR",
 			async (destinationAddress) => {
 				const bridge = new DirectBridge({
 					env: "production",
@@ -123,7 +123,7 @@ describe("DirectBridge", () => {
 						amount: 1n,
 						destinationAddress,
 					}),
-				).rejects.toThrow(DestinationNearAccountDoesntExistError);
+				).rejects.toThrow(DestinationExplicitNearAccountDoesntExistError);
 			},
 		);
 	});

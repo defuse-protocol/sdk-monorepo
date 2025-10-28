@@ -105,8 +105,8 @@ export {
 
 // Direct Bridge Errors
 export {
-	DestinationNearAccountDoesntExistError,
-	type DestinationNearAccountDoesntExistErrorType,
+	DestinationExplicitNearAccountDoesntExistError,
+	type DestinationExplicitNearAccountDoesntExistErrorType,
 } from "./src/bridges/direct-bridge/error";
 
 // Hot Bridge Errors

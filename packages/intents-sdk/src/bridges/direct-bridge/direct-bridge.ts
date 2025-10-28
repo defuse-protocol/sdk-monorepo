@@ -33,7 +33,7 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
-import { DestinationNearAccountDoesntExistError } from "./error";
+import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import { LRUCache } from "lru-cache";
 
 type MinStorageBalance = bigint;
@@ -154,11 +154,15 @@ export class DirectBridge implements Bridge {
 			);
 		}
 
+		// Only check account existence for explicit (named) accounts
 		if (
+			utils.isImplicitAccount(args.destinationAddress) === false &&
 			(await this.getCachedAccountExistenceCheck(args.destinationAddress)) ===
-			false
+				false
 		) {
-			throw new DestinationNearAccountDoesntExistError(args.destinationAddress);
+			throw new DestinationExplicitNearAccountDoesntExistError(
+				args.destinationAddress,
+			);
 		}
 
 		return;
