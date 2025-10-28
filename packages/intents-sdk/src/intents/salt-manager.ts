@@ -9,7 +9,7 @@ import * as v from "valibot";
 
 import { utils } from "@defuse-protocol/internal-utils";
 
-export const SALT_TTL_SEC = 30 * 1000; // 30 seconds
+export const SALT_TTL_MS = 30 * 1000; // 30 seconds
 
 export class SaltManager implements ISaltManager {
 	protected intentsContract: string;
@@ -29,43 +29,53 @@ export class SaltManager implements ISaltManager {
 		this.nearProvider = nearProvider;
 	}
 
+	/**
+	 * Returns the cached salt if it's valid, otherwise fetches a new one
+	 * Deduplicates concurrent requests so only one fetch runs at a time
+	 */
 	async getCachedSalt(): Promise<Salt> {
 		if (this.isCacheValid()) {
 			return this.currentSalt!;
 		}
-
 		if (this.fetchPromise) {
 			return this.fetchPromise;
 		}
 
-		this.fetchPromise = this.fetchAndCache();
-
-		try {
-			return await this.fetchPromise;
-		} finally {
+		this.fetchPromise = this.fetchAndCache().finally(() => {
 			this.fetchPromise = null;
-		}
+		});
+
+		return this.fetchPromise;
+	}
+
+	/**
+	 * Fetches a new salt from the contract and updates the cache
+	 */
+	async refresh(): Promise<Salt> {
+		this.invalidateCache();
+
+		return this.getCachedSalt();
 	}
 
 	async fetchAndCache(): Promise<Salt> {
-		const salt = await fetchSalt(this.nearProvider, this.intentsContract);
+		try {
+			const salt = await fetchSalt(this.nearProvider, this.intentsContract);
 
-		this.currentSalt = salt;
-		this.lastFetchTime = Date.now();
+			this.currentSalt = salt;
+			this.lastFetchTime = Date.now();
 
-		return this.currentSalt;
+			return this.currentSalt;
+		} catch (err) {
+			this.fetchPromise = null;
+
+			throw new Error(`Failed to fetch salt: ${(err as Error).message}`);
+		}
 	}
 
 	isCacheValid(): boolean {
 		return (
-			this.currentSalt !== null &&
-			Date.now() - this.lastFetchTime < SALT_TTL_SEC
+			this.currentSalt !== null && Date.now() - this.lastFetchTime < SALT_TTL_MS
 		);
-	}
-
-	async refresh(): Promise<Salt> {
-		this.invalidateCache();
-		return this.getCachedSalt();
 	}
 
 	private invalidateCache(): void {

@@ -385,6 +385,7 @@ export class IntentsSDK implements IIntentsSDK {
 			relayParams: args.relayParams,
 			signedIntents: args.signedIntents,
 		});
+
 		return { intentHash: ticket };
 	}
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { SALT_TTL_SEC, SaltManager } from "../intents/salt-manager";
+import { SALT_TTL_MS, SaltManager } from "../intents/salt-manager";
 import type { providers } from "near-api-js";
 
 import {
@@ -46,7 +46,7 @@ describe("SaltManager", () => {
 			});
 
 			const salt1 = await saltManager.getCachedSalt();
-			await vi.advanceTimersByTimeAsync(SALT_TTL_SEC / 2);
+			await vi.advanceTimersByTimeAsync(SALT_TTL_MS / 2);
 
 			const newSalt = 67890;
 			mockQueryWithVal(newSalt);
@@ -65,7 +65,7 @@ describe("SaltManager", () => {
 			});
 
 			await saltManager.getCachedSalt();
-			await vi.advanceTimersByTimeAsync(SALT_TTL_SEC + 1);
+			await vi.advanceTimersByTimeAsync(SALT_TTL_MS + 1);
 
 			const expected = 67890;
 			mockQueryWithVal(expected);
