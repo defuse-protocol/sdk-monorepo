@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/internal-utils",
-	"version": "0.15.2",
+	"version": "0.16.0",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,

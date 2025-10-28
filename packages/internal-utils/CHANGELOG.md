@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.16.0
+
+### Minor Changes
+
+- 8bf4c85: Add new quote params - minWaitMs, maxWaitMs, trustedMetadata.
+
 ## 0.15.2
 
 ### Patch Changes
