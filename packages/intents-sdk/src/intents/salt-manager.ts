@@ -86,6 +86,7 @@ export class SaltManager implements ISaltManager {
 
 /**
  * Fetches the current salt from the NEAR contract
+ *
  * @param nearProvider Near provider used for querying the contract
  * @param contractId The NEAR contract ID to query
  * @returns Promise resolving to the salt

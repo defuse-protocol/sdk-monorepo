@@ -55,24 +55,23 @@ const SALTED_NONCE_BORSH_SCHEMA: Schema = {
 };
 
 export namespace VersionedNonceBuilder {
+	/**
+	 * Encodes a versioned expirable nonce with the given salt and deadline
+	 *
+	 * @param salt The salt to use for the nonce
+	 * @param deadline The expiration deadline for the nonce
+	 * @returns The encoded nonce as a base64 string
+	 */
 	export function encodeNonce(salt: Salt, deadline: Date): string {
 		const expirableNonce = {
 			deadline: BigInt(deadline.getTime()) * 1_000_000n,
 			nonce: crypto.getRandomValues(new Uint8Array(15)),
 		};
 
-		let nonce = VersionedNonce.latest(new SaltedNonce(salt, expirableNonce));
-		let encoded = VersionedNonceBuilder.serializeNonce(nonce);
+		let versionedNonce = VersionedNonce.latest(
+			new SaltedNonce(salt, expirableNonce),
+		);
 
-		return base64.encode(encoded);
-	}
-
-	export function decodeNonce(encoded: string): VersionedNonce {
-		const bytes = base64.decode(encoded);
-		return VersionedNonceBuilder.deserializeNonce(bytes);
-	}
-
-	export function serializeNonce(versionedNonce: VersionedNonce): Uint8Array {
 		const borshBytes = serialize(
 			SALTED_NONCE_BORSH_SCHEMA,
 			versionedNonce.value,
@@ -84,10 +83,18 @@ export namespace VersionedNonceBuilder {
 		result.set([versionedNonce.version], 4);
 		result.set(borshBytes, 5);
 
-		return result;
+		return base64.encode(result);
 	}
 
-	export function deserializeNonce(bytes: Uint8Array): VersionedNonce {
+	/**
+	 * Decodes a versioned expirable nonce from a base64-encoded string
+	 *
+	 * @param encoded The encoded nonce string
+	 * @returns The decoded VersionedNonce object
+	 */
+	export function decodeNonce(encoded: string): VersionedNonce {
+		const bytes = base64.decode(encoded);
+
 		if (bytes.length != 32) {
 			throw new Error("Nonce too short");
 		}

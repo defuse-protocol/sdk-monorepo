@@ -412,7 +412,7 @@ export class IntentsSDK implements IIntentsSDK {
 	}
 
 	private isSaltError(error: unknown): error is Error {
-		// TODO: make better error detection
+		// TODO: make better error detection after legacy nonces prohibition
 		return error instanceof Error && /salt/i.test(error.message);
 	}
 

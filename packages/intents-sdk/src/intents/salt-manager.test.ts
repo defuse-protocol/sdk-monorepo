@@ -18,8 +18,7 @@ describe("SaltManager", () => {
 			});
 
 			const saltManager = new SaltManager({
-				// TODO: update to 'production' when upgraded
-				env: "stage",
+				env: "production",
 				nearProvider,
 			});
 
