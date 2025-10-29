@@ -380,16 +380,16 @@ export class IntentsSDK implements IIntentsSDK {
 			onBeforePublishIntent: args.onBeforePublishIntent,
 		});
 
-		return this.withSaltRetry(args, async (salt) => {
-			const { ticket } = await intentExecuter.signAndSendIntent({
+		const { ticket } = await this.withSaltRetry(args, async (salt) =>
+			intentExecuter.signAndSendIntent({
 				intents: args.intents,
 				salt,
 				relayParams: args.relayParams,
 				signedIntents: args.signedIntents,
-			});
+			}),
+		);
 
-			return { intentHash: ticket };
-		});
+		return { intentHash: ticket };
 	}
 
 	private async withSaltRetry<T>(
@@ -397,17 +397,16 @@ export class IntentsSDK implements IIntentsSDK {
 		fn: (salt: Salt) => Promise<T>,
 	): Promise<T> {
 		try {
-			const salt = await this.saltManager.getCachedSalt();
-			return await fn(salt);
-		} catch (error) {
-			if (this.isSaltError(error)) {
-				args.logger?.warn?.(`Salt error detected. Refreshing and retrying`);
-				const newSalt = await this.saltManager.refresh();
+			const cachedSalt = await this.saltManager.getCachedSalt();
 
-				return fn(newSalt);
-			}
+			return await fn(cachedSalt);
+		} catch (err) {
+			if (!this.isSaltError(err)) throw err;
 
-			throw error;
+			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");
+
+			const newSalt = await this.saltManager.refresh();
+			return fn(newSalt);
 		}
 	}
 

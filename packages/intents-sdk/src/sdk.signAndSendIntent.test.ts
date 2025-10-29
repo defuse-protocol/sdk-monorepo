@@ -3,9 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { IntentsSDK } from "./sdk";
-import { MockSaltManager } from "./sdk.test";
-import { SaltManager } from "./intents/salt-manager";
-import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
+import type { ISaltManager } from "./intents/interfaces/salt-manager";
+import type { Salt } from "./intents/expirable-nonce";
 
 describe("sdk.signAndSendIntent()", () => {
 	it("signs with default signer", async () => {
@@ -129,3 +128,13 @@ const AnyEmptyIntent = {
 	signer_id: undefined,
 	verifying_contract: "intents.near",
 };
+
+class MockSaltManager implements ISaltManager {
+	async getCachedSalt(): Promise<Salt> {
+		return 123456789;
+	}
+
+	async refresh(): Promise<Salt> {
+		return 987654321;
+	}
+}

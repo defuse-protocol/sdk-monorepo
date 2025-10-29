@@ -38,6 +38,10 @@ describe("SaltManager", () => {
 			mockQueryWithVal(initialSalt);
 		});
 
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
 		it("should return cached salt within TTL", async () => {
 			const saltManager = new SaltManager({
 				env: "production",

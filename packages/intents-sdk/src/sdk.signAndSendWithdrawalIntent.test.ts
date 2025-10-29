@@ -5,7 +5,8 @@ import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relaye
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { createInternalTransferRoute } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
-import { MockSaltManager } from "./sdk.test";
+import type { ISaltManager } from "./intents/interfaces/salt-manager";
+import type { Salt } from "./intents/expirable-nonce";
 
 describe("sdk.signAndSendWithdrawalIntent()", () => {
 	const withdrawalParams = {
@@ -93,6 +94,16 @@ describe("sdk.signAndSendWithdrawalIntent()", () => {
 });
 
 function setupMocks() {
+	class MockSaltManager implements ISaltManager {
+		async getCachedSalt(): Promise<Salt> {
+			return 123456789;
+		}
+
+		async refresh(): Promise<Salt> {
+			return 987654321;
+		}
+	}
+
 	const defaultIntentSigner = createIntentSignerViem({
 		signer: privateKeyToAccount(
 			// random private key

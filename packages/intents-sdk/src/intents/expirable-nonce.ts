@@ -35,11 +35,6 @@ class VersionedNonce {
 	static latest(saltedNonce: SaltedNonce): VersionedNonce {
 		return new VersionedNonce(LATEST_VERSION, saltedNonce);
 	}
-
-	isExpired(time: Date = new Date()): boolean {
-		const nowNs = BigInt(time.getTime()) * 1_000_000n;
-		return this.value.inner.deadline <= nowNs;
-	}
 }
 
 const SALTED_NONCE_BORSH_SCHEMA: Schema = {
@@ -68,7 +63,7 @@ export namespace VersionedNonceBuilder {
 			nonce: crypto.getRandomValues(new Uint8Array(15)),
 		};
 
-		let versionedNonce = VersionedNonce.latest(
+		const versionedNonce = VersionedNonce.latest(
 			new SaltedNonce(salt, expirableNonce),
 		);
 
@@ -95,24 +90,20 @@ export namespace VersionedNonceBuilder {
 	export function decodeNonce(encoded: string): VersionedNonce {
 		const bytes = base64.decode(encoded);
 
-		if (bytes.length != 32) {
+		if (bytes.length !== 32) {
 			throw new Error("Nonce too short");
 		}
 
-		// Check magic prefix
 		const prefix = bytes.slice(0, 4);
-		if (!(prefix.toString() === VERSIONED_MAGIC_PREFIX.toString())) {
+		const version = bytes[4] as number;
+		const borshData = bytes.slice(5);
+
+		// Check magic prefix
+		if (!prefix.every((byte, i) => byte === VERSIONED_MAGIC_PREFIX[i])) {
 			throw new Error("Invalid magic prefix");
 		}
 
-		// Check version
-		const version = bytes[4];
-		if (version !== LATEST_VERSION) {
-			throw new Error(`Unsupported version: ${version}`);
-		}
-
-		const borshData = bytes.slice(5);
-		let value = deserialize(
+		const value = deserialize(
 			SALTED_NONCE_BORSH_SCHEMA,
 			borshData,
 		) as SaltedNonce;

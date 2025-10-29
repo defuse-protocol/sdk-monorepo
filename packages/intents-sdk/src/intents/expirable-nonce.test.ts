@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { base64, hex } from "@scure/base";
+import { base64 } from "@scure/base";
 import {
 	LATEST_VERSION,
 	VERSIONED_MAGIC_PREFIX,
@@ -10,22 +10,22 @@ import { serialize } from "near-api-js/lib/utils/serialize";
 describe("expirable nonce", () => {
 	it("roundtrip encode/decode", () => {
 		const deadline = new Date();
-		let salt = 123456789;
+		const salt = 123456789;
 
 		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
 		const decoded = VersionedNonceBuilder.decodeNonce(encoded);
 
 		expect(decoded.version).toBe(LATEST_VERSION);
-		expect(decoded.value.salt).toBe(salt);
-		expect(decoded.value.inner.nonce.length).toBe(15);
-		expect(decoded.value.inner.deadline).toBe(
-			BigInt(deadline.getTime()) * 1_000_000n,
-		);
+
+		const value = decoded.value;
+		expect(value.salt).toBe(salt);
+		expect(value.inner.nonce.length).toBe(15);
+		expect(value.inner.deadline).toBe(BigInt(deadline.getTime()) * 1_000_000n);
 	});
 
 	it("encoded payload is valid", () => {
 		const deadline = new Date();
-		let salt = 123456789;
+		const salt = 123456789;
 		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
 		const bytes = base64.decode(encoded);
 
@@ -41,7 +41,7 @@ describe("expirable nonce", () => {
 
 	it("rejects invalid prefix", () => {
 		const deadline = new Date();
-		let salt = 123456789;
+		const salt = 123456789;
 		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
 		const bytes = base64.decode(encoded);
 
@@ -55,19 +55,5 @@ describe("expirable nonce", () => {
 		expect(() =>
 			VersionedNonceBuilder.decodeNonce(corruptedEncoded),
 		).toThrowError(/Invalid magic prefix/);
-	});
-
-	it("detects expiration correctly", () => {
-		const deadline = new Date("2026-01-01T00:01:00.000Z");
-		let salt = 123456789;
-		const encoded = VersionedNonceBuilder.encodeNonce(salt, deadline);
-		const nonce = VersionedNonceBuilder.decodeNonce(encoded);
-
-		// before deadline
-		expect(nonce.isExpired(new Date("2025-01-01T00:01:00.000Z"))).toBe(false);
-		// at deadline
-		expect(nonce.isExpired(new Date("2026-01-01T00:01:00.000Z"))).toBe(true);
-		// after deadline
-		expect(nonce.isExpired(new Date("2027-01-01T00:01:00.000Z"))).toBe(true);
 	});
 });

@@ -37,6 +37,7 @@ export class SaltManager implements ISaltManager {
 		if (this.isCacheValid()) {
 			return this.currentSalt!;
 		}
+
 		if (this.fetchPromise) {
 			return this.fetchPromise;
 		}
@@ -72,9 +73,9 @@ export class SaltManager implements ISaltManager {
 		}
 	}
 
-	isCacheValid(): boolean {
+	private isCacheValid(): boolean {
 		return (
-			this.currentSalt !== null && Date.now() - this.lastFetchTime < SALT_TTL_MS
+			this.currentSalt != null && Date.now() - this.lastFetchTime < SALT_TTL_MS
 		);
 	}
 
