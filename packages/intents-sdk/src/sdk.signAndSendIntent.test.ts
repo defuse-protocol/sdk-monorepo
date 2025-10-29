@@ -4,6 +4,8 @@ import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relaye
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { IntentsSDK } from "./sdk";
 import { MockSaltManager } from "./sdk.test";
+import { SaltManager } from "./intents/salt-manager";
+import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 
 describe("sdk.signAndSendIntent()", () => {
 	it("signs with default signer", async () => {
@@ -53,6 +55,24 @@ describe("sdk.signAndSendIntent()", () => {
 			},
 			expect.any(Object),
 		);
+	});
+
+	it("retry salt fetching", async () => {
+		const { sdk, intentRelayer } = setupMocks();
+		noPublish(intentRelayer);
+
+		const fetchSaltSpy = vi
+			.spyOn(MockSaltManager.prototype as any, "getCachedSalt")
+			.mockRejectedValueOnce(new Error("Salt error"));
+
+		const refreshSpy = vi.spyOn(MockSaltManager.prototype as any, "refresh");
+
+		void sdk.signAndSendIntent({ intents: [] });
+
+		await vi.waitFor(() => expect(refreshSpy).toHaveBeenCalledOnce());
+
+		expect(refreshSpy).toHaveBeenCalledTimes(1);
+		expect(fetchSaltSpy).toHaveBeenCalledTimes(1);
 	});
 });
 

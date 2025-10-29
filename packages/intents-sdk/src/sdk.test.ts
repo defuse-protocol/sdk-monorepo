@@ -941,4 +941,8 @@ export class MockSaltManager implements ISaltManager {
 	async getCachedSalt(): Promise<Salt> {
 		return 123456789;
 	}
+
+	async refresh(): Promise<Salt> {
+		return 987654321;
+	}
 }

@@ -3,4 +3,5 @@ import type { IntentPayload, MultiPayload } from "../shared-types";
 
 export interface ISaltManager {
 	getCachedSalt(): Promise<Salt>;
+	refresh(): Promise<Salt>;
 }
