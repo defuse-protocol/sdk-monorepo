@@ -8,7 +8,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 
 const fetchSaltSpy = vi.spyOn(SaltManager.prototype as any, "fetchAndCache");
-const initialSalt = 12345;
+const initialSalt = Uint8Array.from([1, 2, 3, 4]);
 
 describe("SaltManager", () => {
 	describe("fetching salt from contract", () => {
@@ -24,8 +24,7 @@ describe("SaltManager", () => {
 
 			const salt = await saltManager.getCachedSalt();
 
-			expect(typeof salt).toBe("number");
-			expect(salt).toBeGreaterThan(0);
+			expect(salt.length).toBe(4);
 			expect(fetchSaltSpy).toHaveBeenCalledTimes(1);
 		});
 	});

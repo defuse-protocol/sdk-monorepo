@@ -150,10 +150,10 @@ const AnyEmptyIntent = {
 
 class MockSaltManager implements ISaltManager {
 	async getCachedSalt(): Promise<Salt> {
-		return 123456789;
+		return Uint8Array.from([1, 2, 3, 4]);
 	}
 
 	async refresh(): Promise<Salt> {
-		return 987654321;
+		return Uint8Array.from([5, 6, 7, 8]);
 	}
 }

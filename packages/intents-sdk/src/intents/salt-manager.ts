@@ -105,5 +105,5 @@ export async function fetchSalt(
 		schema: v.string(),
 	});
 
-	return parseInt(hex, 16);
+	return Uint8Array.from(Buffer.from(hex, "hex"));
 }

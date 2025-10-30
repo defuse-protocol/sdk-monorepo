@@ -38,7 +38,7 @@ describe("IntentExecuter", () => {
 					tokens: {},
 				},
 			],
-			salt: 123456789,
+			salt: Uint8Array.from([1, 2, 3, 4]),
 		});
 
 		await vi.waitFor(() =>
@@ -95,7 +95,7 @@ describe("IntentExecuter", () => {
 					tokens: {},
 				},
 			],
-			salt: 123456789,
+			salt: Uint8Array.from([1, 2, 3, 4]),
 		});
 
 		await vi.waitFor(() =>
@@ -138,7 +138,7 @@ describe("IntentExecuter", () => {
 
 		void exec.signAndSendIntent({
 			intents: [],
-			salt: 123456789,
+			salt: Uint8Array.from([1, 2, 3, 4]),
 			deadline: "2025-07-30T12:57:16.264Z",
 			nonce: base64.encode(new Uint8Array(32)),
 		});
@@ -182,7 +182,7 @@ describe("IntentExecuter", () => {
 
 		const result = exec.signAndSendIntent({
 			intents: [],
-			salt: 123456789,
+			salt: Uint8Array.from([1, 2, 3, 4]),
 			deadline: "2025-07-30T12:57:16.264Z",
 			nonce: base64.encode(new Uint8Array(32)),
 		});
@@ -211,7 +211,7 @@ describe("IntentExecuter", () => {
 						tokens: { "wrap.near": "1000" },
 					},
 				],
-				salt: 123456789,
+				salt: Uint8Array.from([1, 2, 3, 4]),
 			});
 
 			expect(result.ticket).toBe("ticket-123");
@@ -221,7 +221,7 @@ describe("IntentExecuter", () => {
 
 		it("composes intents with prepend only", async () => {
 			const { intentSigner, intentRelayer } = setupMocks();
-			const salt = 123456789;
+			const salt = Uint8Array.from([1, 2, 3, 4]);
 
 			const prependIntent1 = await intentSigner.signIntent(
 				defaultIntentPayloadFactory(salt, { verifying_contract: "" }),
@@ -275,7 +275,7 @@ describe("IntentExecuter", () => {
 
 		it("composes intents with append only", async () => {
 			const { intentSigner, intentRelayer } = setupMocks();
-			const salt = 123456789;
+			const salt = Uint8Array.from([1, 2, 3, 4]);
 
 			const appendIntent1 = await intentSigner.signIntent(
 				defaultIntentPayloadFactory(salt, { verifying_contract: "" }),
@@ -307,7 +307,7 @@ describe("IntentExecuter", () => {
 				signedIntents: {
 					after: [appendIntent1, appendIntent2],
 				},
-				salt: 123456789,
+				salt: Uint8Array.from([1, 2, 3, 4]),
 			});
 
 			// Should return the hash of the newly created intent (at index 0)
