@@ -8,6 +8,7 @@ import {
 	configsByEnvironment,
 	nearFailoverRpcProvider,
 	solverRelay,
+	RelayPublishError,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -401,18 +402,14 @@ export class IntentsSDK implements IIntentsSDK {
 
 			return await fn(cachedSalt);
 		} catch (err) {
-			if (!this.isSaltError(err)) throw err;
+			if (!(err instanceof RelayPublishError && err.code === "INVALID_SALT"))
+				throw err;
 
 			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");
 
 			const newSalt = await this.saltManager.refresh();
 			return fn(newSalt);
 		}
-	}
-
-	private isSaltError(error: unknown): error is Error {
-		// TODO: make better error detection after legacy nonces prohibition
-		return error instanceof Error && /salt/i.test(error.message);
 	}
 
 	public async signAndSendWithdrawalIntent(

@@ -26,10 +26,16 @@ class SaltedNonce {
 	) {}
 }
 
+/**
+ * VersionedNonce class representing a versioned expirable nonce
+ *
+ * @property version The version of the nonce
+ * @property value The current value of nonce, it is unknown to allow for future version types
+ */
 class VersionedNonce {
 	constructor(
 		public version: number,
-		public value: any,
+		public value: unknown,
 	) {}
 
 	static latest(saltedNonce: SaltedNonce): VersionedNonce {

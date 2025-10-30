@@ -69,7 +69,7 @@ export class SaltManager implements ISaltManager {
 		} catch (err) {
 			this.fetchPromise = null;
 
-			throw new Error(`Failed to fetch salt: ${(err as Error).message}`);
+			throw new Error(`Failed to fetch salt`, { cause: err });
 		}
 	}
 
