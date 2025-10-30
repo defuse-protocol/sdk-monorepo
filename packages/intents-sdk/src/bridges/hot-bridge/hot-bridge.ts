@@ -308,7 +308,7 @@ export class HotBridge implements Bridge {
 					return { hash: null };
 				}
 				if (typeof status === "string") {
-					// HOT returns string hexified raw bytes, any non hex string value should be ignored.
+					// HOT returns string hexified raw bytes without 0x prefix, any other value should be ignored.
 					if (isHex(status) === false) {
 						return { hash: null };
 					}
