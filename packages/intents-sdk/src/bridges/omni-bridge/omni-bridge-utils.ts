@@ -60,6 +60,7 @@ export function createWithdrawIntentsPrimitive(params: {
 				params.storageDepositAmount > 0n
 					? params.storageDepositAmount.toString()
 					: null,
+			// generate BTC message
 			msg: JSON.stringify({
 				recipient,
 				fee: "0",
@@ -79,8 +80,8 @@ export function caip2ToChainKind(network: Chain): ChainKind | null {
 			return ChainKind.Arb;
 		case Chains.Solana:
 			return ChainKind.Sol;
-		// case Chains.Bitcoin:
-		// 	return ChainKind.Btc;
+		case Chains.Bitcoin:
+			return ChainKind.Btc;
 		default:
 			return null;
 	}
@@ -96,8 +97,8 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return Chains.Arbitrum;
 		case ChainKind.Sol:
 			return Chains.Solana;
-		// case ChainKind.Btc:
-		// 	return Chains.Bitcoin;
+		case ChainKind.Btc:
+			return Chains.Bitcoin;
 		default:
 			return null;
 	}

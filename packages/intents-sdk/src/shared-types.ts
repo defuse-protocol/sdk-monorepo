@@ -303,7 +303,7 @@ export interface Bridge {
 	estimateWithdrawalFee<
 		T extends Pick<
 			WithdrawalParams,
-			"assetId" | "destinationAddress" | "routeConfig"
+			"assetId" | "destinationAddress" | "routeConfig" | "amount"
 		>,
 	>(args: {
 		withdrawalParams: T;
