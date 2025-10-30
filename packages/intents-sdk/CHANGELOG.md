@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.28.0
+
+### Minor Changes
+
+- Added generation of versioned nonce + its encoding/decoding. Added salt fetching and retry in case of salt reset on contract.
+
 ## 0.27.0
 
 ### Minor Changes
