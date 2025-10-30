@@ -199,7 +199,7 @@ describe("HotBridge", () => {
 		);
 	});
 
-	describe("ixHex()", () => {
+	describe("isHex()", () => {
 		it.each([
 			"9b946b769a71dfacf62daa68e3d94f60b9df3ffd1b9ec4ac9258b56e890022ae", //BNB
 			"eb77be889cb6dd8112af0f750959b19da0899460e154e5ae7d01000cce23e371", // POLYGON
