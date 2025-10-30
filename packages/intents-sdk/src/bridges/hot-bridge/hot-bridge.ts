@@ -45,6 +45,7 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import isHex from "../../lib/isHex";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -307,6 +308,10 @@ export class HotBridge implements Bridge {
 					return { hash: null };
 				}
 				if (typeof status === "string") {
+					// HOT returns string hexified raw bytes, any non hex string value should be ignored.
+					if (isHex(status) === false) {
+						return { hash: null };
+					}
 					return {
 						hash:
 							"chain" in args.routeConfig &&
