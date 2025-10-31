@@ -34,7 +34,7 @@ describe("computeIntentHash()", () => {
 		expect(hash).toEqual("7YaoCk1j9rSrM7kw3ip33ySyJLtqWVxFRQHW5PeWMKAf");
 	});
 
-	it("computes hash for ERC-191 standard with non ASCII string (café)", async () => {
+	it("computes hash for ERC-191 standard with non ASCII character (é in café)", async () => {
 		const multiPayload: MultiPayload = {
 			standard: "erc191",
 			payload:

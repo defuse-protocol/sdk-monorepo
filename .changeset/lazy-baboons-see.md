@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Fix incorrect Length Calculation in EIP-191 Hash
+Fix incorrect length calculation for strings with non ASCII char when calculating EIP-191 hash
