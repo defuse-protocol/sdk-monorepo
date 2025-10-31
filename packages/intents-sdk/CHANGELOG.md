@@ -1,5 +1,19 @@
 # @defuse-protocol/intents-sdk
 
+## 0.29.0
+
+### Minor Changes
+
+- 9dfbecf: Add a generation of versioned nonce + its encoding/decoding. Add salt fetching and retry in case of salt reset on contract.
+
+### Patch Changes
+
+- 66dbaa7: Ensure HOT Bridge returns the correct destination tx hash.
+- Updated dependencies [9dfbecf]
+- Updated dependencies [9dfbecf]
+  - @defuse-protocol/contract-types@0.2.0
+  - @defuse-protocol/internal-utils@0.18.0
+
 ## 0.28.0
 
 ### Minor Changes
