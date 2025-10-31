@@ -34,6 +34,19 @@ describe("computeIntentHash()", () => {
 		expect(hash).toEqual("7YaoCk1j9rSrM7kw3ip33ySyJLtqWVxFRQHW5PeWMKAf");
 	});
 
+	it("computes hash for ERC-191 standard with non ASCII string (café)", async () => {
+		const multiPayload: MultiPayload = {
+			standard: "erc191",
+			payload:
+				'{"signer_id":"0x5a95b4a393f0a8def7ac46907e1fb0782cd3538a","verifying_contract":"intents.near","deadline":"2025-07-30T12:57:16.264Z","nonce":"ZSqiEM8mCXluSxIrG03jw6th7vMfKNLRmYKaAkKb1xk=","intents":[{"amount":"100000000","intent":"ft_withdraw","memo":"café","receiver_id":"btc.omft.near","token":"btc.omft.near"}]}',
+			signature:
+				"secp256k1:CvkU692XuyALYxSDvrpFviJozq5DPrwADzqqV6DA1DDAPy93PaBvWPEngZzREqJetbLpBEmYSV7Joo61yXKXAoJ3i",
+		};
+
+		const hash = await computeIntentHash(multiPayload);
+		expect(hash).toEqual("APvv5zuHPLuSG4xwe24FiyCdiWVXVbkyfkXBBjGy5xJL");
+	});
+
 	it("computes hash for TIP-191 standard", async () => {
 		const multiPayload: MultiPayload = {
 			standard: "tip191",
