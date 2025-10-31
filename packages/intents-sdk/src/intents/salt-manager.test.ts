@@ -7,7 +7,6 @@ import {
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
 
-const fetchSaltSpy = vi.spyOn(SaltManager.prototype as any, "fetchAndCache");
 const initialSalt = Uint8Array.from([1, 2, 3, 4]);
 
 describe("SaltManager", () => {
@@ -22,10 +21,12 @@ describe("SaltManager", () => {
 				nearProvider,
 			});
 
+			vi.spyOn(saltManager, "fetchAndCache");
+
 			const salt = await saltManager.getCachedSalt();
 
 			expect(salt.length).toBe(4);
-			expect(fetchSaltSpy).toHaveBeenCalledTimes(1);
+			expect(saltManager.fetchAndCache).toHaveBeenCalledTimes(1);
 		});
 	});
 
@@ -33,8 +34,6 @@ describe("SaltManager", () => {
 		beforeEach(() => {
 			vi.clearAllMocks();
 			vi.useFakeTimers();
-
-			mockQueryWithVal(initialSalt);
 		});
 
 		afterEach(() => {
@@ -46,18 +45,19 @@ describe("SaltManager", () => {
 				env: "production",
 				nearProvider: {} as providers.Provider,
 			});
+			mockQueryWithVal(saltManager, initialSalt);
 
 			const salt1 = await saltManager.getCachedSalt();
 			await vi.advanceTimersByTimeAsync(SALT_TTL_MS / 2);
 
-			const newSalt = 67890;
-			mockQueryWithVal(newSalt);
+			const newSalt = new Uint8Array([6, 7, 8, 9, 0]);
+			mockQueryWithVal(saltManager, newSalt);
 
 			const salt2 = await saltManager.getCachedSalt();
 
 			expect(salt1).toBe(initialSalt);
 			expect(salt2).toBe(initialSalt);
-			expect(fetchSaltSpy).toHaveBeenCalledTimes(1);
+			expect(saltManager.fetchAndCache).toHaveBeenCalledTimes(1);
 		});
 
 		it("should fetch new salt after TTL expires", async () => {
@@ -65,17 +65,18 @@ describe("SaltManager", () => {
 				env: "production",
 				nearProvider: {} as providers.Provider,
 			});
+			mockQueryWithVal(saltManager, initialSalt);
 
 			await saltManager.getCachedSalt();
 			await vi.advanceTimersByTimeAsync(SALT_TTL_MS + 1);
 
-			const expected = 67890;
-			mockQueryWithVal(expected);
+			const expected = new Uint8Array([6, 7, 8, 9, 0]);
+			mockQueryWithVal(saltManager, expected);
 
 			const salt2 = await saltManager.getCachedSalt();
 
 			expect(salt2).toBe(expected);
-			expect(fetchSaltSpy).toHaveBeenCalledTimes(2);
+			expect(saltManager.fetchAndCache).toHaveBeenCalledTimes(2);
 		});
 
 		it("should deduplicate concurrent requests", async () => {
@@ -83,6 +84,7 @@ describe("SaltManager", () => {
 				env: "production",
 				nearProvider: {} as providers.Provider,
 			});
+			mockQueryWithVal(saltManager, initialSalt);
 
 			const [salt1, salt2, salt3] = await Promise.all([
 				saltManager.getCachedSalt(),
@@ -93,27 +95,32 @@ describe("SaltManager", () => {
 			expect(salt1).toBe(initialSalt);
 			expect(salt2).toBe(initialSalt);
 			expect(salt3).toBe(initialSalt);
-			expect(fetchSaltSpy).toHaveBeenCalledTimes(1);
+			expect(saltManager.fetchAndCache).toHaveBeenCalledTimes(1);
 		});
 
 		it("should handle fetch errors", async () => {
-			const err = "Some network error";
-			fetchSaltSpy.mockRejectedValue(new Error(err));
-
 			const saltManager = new SaltManager({
 				env: "production",
 				nearProvider: {} as providers.Provider,
 			});
+
+			const err = "Some network error";
+			vi.spyOn(saltManager, "fetchAndCache").mockRejectedValue(new Error(err));
 
 			await expect(saltManager.getCachedSalt()).rejects.toThrow(err);
 		});
 	});
 });
 
-function mockQueryWithVal(val: number) {
-	fetchSaltSpy.mockImplementation(async function (this: any) {
+function mockQueryWithVal(saltManager: SaltManager, val: Uint8Array) {
+	// Do not double `vi.spyOn`, because it implicitly clears mock calls
+	(vi.isMockFunction(saltManager.fetchAndCache)
+		? vi.mocked(saltManager.fetchAndCache)
+		: vi.spyOn(saltManager, "fetchAndCache")
+	).mockImplementation(async function (this: SaltManager) {
 		const salt = val;
 		this.currentSalt = salt;
+		// @ts-expect-error It's private but still needed for the test
 		this.lastFetchTime = Date.now();
 		return salt;
 	});
