@@ -1,21 +1,26 @@
-import { base64 } from "@scure/base";
+import { VersionedNonceBuilder, type Salt } from "./expirable-nonce";
 import type { IntentPayload } from "./shared-types";
 
-export function defaultIntentPayloadFactory({
-	intents,
-	verifying_contract,
-	...params
-}: Partial<IntentPayload> &
-	Pick<IntentPayload, "verifying_contract">): IntentPayload {
+const DEFAULT_DEADLINE_MS = 60 * 1000; // 1 minute
+
+export function defaultIntentPayloadFactory(
+	salt: Salt,
+	{
+		intents,
+		verifying_contract,
+		...params
+	}: Partial<IntentPayload> & Pick<IntentPayload, "verifying_contract">,
+): IntentPayload {
 	// remove `undefined` properties
 	params = Object.fromEntries(
 		Object.entries(params).filter(([, value]) => value !== undefined),
 	);
 
+	const deadline = new Date(Date.now() + DEFAULT_DEADLINE_MS);
 	return {
 		verifying_contract,
-		deadline: new Date(Date.now() + 60 * 1000).toISOString(),
-		nonce: base64.encode(crypto.getRandomValues(new Uint8Array(32))),
+		deadline: deadline.toISOString(),
+		nonce: VersionedNonceBuilder.encodeNonce(salt, deadline),
 		intents: intents == null ? [] : intents,
 		signer_id: undefined, // or you can specify intent user id
 		...params,

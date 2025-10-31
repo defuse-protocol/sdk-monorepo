@@ -64,15 +64,9 @@ export {
 // ============================================================================
 // Constants & Enums
 // ============================================================================
-export {
-	Chains,
-	type Chain,
-} from "./src/lib/caip2";
+export { Chains, type Chain } from "./src/lib/caip2";
 
-export {
-	RouteEnum,
-	type RouteEnumValues,
-} from "./src/constants/route-enum";
+export { RouteEnum, type RouteEnumValues } from "./src/constants/route-enum";
 
 export {
 	BridgeNameEnum,
@@ -84,10 +78,7 @@ export {
 // ============================================================================
 
 // Base Error Classes
-export {
-	BaseError,
-	type BaseErrorType,
-} from "@defuse-protocol/internal-utils";
+export { BaseError, type BaseErrorType } from "@defuse-protocol/internal-utils";
 
 // Bridge SDK Core Errors
 export {
@@ -192,3 +183,8 @@ export type {
 // Hooks
 // ============================================================================
 export type { OnBeforePublishIntentHook } from "./src/intents/intent-executer-impl/intent-executer";
+
+// ============================================================================
+// Nonce helpers
+// ============================================================================
+export { VersionedNonceBuilder } from "./src/intents/expirable-nonce";
