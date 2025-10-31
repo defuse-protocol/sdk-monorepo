@@ -6,8 +6,8 @@ import type { ISaltManager } from "./interfaces/salt-manager";
 import type { providers } from "near-api-js";
 import type { Salt } from "./expirable-nonce";
 import * as v from "valibot";
-
 import { utils } from "@defuse-protocol/internal-utils";
+import { hex } from "@scure/base";
 
 export const SALT_TTL_MS = 30 * 1000; // 30 seconds
 
@@ -96,7 +96,7 @@ export async function fetchSalt(
 	nearProvider: providers.Provider,
 	contractId: string,
 ): Promise<Salt> {
-	const hex = await utils.queryContract({
+	const value = await utils.queryContract({
 		contractId,
 		methodName: "current_salt",
 		args: {},
@@ -105,5 +105,5 @@ export async function fetchSalt(
 		schema: v.string(),
 	});
 
-	return Uint8Array.from(Buffer.from(hex, "hex"));
+	return hex.decode(value);
 }
