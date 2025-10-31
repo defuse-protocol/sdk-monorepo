@@ -74,7 +74,8 @@ function computeErc191Hash(
 	const message = multiPayload.payload;
 
 	const prefix = "\x19Ethereum Signed Message:\n";
-	const messageWithPrefix = prefix + message.length.toString() + message;
+	const messageBytes = new TextEncoder().encode(message);
+	const messageWithPrefix = prefix + messageBytes.length.toString() + message;
 
 	return keccak_256(new TextEncoder().encode(messageWithPrefix));
 }
