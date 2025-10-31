@@ -66,10 +66,11 @@ describe("sdk.signAndSendIntent()", () => {
 			new RelayPublishError({
 				reason: "nonce was already used",
 				code: "NONCE_USED",
+				publishParams: { quote_hashes: [], signed_datas: [] },
 			}),
 		);
 
-		let res = sdk.signAndSendIntent({ intents: [] });
+		const res = sdk.signAndSendIntent({ intents: [] });
 
 		await expect(res).rejects.toBeInstanceOf(RelayPublishError);
 
@@ -78,7 +79,11 @@ describe("sdk.signAndSendIntent()", () => {
 
 		// Retry on salt error
 		vi.mocked(intentRelayer.publishIntent).mockRejectedValueOnce(
-			new RelayPublishError({ reason: "Invalid salt", code: "INVALID_SALT" }),
+			new RelayPublishError({
+				reason: "Invalid salt",
+				code: "INVALID_SALT",
+				publishParams: { quote_hashes: [], signed_datas: [] },
+			}),
 		);
 
 		void sdk.signAndSendIntent({ intents: [] });
