@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { HotBridge } from "./hot-bridge";
 import {
 	InvalidDestinationAddressForWithdrawalError,
@@ -196,5 +196,78 @@ describe("HotBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+	});
+
+	describe("waitForWithdrawalCompletion()", () => {
+		it("returns destination tx hash", async () => {
+			const hotSDK = new hotOmniSdk.HotBridge({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				"DEADBEEF",
+			);
+
+			const result = bridge.waitForWithdrawalCompletion({
+				tx: { hash: "", accountId: "" },
+				index: 0,
+				routeConfig: createHotBridgeRoute(Chains.TON),
+			});
+
+			await expect(result).resolves.toEqual({ hash: "DEADBEEF" });
+		});
+
+		it("returns no tx if destination tx hash is not valid", async () => {
+			const hotSDK = new hotOmniSdk.HotBridge({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				"invalid_tx_hash",
+			);
+
+			const mockLogger = {
+				error() {},
+				warn: vi.fn(),
+				info() {},
+				debug() {},
+				trace() {},
+			};
+
+			const result = bridge.waitForWithdrawalCompletion({
+				tx: { hash: "", accountId: "" },
+				index: 0,
+				routeConfig: createHotBridgeRoute(Chains.TON),
+				logger: mockLogger,
+			});
+
+			await expect(result).resolves.toEqual({ hash: null });
+			expect(mockLogger.warn).toHaveBeenCalledWith(
+				"HOT Bridge incorrect destination tx hash detected",
+				{ value: "invalid_tx_hash" },
+			);
+		});
 	});
 });

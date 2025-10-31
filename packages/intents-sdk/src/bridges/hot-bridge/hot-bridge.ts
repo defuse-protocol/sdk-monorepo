@@ -45,6 +45,7 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import isHex from "../../lib/hex";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -279,6 +280,7 @@ export class HotBridge implements Bridge {
 		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
+		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo> {
 		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
 			args.tx.hash,
@@ -307,6 +309,14 @@ export class HotBridge implements Bridge {
 					return { hash: null };
 				}
 				if (typeof status === "string") {
+					// HOT returns string hexified raw bytes without 0x prefix, any other value should be ignored.
+					if (!isHex(status)) {
+						args.logger?.warn(
+							"HOT Bridge incorrect destination tx hash detected",
+							{ value: status },
+						);
+						return { hash: null };
+					}
 					return {
 						hash:
 							"chain" in args.routeConfig &&
