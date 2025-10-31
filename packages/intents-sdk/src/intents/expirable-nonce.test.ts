@@ -6,6 +6,7 @@ import {
 	VersionedNonceBuilder,
 } from "./expirable-nonce";
 import { serialize } from "near-api-js/lib/utils/serialize";
+import * as v from "valibot";
 
 const salt = Uint8Array.from([1, 2, 3, 4]);
 
@@ -18,7 +19,16 @@ describe("expirable nonce", () => {
 
 		expect(decoded.version).toBe(LATEST_VERSION);
 
-		const value = decoded.value;
+		const value = v.parse(
+			v.object({
+				salt: v.array(v.number()),
+				inner: v.object({
+					deadline: v.bigint(),
+					nonce: v.array(v.number()),
+				}),
+			}),
+			decoded.value,
+		);
 
 		expect(Array.from(value.salt)).toEqual(Array.from(salt));
 		expect(value.inner.nonce.length).toBe(15);

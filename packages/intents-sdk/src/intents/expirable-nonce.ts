@@ -109,10 +109,7 @@ export namespace VersionedNonceBuilder {
 			throw new Error("Invalid magic prefix");
 		}
 
-		const value = deserialize(
-			SALTED_NONCE_BORSH_SCHEMA,
-			borshData,
-		) as SaltedNonce;
+		const value = deserialize(SALTED_NONCE_BORSH_SCHEMA, borshData);
 
 		return new VersionedNonce(version, value);
 	}
