@@ -146,30 +146,29 @@ async function mergeIntentPayloads(
 	basePayload: IntentPayload,
 	intentPayloadFactory: IntentPayloadFactory,
 ): Promise<IntentPayload> {
-
-  const protectedFields = ['verifying_contract', 'deadline', 'nonce'] as const;
-  const customPayload = await intentPayloadFactory(basePayload);
+	const protectedFields = ["verifying_contract", "deadline", "nonce"] as const;
+	const customPayload = await intentPayloadFactory(basePayload);
 	const customPayloadIntents = customPayload.intents ?? [];
 
-  for (const field of protectedFields) {
-               if (customPayload[field] !== undefined &&
-                       customPayload[field] !== basePayload[field]) {
-                       throw new Error(
-                               `Security violation: ${field} cannot be overridden by custom factory. ` +
-                               `Expected: ${basePayload[field]}, Got: ${customPayload[field]}`
-                       );
-               }
-       }
-
-
+	for (const field of protectedFields) {
+		if (
+			customPayload[field] !== undefined &&
+			customPayload[field] !== basePayload[field]
+		) {
+			throw new Error(
+				`Security violation: ${field} cannot be overridden by custom factory. ` +
+					`Expected: ${basePayload[field]}, Got: ${customPayload[field]}`,
+			);
+		}
+	}
 
 	return {
 		...basePayload,
 		...customPayload,
-	 verifying_contract: basePayload.verifying_contract,
-   deadline: basePayload.deadline,
-   nonce: basePayload.nonce,
-	 intents: Array.from(
+		verifying_contract: basePayload.verifying_contract,
+		deadline: basePayload.deadline,
+		nonce: basePayload.nonce,
+		intents: Array.from(
 			new Set([...customPayloadIntents, ...basePayload.intents]),
 		),
 	};
