@@ -123,6 +123,9 @@ export class PoaBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+		if (assetInfo === null) {
+			throw new Error("Asset is not supported");
+		}
 
 		if (
 			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
@@ -140,7 +143,8 @@ export class PoaBridge implements Bridge {
 		);
 
 		const tokenInfo = tokens.find(
-			(token) => token.intents_token_id === args.assetId,
+			(token: (typeof tokens)[number]) =>
+				token.intents_token_id === args.assetId,
 		);
 
 		if (tokenInfo != null) {
@@ -162,6 +166,9 @@ export class PoaBridge implements Bridge {
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+		if (assetInfo === null) {
+			throw new Error("Asset is not supported");
+		}
 
 		const estimation = await poaBridge.httpClient.getWithdrawalEstimate(
 			{
