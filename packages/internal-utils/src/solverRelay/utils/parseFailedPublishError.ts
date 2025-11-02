@@ -11,7 +11,8 @@ type PublishErrorCode =
 	| "INSUFFICIENT_BALANCE"
 	| "PUBLIC_KEY_NOT_EXIST"
 	| "UNKNOWN_ERROR"
-	| "NETWORK_ERROR";
+	| "NETWORK_ERROR"
+	| "INVALID_SALT";
 
 export type RelayPublishErrorType = RelayPublishError & {
 	name: "RelayPublishError";
@@ -95,6 +96,10 @@ function parseFailedPublishReason(
 
 	if (response.reason.includes("public key doesn't exist")) {
 		return "PUBLIC_KEY_NOT_EXIST";
+	}
+
+	if (response.reason.includes("invalid salt")) {
+		return "INVALID_SALT";
 	}
 
 	return "UNKNOWN_ERROR";

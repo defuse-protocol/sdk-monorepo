@@ -1,5 +1,29 @@
 # @defuse-protocol/internal-utils
 
+## 0.18.0
+
+### Minor Changes
+
+- 9dfbecf: Add a generation of versioned nonce + its encoding/decoding. Add salt fetching and retry in case of salt reset on contract.
+
+### Patch Changes
+
+- Updated dependencies [9dfbecf]
+  - @defuse-protocol/contract-types@0.2.0
+
+## 0.17.0
+
+### Minor Changes
+
+- 2ebddf9: Add account existence check for explicit(named accounts) for direct bridge
+  Add storage deposit cache for direct bridge
+
+## 0.16.0
+
+### Minor Changes
+
+- 8bf4c85: Add new quote params - minWaitMs, maxWaitMs, trustedMetadata.
+
 ## 0.15.2
 
 ### Patch Changes

@@ -13,6 +13,7 @@ import type {
 	Bridge,
 	FeeEstimation,
 	NearTxInfo,
+	QuoteOptions,
 	RouteConfig,
 	TxNoInfo,
 	WithdrawalParams,
@@ -138,7 +139,7 @@ export class AuroraEngineBridge implements Bridge {
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<WithdrawalParams, "assetId" | "routeConfig">;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		withdrawalParamsInvariant(args.withdrawalParams);

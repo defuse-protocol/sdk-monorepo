@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { IntentsSDK } from "./sdk";
+import type { ISaltManager } from "./intents/interfaces/salt-manager";
+import type { Salt } from "./intents/expirable-nonce";
+import { RelayPublishError } from "@defuse-protocol/internal-utils";
 
 describe("sdk.signAndSendIntent()", () => {
 	it("signs with default signer", async () => {
@@ -53,6 +56,43 @@ describe("sdk.signAndSendIntent()", () => {
 			expect.any(Object),
 		);
 	});
+
+	it("retry salt fetching", async () => {
+		const { sdk, intentRelayer, saltManager } = setupMocks();
+		noPublish(intentRelayer);
+
+		// Fail on any error exept salt error
+		vi.mocked(intentRelayer.publishIntent).mockRejectedValueOnce(
+			new RelayPublishError({
+				reason: "nonce was already used",
+				code: "NONCE_USED",
+				publishParams: { quote_hashes: [], signed_datas: [] },
+			}),
+		);
+
+		const res = sdk.signAndSendIntent({ intents: [] });
+
+		await expect(res).rejects.toBeInstanceOf(RelayPublishError);
+
+		expect(saltManager.refresh).toHaveBeenCalledTimes(0);
+		expect(saltManager.getCachedSalt).toHaveBeenCalledTimes(1);
+
+		// Retry on salt error
+		vi.mocked(intentRelayer.publishIntent).mockRejectedValueOnce(
+			new RelayPublishError({
+				reason: "Invalid salt",
+				code: "INVALID_SALT",
+				publishParams: { quote_hashes: [], signed_datas: [] },
+			}),
+		);
+
+		void sdk.signAndSendIntent({ intents: [] });
+
+		await vi.waitFor(() => expect(saltManager.refresh).toHaveBeenCalledOnce());
+
+		expect(saltManager.refresh).toHaveBeenCalledTimes(1);
+		expect(saltManager.getCachedSalt).toHaveBeenCalledTimes(2);
+	});
 });
 
 function setupMocks() {
@@ -75,10 +115,16 @@ function setupMocks() {
 	const intentRelayer = new IntentRelayerPublic({ env: "production" });
 	vi.spyOn(intentRelayer, "publishIntent");
 
+	const saltManager = new MockSaltManager();
+
+	vi.spyOn(saltManager, "getCachedSalt");
+	vi.spyOn(saltManager, "refresh");
+
 	class MockSDK extends IntentsSDK {
 		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.intentRelayer = intentRelayer;
+			this.saltManager = saltManager;
 		}
 	}
 
@@ -89,6 +135,7 @@ function setupMocks() {
 		intentRelayer,
 		defaultIntentSigner,
 		intentSigner2,
+		saltManager,
 	};
 }
 
@@ -105,3 +152,13 @@ const AnyEmptyIntent = {
 	signer_id: undefined,
 	verifying_contract: "intents.near",
 };
+
+class MockSaltManager implements ISaltManager {
+	async getCachedSalt(): Promise<Salt> {
+		return Uint8Array.from([1, 2, 3, 4]);
+	}
+
+	async refresh(): Promise<Salt> {
+		return Uint8Array.from([5, 6, 7, 8]);
+	}
+}

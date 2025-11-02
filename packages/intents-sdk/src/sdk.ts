@@ -8,6 +8,7 @@ import {
 	configsByEnvironment,
 	nearFailoverRpcProvider,
 	solverRelay,
+	RelayPublishError,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -51,6 +52,7 @@ import type {
 	ParsedAssetInfo,
 	PartialRPCEndpointMap,
 	ProcessWithdrawalArgs,
+	QuoteOptions,
 	SignAndSendArgs,
 	SignAndSendWithdrawalArgs,
 	TxInfo,
@@ -59,6 +61,9 @@ import type {
 	WithdrawalParams,
 	WithdrawalResult,
 } from "./shared-types";
+import type { ISaltManager } from "./intents/interfaces/salt-manager";
+import { SaltManager } from "./intents/salt-manager";
+import type { Salt } from "./intents/expirable-nonce";
 
 export interface IntentsSDKConfig {
 	env?: NearIntentsEnv;
@@ -75,6 +80,7 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 	protected solverRelayApiKey: string | undefined;
+	protected saltManager: ISaltManager;
 
 	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
@@ -144,6 +150,11 @@ export class IntentsSDK implements IIntentsSDK {
 		});
 
 		this.intentSigner = args.intentSigner;
+
+		this.saltManager = new SaltManager({
+			env: this.env,
+			nearProvider,
+		});
 	}
 
 	public setIntentSigner(signer: IIntentSigner) {
@@ -183,25 +194,27 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		throw new Error(
-			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
+			`Cannot determine bridge for withdrawal = ${stringify(
+				args.withdrawalParams,
+			)}`,
 		);
 	}
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation>;
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation[]>;
 
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams | WithdrawalParams[];
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation | FeeEstimation[]> {
 		if (!Array.isArray(args.withdrawalParams)) {
@@ -223,7 +236,7 @@ export class IntentsSDK implements IIntentsSDK {
 
 	protected async _estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
-		quoteOptions?: { waitMs: number };
+		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
 	}): Promise<FeeEstimation> {
 		for (const bridge of this.bridges) {
@@ -245,7 +258,9 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		throw new Error(
-			`Cannot determine bridge for withdrawal = ${stringify(args.withdrawalParams)}`,
+			`Cannot determine bridge for withdrawal = ${stringify(
+				args.withdrawalParams,
+			)}`,
 		);
 	}
 
@@ -366,12 +381,35 @@ export class IntentsSDK implements IIntentsSDK {
 			onBeforePublishIntent: args.onBeforePublishIntent,
 		});
 
-		const { ticket } = await intentExecuter.signAndSendIntent({
-			intents: args.intents,
-			relayParams: args.relayParams,
-			signedIntents: args.signedIntents,
-		});
+		const { ticket } = await this.withSaltRetry(args, async (salt) =>
+			intentExecuter.signAndSendIntent({
+				intents: args.intents,
+				salt,
+				relayParams: args.relayParams,
+				signedIntents: args.signedIntents,
+			}),
+		);
+
 		return { intentHash: ticket };
+	}
+
+	private async withSaltRetry<T>(
+		args: SignAndSendArgs,
+		fn: (salt: Salt) => Promise<T>,
+	): Promise<T> {
+		try {
+			const cachedSalt = await this.saltManager.getCachedSalt();
+
+			return await fn(cachedSalt);
+		} catch (err) {
+			if (!(err instanceof RelayPublishError && err.code === "INVALID_SALT"))
+				throw err;
+
+			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");
+
+			const newSalt = await this.saltManager.refresh();
+			return fn(newSalt);
+		}
 	}
 
 	public async signAndSendWithdrawalIntent(

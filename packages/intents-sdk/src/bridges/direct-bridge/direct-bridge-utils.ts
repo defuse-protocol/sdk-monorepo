@@ -1,8 +1,13 @@
-import { assert, utils } from "@defuse-protocol/internal-utils";
+import {
+	assert,
+	unwrapNearFailoverRpcProvider,
+	utils,
+} from "@defuse-protocol/internal-utils";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
+import { TypedError, type Provider } from "near-api-js/lib/providers";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -54,4 +59,24 @@ export function withdrawalParamsInvariant<
 			: params.routeConfig.route === RouteEnum.NearWithdrawal,
 		"Bridge is not direct",
 	);
+}
+
+export async function accountExistsInNEAR(
+	provider: Provider,
+	accountId: string,
+): Promise<boolean> {
+	try {
+		const client = unwrapNearFailoverRpcProvider(provider);
+		await client.query({
+			request_type: "view_account",
+			account_id: accountId,
+			finality: "final",
+		});
+		return true;
+	} catch (error) {
+		if (error instanceof TypedError && error.type === "AccountDoesNotExist") {
+			return false;
+		}
+		throw error;
+	}
 }

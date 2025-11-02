@@ -38,6 +38,9 @@ export type QuoteRequest = JSONRPCRequest<
 		exact_amount_out?: string;
 		min_deadline_ms?: number;
 		wait_ms?: number;
+		min_wait_ms?: number;
+		max_wait_ms?: number;
+		trusted_metadata?: unknown;
 	}
 >;
 

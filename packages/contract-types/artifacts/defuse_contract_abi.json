@@ -2,12 +2,12 @@
   "schema_version": "0.4.0",
   "metadata": {
     "name": "defuse",
-    "version": "0.2.5",
+    "version": "0.3.0",
     "build": {
-      "compiler": "rustc 1.85.0",
-      "builder": "cargo-near cargo-near-build 0.7.1"
+      "compiler": "rustc 1.86.0",
+      "builder": "cargo-near cargo-near-build 0.8.0"
     },
-    "wasm_hash": "HWjj9aDiHTBXTxb7Zfv24dzUHtkqPY7ZtwRq2Ne9Tkta"
+    "wasm_hash": "8bngUmV9a6RwKrF92wPcUhtwTmfc4ZB4DRLrp5Toic8K"
   },
   "body": {
     "functions": [
@@ -613,8 +613,54 @@
         }
       },
       {
+        "name": "cleanup_nonces",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "nonces",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AccountId"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "contentEncoding": "base64"
+                      }
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
         "name": "contract_source_metadata",
         "kind": "view"
+      },
+      {
+        "name": "current_salt",
+        "kind": "view",
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "string",
+            "contentEncoding": "hex"
+          }
+        }
       },
       {
         "name": "delete_key",
@@ -665,6 +711,13 @@
         }
       },
       {
+        "name": "disable_auth_by_predecessor_id",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ]
+      },
+      {
         "name": "do_add_relayer_key",
         "kind": "call",
         "modifiers": [
@@ -680,6 +733,36 @@
               }
             }
           ]
+        }
+      },
+      {
+        "name": "do_auth_call",
+        "kind": "view",
+        "modifiers": [
+          "private"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "signer_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "auth_call",
+              "type_schema": {
+                "$ref": "#/definitions/AuthCall"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "$ref": "#/definitions/Promise"
+          }
         }
       },
       {
@@ -732,7 +815,7 @@
       },
       {
         "name": "do_native_withdraw",
-        "kind": "call",
+        "kind": "view",
         "modifiers": [
           "private"
         ],
@@ -780,7 +863,7 @@
       },
       {
         "name": "do_storage_deposit",
-        "kind": "call",
+        "kind": "view",
         "modifiers": [
           "private"
         ],
@@ -837,6 +920,96 @@
           "serialization_type": "json",
           "type_schema": {
             "$ref": "#/definitions/AccountId"
+          }
+        }
+      },
+      {
+        "name": "force_disable_auth_by_predecessor_ids",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "account_ids",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AccountId"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "force_enable_auth_by_predecessor_ids",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "account_ids",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AccountId"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "force_lock_account",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "account_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "name": "force_unlock_account",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "account_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "boolean"
           }
         }
       },
@@ -1063,7 +1236,7 @@
         }
       },
       {
-        "name": "invalidate_nonces",
+        "name": "invalidate_salts",
         "kind": "call",
         "modifiers": [
           "payable"
@@ -1072,16 +1245,65 @@
           "serialization_type": "json",
           "args": [
             {
-              "name": "nonces",
+              "name": "salts",
               "type_schema": {
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "contentEncoding": "base64"
+                  "contentEncoding": "hex"
                 }
               }
             }
           ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "string",
+            "contentEncoding": "hex"
+          }
+        }
+      },
+      {
+        "name": "is_account_locked",
+        "kind": "view",
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "account_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "name": "is_auth_by_predecessor_id_enabled",
+        "kind": "view",
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "account_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "boolean"
+          }
         }
       },
       {
@@ -1101,6 +1323,28 @@
               "type_schema": {
                 "type": "string",
                 "contentEncoding": "base64"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "name": "is_valid_salt",
+        "kind": "view",
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "salt",
+              "type_schema": {
+                "type": "string",
+                "contentEncoding": "hex"
               }
             }
           ]
@@ -1332,6 +1576,318 @@
                   "maxItems": 2,
                   "minItems": 2
                 }
+              }
+            },
+            {
+              "name": "memo",
+              "type_schema": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            {
+              "name": "msg",
+              "type_schema": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "$ref": "#/definitions/PromiseOrValueArray_of_String"
+          }
+        }
+      },
+      {
+        "name": "mt_force_batch_transfer",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "owner_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "receiver_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "token_ids",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "name": "amounts",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "name": "approvals",
+              "type_schema": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AccountId"
+                    },
+                    {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0.0
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              }
+            },
+            {
+              "name": "memo",
+              "type_schema": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "mt_force_batch_transfer_call",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "owner_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "receiver_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "token_ids",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "name": "amounts",
+              "type_schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "name": "approvals",
+              "type_schema": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": [
+                    {
+                      "$ref": "#/definitions/AccountId"
+                    },
+                    {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0.0
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              }
+            },
+            {
+              "name": "memo",
+              "type_schema": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            {
+              "name": "msg",
+              "type_schema": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "$ref": "#/definitions/PromiseOrValueArray_of_String"
+          }
+        }
+      },
+      {
+        "name": "mt_force_transfer",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "owner_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "receiver_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "token_id",
+              "type_schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "amount",
+              "type_schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "approval",
+              "type_schema": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": [
+                  {
+                    "$ref": "#/definitions/AccountId"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            {
+              "name": "memo",
+              "type_schema": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "mt_force_transfer_call",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "params": {
+          "serialization_type": "json",
+          "args": [
+            {
+              "name": "owner_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "receiver_id",
+              "type_schema": {
+                "$ref": "#/definitions/AccountId"
+              }
+            },
+            {
+              "name": "token_id",
+              "type_schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "amount",
+              "type_schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "approval",
+              "type_schema": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": [
+                  {
+                    "$ref": "#/definitions/AccountId"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
               }
             },
             {
@@ -2397,6 +2953,20 @@
         ]
       },
       {
+        "name": "update_current_salt",
+        "kind": "call",
+        "modifiers": [
+          "payable"
+        ],
+        "result": {
+          "serialization_type": "json",
+          "type_schema": {
+            "type": "string",
+            "contentEncoding": "hex"
+          }
+        }
+      },
+      {
         "name": "upgrade",
         "kind": "call",
         "modifiers": [
@@ -2518,6 +3088,39 @@
           "description": "Account identifier. This is the human readable UTF-8 string which is used internally to index accounts on the network and their respective state.\n\nThis is the \"referenced\" version of the account ID. It is to [`AccountId`] what [`str`] is to [`String`], and works quite similarly to [`Path`]. Like with [`str`] and [`Path`], you can't have a value of type `AccountIdRef`, but you can have a reference like `&AccountIdRef` or `&mut AccountIdRef`.\n\nThis type supports zero-copy deserialization offered by [`serde`](https://docs.rs/serde/), but cannot do the same for [`borsh`](https://docs.rs/borsh/) since the latter does not support zero-copy.\n\n# Examples ``` use near_account_id::{AccountId, AccountIdRef}; use std::convert::{TryFrom, TryInto};\n\n// Construction let alice = AccountIdRef::new(\"alice.near\").unwrap(); assert!(AccountIdRef::new(\"invalid.\").is_err()); ```\n\n[`FromStr`]: std::str::FromStr [`Path`]: std::path::Path",
           "type": "string"
         },
+        "AuthCall": {
+          "description": "Call [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) with `signer_id` of intent.",
+          "type": "object",
+          "required": [
+            "contract_id",
+            "msg"
+          ],
+          "properties": {
+            "attached_deposit": {
+              "description": "Optionally, attach deposit to [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) call. The amount will be subtracted from user's NEP-141 `wNEAR` balance.\n\nNOTE: the `wNEAR` will not be refunded in case of fail.",
+              "type": "string"
+            },
+            "contract_id": {
+              "description": "Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/AccountId"
+                }
+              ]
+            },
+            "min_gas": {
+              "description": "Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "msg": {
+              "description": "`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
+              "type": "string"
+            }
+          }
+        },
         "Deadline": {
           "type": "string",
           "format": "date-time"
@@ -2612,6 +3215,13 @@
                 "null"
               ]
             },
+            "min_gas": {
+              "description": "Optional minimum required Near gas for created Promise to succeed: * `ft_transfer`:      minimum: 15TGas, default: 15TGas * `ft_transfer_call`: minimum: 30TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "msg": {
               "description": "Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`",
               "type": [
@@ -2685,29 +3295,6 @@
               }
             },
             {
-              "description": "See [`InvalidateNonces`]",
-              "type": "object",
-              "required": [
-                "intent",
-                "nonces"
-              ],
-              "properties": {
-                "intent": {
-                  "type": "string",
-                  "enum": [
-                    "invalidate_nonces"
-                  ]
-                },
-                "nonces": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "contentEncoding": "base64"
-                  }
-                }
-              }
-            },
-            {
               "description": "See [`Transfer`]",
               "type": "object",
               "required": [
@@ -2764,6 +3351,13 @@
                     "null"
                   ]
                 },
+                "min_gas": {
+                  "description": "Optional minimum required Near gas for created Promise to succeed: * `ft_transfer`:      minimum: 15TGas, default: 15TGas * `ft_transfer_call`: minimum: 30TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "msg": {
                   "description": "Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`",
                   "type": [
@@ -2803,6 +3397,13 @@
                   ]
                 },
                 "memo": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "min_gas": {
+                  "description": "Optional minimum required Near gas for created Promise to succeed: * `nft_transfer`:      minimum: 15TGas, default: 15TGas * `nft_transfer_call`: minimum: 30TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
                   "type": [
                     "string",
                     "null"
@@ -2857,6 +3458,13 @@
                   ]
                 },
                 "memo": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "min_gas": {
+                  "description": "Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
                   "type": [
                     "string",
                     "null"
@@ -2917,19 +3525,19 @@
               "description": "See [`StorageDeposit`]",
               "type": "object",
               "required": [
-                "account_id",
                 "amount",
                 "contract_id",
+                "deposit_for_account_id",
                 "intent"
               ],
               "properties": {
-                "account_id": {
-                  "$ref": "#/definitions/AccountId"
-                },
                 "amount": {
                   "type": "string"
                 },
                 "contract_id": {
+                  "$ref": "#/definitions/AccountId"
+                },
+                "deposit_for_account_id": {
                   "$ref": "#/definitions/AccountId"
                 },
                 "intent": {
@@ -2977,14 +3585,74 @@
                   ]
                 }
               }
+            },
+            {
+              "description": "See [`SetAuthByPredecessorId`]",
+              "type": "object",
+              "required": [
+                "enabled",
+                "intent"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "intent": {
+                  "type": "string",
+                  "enum": [
+                    "set_auth_by_predecessor_id"
+                  ]
+                }
+              }
+            },
+            {
+              "description": "See [`AuthCall`]",
+              "type": "object",
+              "required": [
+                "contract_id",
+                "intent",
+                "msg"
+              ],
+              "properties": {
+                "attached_deposit": {
+                  "description": "Optionally, attach deposit to [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) call. The amount will be subtracted from user's NEP-141 `wNEAR` balance.\n\nNOTE: the `wNEAR` will not be refunded in case of fail.",
+                  "type": "string"
+                },
+                "contract_id": {
+                  "description": "Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/AccountId"
+                    }
+                  ]
+                },
+                "intent": {
+                  "type": "string",
+                  "enum": [
+                    "auth_call"
+                  ]
+                },
+                "min_gas": {
+                  "description": "Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "msg": {
+                  "description": "`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
+                  "type": "string"
+                }
+              }
             }
           ]
         },
-        "IntentEvent_for_AccountEvent_for_Null": {
+        "IntentEvent_for_AccountEvent_for_NonceEvent": {
           "type": "object",
           "required": [
             "account_id",
-            "intent_hash"
+            "intent_hash",
+            "nonce"
           ],
           "properties": {
             "account_id": {
@@ -2993,6 +3661,10 @@
             "intent_hash": {
               "type": "string",
               "contentEncoding": "base58"
+            },
+            "nonce": {
+              "type": "string",
+              "contentEncoding": "base64"
             }
           }
         },
@@ -3057,6 +3729,13 @@
                 "null"
               ]
             },
+            "min_gas": {
+              "description": "Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "msg": {
               "description": "Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`",
               "type": [
@@ -3086,8 +3765,10 @@
           }
         },
         "MultiPayload": {
+          "description": "Assuming wallets want to interact with Intents protocol, besides preparing the data in a certain form, they have to have the capability to sign raw messages (off-chain signatures) using an algorithm we understand. This enum solves that problem.\n\nFor example, because we support ERC-191 and know how to verify messages with that standard, we can allow wallets, like Metamask, sign messages to perform intents without having to support new cryptographic primitives and signing standards.",
           "oneOf": [
             {
+              "description": "NEP-413: The standard for message signing in Near Protocol. For more details, refer to [NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md).",
               "type": "object",
               "required": [
                 "payload",
@@ -3118,6 +3799,7 @@
               }
             },
             {
+              "description": "ERC-191: The standard for message signing in Ethereum, commonly used with `personal_sign()`. For more details, refer to [EIP-191](https://eips.ethereum.org/EIPS/eip-191).",
               "type": "object",
               "required": [
                 "payload",
@@ -3129,6 +3811,7 @@
                   "$ref": "#/definitions/Erc191Payload"
                 },
                 "signature": {
+                  "description": "There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature",
                   "type": "string",
                   "pattern": "^secp256k1:",
                   "contentEncoding": "base58"
@@ -3142,6 +3825,33 @@
               }
             },
             {
+              "description": "TIP-191: The standard for message signing in Tron. For more details, refer to [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md).",
+              "type": "object",
+              "required": [
+                "payload",
+                "signature",
+                "standard"
+              ],
+              "properties": {
+                "payload": {
+                  "$ref": "#/definitions/Tip191Payload"
+                },
+                "signature": {
+                  "description": "There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature",
+                  "type": "string",
+                  "pattern": "^secp256k1:",
+                  "contentEncoding": "base58"
+                },
+                "standard": {
+                  "type": "string",
+                  "enum": [
+                    "tip191"
+                  ]
+                }
+              }
+            },
+            {
+              "description": "Raw Ed25519: The standard used by Solana Phantom wallets for message signing. For more details, refer to [Phantom Wallet's documentation](https://docs.phantom.com/solana/signing-a-message).",
               "type": "object",
               "required": [
                 "payload",
@@ -3172,6 +3882,7 @@
               }
             },
             {
+              "description": "WebAuthn: The standard for Passkeys. For more details, refer to [WebAuthn specification](https://w3c.github.io/webauthn/).",
               "type": "object",
               "anyOf": [
                 {
@@ -3243,6 +3954,7 @@
               }
             },
             {
+              "description": "TonConnect: The standard for data signing in TON blockchain platform. For more details, refer to [TonConnect documentation](https://docs.tonconsole.com/academy/sign-data).",
               "type": "object",
               "required": [
                 "address",
@@ -3255,7 +3967,7 @@
               ],
               "properties": {
                 "address": {
-                  "description": "Wallet address in either [Raw](https://docs.ton.org/learn/overviews/addresses#raw-address) representation or [user-friendly](https://docs.ton.org/learn/overviews/addresses#user-friendly-address) format",
+                  "description": "Wallet address in either [Raw](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#raw-address) representation or [user-friendly](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#user-friendly-address) format",
                   "type": "string"
                 },
                 "domain": {
@@ -3287,6 +3999,37 @@
                     {
                       "$ref": "#/definitions/PickFirst(DateTimeint64)"
                     }
+                  ]
+                }
+              }
+            },
+            {
+              "description": "SEP-53: The standard for signing data off-chain for Stellar accounts. See [SEP-53](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0053.md)",
+              "type": "object",
+              "required": [
+                "payload",
+                "public_key",
+                "signature",
+                "standard"
+              ],
+              "properties": {
+                "payload": {
+                  "type": "string"
+                },
+                "public_key": {
+                  "type": "string",
+                  "pattern": "^ed25519:",
+                  "contentEncoding": "base58"
+                },
+                "signature": {
+                  "type": "string",
+                  "pattern": "^ed25519:",
+                  "contentEncoding": "base58"
+                },
+                "standard": {
+                  "type": "string",
+                  "enum": [
+                    "sep53"
                   ]
                 }
               }
@@ -3368,6 +4111,13 @@
           ],
           "properties": {
             "memo": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "min_gas": {
+              "description": "Optional minimum required Near gas for created Promise to succeed: * `nft_transfer`:      minimum: 15TGas, default: 15TGas * `nft_transfer_call`: minimum: 30TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
               "type": [
                 "string",
                 "null"
@@ -3523,15 +4273,15 @@
           "type": "object",
           "required": [
             "intents_executed",
+            "logs",
             "min_deadline",
             "state"
           ],
           "properties": {
             "intents_executed": {
-              "description": "Intent hashes along with corresponding signers",
               "type": "array",
               "items": {
-                "$ref": "#/definitions/IntentEvent_for_AccountEvent_for_Null"
+                "$ref": "#/definitions/IntentEvent_for_AccountEvent_for_NonceEvent"
               }
             },
             "invariant_violated": {
@@ -3545,13 +4295,14 @@
                 }
               ]
             },
+            "logs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
             "min_deadline": {
-              "description": "Minimum deadline among all simulated intents",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Deadline"
-                }
-              ]
+              "$ref": "#/definitions/Deadline"
             },
             "state": {
               "description": "Additional info about current state",
@@ -3566,9 +4317,14 @@
         "StateOutput": {
           "type": "object",
           "required": [
+            "current_salt",
             "fee"
           ],
           "properties": {
+            "current_salt": {
+              "type": "string",
+              "contentEncoding": "hex"
+            },
             "fee": {
               "$ref": "#/definitions/Pips"
             }
@@ -3578,21 +4334,25 @@
           "description": "Make [NEP-145](https://nomicon.io/Standards/StorageManagement#nep-145) `storage_deposit` for an `account_id` on `contract_id`. The `amount` will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in any case.\n\nWARNING: use this intent only if paying storage_deposit is not a prerequisite for other intents to succeed. If some intent (e.g. ft_withdraw) requires storage_deposit, then use storage_deposit field of corresponding intent instead of adding a separate `StorageDeposit` intent. This is due to the fact that intents that fire `Promise`s are not guaranteed to be executed sequentially, in the order of the provided intents in `DefuseIntents`.",
           "type": "object",
           "required": [
-            "account_id",
             "amount",
-            "contract_id"
+            "contract_id",
+            "deposit_for_account_id"
           ],
           "properties": {
-            "account_id": {
-              "$ref": "#/definitions/AccountId"
-            },
             "amount": {
               "type": "string"
             },
             "contract_id": {
               "$ref": "#/definitions/AccountId"
+            },
+            "deposit_for_account_id": {
+              "$ref": "#/definitions/AccountId"
             }
           }
+        },
+        "Tip191Payload": {
+          "description": "See [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md)",
+          "type": "string"
         },
         "Token": {
           "type": "object",

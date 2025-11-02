@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { HotBridge } from "./hot-bridge";
 import {
 	InvalidDestinationAddressForWithdrawalError,
@@ -120,7 +120,7 @@ describe("HotBridge", () => {
 				assetId:
 					"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
 				destinationAddress:
-					"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTV",
+					"GAEQ3MB7PSTGWKH2GK7O3HK5AKGH2RHVS4X7GDXV7BMX2GK4VL7GDHKD",
 			}, // UDSC Stellar
 			{
 				assetId:
@@ -196,5 +196,78 @@ describe("HotBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+	});
+
+	describe("waitForWithdrawalCompletion()", () => {
+		it("returns destination tx hash", async () => {
+			const hotSDK = new hotOmniSdk.HotBridge({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				"DEADBEEF",
+			);
+
+			const result = bridge.waitForWithdrawalCompletion({
+				tx: { hash: "", accountId: "" },
+				index: 0,
+				routeConfig: createHotBridgeRoute(Chains.TON),
+			});
+
+			await expect(result).resolves.toEqual({ hash: "DEADBEEF" });
+		});
+
+		it("returns no tx if destination tx hash is not valid", async () => {
+			const hotSDK = new hotOmniSdk.HotBridge({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				"invalid_tx_hash",
+			);
+
+			const mockLogger = {
+				error() {},
+				warn: vi.fn(),
+				info() {},
+				debug() {},
+				trace() {},
+			};
+
+			const result = bridge.waitForWithdrawalCompletion({
+				tx: { hash: "", accountId: "" },
+				index: 0,
+				routeConfig: createHotBridgeRoute(Chains.TON),
+				logger: mockLogger,
+			});
+
+			await expect(result).resolves.toEqual({ hash: null });
+			expect(mockLogger.warn).toHaveBeenCalledWith(
+				"HOT Bridge incorrect destination tx hash detected",
+				{ value: "invalid_tx_hash" },
+			);
+		});
 	});
 });

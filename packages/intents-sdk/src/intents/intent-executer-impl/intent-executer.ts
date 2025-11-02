@@ -17,6 +17,7 @@ import type {
 	MultiPayload,
 	RelayParamsDefault,
 } from "../shared-types";
+import type { Salt } from "../expirable-nonce";
 
 /**
  * Hook function called before publishing an intent.
@@ -60,17 +61,19 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 
 	async signAndSendIntent({
 		relayParams: relayParamsFactory,
+		salt,
 		signedIntents,
 		...intentParams
 	}: {
 		relayParams?: IntentRelayParamsFactory;
+		salt: Salt;
 		signedIntents?: SignedIntentsComposition;
 	} & Partial<Parameters<IntentPayloadFactory>[0]>): Promise<{
 		ticket: Ticket;
 	}> {
 		const verifyingContract = configsByEnvironment[this.env].contractID;
 
-		let intentPayload = defaultIntentPayloadFactory({
+		let intentPayload = defaultIntentPayloadFactory(salt, {
 			verifying_contract: verifyingContract,
 			...intentParams,
 		});

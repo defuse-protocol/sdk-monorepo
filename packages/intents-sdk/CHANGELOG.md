@@ -1,5 +1,43 @@
 # @defuse-protocol/intents-sdk
 
+## 0.29.0
+
+### Minor Changes
+
+- 9dfbecf: Add a generation of versioned nonce + its encoding/decoding. Add salt fetching and retry in case of salt reset on contract.
+
+### Patch Changes
+
+- 66dbaa7: Ensure HOT Bridge returns the correct destination tx hash.
+- Updated dependencies [9dfbecf]
+- Updated dependencies [9dfbecf]
+  - @defuse-protocol/contract-types@0.2.0
+  - @defuse-protocol/internal-utils@0.18.0
+
+## 0.28.0
+
+### Minor Changes
+
+- 2ebddf9: Add account existence check for explicit(named accounts) for direct bridge
+  Add storage deposit cache for direct bridge
+
+### Patch Changes
+
+- Updated dependencies [2ebddf9]
+  - @defuse-protocol/internal-utils@0.17.0
+
+## 0.27.0
+
+### Minor Changes
+
+- 8bf4c85: Add new quote params - minWaitMs, maxWaitMs, trustedMetadata.
+- 83aee66: Allow prepending and appending other signed intents, so that all of them are executed atomically.
+
+### Patch Changes
+
+- Updated dependencies [8bf4c85]
+  - @defuse-protocol/internal-utils@0.16.0
+
 ## 0.26.4
 
 ### Patch Changes
