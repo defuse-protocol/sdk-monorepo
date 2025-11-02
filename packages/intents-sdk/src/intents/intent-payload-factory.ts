@@ -13,11 +13,11 @@ export function defaultIntentPayloadFactory({
 	);
 
 	return {
-		signer_id: undefined, // or you can specify intent user id
-		...params,
 		verifying_contract,
 		deadline: new Date(Date.now() + 60 * 1000).toISOString(),
 		nonce: base64.encode(crypto.getRandomValues(new Uint8Array(32))),
 		intents: intents == null ? [] : intents,
+		signer_id: undefined, // or you can specify intent user id
+		...params,
 	};
 }
