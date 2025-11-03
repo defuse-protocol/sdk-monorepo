@@ -287,6 +287,9 @@ export class IntentsSDK implements IIntentsSDK {
 
 			const index = indexes.get(route);
 			assert(index != null, "Index is not found for route");
+			if (index === undefined) {
+				throw new Error(`Index is not found for route ${route}`);
+			}
 			indexes.set(route, index + 1);
 
 			return {
@@ -370,7 +373,11 @@ export class IntentsSDK implements IIntentsSDK {
 		args: SignAndSendArgs,
 	): Promise<IntentPublishResult> {
 		const intentSigner = args.signer ?? this.intentSigner;
-		assert(intentSigner != null, "Intent signer is not provided");
+		const intentSignerNullErrorMessage = "Intent signer is not provided";
+		assert(intentSigner != null, intentSignerNullErrorMessage);
+		if (intentSigner === undefined) {
+			throw new Error(intentSignerNullErrorMessage);
+		}
 
 		const intentExecuter = new IntentExecuter({
 			env: this.env,
@@ -402,7 +409,12 @@ export class IntentsSDK implements IIntentsSDK {
 
 			return await fn(cachedSalt);
 		} catch (err) {
-			if (!(err instanceof RelayPublishError && err.code === "INVALID_SALT"))
+			if (
+				!(
+					err instanceof RelayPublishError &&
+					(err as RelayPublishError).code === "INVALID_SALT"
+				)
+			)
 				throw err;
 
 			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");

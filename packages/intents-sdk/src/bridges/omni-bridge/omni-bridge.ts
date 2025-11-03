@@ -251,10 +251,11 @@ export class OmniBridge implements Bridge {
 			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
 		);
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(
-			omniChainKind !== null,
-			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
-		);
+		const omnitChainKindNullErrorMessage = `Chain ${assetInfo.blockchain} is not supported by Omni Bridge`;
+		assert(omniChainKind !== null, omnitChainKindNullErrorMessage);
+		if (omniChainKind === null) {
+			throw new Error(omnitChainKindNullErrorMessage);
+		}
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
 		const storageDepositAmount =
@@ -329,11 +330,11 @@ export class OmniBridge implements Bridge {
 		}
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(
-			omniChainKind !== null,
-			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
-		);
-
+		const omnitChainKindNullErrorMessage = `Chain ${assetInfo.blockchain} is not supported by Omni Bridge`;
+		assert(omniChainKind !== null, omnitChainKindNullErrorMessage);
+		if (omniChainKind === null) {
+			throw new Error(omnitChainKindNullErrorMessage);
+		}
 		const destTokenAddress = await this.getCachedDestinationTokenAddress(
 			assetInfo.contractId,
 			omniChainKind,
@@ -351,6 +352,13 @@ export class OmniBridge implements Bridge {
 			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
+		if (decimals === null) {
+			throw new Error(
+				`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
+  Ensure the token is supported and the address is correct.`,
+			);
+		}
+
 		const normalisationCheckSucceeded = verifyTransferAmount(
 			// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
 			args.amount + args.feeEstimation.amount,
@@ -409,10 +417,11 @@ export class OmniBridge implements Bridge {
 		);
 
 		const omniChainKind = caip2ToChainKind(assetInfo.blockchain);
-		assert(
-			omniChainKind !== null,
-			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
-		);
+		const omnitChainKindNullErrorMessage = `Chain ${assetInfo.blockchain} is not supported by Omni Bridge`;
+		assert(omniChainKind !== null, omnitChainKindNullErrorMessage);
+		if (omniChainKind === null) {
+			throw new Error(omnitChainKindNullErrorMessage);
+		}
 
 		const fee = await this.omniBridgeAPI.getFee(
 			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
