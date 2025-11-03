@@ -277,6 +277,16 @@ export class OmniBridge implements Bridge {
 			});
 		}
 
+		const nativeFee =
+			(args.feeEstimation.quote === null
+				? args.feeEstimation.amount
+				: BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
+
+		assert(
+			nativeFee >= 0n,
+			`Native fee cannot be negative. Storage deposit amount (${storageDepositAmount}) exceeds fee estimation (${args.feeEstimation.quote === null ? args.feeEstimation.amount : BigInt(args.feeEstimation.quote.amount_out)}). This may indicate a race condition where storage balance changed between fee estimation and intent creation.`,
+		);
+
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
@@ -287,11 +297,7 @@ export class OmniBridge implements Bridge {
 				// we need to calculate relayer fee
 				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
 				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
-				nativeFee:
-					(args.feeEstimation.quote === null
-						? args.feeEstimation.amount
-						: BigInt(args.feeEstimation.quote.amount_out)) -
-					storageDepositAmount,
+				nativeFee,
 				storageDepositAmount,
 			}),
 		);
