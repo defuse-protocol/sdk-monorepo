@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.29.2
+
+### Patch Changes
+
+- 8b87855: Fix generating nonce when deadline is overridden via `payload()`.
+
 ## 0.29.1
 
 ### Patch Changes
