@@ -32,6 +32,25 @@ export function createWithdrawIntentsPrimitive(params: {
 		params.omniChainKind,
 		params.destinationAddress,
 	);
+	let msg = "";
+	const ftWithdrawPayload: {
+		recipient: OmniAddress;
+		fee: string;
+		native_token_fee: string;
+		msg?: string;
+	} = {
+		recipient,
+		fee: "0",
+		native_token_fee: params.nativeFee.toString(),
+	};
+	// For UTXO transfers
+	if (params.maxGasFee > 0n && isUtxoWithdrawal(params.omniChainKind)) {
+		msg = JSON.stringify({
+			// update after contract update on mainnet
+			V0: { max_fee: params.maxGasFee.toString() },
+		});
+		ftWithdrawPayload.msg = msg;
+	}
 	const implicitAccount = calculateStorageAccountId({
 		token: `near:${tokenAccountId}`,
 		amount: params.amount,
@@ -41,7 +60,7 @@ export function createWithdrawIntentsPrimitive(params: {
 			native_fee: params.nativeFee,
 		},
 		sender: `near:${params.intentsContract}`,
-		msg: "",
+		msg,
 	});
 	assert(standard === "nep141", "Only NEP-141 is supported");
 
@@ -61,44 +80,9 @@ export function createWithdrawIntentsPrimitive(params: {
 				params.storageDepositAmount > 0n
 					? params.storageDepositAmount.toString()
 					: null,
-			// generate different chain for UTXO chains
-			msg:
-				params.maxGasFee > 0n && isUtxoWithdrawal(params.omniChainKind)
-					? makeUtxoTransferMessage(
-							recipient,
-							params.nativeFee.toString(),
-							params.maxGasFee.toString(),
-						)
-					: makeRegularTransferMessage(recipient, params.nativeFee.toString()),
+			msg: JSON.stringify(ftWithdrawPayload),
 		},
 	];
-}
-
-function makeRegularTransferMessage(
-	recipient: OmniAddress,
-	nativeTokenFee: string,
-) {
-	return JSON.stringify({
-		recipient,
-		fee: "0",
-		native_token_fee: nativeTokenFee,
-	});
-}
-
-function makeUtxoTransferMessage(
-	recipient: OmniAddress,
-	nativeTokenFee: string,
-	maxGasFee: string,
-) {
-	return JSON.stringify({
-		recipient,
-		fee: "0",
-		native_token_fee: nativeTokenFee,
-		msg: JSON.stringify({
-			// update after contract update on mainnet
-			V0: { max_fee: maxGasFee },
-		}),
-	});
 }
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
