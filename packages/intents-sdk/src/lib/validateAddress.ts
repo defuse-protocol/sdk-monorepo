@@ -110,7 +110,7 @@ function validateZcashAddress(address: string) {
 	}
 
 	// Unified address validation
-	const uaHrp = 'u';
+	const uaHrp = "u";
 	if (address.startsWith(`${uaHrp}1`)) {
 		try {
 			const decoded = bech32m.decodeToBytes(address);
@@ -119,7 +119,6 @@ function validateZcashAddress(address: string) {
 			return false;
 		}
 	}
-
 
 	return false;
 }
