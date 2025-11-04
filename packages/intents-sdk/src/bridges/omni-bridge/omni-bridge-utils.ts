@@ -44,7 +44,7 @@ export function createWithdrawIntentsPrimitive(params: {
 		native_token_fee: params.nativeFee.toString(),
 	};
 	// For UTXO transfers
-	if (params.maxGasFee > 0n && isUtxoWithdrawal(params.omniChainKind)) {
+	if (params.maxGasFee > 0n && isUtxoChainKind(params.omniChainKind)) {
 		msg = JSON.stringify({
 			// update after contract update on mainnet
 			V0: { max_fee: params.maxGasFee.toString() },
@@ -119,7 +119,7 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 	}
 }
 
-export function isUtxoWithdrawal(network: ChainKind) {
+export function isUtxoChainKind(network: ChainKind) {
 	switch (network) {
 		case ChainKind.Btc:
 			return true;

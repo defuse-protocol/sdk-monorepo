@@ -61,7 +61,7 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
-	isUtxoWithdrawal,
+	isUtxoChainKind,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
@@ -265,7 +265,7 @@ export class OmniBridge implements Bridge {
 
 		let maxGasFee = 0n;
 		// Withdrawal to UTXO chains need max_gas_fee value indicated in the msg
-		if (isUtxoWithdrawal(omniChainKind)) {
+		if (isUtxoChainKind(omniChainKind)) {
 			const fee = await this.omniBridgeAPI.getFee(
 				omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
 				omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
@@ -511,6 +511,8 @@ export class OmniBridge implements Bridge {
 					txHash = transfer.finalised?.EVMLog?.transaction_hash;
 				} else if (destinationChain === ChainKind.Sol) {
 					txHash = transfer.finalised?.Solana?.signature;
+				} else if (isUtxoChainKind(destinationChain)) {
+					txHash = transfer.finalised?.UtxoLog?.transaction_hash;
 				} else {
 					return { hash: null };
 				}
