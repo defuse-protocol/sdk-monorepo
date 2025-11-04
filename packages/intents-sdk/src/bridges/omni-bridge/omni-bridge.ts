@@ -119,8 +119,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-			params.routeConfig.route === RouteEnum.OmniBridge &&
-			params.routeConfig.chain === undefined,
+				params.routeConfig.route === RouteEnum.OmniBridge &&
+				params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -197,8 +197,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 
@@ -263,7 +263,7 @@ export class OmniBridge implements Bridge {
 				? minStorageBalance - currentStorageBalance
 				: 0n;
 
-		let maxGasFee = 0n
+		let maxGasFee = 0n;
 		// Withdrawal to UTXO chains need max_gas_fee value indicated in the msg
 		if (isUtxoWithdrawal(omniChainKind)) {
 			const fee = await this.omniBridgeAPI.getFee(
@@ -272,11 +272,16 @@ export class OmniBridge implements Bridge {
 				omniAddress(ChainKind.Near, assetInfo.contractId),
 				args.withdrawalParams.amount,
 			);
-			assert(fee.max_gas_fee !== null && fee.max_gas_fee !== undefined, "Failed to receive max gas fee value for a BTC transfer")
-			assert(fee.max_gas_fee > 0n, `Invalid max_gas_fee value ${fee.max_gas_fee}`)
-			maxGasFee = fee.max_gas_fee
+			assert(
+				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
+				"Failed to receive max gas fee value for a BTC transfer",
+			);
+			assert(
+				fee.max_gas_fee > 0n,
+				`Invalid max_gas_fee value ${fee.max_gas_fee}`,
+			);
+			maxGasFee = fee.max_gas_fee;
 		}
-
 
 		const intents: IntentPrimitive[] = [];
 
@@ -315,7 +320,7 @@ export class OmniBridge implements Bridge {
 				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
 				nativeFee,
 				storageDepositAmount,
-				maxGasFee
+				maxGasFee,
 			}),
 		);
 
