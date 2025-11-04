@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateAddress } from "./validateAddress";
-import { BlockchainEnum } from "@defuse-protocol/internal-utils";
+import {Chains} from "./caip2";
 
 describe("validateZcashAddress", () => {
 	const validTransparentAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";
@@ -10,22 +10,22 @@ describe("validateZcashAddress", () => {
 	const invalidUA = "u1r2VHBwC5eAnZB22YNFSJg8iFtWgoAEKW000";
 
 	it("accepts a valid transparent address", () => {
-		expect(validateAddress(validTransparentAddress, BlockchainEnum.zec)).toBe(
+		expect(validateAddress(validTransparentAddress, Chains.Zcash)).toBe(
 			true,
 		);
 	});
 
 	it("accepts a valid UA address", () => {
-		expect(validateAddress(validUAAddress, BlockchainEnum.zec)).toBe(true);
+		expect(validateAddress(validUAAddress, Chains.Zcash)).toBe(true);
 	});
 
 	it("rejects a transparent address with invalid characters", () => {
-		expect(validateAddress(invalidTransparentAddress, BlockchainEnum.zec)).toBe(
+		expect(validateAddress(invalidTransparentAddress, Chains.Zcash)).toBe(
 			false,
 		);
 	});
 
 	it("rejects a ua address with invalid characters", () => {
-		expect(validateAddress(invalidUA, BlockchainEnum.zec)).toBe(false);
+		expect(validateAddress(invalidUA, Chains.Zcash)).toBe(false);
 	});
 });
