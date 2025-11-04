@@ -23,6 +23,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
 	intentsContract: string;
+	maxGasFee: bigint
 }): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -60,14 +61,37 @@ export function createWithdrawIntentsPrimitive(params: {
 				params.storageDepositAmount > 0n
 					? params.storageDepositAmount.toString()
 					: null,
-			// generate BTC message
-			msg: JSON.stringify({
-				recipient,
-				fee: "0",
-				native_token_fee: params.nativeFee.toString(),
-			}),
+			// generate different chain for UTXO chains
+			msg: params.maxGasFee > 0n && isUtxoWithdrawal(params.omniChainKind) ? makeUtxoTransferMessage(recipient, params.nativeFee.toString(), params.maxGasFee.toString()) : makeRegularTransferMessage(recipient, params.nativeFee.toString())
 		},
 	];
+}
+
+function makeRegularTransferMessage(
+	recipient: OmniAddress,
+	nativeTokenFee: string
+) {
+	return JSON.stringify({
+		recipient,
+		fee: "0",
+		native_token_fee: nativeTokenFee,
+	})
+}
+
+function makeUtxoTransferMessage(
+	recipient: OmniAddress,
+	nativeTokenFee: string,
+	maxGasFee: string,
+) {
+	return JSON.stringify({
+		recipient,
+		fee: "0",
+		native_token_fee: nativeTokenFee,
+		msg: {
+			// update after contract update on mainnet
+			V0: { max_fee: maxGasFee }
+		}
+	})
 }
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
@@ -101,6 +125,15 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return Chains.Bitcoin;
 		default:
 			return null;
+	}
+}
+
+export function isUtxoWithdrawal(network: ChainKind) {
+	switch (network) {
+		case ChainKind.Btc:
+			return true;
+		default:
+			return false;
 	}
 }
 

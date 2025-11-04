@@ -61,6 +61,7 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
+	isUtxoWithdrawal,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
@@ -262,6 +263,21 @@ export class OmniBridge implements Bridge {
 				? minStorageBalance - currentStorageBalance
 				: 0n;
 
+		let maxGasFee = 0n
+		// Withdrawal to UTXO chains need max_gas_fee value indicated in the msg
+		if (isUtxoWithdrawal(omniChainKind)) {
+			const fee = await this.omniBridgeAPI.getFee(
+				omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
+				omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+				omniAddress(ChainKind.Near, assetInfo.contractId),
+				args.withdrawalParams.amount,
+			);
+			assert(fee.max_gas_fee !== null && fee.max_gas_fee !== undefined, "Failed to receive max gas fee value for a BTC transfer")
+			assert(fee.max_gas_fee > 0n, `Invalid max_gas_fee value ${fee.max_gas_fee}`)
+			maxGasFee = fee.max_gas_fee
+		}
+
+
 		const intents: IntentPrimitive[] = [];
 
 		if (args.feeEstimation.quote !== null) {
@@ -299,6 +315,7 @@ export class OmniBridge implements Bridge {
 				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
 				nativeFee,
 				storageDepositAmount,
+				maxGasFee
 			}),
 		);
 
@@ -420,7 +437,6 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-		// will have a different fee calc for BTC
 		const fee = await this.omniBridgeAPI.getFee(
 			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
 			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
