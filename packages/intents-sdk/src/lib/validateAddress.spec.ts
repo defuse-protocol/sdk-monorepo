@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateAddress } from "./validateAddress";
-import { BlockchainEnum } from "@defuse-protocol/internal-utils/src";
+import { BlockchainEnum } from "@defuse-protocol/internal-utils";
 
 describe("validateZcashAddress", () => {
 	const validTransparentAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";
