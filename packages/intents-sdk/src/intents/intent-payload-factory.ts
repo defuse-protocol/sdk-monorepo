@@ -16,7 +16,11 @@ export function defaultIntentPayloadFactory(
 		Object.entries(params).filter(([, value]) => value !== undefined),
 	);
 
-	const deadline = new Date(Date.now() + DEFAULT_DEADLINE_MS);
+	const deadline =
+		params.deadline != null
+			? new Date(params.deadline)
+			: new Date(Date.now() + DEFAULT_DEADLINE_MS);
+
 	return {
 		verifying_contract,
 		deadline: deadline.toISOString(),
