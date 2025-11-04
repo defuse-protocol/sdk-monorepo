@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateAddress } from "./validateAddress";
-import {Chains} from "./caip2";
+import { Chains } from "./caip2";
 
 describe("validateZcashAddress", () => {
 	const validTransparentAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";
@@ -10,9 +10,7 @@ describe("validateZcashAddress", () => {
 	const invalidUA = "u1r2VHBwC5eAnZB22YNFSJg8iFtWgoAEKW000";
 
 	it("accepts a valid transparent address", () => {
-		expect(validateAddress(validTransparentAddress, Chains.Zcash)).toBe(
-			true,
-		);
+		expect(validateAddress(validTransparentAddress, Chains.Zcash)).toBe(true);
 	});
 
 	it("accepts a valid UA address", () => {
