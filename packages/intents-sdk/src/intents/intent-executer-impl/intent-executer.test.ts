@@ -1,3 +1,4 @@
+import { providers } from "near-api-js";
 import { base64 } from "@scure/base";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
@@ -5,6 +6,7 @@ import { IntentRelayerPublic } from "../intent-relayer-impl/intent-relayer-publi
 import { createIntentSignerViem } from "../intent-signer-impl/factories";
 import { IntentExecuter } from "./intent-executer";
 import { defaultIntentPayloadFactory } from "../intent-payload-factory";
+import { SaltManager } from "../salt-manager";
 
 describe("IntentExecuter", () => {
 	it("appends argument intents to factory produced intents", async () => {
@@ -189,6 +191,49 @@ describe("IntentExecuter", () => {
 
 		await expect(result).rejects.toThrow("dummy error");
 		expect(intentRelayer.publishIntent).not.toHaveBeenCalled();
+	});
+
+	it("allows to override the deadline", async () => {
+		const { intentSigner, intentRelayer } = setupMocks();
+
+		const rpc = new providers.JsonRpcProvider({
+			url: "https://relmn.aurora.dev",
+		});
+
+		const exec = new IntentExecuter({
+			env: "production",
+			intentRelayer,
+			intentSigner,
+			intentPayloadFactory: () => ({
+				deadline: "2100-01-01T12:00:00.000Z",
+			}),
+			onBeforePublishIntent: async ({ multiPayload, intentPayload }) => {
+				expect(intentPayload.deadline).toEqual("2100-01-01T12:00:00.000Z");
+
+				// If simulation does not throw, then multipayload is valid
+				await rpc.query({
+					request_type: "call_function",
+					account_id: "intents.near",
+					method_name: "simulate_intents",
+					args_base64: btoa(JSON.stringify({ signed: [multiPayload] })),
+					finality: "optimistic",
+				});
+
+				// Interrupt, so it's not published
+				throw new Error("ok");
+			},
+		});
+
+		const saltManager = new SaltManager({
+			env: "production",
+			nearProvider: rpc,
+		});
+
+		const promise = exec.signAndSendIntent({
+			salt: await saltManager.getCachedSalt(),
+		});
+		await expect(promise).rejects.toThrow("ok");
+		expect.assertions(2);
 	});
 
 	describe("Intent Composition", () => {
