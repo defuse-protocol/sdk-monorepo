@@ -1,5 +1,14 @@
 # @defuse-protocol/intents-sdk
 
+## 0.29.1
+
+### Patch Changes
+
+- 5f66088: feat: zcash validation for UA address
+  - Added support for Unified Addresses for Zcash network in validateAddress function.
+- 95bee77: Fix incorrect length calculation for strings with non ASCII characters when calculating ERC-191 hash
+- 4e3405d: Prevent negative native fee in Omni bridge withdrawal.
+
 ## 0.29.0
 
 ### Minor Changes
