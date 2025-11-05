@@ -11,7 +11,10 @@ import {
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
-import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
+import {
+	BTC_BRIDGE_CONNECTOR,
+	OMNI_BRIDGE_CONTRACT,
+} from "./omni-bridge-constants";
 import type { providers } from "near-api-js";
 import * as v from "valibot";
 
@@ -43,8 +46,8 @@ export function createWithdrawIntentsPrimitive(params: {
 		fee: "0",
 		native_token_fee: params.nativeFee.toString(),
 	};
-	// For UTXO transfers
-	if (params.maxGasFee > 0n && isUtxoChainKind(params.omniChainKind)) {
+	// For withdrawals to Bitcoin
+	if (params.maxGasFee > 0n && params.omniChainKind === ChainKind.Btc) {
 		msg = JSON.stringify({
 			// update after contract update on mainnet
 			V0: { max_fee: params.maxGasFee.toString() },
@@ -116,15 +119,6 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return Chains.Bitcoin;
 		default:
 			return null;
-	}
-}
-
-export function isUtxoChainKind(network: ChainKind) {
-	switch (network) {
-		case ChainKind.Btc:
-			return true;
-		default:
-			return false;
 	}
 }
 
@@ -232,5 +226,52 @@ export async function getTokenDecimals(
 			v.null(),
 			v.object({ decimals: v.number(), origin_decimals: v.number() }),
 		]),
+	});
+}
+
+const bridgeFeeSchema = v.object({
+	fee_min: v.string(),
+	fee_rate: v.number(),
+	protocol_fee_rate: v.number(),
+});
+
+const btcConnectorConfigSchema = v.object({
+	btc_light_client_account_id: v.string(),
+	nbtc_account_id: v.string(),
+	chain_signatures_account_id: v.string(),
+	chain_signatures_root_public_key: v.string(),
+	change_address: v.string(),
+	confirmations_strategy: v.record(v.string(), v.number()),
+	confirmations_delta: v.number(),
+	deposit_bridge_fee: bridgeFeeSchema,
+	withdraw_bridge_fee: bridgeFeeSchema,
+	min_deposit_amount: v.string(),
+	min_withdraw_amount: v.string(),
+	min_change_amount: v.string(),
+	max_change_amount: v.string(),
+	min_btc_gas_fee: v.string(),
+	max_btc_gas_fee: v.string(),
+	max_withdrawal_input_number: v.number(),
+	max_change_number: v.number(),
+	max_active_utxo_management_input_number: v.number(),
+	max_active_utxo_management_output_number: v.number(),
+	active_management_lower_limit: v.number(),
+	active_management_upper_limit: v.number(),
+	passive_management_lower_limit: v.number(),
+	passive_management_upper_limit: v.number(),
+	rbf_num_limit: v.number(),
+	max_btc_tx_pending_sec: v.number(),
+});
+
+export async function getBtcBridgeConfig(
+	nearProvider: providers.Provider,
+): Promise<v.InferOutput<typeof btcConnectorConfigSchema>> {
+	return utils.queryContract({
+		contractId: BTC_BRIDGE_CONNECTOR,
+		methodName: "get_config",
+		args: {},
+		finality: "optimistic",
+		nearClient: nearProvider,
+		schema: btcConnectorConfigSchema,
 	});
 }

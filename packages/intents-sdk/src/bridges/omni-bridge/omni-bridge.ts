@@ -61,12 +61,13 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
-	isUtxoChainKind,
+	getBtcBridgeConfig,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import {
 	InvalidDestinationAddressForWithdrawalError,
+	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
@@ -264,8 +265,8 @@ export class OmniBridge implements Bridge {
 				: 0n;
 
 		let maxGasFee = 0n;
-		// Withdrawal to UTXO chains need max_gas_fee value indicated in the msg
-		if (isUtxoChainKind(omniChainKind)) {
+		// Withdrawal to Bitcoin need max_gas_fee value indicated in the msg
+		if (omniChainKind === ChainKind.Btc) {
 			const fee = await this.omniBridgeAPI.getFee(
 				omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
 				omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
@@ -416,7 +417,20 @@ export class OmniBridge implements Bridge {
 				intentsNearStorageBalance.toString(),
 			);
 		}
-		// Probably will have to add a special validation for btc here
+
+		if (omniChainKind === ChainKind.Btc) {
+			const config = await getBtcBridgeConfig(this.nearProvider);
+			// args.amount is without fee
+			const minAmount = BigInt(config.min_withdraw_amount);
+			if (args.amount < minAmount) {
+				throw new MinWithdrawalAmountError(
+					minAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
+		}
+
 		return;
 	}
 
@@ -511,7 +525,7 @@ export class OmniBridge implements Bridge {
 					txHash = transfer.finalised?.EVMLog?.transaction_hash;
 				} else if (destinationChain === ChainKind.Sol) {
 					txHash = transfer.finalised?.Solana?.signature;
-				} else if (isUtxoChainKind(destinationChain)) {
+				} else if (destinationChain === ChainKind.Btc) {
 					txHash = transfer.finalised?.UtxoLog?.transaction_hash;
 				} else {
 					return { hash: null };
