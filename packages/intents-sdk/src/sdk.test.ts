@@ -745,7 +745,7 @@ describe.concurrent("omni_bridge", () => {
 				referral,
 			},
 			{
-				account_id: implicitAccount,
+				deposit_for_account_id: implicitAccount,
 				amount: feeEstimation.quote.amount_out,
 				contract_id: OMNI_BRIDGE_CONTRACT,
 				intent: "storage_deposit",
@@ -817,7 +817,7 @@ describe.concurrent("omni_bridge", () => {
 				referral,
 			},
 			{
-				account_id: implicitAccount,
+				deposit_for_account_id: implicitAccount,
 				amount: feeEstimation.quote.amount_out,
 				contract_id: OMNI_BRIDGE_CONTRACT,
 				intent: "storage_deposit",
