@@ -1,5 +1,4 @@
 import { providers } from "near-api-js";
-import type { FailoverRpcProvider } from "near-api-js/lib/providers";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createNearFailoverRpcProvider } from "./failover";
 
@@ -28,7 +27,7 @@ const providers_ = [
 ];
 
 describe("createNearFailoverRpcProvider", () => {
-	let nearClient: FailoverRpcProvider;
+	let nearClient: providers.FailoverRpcProvider;
 
 	beforeEach(() => {
 		nearClient = createNearFailoverRpcProvider({ providers: providers_ });

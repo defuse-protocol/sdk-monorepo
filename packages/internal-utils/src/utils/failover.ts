@@ -1,5 +1,4 @@
 import { providers } from "near-api-js";
-import { FailoverRpcProvider, type Provider } from "near-api-js/lib/providers";
 
 /**
  * @note This function is specifically designed for NEAR RPC providers and should not be used with other blockchain networks.
@@ -18,9 +17,11 @@ export function createNearFailoverRpcProvider({
 	return new providers.FailoverRpcProvider(list);
 }
 
-export function unwrapNearFailoverRpcProvider(provider: Provider): Provider {
+export function unwrapNearFailoverRpcProvider(
+	provider: providers.Provider,
+): providers.Provider {
 	if (
-		provider instanceof FailoverRpcProvider &&
+		provider instanceof providers.FailoverRpcProvider &&
 		provider.providers.length > 0 &&
 		provider.providers[0]
 	) {
