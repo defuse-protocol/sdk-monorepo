@@ -24,8 +24,8 @@ describe("IntentExecuter", () => {
 				return {
 					intents: [
 						{
-							intent: "invalidate_nonces",
-							nonces: ["my_nonce"],
+							intent: "add_public_key",
+							public_key: "my_pk",
 						},
 					],
 				};
@@ -50,8 +50,8 @@ describe("IntentExecuter", () => {
 			deadline: expect.any(String),
 			intents: [
 				{
-					intent: "invalidate_nonces",
-					nonces: ["my_nonce"],
+					intent: "add_public_key",
+					public_key: "my_pk",
 				},
 				{
 					intent: "transfer",
@@ -81,8 +81,8 @@ describe("IntentExecuter", () => {
 					intents: [
 						...intentPayload.intents,
 						{
-							intent: "invalidate_nonces",
-							nonces: ["my_nonce"],
+							intent: "add_public_key",
+							public_key: "my_pk",
 						},
 					],
 				};
@@ -112,8 +112,8 @@ describe("IntentExecuter", () => {
 					tokens: {},
 				},
 				{
-					intent: "invalidate_nonces",
-					nonces: ["my_nonce"],
+					intent: "add_public_key",
+					public_key: "my_pk",
 				},
 			],
 			nonce: expect.any(String),

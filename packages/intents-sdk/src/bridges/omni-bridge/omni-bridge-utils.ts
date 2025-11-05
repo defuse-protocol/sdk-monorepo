@@ -46,7 +46,7 @@ export function createWithdrawIntentsPrimitive(params: {
 
 	return [
 		{
-			account_id: implicitAccount,
+			deposit_for_account_id: implicitAccount,
 			amount: params.nativeFee.toString(),
 			contract_id: OMNI_BRIDGE_CONTRACT,
 			intent: "storage_deposit",
