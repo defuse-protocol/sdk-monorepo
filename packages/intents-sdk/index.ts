@@ -193,3 +193,8 @@ export { VersionedNonceBuilder } from "./src/intents/expirable-nonce";
 // Intent Payload Builder
 // ============================================================================
 export { IntentPayloadBuilder } from "./src/intents/intent-payload-builder";
+
+// ============================================================================
+// Intent Hash
+// ============================================================================
+export { computeIntentHash } from "./src/intents/intent-hash";
