@@ -3,3 +3,4 @@ export * from "./authIdentity";
 export * from "./prepareBroadcastRequest";
 export * from "./tokenUtils";
 export * from "./near";
+export * from "./uint8Array";
