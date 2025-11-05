@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.31.0
+
+### Minor Changes
+
+- ae1afbc: Implement intent hash computation of all standards. Expose `computeIntentHash()` function.
+
+### Patch Changes
+
+- Updated dependencies [ae1afbc]
+  - @defuse-protocol/internal-utils@0.18.3
+
 ## 0.30.1
 
 ### Patch Changes

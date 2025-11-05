@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.18.3
+
+### Patch Changes
+
+- ae1afbc: Export Uint8Array utils.
+
 ## 0.18.2
 
 ### Patch Changes
