@@ -1,5 +1,17 @@
 # @defuse-protocol/intents-sdk
 
+## 0.30.0
+
+### Minor Changes
+
+- 9f4538b: Add IntentPayloadBuilder for generating an intent payload.
+
+### Patch Changes
+
+- Updated dependencies [5edb8fa]
+  - @defuse-protocol/contract-types@0.3.0
+  - @defuse-protocol/internal-utils@0.18.1
+
 ## 0.29.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.3.0
+
+### Minor Changes
+
+- 5edb8fa: Re-generate types from contract ABI.
+
 ## 0.2.0
 
 ### Minor Changes
