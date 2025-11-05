@@ -188,3 +188,8 @@ export type { OnBeforePublishIntentHook } from "./src/intents/intent-executer-im
 // Nonce helpers
 // ============================================================================
 export { VersionedNonceBuilder } from "./src/intents/expirable-nonce";
+
+// ============================================================================
+// Intent Payload Builder
+// ============================================================================
+export { IntentPayloadBuilder } from "./src/intents/intent-payload-builder";
