@@ -165,9 +165,9 @@ export class IntentsSDK implements IIntentsSDK {
 	/**
 	 * Create a new intent payload builder with environment context.
 	 * Use this to build custom intent payloads for your API or advanced use cases.
-	 * 
+	 *
 	 * @returns A new IntentPayloadBuilder instance configured with the SDK's environment
-	 * 
+	 *
 	 * @example
 	 * ```typescript
 	 * // Build a custom intent payload
@@ -181,7 +181,7 @@ export class IntentsSDK implements IIntentsSDK {
 	 *     receiver_id: 'user.near'
 	 *   })
 	 *   .build();
-	 * 
+	 *
 	 * // Return to user for signing with their preferred method (MetaMask, etc.)
 	 * return payload;
 	 * ```
