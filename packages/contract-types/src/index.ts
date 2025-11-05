@@ -21,11 +21,6 @@ export type Intent =
 			[k: string]: unknown;
 	  }
 	| {
-			intent: "invalidate_nonces";
-			nonces: string[];
-			[k: string]: unknown;
-	  }
-	| {
 			intent: "transfer";
 			memo?: string | null;
 			receiver_id: AccountId;
@@ -38,6 +33,12 @@ export type Intent =
 			amount: string;
 			intent: "ft_withdraw";
 			memo?: string | null;
+			/**
+			 * Optional minimum required Near gas for created Promise to succeed: * `ft_transfer`:      minimum: 15TGas, default: 15TGas * `ft_transfer_call`: minimum: 30TGas, default: 50TGas
+			 *
+			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+			 */
+			min_gas?: string | null;
 			/**
 			 * Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 			 */
@@ -53,6 +54,12 @@ export type Intent =
 	| {
 			intent: "nft_withdraw";
 			memo?: string | null;
+			/**
+			 * Optional minimum required Near gas for created Promise to succeed: * `nft_transfer`:      minimum: 15TGas, default: 15TGas * `nft_transfer_call`: minimum: 30TGas, default: 50TGas
+			 *
+			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+			 */
+			min_gas?: string | null;
 			/**
 			 * Message to pass to `nft_transfer_call`. Otherwise, `nft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 			 */
@@ -70,6 +77,12 @@ export type Intent =
 			amounts: string[];
 			intent: "mt_withdraw";
 			memo?: string | null;
+			/**
+			 * Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
+			 *
+			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+			 */
+			min_gas?: string | null;
 			/**
 			 * Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 			 */
@@ -90,9 +103,9 @@ export type Intent =
 			[k: string]: unknown;
 	  }
 	| {
-			account_id: AccountId;
 			amount: string;
 			contract_id: AccountId;
+			deposit_for_account_id: AccountId;
 			intent: "storage_deposit";
 			[k: string]: unknown;
 	  }
@@ -103,6 +116,35 @@ export type Intent =
 			intent: "token_diff";
 			memo?: string | null;
 			referral?: AccountId | null;
+			[k: string]: unknown;
+	  }
+	| {
+			enabled: boolean;
+			intent: "set_auth_by_predecessor_id";
+			[k: string]: unknown;
+	  }
+	| {
+			/**
+			 * Optionally, attach deposit to [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) call. The amount will be subtracted from user's NEP-141 `wNEAR` balance.
+			 *
+			 * NOTE: the `wNEAR` will not be refunded in case of fail.
+			 */
+			attached_deposit?: string;
+			/**
+			 * Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
+			 */
+			contract_id: AccountId;
+			intent: "auth_call";
+			/**
+			 * Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.
+			 *
+			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+			 */
+			min_gas?: string | null;
+			/**
+			 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
+			 */
+			msg: string;
 			[k: string]: unknown;
 	  };
 /**
@@ -179,6 +221,10 @@ export type InvariantViolated =
 			[k: string]: unknown;
 	  };
 /**
+ * Assuming wallets want to interact with Intents protocol, besides preparing the data in a certain form, they have to have the capability to sign raw messages (off-chain signatures) using an algorithm we understand. This enum solves that problem.
+ *
+ * For example, because we support ERC-191 and know how to verify messages with that standard, we can allow wallets, like Metamask, sign messages to perform intents without having to support new cryptographic primitives and signing standards.
+ *
  * This interface was referenced by `DefuseContractABI`'s JSON-Schema
  * via the `definition` "MultiPayload".
  */
@@ -192,12 +238,18 @@ export type MultiPayload =
 	  }
 	| {
 			payload: Erc191Payload;
+			/**
+			 * There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature
+			 */
 			signature: string;
 			standard: "erc191";
 			[k: string]: unknown;
 	  }
 	| {
-			payload: string;
+			payload: Tip191Payload;
+			/**
+			 * There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature
+			 */
 			signature: string;
 			standard: "tip191";
 			[k: string]: unknown;
@@ -216,7 +268,7 @@ export type MultiPayload =
 	  }
 	| {
 			/**
-			 * Wallet address in either [Raw](https://docs.ton.org/learn/overviews/addresses#raw-address) representation or [user-friendly](https://docs.ton.org/learn/overviews/addresses#user-friendly-address) format
+			 * Wallet address in either [Raw](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#raw-address) representation or [user-friendly](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#user-friendly-address) format
 			 */
 			address: string;
 			/**
@@ -232,7 +284,21 @@ export type MultiPayload =
 			 */
 			timestamp: PickFirstDateTimeint64;
 			[k: string]: unknown;
+	  }
+	| {
+			payload: string;
+			public_key: string;
+			signature: string;
+			standard: "sep53";
+			[k: string]: unknown;
 	  };
+/**
+ * See [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md)
+ *
+ * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * via the `definition` "Tip191Payload".
+ */
+export type Tip191Payload = string;
 /**
  * See <https://docs.tonconsole.com/academy/sign-data#choosing-the-right-format>
  *
@@ -327,6 +393,35 @@ export interface Nep413DefuseMessageFor_DefuseIntents {
 	[k: string]: unknown;
 }
 /**
+ * Call [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) with `signer_id` of intent.
+ *
+ * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * via the `definition` "AuthCall".
+ */
+export interface AuthCall {
+	/**
+	 * Optionally, attach deposit to [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) call. The amount will be subtracted from user's NEP-141 `wNEAR` balance.
+	 *
+	 * NOTE: the `wNEAR` will not be refunded in case of fail.
+	 */
+	attached_deposit?: string;
+	/**
+	 * Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
+	 */
+	contract_id: AccountId;
+	/**
+	 * Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
+	 */
+	msg: string;
+	[k: string]: unknown;
+}
+/**
  * This interface was referenced by `DefuseContractABI`'s JSON-Schema
  * via the `definition` "DefuseConfig".
  */
@@ -369,6 +464,12 @@ export interface FtWithdraw {
 	amount: string;
 	memo?: string | null;
 	/**
+	 * Optional minimum required Near gas for created Promise to succeed: * `ft_transfer`:      minimum: 15TGas, default: 15TGas * `ft_transfer_call`: minimum: 30TGas, default: 50TGas
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
 	 * Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
@@ -382,11 +483,12 @@ export interface FtWithdraw {
 }
 /**
  * This interface was referenced by `DefuseContractABI`'s JSON-Schema
- * via the `definition` "IntentEvent_for_AccountEvent_for_Null".
+ * via the `definition` "IntentEvent_for_AccountEvent_for_NonceEvent".
  */
-export interface IntentEventFor_AccountEventFor_Null {
+export interface IntentEventFor_AccountEventFor_NonceEvent {
 	account_id: AccountIdRef;
 	intent_hash: string;
+	nonce: string;
 	[k: string]: unknown;
 }
 /**
@@ -400,6 +502,12 @@ export interface IntentEventFor_AccountEventFor_Null {
 export interface MtWithdraw {
 	amounts: string[];
 	memo?: string | null;
+	/**
+	 * Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
 	/**
 	 * Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
@@ -445,6 +553,12 @@ export interface NativeWithdraw {
  */
 export interface NftWithdraw {
 	memo?: string | null;
+	/**
+	 * Optional minimum required Near gas for created Promise to succeed: * `nft_transfer`:      minimum: 15TGas, default: 15TGas * `nft_transfer_call`: minimum: 30TGas, default: 50TGas
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
 	/**
 	 * Message to pass to `nft_transfer_call`. Otherwise, `nft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
@@ -517,17 +631,12 @@ export interface PermissionedAccountsPerRole {
  * via the `definition` "SimulationOutput".
  */
 export interface SimulationOutput {
-	/**
-	 * Intent hashes along with corresponding signers
-	 */
-	intents_executed: IntentEventFor_AccountEventFor_Null[];
+	intents_executed: IntentEventFor_AccountEventFor_NonceEvent[];
 	/**
 	 * Unmatched token deltas needed to keep the invariant. If not empty, can be used along with fee to calculate `token_diff` closure.
 	 */
 	invariant_violated?: InvariantViolated | null;
-	/**
-	 * Minimum deadline among all simulated intents
-	 */
+	logs: string[];
 	min_deadline: Deadline;
 	/**
 	 * Additional info about current state
@@ -540,6 +649,7 @@ export interface SimulationOutput {
  * via the `definition` "StateOutput".
  */
 export interface StateOutput {
+	current_salt: string;
 	fee: Pips;
 	[k: string]: unknown;
 }
@@ -552,9 +662,9 @@ export interface StateOutput {
  * via the `definition` "StorageDeposit".
  */
 export interface StorageDeposit {
-	account_id: AccountId;
 	amount: string;
 	contract_id: AccountId;
+	deposit_for_account_id: AccountId;
 	[k: string]: unknown;
 }
 /**
