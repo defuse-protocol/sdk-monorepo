@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.18.2
+
+### Patch Changes
+
+- ec3976b: Fix importing providers from near-api-js.
+
 ## 0.18.1
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @defuse-protocol/intents-sdk
 
+## 0.30.1
+
+### Patch Changes
+
+- ec3976b: Fix importing providers from near-api-js.
+- Updated dependencies [ec3976b]
+  - @defuse-protocol/internal-utils@0.18.2
+
 ## 0.30.0
 
 ### Minor Changes
