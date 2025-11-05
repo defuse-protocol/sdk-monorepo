@@ -154,13 +154,13 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	 *
 	 * @returns The builder instance for chaining
 	 */
-	reset(): this {
+	reset(): IntentPayloadBuilder<false> {
 		this.signerId = undefined;
 		this.deadline = undefined;
 		this.intents = [];
 		this.customNonce = undefined;
 		this.verifyingContract = configsByEnvironment[this.env].contractID;
-		return this;
+		return this as unknown as IntentPayloadBuilder<false>;
 	}
 
 	/**
