@@ -26,7 +26,7 @@ import type { IntentHash } from "./shared-types";
  * @param signed - The multi-payload to hash
  * @returns 32-byte hash as Uint8Array
  */
-export async function computeMultiPayloadHashBytes(
+export async function computeIntentHashHashBytes(
 	signed: MultiPayload,
 ): Promise<Uint8Array> {
 	const { standard } = signed;
@@ -64,9 +64,9 @@ export async function computeMultiPayloadHashBytes(
 	}
 }
 
-export async function computeMultiPayloadHash(
+export async function computeIntentHash(
 	multiPayload: MultiPayload,
 ): Promise<IntentHash> {
-	const hashBytes = await computeMultiPayloadHashBytes(multiPayload);
+	const hashBytes = await computeIntentHashHashBytes(multiPayload);
 	return base58.encode(hashBytes);
 }

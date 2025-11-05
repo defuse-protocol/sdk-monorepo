@@ -3,9 +3,9 @@ import { utils } from "@defuse-protocol/internal-utils";
 import { providers } from "near-api-js";
 import * as v from "valibot";
 import type { MultiPayload } from "./shared-types";
-import { computeMultiPayloadHash } from "./intent-hash";
+import { computeIntentHash } from "./intent-hash";
 
-describe("computeMultiPayloadHash()", () => {
+describe("computeIntentHash()", () => {
 	it("computes hash for ERC-191 standard with non ASCII character (é in café)", async () => {
 		const multiPayload: MultiPayload = {
 			standard: "erc191",
@@ -15,7 +15,7 @@ describe("computeMultiPayloadHash()", () => {
 				"secp256k1:CvkU692XuyALYxSDvrpFviJozq5DPrwADzqqV6DA1DDAPy93PaBvWPEngZzREqJetbLpBEmYSV7Joo61yXKXAoJ3i",
 		};
 
-		const hash = await computeMultiPayloadHash(multiPayload);
+		const hash = await computeIntentHash(multiPayload);
 		expect(hash).toEqual("APvv5zuHPLuSG4xwe24FiyCdiWVXVbkyfkXBBjGy5xJL");
 	});
 
@@ -93,7 +93,7 @@ describe("computeMultiPayloadHash()", () => {
 	] satisfies MultiPayload[])(
 		"computes hash (case %#)",
 		async (multiPayload) => {
-			const hash = await computeMultiPayloadHash(multiPayload);
+			const hash = await computeIntentHash(multiPayload);
 			const expected = await sim(multiPayload);
 			expect(hash).toEqual(expected);
 		},
