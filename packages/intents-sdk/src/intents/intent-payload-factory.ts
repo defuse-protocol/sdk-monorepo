@@ -1,7 +1,7 @@
 import { VersionedNonceBuilder, type Salt } from "./expirable-nonce";
 import type { IntentPayload } from "./shared-types";
 
-const DEFAULT_DEADLINE_MS = 60 * 1000; // 1 minute
+export const DEFAULT_DEADLINE_MS = 60 * 1000; // 1 minute
 
 export function defaultIntentPayloadFactory(
 	salt: Salt,

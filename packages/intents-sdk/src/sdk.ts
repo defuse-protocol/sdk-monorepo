@@ -64,6 +64,7 @@ import type {
 import type { ISaltManager } from "./intents/interfaces/salt-manager";
 import { SaltManager } from "./intents/salt-manager";
 import type { Salt } from "./intents/expirable-nonce";
+import { IntentPayloadBuilder } from "./intents/intent-payload-builder";
 
 export interface IntentsSDKConfig {
 	env?: NearIntentsEnv;
@@ -159,6 +160,37 @@ export class IntentsSDK implements IIntentsSDK {
 
 	public setIntentSigner(signer: IIntentSigner) {
 		this.intentSigner = signer;
+	}
+
+	/**
+	 * Create a new intent payload builder with environment context.
+	 * Use this to build custom intent payloads for your API or advanced use cases.
+	 *
+	 * @returns A new IntentPayloadBuilder instance configured with the SDK's environment
+	 *
+	 * @example
+	 * ```typescript
+	 * // Build a custom intent payload
+	 * const payload = await sdk.intentBuilder()
+	 *   .setSigner('0x1234...') // User's EVM address
+	 *   .setDeadline(new Date(Date.now() + 5 * 60 * 1000))
+	 *   .addIntent({
+	 *     intent: 'ft_withdraw',
+	 *     token: 'usdc.omft.near',
+	 *     amount: '1000000',
+	 *     receiver_id: 'user.near'
+	 *   })
+	 *   .build();
+	 *
+	 * // Return to user for signing with their preferred method (MetaMask, etc.)
+	 * return payload;
+	 * ```
+	 */
+	public intentBuilder(): IntentPayloadBuilder {
+		return new IntentPayloadBuilder({
+			env: this.env,
+			saltManager: this.saltManager,
+		});
 	}
 
 	public async createWithdrawalIntents(args: {

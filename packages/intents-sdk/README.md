@@ -19,6 +19,7 @@ interacting with various bridge implementations across multiple blockchains.
 - [Advanced Usage](#advanced-usage)
     - [Custom RPC URLs](#custom-rpc-urls)
     - [Other Intent Signers](#other-intent-signers)
+    - [Intent Payload Builder](#intent-payload-builder)
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
     - [Intent Management](#intent-management)
@@ -401,6 +402,23 @@ const signer = createIntentSignerViem({ signer: account });
 
 // Set the signer at runtime
 sdk.setIntentSigner(signer);
+```
+
+### Intent Payload Builder
+
+For API builders who need to generate intent payloads based on user metadata (e.g., generating payloads server-side for users to sign with MetaMask), the SDK provides a fluent `IntentPayloadBuilder`:
+
+```typescript
+// Build an intent payload for your users
+const payload = await sdk.intentBuilder()
+    .setSigner('0x742d35cc6634c0532925a3b8d84b2021f90a51a3') // User's EVM address
+    .setDeadline(new Date(Date.now() + 5 * 60 * 1000)) // 5 minutes
+    .addIntent({
+        intent: "transfer",
+        tokens: { "token.near": "100" },
+        receiver_id: "receiver.near",
+    })
+    .build();
 ```
 
 ### Intent Publishing Hooks
