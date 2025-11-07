@@ -299,10 +299,12 @@ export class OmniBridge implements Bridge {
 			});
 		}
 
+		// args.feeEstimation.quote === null  only for withdrawing nep141:wrap.near
 		const nativeFee =
 			(args.feeEstimation.quote === null
 				? args.feeEstimation.amount
-				: BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
+				: // args.feeEstimation.quote.amount_out is always nep141:wrap.near
+					BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
 
 		assert(
 			nativeFee >= 0n,
@@ -468,13 +470,15 @@ export class OmniBridge implements Bridge {
 			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
 		}
 
+		let totalAmountToQuote = fee.native_token_fee;
+
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const totalAmountToQuote =
-			fee.native_token_fee +
-			(minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n);
+
+		if (minStorageBalance > currentStorageBalance) {
+			totalAmountToQuote += minStorageBalance - currentStorageBalance;
+		}
+
 		// withdraw of nep141:wrap.near
 		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
@@ -493,8 +497,23 @@ export class OmniBridge implements Bridge {
 			solverRelayApiKey: this.solverRelayApiKey,
 		});
 
+		let amount = BigInt(quote.amount_in);
+		// For btc withdrawal we also need to take into consideration
+		// max_gas_fee - max amount of BTC that can be spent on gas in Bitcoin network
+		// protocol_fee - fee taken by the relayer
+		if (omniChainKind === ChainKind.Btc) {
+			assert(
+				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
+				"Invalid max_gas_fee value returned from omni bridge api for BTC withdrawal",
+			);
+			assert(
+				fee.protocol_fee !== null && fee.protocol_fee !== undefined,
+				"Invalid protocol_fee value returned from omni bridge api for BTC withdrawal",
+			);
+			amount += fee.max_gas_fee + fee.protocol_fee;
+		}
 		return {
-			amount: BigInt(quote.amount_in),
+			amount,
 			quote,
 		};
 	}
