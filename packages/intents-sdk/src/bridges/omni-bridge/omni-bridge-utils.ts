@@ -46,7 +46,11 @@ export function createWithdrawIntentsPrimitive(params: {
 		fee: "0",
 		native_token_fee: params.nativeFee.toString(),
 	};
-	// For withdrawals to Bitcoin
+	// For withdrawals to Bitcoin we need to specify maxGasFee to the relayer
+	// that is picking up our TX and sends it to btc connector.
+	// Technically we can avoid specifying it in the message and relayer just takes the same value
+	// however this introduces a risk that a maclicious actor can pick up this tx and submit it to the btc connector
+	// with big max gas fee value that will result in recipient getting less BTC.
 	if (params.maxGasFee > 0n && params.omniChainKind === ChainKind.Btc) {
 		msg = JSON.stringify({
 			// update after contract update on mainnet

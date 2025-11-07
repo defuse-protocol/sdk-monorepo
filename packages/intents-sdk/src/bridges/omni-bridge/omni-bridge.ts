@@ -421,6 +421,8 @@ export class OmniBridge implements Bridge {
 		if (omniChainKind === ChainKind.Btc) {
 			const config = await getBtcBridgeConfig(this.nearProvider);
 			// args.amount is without fee
+			// BTC connector that actually do the withdrawal has a custom
+			// min withdraw amount which is not harcoded and can be updated in the contract.
 			const minAmount = BigInt(config.min_withdraw_amount);
 			if (args.amount < minAmount) {
 				throw new MinWithdrawalAmountError(
