@@ -56,7 +56,6 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Gnosis:
 		case Chains.Polygon:
 		case Chains.LayerX:
-		case Chains.HyperEVM:
 		case Chains.Base:
 		case Chains.Arbitrum:
 		case Chains.Avalanche:
