@@ -507,7 +507,7 @@ export class OmniBridge implements Bridge {
 				"Invalid max_gas_fee value returned from omni bridge api for BTC withdrawal",
 			);
 			assert(
-				fee.max_gas_fee >= 0n,
+				fee.max_gas_fee > 0n,
 				`Invalid max_gas_fee value ${fee.max_gas_fee}`,
 			);
 			assert(
