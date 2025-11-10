@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.32.0
+
+### Minor Changes
+
+- 00f0115: Add Litecoin and LayerX support.
+
+### Patch Changes
+
+- Updated dependencies [00f0115]
+  - @defuse-protocol/internal-utils@0.19.0
+
 ## 0.31.0
 
 ### Minor Changes

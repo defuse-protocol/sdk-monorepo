@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.19.0
+
+### Minor Changes
+
+- 00f0115: Add Litecoin and LayerX support.
+
 ## 0.18.3
 
 ### Patch Changes
