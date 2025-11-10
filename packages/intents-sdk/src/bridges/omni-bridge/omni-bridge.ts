@@ -500,7 +500,7 @@ export class OmniBridge implements Bridge {
 		let amount = BigInt(quote.amount_in);
 		// For btc withdrawal we also need to take into consideration
 		// max_gas_fee - max amount of BTC that can be spent on gas in Bitcoin network
-		// protocol_fee - fee taken by the relayer
+		// protocol_fee - constant fee taken by the relayer
 		if (omniChainKind === ChainKind.Btc) {
 			assert(
 				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
