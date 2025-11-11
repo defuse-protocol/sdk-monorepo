@@ -10,6 +10,7 @@ export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChain, string[]> = {
 	[Chains.Polygon]: ["https://polygon-bor-rpc.publicnode.com"],
 	[Chains.Optimism]: ["https://optimism-rpc.publicnode.com"],
 	[Chains.Avalanche]: ["https://avalanche-c-chain-rpc.publicnode.com"],
+	[Chains.LayerX]: ["https://rpc.xlayer.tech"],
 };
 
 export const PUBLIC_STELLAR_RPC_URLS: RPCEndpointMap[typeof Chains.Stellar] = {

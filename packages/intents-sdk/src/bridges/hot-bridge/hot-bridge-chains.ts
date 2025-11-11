@@ -10,6 +10,7 @@ export const HotBridgeChains = [
 	Chains.Optimism,
 	Chains.Avalanche,
 	Chains.Stellar,
+	Chains.LayerX,
 ];
 
 export const HotBridgeEVMChains = HotBridgeChains.filter<

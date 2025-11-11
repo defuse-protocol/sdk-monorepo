@@ -11,6 +11,7 @@ const nativeTokenMapping: Record<HotBridgeChain, string> = {
 	[Chains.Avalanche]: "nep245:v2_1.omni.hot.tg:43114_11111111111111111111",
 	[Chains.Stellar]:
 		"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+	[Chains.LayerX]: "nep245:v2_1.omni.hot.tg:196_11111111111111111111",
 };
 
 const caip2NetworkIdMapping: Record<HotBridgeChain, Network> = {
@@ -20,6 +21,7 @@ const caip2NetworkIdMapping: Record<HotBridgeChain, Network> = {
 	[Chains.Optimism]: Network.Optimism,
 	[Chains.Avalanche]: Network.Avalanche,
 	[Chains.Stellar]: Network.Stellar,
+	[Chains.LayerX]: Network.Xlayer,
 };
 
 const networkIdCAIP2Mapping: Partial<Record<Network, HotBridgeChain>> =
