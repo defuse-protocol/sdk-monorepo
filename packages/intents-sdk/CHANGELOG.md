@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.32.1
+
+### Patch Changes
+
+- 0199fb6: fix litecoin withdrawal
+
 ## 0.32.0
 
 ### Minor Changes
