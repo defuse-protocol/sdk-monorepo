@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.32.2
+
+### Patch Changes
+
+- 8cfa8a4: fix xlayer
+
 ## 0.32.1
 
 ### Patch Changes
