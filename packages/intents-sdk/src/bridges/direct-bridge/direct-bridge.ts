@@ -128,9 +128,7 @@ export class DirectBridge implements Bridge {
 			assetId: args.withdrawalParams.assetId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
-			storageDeposit: args.feeEstimation.quote
-				? BigInt(args.feeEstimation.quote.amount_out)
-				: args.feeEstimation.amount,
+			storageDeposit: args.feeEstimation.feeBreakdown?.storageDeposit ?? 0n,
 			msg: args.withdrawalParams.routeConfig?.msg,
 		});
 
@@ -223,10 +221,13 @@ export class DirectBridge implements Bridge {
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});
-
+		const storageDepositFee = feeQuote ? BigInt(feeQuote.amount_in) : feeAmount;
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: storageDepositFee,
 			quote: feeQuote,
+			feeBreakdown: {
+				storageDeposit: storageDepositFee,
+			},
 		};
 	}
 

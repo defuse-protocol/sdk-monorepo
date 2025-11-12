@@ -175,10 +175,13 @@ export class PoaBridge implements Bridge {
 				logger: args.logger,
 			},
 		);
-
+		const poaBridgeFee = BigInt(estimation.withdrawalFee);
 		return {
-			amount: BigInt(estimation.withdrawalFee),
+			amount: poaBridgeFee,
 			quote: null,
+			feeBreakdown: {
+				poaBridgeFee,
+			},
 		};
 	}
 

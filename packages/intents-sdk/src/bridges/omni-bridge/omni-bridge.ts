@@ -45,7 +45,7 @@ import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
-	FailedToFetchFeeError,
+	InvalidOmniNativeFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 } from "./error";
 import {
@@ -255,12 +255,6 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-		const [minStorageBalance, currentStorageBalance] =
-			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const storageDepositAmount =
-			minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n;
 
 		const intents: IntentPrimitive[] = [];
 
@@ -276,17 +270,11 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-
-		const nativeFee =
-			(args.feeEstimation.quote === null
-				? args.feeEstimation.amount
-				: BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
-
+		const nativeFee = args.feeEstimation.feeBreakdown?.omniRelayerNativeFee;
 		assert(
-			nativeFee >= 0n,
-			`Native fee cannot be negative. Storage deposit amount (${storageDepositAmount}) exceeds fee estimation (${args.feeEstimation.quote === null ? args.feeEstimation.amount : BigInt(args.feeEstimation.quote.amount_out)}). This may indicate a race condition where storage balance changed between fee estimation and intent creation.`,
+			nativeFee !== undefined && nativeFee > 0n,
+			`Native fee must be a big int greater than zero. Current value is ${nativeFee}`,
 		);
-
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
@@ -294,11 +282,9 @@ export class OmniBridge implements Bridge {
 				amount: args.withdrawalParams.amount,
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
-				// we need to calculate relayer fee
-				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
-				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
 				nativeFee,
-				storageDepositAmount,
+				storageDepositAmount:
+					args.feeEstimation.feeBreakdown?.storageDeposit ?? 0n,
 			}),
 		);
 
@@ -426,22 +412,32 @@ export class OmniBridge implements Bridge {
 			omniAddress(ChainKind.Near, assetInfo.contractId),
 		);
 
-		if (fee.native_token_fee === null) {
-			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
+		if (fee.native_token_fee === null || fee.native_token_fee <= 0n) {
+			throw new InvalidOmniNativeFeeValueError(
+				args.withdrawalParams.assetId,
+				fee.native_token_fee,
+			);
 		}
+
+		let totalAmountToQuote = fee.native_token_fee;
 
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const totalAmountToQuote =
-			fee.native_token_fee +
-			(minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n);
+
+		const storageDepositFee = minStorageBalance - currentStorageBalance;
+		if (storageDepositFee > 0n) {
+			totalAmountToQuote += storageDepositFee;
+		}
+
 		// withdraw of nep141:wrap.near
 		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
 				amount: totalAmountToQuote,
 				quote: null,
+				feeBreakdown: {
+					storageDeposit: storageDepositFee,
+					omniRelayerNativeFee: fee.native_token_fee,
+				},
 			};
 		}
 
@@ -458,6 +454,10 @@ export class OmniBridge implements Bridge {
 		return {
 			amount: BigInt(quote.amount_in),
 			quote,
+			feeBreakdown: {
+				storageDeposit: storageDepositFee,
+				omniRelayerNativeFee: fee.native_token_fee,
+			},
 		};
 	}
 

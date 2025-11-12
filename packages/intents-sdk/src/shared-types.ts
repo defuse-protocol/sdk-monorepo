@@ -271,9 +271,20 @@ export type RouteConfig =
 	| HotBridgeRouteConfig
 	| OmniBridgeRouteConfig;
 
+export type FeeTypes =
+	| "hotBridgeFee"
+	| "poaBridgeFee"
+	| "storageDeposit"
+	| "omniRelayerNativeFee"
+	| "utxoProtocolFee"
+	| "utxoMaxGasFee";
+
 export interface FeeEstimation {
 	amount: bigint;
 	quote: null | solverRelay.Quote;
+	feeBreakdown?: {
+		[key in FeeTypes]?: bigint;
+	};
 }
 
 export interface Bridge {
