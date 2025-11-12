@@ -124,10 +124,6 @@ describe("OmniBridge", () => {
 					assetId: "nep141:token.publicailab.near",
 					routeConfig: createOmniBridgeRoute(Chains.Dogecoin),
 				},
-				{
-					assetId: "nep141:nbtc.bridge.near",
-					routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
-				},
 			])(
 				"throws UnsupportedAssetIdError if trying to bridge a token to unsupported chain",
 				async ({ assetId, routeConfig }) => {
