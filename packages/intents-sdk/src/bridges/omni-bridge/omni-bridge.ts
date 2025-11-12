@@ -418,7 +418,9 @@ export class OmniBridge implements Bridge {
 				fee.native_token_fee,
 			);
 		}
-
+		const feeBreakdown: FeeEstimation["feeBreakdown"] = {
+			omniRelayerNativeFee: fee.native_token_fee,
+		};
 		let totalAmountToQuote = fee.native_token_fee;
 
 		const [minStorageBalance, currentStorageBalance] =
@@ -427,6 +429,7 @@ export class OmniBridge implements Bridge {
 		const storageDepositFee = minStorageBalance - currentStorageBalance;
 		if (storageDepositFee > 0n) {
 			totalAmountToQuote += storageDepositFee;
+			feeBreakdown.storageDeposit = storageDepositFee;
 		}
 
 		// withdraw of nep141:wrap.near
@@ -434,10 +437,7 @@ export class OmniBridge implements Bridge {
 			return {
 				amount: totalAmountToQuote,
 				quote: null,
-				feeBreakdown: {
-					storageDeposit: storageDepositFee,
-					omniRelayerNativeFee: fee.native_token_fee,
-				},
+				feeBreakdown,
 			};
 		}
 
@@ -454,10 +454,7 @@ export class OmniBridge implements Bridge {
 		return {
 			amount: BigInt(quote.amount_in),
 			quote,
-			feeBreakdown: {
-				storageDeposit: storageDepositFee,
-				omniRelayerNativeFee: fee.native_token_fee,
-			},
+			feeBreakdown,
 		};
 	}
 
