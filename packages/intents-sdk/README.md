@@ -434,6 +434,9 @@ const salt_hex = await account.viewFunction({
   methodName: "current_salt",
 });
 
+// Example: 5-minute deadline, but actual deadline should not be grater than intent deadline
+const deadline = new Date(Date.now() + 5 * 60 * 1000)
+
 // Create versioned nonce from salt and deadline
 const versionedNonce = VersionedNonceBuilder.encodeNonce(
   Uint8Array.from(Buffer.from(salt_hex, "hex")),
@@ -441,7 +444,7 @@ const versionedNonce = VersionedNonceBuilder.encodeNonce(
 );
 
 // Create intent builder with specified nonce
-const builder = await sdk.intentBuilder().setNonce(nonce);
+const builder = await sdk.intentBuilder().setNonce(versionedNonce);
 ```
 
 
