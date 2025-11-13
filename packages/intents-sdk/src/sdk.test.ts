@@ -8,7 +8,6 @@ import {
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
-import { RouteEnum } from "./constants/route-enum";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
