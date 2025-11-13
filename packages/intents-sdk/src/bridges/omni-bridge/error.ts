@@ -63,7 +63,7 @@ export class InvalidOmniNativeFeeValueError extends BaseError {
 		public token: string,
 		value: unknown,
 	) {
-		super(`Invalid native token fee value`, {
+		super(`Invalid omni native token fee value`, {
 			metaMessages: [`Token: ${token}`, `Native token fee value: ${value}`],
 			name: "InvalidOmniNativeFeeValueError",
 		});
