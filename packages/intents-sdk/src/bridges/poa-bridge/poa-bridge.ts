@@ -179,9 +179,12 @@ export class PoaBridge implements Bridge {
 		return {
 			amount: poaBridgeFee,
 			quote: null,
-			feeBreakdown: {
-				poaBridgeFee,
-			},
+			feeBreakdown:
+				poaBridgeFee > 0n
+					? {
+							poaBridgeFee,
+						}
+					: null,
 		};
 	}
 

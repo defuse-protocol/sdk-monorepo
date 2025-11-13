@@ -163,6 +163,7 @@ export class AuroraEngineBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				feeBreakdown: null,
 			};
 		}
 

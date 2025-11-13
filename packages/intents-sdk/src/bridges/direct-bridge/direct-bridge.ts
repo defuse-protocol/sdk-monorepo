@@ -191,6 +191,7 @@ export class DirectBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				feeBreakdown: null,
 			};
 
 		const [minStorageBalance, userStorageBalance] =
@@ -203,6 +204,7 @@ export class DirectBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				feeBreakdown: null,
 			};
 		}
 

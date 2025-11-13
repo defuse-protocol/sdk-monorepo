@@ -266,14 +266,11 @@ export class HotBridge implements Bridge {
 						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
-		const result: FeeEstimation = {
+		return {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : hotBridgeFee,
 			quote: feeQuote,
+			feeBreakdown: hotBridgeFee > 0n ? { hotBridgeFee } : null,
 		};
-		if (hotBridgeFee > 0n) {
-			result.feeBreakdown = { hotBridgeFee };
-		}
-		return result;
 	}
 
 	async waitForWithdrawalCompletion(args: {

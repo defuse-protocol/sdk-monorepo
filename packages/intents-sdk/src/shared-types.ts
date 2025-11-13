@@ -292,9 +292,11 @@ export type FeeTypes =
 export interface FeeEstimation {
 	amount: bigint;
 	quote: null | solverRelay.Quote;
-	feeBreakdown?: {
-		[key in FeeTypes]?: bigint;
-	};
+	feeBreakdown:
+		| null
+		| {
+				[key in FeeTypes]?: bigint;
+		  };
 }
 
 export interface Bridge {
