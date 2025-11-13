@@ -207,13 +207,13 @@ export class DirectBridge implements Bridge {
 		}
 
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
-		const feeAmount = minStorageBalance - userStorageBalance;
+		const storageDepositAmount = minStorageBalance - userStorageBalance;
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
 				? null
 				: await getFeeQuote({
-						feeAmount,
+						feeAmount: storageDepositAmount,
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
@@ -221,12 +221,12 @@ export class DirectBridge implements Bridge {
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});
-		const storageDepositFee = feeQuote ? BigInt(feeQuote.amount_in) : feeAmount;
+
 		return {
-			amount: storageDepositFee,
+			amount: feeQuote ? BigInt(feeQuote.amount_in) : storageDepositAmount,
 			quote: feeQuote,
 			feeBreakdown: {
-				storageDeposit: storageDepositFee,
+				storageDeposit: storageDepositAmount,
 			},
 		};
 	}

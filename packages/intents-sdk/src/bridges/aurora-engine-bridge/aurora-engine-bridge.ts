@@ -167,13 +167,13 @@ export class AuroraEngineBridge implements Bridge {
 		}
 
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
-		const feeAmount = minStorageBalance - userStorageBalance;
+		const storageDepositAmount = minStorageBalance - userStorageBalance;
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
 				? null
 				: await getFeeQuote({
-						feeAmount,
+						feeAmount: storageDepositAmount,
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
@@ -182,14 +182,11 @@ export class AuroraEngineBridge implements Bridge {
 						solverRelayApiKey: this.solverRelayApiKey,
 					});
 
-		const storageDepositFeeAmount = feeQuote
-			? BigInt(feeQuote.amount_in)
-			: feeAmount;
 		return {
-			amount: storageDepositFeeAmount,
+			amount: feeQuote ? BigInt(feeQuote.amount_in) : storageDepositAmount,
 			quote: feeQuote,
 			feeBreakdown: {
-				storageDeposit: storageDepositFeeAmount,
+				storageDeposit: storageDepositAmount,
 			},
 		};
 	}

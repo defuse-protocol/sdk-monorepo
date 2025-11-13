@@ -245,7 +245,7 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee({
+		const { gasPrice: hotBridgeFee } = await this.hotSdk.getGaslessWithdrawFee({
 			chain: toHotNetworkId(assetInfo.blockchain),
 			token: "native" in assetInfo ? "native" : assetInfo.address,
 			receiver: args.withdrawalParams.destinationAddress,
@@ -254,10 +254,10 @@ export class HotBridge implements Bridge {
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
+			args.withdrawalParams.assetId === feeAssetId || hotBridgeFee === 0n
 				? null
 				: await getFeeQuote({
-						feeAmount,
+						feeAmount: hotBridgeFee,
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
@@ -265,9 +265,9 @@ export class HotBridge implements Bridge {
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});
-		const hotBridgeFee = feeQuote ? BigInt(feeQuote.amount_in) : feeAmount;
+
 		const result: FeeEstimation = {
-			amount: hotBridgeFee,
+			amount: feeQuote ? BigInt(feeQuote.amount_in) : hotBridgeFee,
 			quote: feeQuote,
 		};
 		if (hotBridgeFee > 0n) {
