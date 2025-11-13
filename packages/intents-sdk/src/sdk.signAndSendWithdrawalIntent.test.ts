@@ -16,7 +16,7 @@ describe("sdk.signAndSendWithdrawalIntent()", () => {
 		feeInclusive: true,
 		routeConfig: createInternalTransferRoute(),
 	};
-	const fee = { amount: 0n, quote: null };
+	const fee = { amount: 0n, quote: null, feeBreakdown: null };
 
 	it("supports single withdrawal", async () => {
 		const { sdk, intentRelayer, defaultIntentSigner } = setupMocks();

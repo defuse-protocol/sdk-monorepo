@@ -204,6 +204,9 @@ describe("OmniBridge", () => {
 						feeEstimation: {
 							amount: 25_000_000_000n,
 							quote: null,
+							feeBreakdown: {
+								omniRelayerNativeFee: 25_000_000_000n,
+							},
 						},
 						routeConfig,
 					}),
@@ -242,6 +245,9 @@ describe("OmniBridge", () => {
 						feeEstimation: {
 							amount: 25_000_000_000n,
 							quote: null,
+							feeBreakdown: {
+								omniRelayerNativeFee: 25_000_000_000n,
+							},
 						},
 						routeConfig,
 					}),

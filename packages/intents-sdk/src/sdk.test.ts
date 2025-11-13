@@ -80,6 +80,9 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				feeBreakdown: {
+					poaBridgeFee: 1500n,
+				},
 			},
 		});
 
@@ -103,6 +106,9 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				feeBreakdown: {
+					poaBridgeFee: 1500n,
+				},
 			},
 		});
 
@@ -295,6 +301,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					feeBreakdown: null,
 				},
 			});
 
@@ -315,6 +322,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					feeBreakdown: null,
 				},
 			});
 
@@ -329,6 +337,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					feeBreakdown: null,
 				},
 			});
 
@@ -379,6 +388,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					feeBreakdown: null,
 				},
 			});
 
@@ -424,7 +434,7 @@ describe.concurrent.each([
 				feeInclusive: false,
 				routeConfig: createInternalTransferRoute(),
 			},
-			feeEstimation: { amount: 0n, quote: null },
+			feeEstimation: { amount: 0n, quote: null, feeBreakdown: null },
 		});
 
 		await expect(intents).resolves.toEqual([
@@ -584,6 +594,7 @@ describe.concurrent("near_withdrawal", () => {
 		const feeEstimation = {
 			amount: 0n,
 			quote: null,
+			feeBreakdown: null,
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -615,6 +626,7 @@ describe.concurrent("near_withdrawal", () => {
 		const feeEstimation = {
 			amount: 0n,
 			quote: null,
+			feeBreakdown: null,
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -646,13 +658,12 @@ describe.concurrent("near_withdrawal", () => {
 				amount: 700n,
 				destinationAddress: "hello.near",
 				feeInclusive: false,
-				routeConfig: {
-					route: RouteEnum.NearWithdrawal,
-				},
+				routeConfig: createNearWithdrawalRoute(),
 			},
 			feeEstimation: {
 				amount: 0n,
 				quote: null,
+				feeBreakdown: null,
 			},
 		});
 
@@ -908,6 +919,9 @@ describe.concurrent("omni_bridge", () => {
 				amount_out: "195753412200812731432960",
 				expiration_time: "2025-09-26T07:22:24.708Z",
 				quote_hash: "BTUmMusz94gpRVaVanpoM1gcyjS2rT3iDpwoyqrSQEG5",
+			},
+			feeBreakdown: {
+				omniRelayerNativeFee: 195753412200812731432960n,
 			},
 		};
 
