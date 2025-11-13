@@ -421,6 +421,30 @@ const payload = await sdk.intentBuilder()
     .build();
 ```
 
+### Versioned Nonce Builder
+
+By default, the nonce is generated during the intent construction process, but it is possible to generate and pass the nonce within the builder independently. All of the nonces have specific [requirements](https://github.com/near/intents/tree/main/defuse/README.md) for the structure reflecting their validity.
+
+```typescript
+import {VersionedNonceBuilder} from '@defuse-protocol/intents-sdk';
+
+// Fetch current salt from contract
+const salt_hex = await account.viewFunction({
+  contractId: "intents.near",
+  methodName: "current_salt",
+});
+
+// Create versioned nonce from salt and deadline
+const versionedNonce = VersionedNonceBuilder.encodeNonce(
+  Uint8Array.from(Buffer.from(salt_hex, "hex")),
+  deadline
+);
+
+// Create intent builder with specified nonce
+const builder = await sdk.intentBuilder().setNonce(nonce);
+```
+
+
 ### Intent Publishing Hooks
 
 Use the `onBeforePublishIntent` hook to intercept and process intent data before it's published to the relayer. This is
