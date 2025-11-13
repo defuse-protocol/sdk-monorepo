@@ -279,7 +279,7 @@ export type RouteConfig =
  * @property storageDeposit - fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token.
  * @property omniRelayerNativeFee - fee for transferring tokens via Omni Bridge to other supported blockchains, taken in wrap.near token.
  * @property utxoProtocolFee - fee taken when making a withdrawal via utxo connector (example - btc-connector.bridge.near), taken in transferred token.
- * @property utxoMaxGasFee - maximum amount of tokens that can be spent on gas when making a withdrawal via utxo connector (example - btc-connector.bridge.near), taken in transferred token..
+ * @property utxoMaxGasFee - maximum amount of tokens that can be spent on gas when making a withdrawal via utxo connector (example - btc-connector.bridge.near), taken in transferred token.
  */
 export type FeeTypes =
 	| "hotBridgeFee"
