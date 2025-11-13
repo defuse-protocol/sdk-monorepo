@@ -428,16 +428,16 @@ By default, the nonce is generated during the intent construction process, but i
 ```typescript
 import {VersionedNonceBuilder} from '@defuse-protocol/intents-sdk';
 
-// Fetch current salt from contract
-const salt_hex = await account.viewFunction({
+// Fetch current salt from the verifier contract
+const salt_hex = await nearRPC.viewFunction({
   contractId: "intents.near",
   methodName: "current_salt",
 });
 
-// Example: 5-minute deadline, but actual deadline should not be grater than intent deadline
+// Example: 5-minute deadline, but actual deadline should not be greater than intent's deadline
 const deadline = new Date(Date.now() + 5 * 60 * 1000)
 
-// Create versioned nonce from salt and deadline
+// Create ready to use versioned nonce from salt and deadline
 const versionedNonce = VersionedNonceBuilder.encodeNonce(
   Uint8Array.from(Buffer.from(salt_hex, "hex")),
   deadline
