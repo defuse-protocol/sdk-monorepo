@@ -419,6 +419,7 @@ describe.concurrent.each([
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			feeBreakdown: null,
 		});
 	});
 
