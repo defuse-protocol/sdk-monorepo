@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.3.1
+
+### Patch Changes
+
+- 2d38a96: Fix generating types for `webauthn` multipayload.
+
 ## 0.3.0
 
 ### Minor Changes
