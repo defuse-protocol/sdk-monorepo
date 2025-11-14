@@ -128,9 +128,7 @@ export class DirectBridge implements Bridge {
 			assetId: args.withdrawalParams.assetId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
-			storageDeposit: args.feeEstimation.quote
-				? BigInt(args.feeEstimation.quote.amount_out)
-				: args.feeEstimation.amount,
+			storageDeposit: args.feeEstimation.feeBreakdown?.storageDeposit ?? 0n,
 			msg: args.withdrawalParams.routeConfig?.msg,
 		});
 
@@ -193,6 +191,7 @@ export class DirectBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				feeBreakdown: null,
 			};
 
 		const [minStorageBalance, userStorageBalance] =
@@ -205,6 +204,7 @@ export class DirectBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				feeBreakdown: null,
 			};
 		}
 
@@ -227,6 +227,9 @@ export class DirectBridge implements Bridge {
 		return {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
 			quote: feeQuote,
+			feeBreakdown: {
+				storageDeposit: feeAmount,
+			},
 		};
 	}
 

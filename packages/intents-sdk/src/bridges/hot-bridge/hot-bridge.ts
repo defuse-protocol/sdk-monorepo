@@ -150,12 +150,10 @@ export class HotBridge implements Bridge {
 		}
 
 		const intents: IntentPrimitive[] = [];
-		let feeAmount: bigint;
+		const feeAmount: bigint =
+			args.feeEstimation.feeBreakdown?.hotBridgeFee ?? 0n;
 
-		if (args.feeEstimation.quote == null) {
-			feeAmount = args.feeEstimation.amount;
-		} else {
-			feeAmount = BigInt(args.feeEstimation.quote.amount_out);
+		if (args.feeEstimation.quote !== null) {
 			intents.push({
 				intent: "token_diff",
 				diff: {
@@ -271,6 +269,7 @@ export class HotBridge implements Bridge {
 		return {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
 			quote: feeQuote,
+			feeBreakdown: feeAmount > 0n ? { hotBridgeFee: feeAmount } : null,
 		};
 	}
 
