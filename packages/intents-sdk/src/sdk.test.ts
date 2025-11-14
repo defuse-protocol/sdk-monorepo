@@ -170,6 +170,9 @@ describe.concurrent("hot_bridge", () => {
 				expiration_time: expect.any(String),
 				quote_hash: expect.any(String),
 			},
+			feeBreakdown: {
+				hotBridgeFee: expect.any(BigInt),
+			},
 		});
 	});
 
@@ -267,6 +270,9 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).resolves.toEqual({
 				amount: expect.any(BigInt),
 				quote: null,
+				feeBreakdown: {
+					hotBridgeFee: expect.any(BigInt),
+				},
 			});
 		});
 
