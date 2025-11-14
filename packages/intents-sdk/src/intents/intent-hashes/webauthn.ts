@@ -22,6 +22,5 @@ export function computeWebAuthnHash(payload: string): Uint8Array {
 export function computeSignedWebAuthnHash(
 	signedPayload: Extract<MultiPayload, { standard: "webauthn" }>,
 ): Uint8Array {
-	// @ts-expect-error Types incorrectly inferred from ABI, it lacks `webauthn`.
 	return computeWebAuthnHash(signedPayload.payload);
 }
