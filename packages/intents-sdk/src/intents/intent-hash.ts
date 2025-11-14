@@ -60,7 +60,8 @@ export async function computeIntentHashHashBytes(
 				signed as Extract<MultiPayload, { standard: "sep53" }>,
 			);
 		default:
-			throw new Error(`Unknown payload standard: ${signed.standard}`);
+			standard satisfies never;
+			throw new Error(`Unknown payload standard: ${standard}`);
 	}
 }
 
