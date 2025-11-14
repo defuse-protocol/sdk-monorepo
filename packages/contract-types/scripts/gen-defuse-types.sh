@@ -3,7 +3,38 @@
 existing_json="./artifacts/defuse_contract_abi.json"
 type_output="./src/index.ts"
 
-jq_filter='.body.root_schema | del(.type) | .title = "Defuse Contract ABI"'
+# shellcheck disable=SC2016
+jq_filter='
+# Extract JSON Schema
+.body.root_schema
+
+# Get rid of unnecessary "type"
+| del(.type)
+
+# Set reasonable title
+| .title = "NEAR Intents Contract ABI"
+
+# Problem: WebAuthn definition includes "properties" and "onOf" together.
+#          Tools cannot resolve such ambiguity. So we separate them into
+#          two different definitions.
+| .definitions.MultiPayload.oneOf |= (
+      map(
+        if ((.properties.standard.enum // []) | contains(["webauthn"])) then
+          . as $webauthn |
+          $webauthn.anyOf | map(
+            {
+              type: "object",
+              description: .description,
+              required: ($webauthn.required + .required),
+              properties: ($webauthn.properties + .properties)
+            }
+          )
+        else
+          [.]
+        end
+      ) | flatten
+    )
+'
 
 # Ensure the output directory exists
 mkdir -p "$(dirname "$type_output")"
