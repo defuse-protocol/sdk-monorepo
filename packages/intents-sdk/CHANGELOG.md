@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.33.0
+
+### Minor Changes
+
+- d78f077: Add new `sdk.invalidateNonces()` method.
+
 ## 0.32.3
 
 ### Patch Changes
