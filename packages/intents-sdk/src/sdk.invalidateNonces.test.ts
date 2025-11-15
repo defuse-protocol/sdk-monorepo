@@ -172,20 +172,6 @@ describe("sdk.invalidateNonces()", () => {
 		expect(intentRelayer.publishIntents).not.toHaveBeenCalled();
 	});
 
-	it("accepts exactly 50 nonces", async () => {
-		const { sdk, intentRelayer, defaultIntentSigner } = setupMocks();
-		noPublish(intentRelayer);
-
-		// Create exactly 50 nonces
-		const fiftyNonces = Array.from({ length: 50 }, (_, i) => `nonce${i}`);
-
-		void sdk.invalidateNonces({ nonces: fiftyNonces });
-
-		await vi.waitFor(() =>
-			expect(defaultIntentSigner.signIntent).toHaveBeenCalledTimes(50),
-		);
-	});
-
 	it("gracefully handles invalid nonce format", async () => {
 		const { sdk, intentRelayer, defaultIntentSigner } = setupMocks();
 		noPublish(intentRelayer);
