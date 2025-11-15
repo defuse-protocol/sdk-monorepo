@@ -1,12 +1,27 @@
 import { base64 } from "@scure/base";
 import { serialize, deserialize } from "near-api-js/lib/utils/serialize";
 import type { Schema } from "near-api-js/lib/utils/serialize";
+import * as v from "valibot";
 
 //  Magic prefix (first 4 bytes of `sha256(<versioned_nonce>)`) used to mark versioned nonces
 export const VERSIONED_MAGIC_PREFIX = new Uint8Array([0x56, 0x28, 0xf6, 0xc6]);
 export const LATEST_VERSION = 0;
 
 export type Salt = Uint8Array;
+
+/**
+ * Schema for validating decoded salted nonce structure.
+ * The decoded value from `VersionedNonceBuilder.decodeNonce()` should match this structure.
+ */
+export const saltedNonceSchema = v.object({
+	salt: v.array(v.number()),
+	inner: v.object({
+		deadline: v.bigint(),
+		nonce: v.array(v.number()),
+	}),
+});
+
+export type SaltedNonceValue = v.InferOutput<typeof saltedNonceSchema>;
 
 class ExpirableNonce {
 	constructor(
