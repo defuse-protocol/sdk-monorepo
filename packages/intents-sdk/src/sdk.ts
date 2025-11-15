@@ -208,11 +208,9 @@ export class IntentsSDK implements IIntentsSDK {
 	 * 1. The nonce's embedded deadline (can't exceed this)
 	 * 2. 1 minute from now (for quick invalidation when possible)
 	 *
-	 * @param args.nonces - Array of nonce strings to invalidate (maximum 50 nonces per call)
+	 * @param args.nonces - Array of nonce strings to invalidate (up to 400 nonces per call, but depends on gas consumption)
 	 * @param args.signer - Optional intent signer to use (defaults to SDK's configured signer)
 	 * @param args.logger - Optional logger for debugging
-	 *
-	 * @throws {Error} If more than 50 nonces are provided (transaction would exceed gas limit)
 	 *
 	 * @example
 	 * ```typescript
