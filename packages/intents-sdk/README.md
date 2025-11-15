@@ -23,6 +23,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
     - [Intent Management](#intent-management)
+    - [Nonce Invalidation](#nonce-invalidation)
     - [Configure Withdrawal Routes](#configure-withdrawal-routes)
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
@@ -571,6 +572,17 @@ if (status.status === 'SETTLED') {
 - `TX_BROADCASTED` - Intent being processed, transaction broadcasted
 - `SETTLED` - Intent successfully completed
 - `NOT_FOUND_OR_NOT_VALID` - Intent not found or invalid, it isn't executed onchain
+
+### Nonce Invalidation
+
+Invalidate nonces to prevent execution of previously created intent payloads. Primarily used by **solvers** to revoke quotes due to price volatility, liquidity changes, or risk management.
+
+```typescript
+await sdk.invalidateNonces({
+    nonces: ['VigoxLwmUGf35MGLVBG9Fh5cCtJw3D68pSKFcqGCkHU='],
+    signer: customIntentSigner, // optional - uses SDK default if not provided
+});
+```
 
 ### Configure Withdrawal Routes
 
