@@ -47,7 +47,9 @@ describe.concurrent("poa_bridge", () => {
 			amount: 1500n,
 			quote: null,
 			underlyingFees: {
-				poaBridgeFee: expect.any(BigInt),
+				[RouteEnum.PoaBridge]: {
+					poaBridgeFee: expect.any(BigInt),
+				},
 			},
 		});
 	});
