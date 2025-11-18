@@ -24,6 +24,7 @@ import {
 	omniAddress,
 } from "omni-bridge-sdk";
 import type { FeeEstimation } from "./shared-types";
+import { RouteEnum } from "./constants/route-enum";
 
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
@@ -45,7 +46,7 @@ describe.concurrent("poa_bridge", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 1500n,
 			quote: null,
-			feeBreakdown: {
+			underlyingFees: {
 				poaBridgeFee: expect.any(BigInt),
 			},
 		});
@@ -79,8 +80,10 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
-				feeBreakdown: {
-					poaBridgeFee: 1500n,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						poaBridgeFee: 1500n,
+					},
 				},
 			},
 		});
@@ -105,8 +108,10 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
-				feeBreakdown: {
-					poaBridgeFee: 1500n,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						poaBridgeFee: 1500n,
+					},
 				},
 			},
 		});
@@ -135,8 +140,10 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
-				feeBreakdown: {
-					poaBridgeFee: 1600n,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						poaBridgeFee: 1600n,
+					},
 				},
 			},
 		});
@@ -170,8 +177,10 @@ describe.concurrent("hot_bridge", () => {
 				expiration_time: expect.any(String),
 				quote_hash: expect.any(String),
 			},
-			feeBreakdown: {
-				hotBridgeFee: expect.any(BigInt),
+			underlyingFees: {
+				[RouteEnum.HotBridge]: {
+					hotBridgeFee: expect.any(BigInt),
+				},
 			},
 		});
 	});
@@ -206,8 +215,10 @@ describe.concurrent("hot_bridge", () => {
 				expiration_time: "2025-07-22T03:52:23.747Z",
 				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
 			},
-			feeBreakdown: {
-				hotBridgeFee: 6600000024640000n,
+			underlyingFees: {
+				[RouteEnum.HotBridge]: {
+					hotBridgeFee: 6600000024640000n,
+				},
 			},
 		};
 
@@ -270,8 +281,10 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).resolves.toEqual({
 				amount: expect.any(BigInt),
 				quote: null,
-				feeBreakdown: {
-					hotBridgeFee: expect.any(BigInt),
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						hotBridgeFee: expect.any(BigInt),
+					},
 				},
 			});
 		});
@@ -306,7 +319,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					feeBreakdown: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -327,7 +340,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					feeBreakdown: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -342,7 +355,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					feeBreakdown: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -393,7 +406,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					feeBreakdown: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -425,7 +438,7 @@ describe.concurrent.each([
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
-			feeBreakdown: null,
+			underlyingFees: null,
 		});
 	});
 
@@ -440,7 +453,7 @@ describe.concurrent.each([
 				feeInclusive: false,
 				routeConfig: createInternalTransferRoute(),
 			},
-			feeEstimation: { amount: 0n, quote: null, feeBreakdown: null },
+			feeEstimation: { amount: 0n, quote: null, underlyingFees: null },
 		});
 
 		await expect(intents).resolves.toEqual([
@@ -477,8 +490,10 @@ describe.concurrent("near_withdrawal", () => {
 				expiration_time: expect.any(String),
 				quote_hash: expect.any(String),
 			},
-			feeBreakdown: {
-				storageDeposit: 1250000000000000000000n,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
 			},
 		});
 	});
@@ -499,8 +514,10 @@ describe.concurrent("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 1250000000000000000000n,
 			quote: null,
-			feeBreakdown: {
-				storageDeposit: 1250000000000000000000n,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
 			},
 		});
 	});
@@ -521,7 +538,7 @@ describe.concurrent("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
-			feeBreakdown: null,
+			underlyingFees: null,
 		});
 	});
 
@@ -541,7 +558,7 @@ describe.concurrent("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
-			feeBreakdown: null,
+			underlyingFees: null,
 		});
 	});
 
@@ -558,8 +575,10 @@ describe.concurrent("near_withdrawal", () => {
 				expiration_time: "2025-07-22T03:52:23.747Z",
 				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
 			},
-			feeBreakdown: {
-				storageDeposit: 1250000000000000000000n,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
 			},
 		};
 
@@ -600,7 +619,7 @@ describe.concurrent("near_withdrawal", () => {
 		const feeEstimation = {
 			amount: 0n,
 			quote: null,
-			feeBreakdown: null,
+			underlyingFees: null,
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -632,7 +651,7 @@ describe.concurrent("near_withdrawal", () => {
 		const feeEstimation = {
 			amount: 0n,
 			quote: null,
-			feeBreakdown: null,
+			underlyingFees: null,
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -669,7 +688,7 @@ describe.concurrent("near_withdrawal", () => {
 			feeEstimation: {
 				amount: 0n,
 				quote: null,
-				feeBreakdown: null,
+				underlyingFees: null,
 			},
 		});
 
@@ -701,8 +720,10 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(fee).resolves.toEqual({
 			amount: expect.any(BigInt),
-			feeBreakdown: {
-				omniRelayerNativeFee: expect.any(BigInt),
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: expect.any(BigInt),
+				},
 			},
 			quote: {
 				defuse_asset_identifier_in: "nep141:eth.bridge.near",
@@ -730,8 +751,10 @@ describe.concurrent("omni_bridge", () => {
 		await expect(fee).resolves.toEqual({
 			amount: expect.any(BigInt),
 			quote: null,
-			feeBreakdown: {
-				omniRelayerNativeFee: expect.any(BigInt),
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: expect.any(BigInt),
+				},
 			},
 		});
 	});
@@ -756,8 +779,10 @@ describe.concurrent("omni_bridge", () => {
 				expiration_time: "2025-09-26T06:41:05.827Z",
 				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
 			},
-			feeBreakdown: {
-				omniRelayerNativeFee: 32692131726749337649152n,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: 32692131726749337649152n,
+				},
 			},
 		};
 
@@ -831,8 +856,10 @@ describe.concurrent("omni_bridge", () => {
 				expiration_time: "2025-09-26T06:41:05.827Z",
 				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
 			},
-			feeBreakdown: {
-				omniRelayerNativeFee: 32692131726749337649152n,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: 32692131726749337649152n,
+				},
 			},
 		};
 
@@ -926,8 +953,10 @@ describe.concurrent("omni_bridge", () => {
 				expiration_time: "2025-09-26T07:22:24.708Z",
 				quote_hash: "BTUmMusz94gpRVaVanpoM1gcyjS2rT3iDpwoyqrSQEG5",
 			},
-			feeBreakdown: {
-				omniRelayerNativeFee: 195753412200812731432960n,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: 195753412200812731432960n,
+				},
 			},
 		};
 

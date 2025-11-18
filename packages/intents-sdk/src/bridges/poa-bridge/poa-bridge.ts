@@ -101,7 +101,8 @@ export class PoaBridge implements Bridge {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]> {
-		const poaBridgeFee = args.feeEstimation.feeBreakdown?.poaBridgeFee;
+		const poaBridgeFee =
+			args.feeEstimation.underlyingFees?.[RouteEnum.PoaBridge]?.poaBridgeFee;
 		assert(
 			poaBridgeFee !== undefined && poaBridgeFee > 0n,
 			"Invalid poa bridge fee, must be greater than zero.",
@@ -188,8 +189,10 @@ export class PoaBridge implements Bridge {
 		return {
 			amount: poaBridgeFee,
 			quote: null,
-			feeBreakdown: {
-				poaBridgeFee,
+			underlyingFees: {
+				[RouteEnum.PoaBridge]: {
+					poaBridgeFee,
+				},
 			},
 		};
 	}

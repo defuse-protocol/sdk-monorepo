@@ -270,7 +270,9 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-		const nativeFee = args.feeEstimation.feeBreakdown?.omniRelayerNativeFee;
+		const nativeFee =
+			args.feeEstimation.underlyingFees?.[RouteEnum.OmniBridge]
+				?.omniRelayerNativeFee;
 		assert(
 			nativeFee !== undefined && nativeFee > 0n,
 			`Native fee must be a big int greater than zero. Current value is ${nativeFee}`,
@@ -284,7 +286,8 @@ export class OmniBridge implements Bridge {
 				intentsContract: configsByEnvironment[this.env].contractID,
 				nativeFee,
 				storageDepositAmount:
-					args.feeEstimation.feeBreakdown?.storageDeposit ?? 0n,
+					args.feeEstimation.underlyingFees?.[RouteEnum.OmniBridge]
+						?.storageDepositFee ?? 0n,
 			}),
 		);
 
@@ -418,7 +421,9 @@ export class OmniBridge implements Bridge {
 				fee.native_token_fee,
 			);
 		}
-		const feeBreakdown: FeeEstimation["feeBreakdown"] = {
+		const underlyingFees: NonNullable<
+			FeeEstimation["underlyingFees"]
+		>[RouteEnum["OmniBridge"]] = {
 			omniRelayerNativeFee: fee.native_token_fee,
 		};
 		let totalAmountToQuote = fee.native_token_fee;
@@ -429,7 +434,7 @@ export class OmniBridge implements Bridge {
 		const storageDepositFee = minStorageBalance - currentStorageBalance;
 		if (storageDepositFee > 0n) {
 			totalAmountToQuote += storageDepositFee;
-			feeBreakdown.storageDeposit = storageDepositFee;
+			underlyingFees.storageDepositFee = storageDepositFee;
 		}
 
 		// withdraw of nep141:wrap.near
@@ -437,7 +442,9 @@ export class OmniBridge implements Bridge {
 			return {
 				amount: totalAmountToQuote,
 				quote: null,
-				feeBreakdown,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: underlyingFees,
+				},
 			};
 		}
 
@@ -454,7 +461,9 @@ export class OmniBridge implements Bridge {
 		return {
 			amount: BigInt(quote.amount_in),
 			quote,
-			feeBreakdown,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: underlyingFees,
+			},
 		};
 	}
 

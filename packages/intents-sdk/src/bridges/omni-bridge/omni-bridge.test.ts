@@ -12,6 +12,7 @@ import {
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
+import { RouteEnum } from "../../constants/route-enum";
 
 describe("OmniBridge", () => {
 	describe("without routeConfig", () => {
@@ -204,8 +205,10 @@ describe("OmniBridge", () => {
 						feeEstimation: {
 							amount: 25_000_000_000n,
 							quote: null,
-							feeBreakdown: {
-								omniRelayerNativeFee: 25_000_000_000n,
+							underlyingFees: {
+								[RouteEnum.OmniBridge]: {
+									omniRelayerNativeFee: 25_000_000_000n,
+								},
 							},
 						},
 						routeConfig,
@@ -245,8 +248,10 @@ describe("OmniBridge", () => {
 						feeEstimation: {
 							amount: 25_000_000_000n,
 							quote: null,
-							feeBreakdown: {
-								omniRelayerNativeFee: 25_000_000_000n,
+							underlyingFees: {
+								[RouteEnum.OmniBridge]: {
+									omniRelayerNativeFee: 25_000_000_000n,
+								},
 							},
 						},
 						routeConfig,
