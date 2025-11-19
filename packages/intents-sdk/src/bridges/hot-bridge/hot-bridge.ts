@@ -4,6 +4,7 @@ import {
 	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
+	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
@@ -46,20 +47,28 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
+import { DEFAULT_API_TIMEOUT } from "../../constants/api";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
-
+	protected apiTimeoutMs: number;
 	constructor({
 		env,
 		hotSdk,
 		solverRelayApiKey,
-	}: { env: NearIntentsEnv; hotSdk: HotSdk; solverRelayApiKey?: string }) {
+		apiTimeoutMs,
+	}: {
+		env: NearIntentsEnv;
+		hotSdk: HotSdk;
+		solverRelayApiKey?: string;
+		apiTimeoutMs?: number;
+	}) {
 		this.env = env;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -247,11 +256,15 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee({
-			chain: toHotNetworkId(assetInfo.blockchain),
-			token: "native" in assetInfo ? "native" : assetInfo.address,
-			receiver: args.withdrawalParams.destinationAddress,
-		});
+		const { gasPrice: feeAmount } = await withTimeout(
+			() =>
+				this.hotSdk.getGaslessWithdrawFee({
+					chain: toHotNetworkId(assetInfo.blockchain),
+					token: "native" in assetInfo ? "native" : assetInfo.address,
+					receiver: args.withdrawalParams.destinationAddress,
+				}),
+			{ timeout: this.apiTimeoutMs },
+		);
 
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
@@ -266,6 +279,7 @@ export class HotBridge implements Bridge {
 						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
+						timeout: this.apiTimeoutMs,
 					});
 
 		return {

@@ -7,17 +7,25 @@ import {
 import type { NearTxInfo } from "../../shared-types";
 import type { IIntentRelayer } from "../interfaces/intent-relayer";
 import type { IntentHash, MultiPayload } from "../shared-types";
+import { DEFAULT_API_TIMEOUT } from "../../constants/api";
 
 export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 	protected env: NearIntentsEnv;
 	protected solverRelayApiKey: string | undefined;
+	protected apiTimeoutMs: number;
 
 	constructor({
 		env,
 		solverRelayApiKey,
-	}: { env: NearIntentsEnv; solverRelayApiKey?: string }) {
+		apiTimeoutMs,
+	}: {
+		env: NearIntentsEnv;
+		solverRelayApiKey?: string;
+		apiTimeoutMs?: number;
+	}) {
 		this.env = env;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
 	}
 
 	async publishIntent(
@@ -62,6 +70,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger: ctx.logger,
 				solverRelayApiKey: this.solverRelayApiKey,
+				timeout: this.apiTimeoutMs,
 			},
 		);
 		if (result.isOk()) {
@@ -81,6 +90,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 			logger: ctx.logger,
 			solverRelayApiKey: this.solverRelayApiKey,
+			timeout: this.apiTimeoutMs,
 		});
 		return {
 			tx: {

@@ -35,6 +35,7 @@ export async function waitForWithdrawalCompletion({
 	baseURL,
 	retryOptions = RETRY_CONFIGS.TWO_MINS_GRADUAL,
 	logger,
+	timeout,
 }: {
 	txHash: string;
 	index?: number;
@@ -42,12 +43,13 @@ export async function waitForWithdrawalCompletion({
 	baseURL?: string;
 	retryOptions?: RetryOptions;
 	logger?: ILogger;
+	timeout?: number;
 }): Promise<WaitForWithdrawalCompletionOkType> {
 	return retry(
 		async () => {
 			const result = await getWithdrawalStatus(
 				{ withdrawal_hash: txHash },
-				{ baseURL, fetchOptions: { signal }, logger },
+				{ baseURL, fetchOptions: { signal }, logger, timeout },
 			);
 
 			const withdrawal = result.withdrawals[index];

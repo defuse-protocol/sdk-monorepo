@@ -19,6 +19,7 @@ export async function getFeeQuote({
 	env,
 	logger,
 	solverRelayApiKey,
+	timeout,
 }: {
 	feeAmount: bigint;
 	feeAssetId: string;
@@ -27,6 +28,7 @@ export async function getFeeQuote({
 	env: NearIntentsEnv;
 	logger?: ILogger;
 	solverRelayApiKey?: string;
+	timeout?: number;
 }): Promise<solverRelay.Quote> {
 	try {
 		return await solverRelay.getQuote({
@@ -44,6 +46,7 @@ export async function getFeeQuote({
 				logBalanceSufficient: false,
 				logger: logger,
 				solverRelayApiKey,
+				timeout,
 			},
 		});
 	} catch (err: unknown) {
@@ -55,7 +58,7 @@ export async function getFeeQuote({
 			"Can't get exact out quote, trying to get exact in quote with x1.2",
 		);
 
-		const prices = await tokens({ env });
+		const prices = await tokens({ env, timeout });
 		const feeAssetPrice = prices.items.find(
 			(t) => t.defuse_asset_id === feeAssetId,
 		);
@@ -101,6 +104,7 @@ export async function getFeeQuote({
 				logBalanceSufficient: false,
 				logger: logger,
 				solverRelayApiKey,
+				timeout,
 			},
 		});
 

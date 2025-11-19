@@ -33,9 +33,11 @@ import {
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
+import { DEFAULT_API_TIMEOUT } from "../../constants/api";
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
+	protected apiTimeoutMs: number;
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -43,8 +45,12 @@ export class PoaBridge implements Bridge {
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
 
-	constructor({ env }: { env: NearIntentsEnv }) {
+	constructor({
+		env,
+		apiTimeoutMs,
+	}: { env: NearIntentsEnv; apiTimeoutMs?: number }) {
 		this.env = env;
+		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
 	}
 
 	is(routeConfig: RouteConfig) {
@@ -173,6 +179,7 @@ export class PoaBridge implements Bridge {
 			{
 				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 				logger: args.logger,
+				timeout: this.apiTimeoutMs,
 			},
 		);
 
@@ -196,6 +203,7 @@ export class PoaBridge implements Bridge {
 			retryOptions: args.retryOptions,
 			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 			logger: args.logger,
+			timeout: this.apiTimeoutMs,
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
@@ -223,6 +231,7 @@ export class PoaBridge implements Bridge {
 			{
 				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 				logger,
+				timeout: this.apiTimeoutMs,
 			},
 		);
 

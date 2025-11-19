@@ -36,6 +36,7 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import { LRUCache } from "lru-cache";
+import { DEFAULT_API_TIMEOUT } from "../../constants/api";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -51,18 +52,22 @@ export class DirectBridge implements Bridge {
 		max: 100,
 		ttl: 3600000,
 	});
+	protected apiTimeoutMs: number;
 	constructor({
 		env,
 		nearProvider,
 		solverRelayApiKey,
+		apiTimeoutMs,
 	}: {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
 	}
 
 	is(routeConfig: RouteConfig) {
@@ -222,6 +227,7 @@ export class DirectBridge implements Bridge {
 						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
+						timeout: this.apiTimeoutMs,
 					});
 
 		return {

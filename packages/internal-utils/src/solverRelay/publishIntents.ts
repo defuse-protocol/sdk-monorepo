@@ -12,7 +12,7 @@ export async function publishIntents(
 	const [params, requestConfig] = args;
 	return solverRelayClient
 		.publishIntents(params, {
-			timeout: 30000,
+			timeout: requestConfig?.timeout ?? 30_000,
 			...requestConfig,
 			retryOptions: {
 				delay: 1000,

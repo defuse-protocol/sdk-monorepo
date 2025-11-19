@@ -7,6 +7,7 @@ import {
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
+	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -69,6 +70,7 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { DEFAULT_API_TIMEOUT } from "../../constants/api";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -88,20 +90,23 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
-
+	protected apiTimeoutMs: number;
 	constructor({
 		env,
 		nearProvider,
 		solverRelayApiKey,
+		apiTimeoutMs,
 	}: {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -420,10 +425,18 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
-		const fee = await this.omniBridgeAPI.getFee(
-			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
-			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
-			omniAddress(ChainKind.Near, assetInfo.contractId),
+		const fee = await withTimeout(
+			() =>
+				this.omniBridgeAPI.getFee(
+					omniAddress(
+						ChainKind.Near,
+						configsByEnvironment[this.env].contractID,
+					),
+					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+					omniAddress(ChainKind.Near, assetInfo.contractId),
+				),
+
+			{ timeout: this.apiTimeoutMs },
 		);
 
 		if (fee.native_token_fee === null) {
@@ -453,6 +466,7 @@ export class OmniBridge implements Bridge {
 			env: this.env,
 			quoteOptions: args.quoteOptions,
 			solverRelayApiKey: this.solverRelayApiKey,
+			timeout: this.apiTimeoutMs,
 		});
 
 		return {

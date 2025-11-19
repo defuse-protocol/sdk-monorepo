@@ -31,24 +31,29 @@ import {
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import { Chains } from "../../lib/caip2";
+import { DEFAULT_API_TIMEOUT } from "../../constants/api";
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
+	protected apiTimeoutMs: number;
 
 	constructor({
 		env,
 		nearProvider,
 		solverRelayApiKey,
+		apiTimeoutMs,
 	}: {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -182,6 +187,7 @@ export class AuroraEngineBridge implements Bridge {
 						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
+						timeout: this.apiTimeoutMs,
 					});
 
 		return {
