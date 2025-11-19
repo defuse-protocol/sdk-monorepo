@@ -3,7 +3,11 @@ import { IntentPayloadBuilder } from "./intent-payload-builder";
 import type { ISaltManager } from "./interfaces/salt-manager";
 import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "./shared-types";
-import { VersionedNonceBuilder } from "./expirable-nonce";
+import {
+	VersionedNonceBuilder,
+	type SaltedNonceValue,
+} from "./expirable-nonce";
+import { DEFAULT_NONCE_DEADLINE_OFFSET_MS } from "./intent-payload-factory";
 
 describe("IntentPayloadBuilder", () => {
 	let mockSaltManager: ISaltManager;
@@ -22,6 +26,12 @@ describe("IntentPayloadBuilder", () => {
 			saltManager: mockSaltManager,
 		});
 	});
+
+	function extractNonceDeadlineMs(nonce: string): number {
+		const decoded = VersionedNonceBuilder.decodeNonce(nonce);
+		const saltedNonce = decoded.value as SaltedNonceValue;
+		return Number(saltedNonce.inner.deadline / 1_000_000n);
+	}
 
 	describe("basic builder operations", () => {
 		it("creates a builder with correct environment", () => {
@@ -246,6 +256,26 @@ describe("IntentPayloadBuilder", () => {
 
 			// Payload should not be affected
 			expect(payload.intents).toHaveLength(1);
+		});
+
+		it("extends nonce deadline beyond payload deadline", () => {
+			const deadline = new Date("2025-12-31T23:59:59Z");
+			const payload = builder.setDeadline(deadline).buildWithSalt(testSalt);
+
+			const nonceDeadlineMs = extractNonceDeadlineMs(payload.nonce);
+			expect(nonceDeadlineMs).toBe(
+				deadline.getTime() + DEFAULT_NONCE_DEADLINE_OFFSET_MS,
+			);
+		});
+
+		it("applies nonce buffer when using default deadline", () => {
+			const payload = builder.buildWithSalt(testSalt);
+			const payloadDeadlineMs = new Date(payload.deadline).getTime();
+			const nonceDeadlineMs = extractNonceDeadlineMs(payload.nonce);
+
+			expect(nonceDeadlineMs - payloadDeadlineMs).toBe(
+				DEFAULT_NONCE_DEADLINE_OFFSET_MS,
+			);
 		});
 	});
 
