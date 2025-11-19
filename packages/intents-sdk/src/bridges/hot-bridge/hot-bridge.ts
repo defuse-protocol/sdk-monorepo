@@ -31,6 +31,7 @@ import type {
 	WithdrawalParams,
 } from "../../shared-types";
 import {
+	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalCancelledError,
 	HotWithdrawalNotFoundError,
 	HotWithdrawalPendingError,
@@ -263,7 +264,10 @@ export class HotBridge implements Bridge {
 					token: "native" in assetInfo ? "native" : assetInfo.address,
 					receiver: args.withdrawalParams.destinationAddress,
 				}),
-			{ timeout: this.apiTimeoutMs },
+			{
+				errorInstance: new HotWithdrawalApiFeeRequestTimeoutError(),
+				timeout: this.apiTimeoutMs,
+			},
 		);
 
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);

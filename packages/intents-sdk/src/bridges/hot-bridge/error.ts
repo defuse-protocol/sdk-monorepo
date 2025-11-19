@@ -44,3 +44,15 @@ export class HotWithdrawalCancelledError extends BaseError {
 		});
 	}
 }
+
+export type HotWithdrawalApiFeeRequestTimeoutErrorType =
+	HotWithdrawalApiFeeRequestTimeoutError & {
+		name: "HotWithdrawalApiFeeRequestTimeoutError";
+	};
+export class HotWithdrawalApiFeeRequestTimeoutError extends BaseError {
+	constructor() {
+		super("Hot bridge withdrawal fee request timed out.", {
+			name: "HotWithdrawalApiFeeRequestTimeout",
+		});
+	}
+}
