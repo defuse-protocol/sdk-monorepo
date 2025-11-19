@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.33.1
+
+### Patch Changes
+
+- 27a6923: Extend generated nonce deadlines by 30 seconds past intent deadlines so solvers can reliably invalidate soon-to-expire quotas.
+
 ## 0.33.0
 
 ### Minor Changes
