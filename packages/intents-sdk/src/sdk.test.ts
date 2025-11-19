@@ -1,6 +1,6 @@
 import { zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OMNI_BRIDGE_CONTRACT } from "./bridges/omni-bridge/omni-bridge-constants";
 import {
 	FeeExceedsAmountError,
@@ -427,11 +427,30 @@ describe.concurrent.each([
 	});
 });
 
-describe.concurrent("near_withdrawal", () => {
+describe("near_withdrawal", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
 	it("estimateWithdrawalFee(): returns fee", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const fee = sdk.estimateWithdrawalFee({
+		const quote = {
+			amount_in: "1000",
+			amount_out: "1250000000000000000000",
+			defuse_asset_identifier_in: "nep141:btc.omft.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			expiration_time: "",
+			quote_hash: "",
+		};
+		solverRelay.getQuote.mockResolvedValue(quote);
+
+		const fee = await sdk.estimateWithdrawalFee({
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
@@ -441,17 +460,7 @@ describe.concurrent("near_withdrawal", () => {
 			},
 		});
 
-		await expect(fee).resolves.toEqual({
-			amount: expect.any(BigInt),
-			quote: {
-				amount_in: expect.any(String),
-				amount_out: "1250000000000000000000",
-				defuse_asset_identifier_in: "nep141:btc.omft.near",
-				defuse_asset_identifier_out: "nep141:wrap.near",
-				expiration_time: expect.any(String),
-				quote_hash: expect.any(String),
-			},
-		});
+		expect(fee).toEqual({ amount: 1000n, quote });
 	});
 
 	it("estimateWithdrawalFee(): returns fee without quote for wrap.near with msg", async () => {
@@ -648,31 +657,43 @@ describe.concurrent("near_withdrawal", () => {
 	});
 });
 
-describe.concurrent("omni_bridge", () => {
+describe("omni_bridge", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
 	it("estimateWithdrawalFee(): should return fee", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const fee = sdk.estimateWithdrawalFee({
+		const quote = {
+			defuse_asset_identifier_in: "nep141:zec.omft.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			amount_in: "5",
+			amount_out: "7",
+			expiration_time: "0",
+			quote_hash: "mock-hash",
+		};
+
+		solverRelay.getQuote.mockResolvedValueOnce(quote);
+
+		const fee = await sdk.estimateWithdrawalFee({
 			withdrawalParams: {
-				assetId: "nep141:eth.bridge.near",
-				amount: 1000000000000000000n,
-				destinationAddress: zeroAddress,
+				assetId: "nep141:zec.omft.near",
+				amount: 10000n,
+				destinationAddress: "1nc1nerator11111111111111111111111111111111",
 				feeInclusive: false,
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			},
 		});
 
-		await expect(fee).resolves.toEqual({
-			amount: expect.any(BigInt),
-			quote: {
-				defuse_asset_identifier_in: "nep141:eth.bridge.near",
-				defuse_asset_identifier_out: "nep141:wrap.near",
-				amount_in: expect.any(String),
-				amount_out: expect.any(String),
-				expiration_time: expect.any(String),
-				quote_hash: expect.any(String),
-			},
-		});
+		expect(fee).toEqual({ amount: 5n, quote });
 	});
+
 	it("estimateWithdrawalFee(): should return fee without quote for withdrawal of nep141:wrap.near", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
@@ -764,6 +785,7 @@ describe.concurrent("omni_bridge", () => {
 			},
 		]);
 	});
+
 	it("createWithdrawalIntents(): returns valid intents array with feeInclusive = true", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({ referral, intentSigner });
@@ -838,7 +860,24 @@ describe.concurrent("omni_bridge", () => {
 	});
 
 	it("estimateWithdrawalFee(): rejects when amount is lower than fee", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+		const { FeeExceedsAmountError } = await import("./classes/errors");
+
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const quote = {
+			defuse_asset_identifier_in: "nep141:eth.bridge.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			amount_in: "99",
+			amount_out: "7",
+			expiration_time: "0",
+			quote_hash: "mock-hash",
+		};
+
+		solverRelay.getQuote.mockResolvedValueOnce(quote);
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -851,6 +890,7 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 	});
+
 	it("validateWithdrawal(): prevents transfers that normalize to zero after decimal adjustment", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 		// The NEP-141 token (token.publicailab.near) uses 18 decimals on NEAR,
@@ -934,3 +974,31 @@ describe("sdk.parseAssetId()", () => {
 		);
 	});
 });
+
+/**
+ * Use it for easy mocking of `solverRelay.getQuote()`
+ */
+async function useMockedSolverRelay() {
+	// Mock at runtime
+	vi.doMock("@defuse-protocol/internal-utils", async (importOriginal) => {
+		const actual =
+			await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+		return {
+			...actual,
+			solverRelay: {
+				...actual.solverRelay,
+				getQuote: vi.fn(),
+			},
+		};
+	});
+
+	// Import the mocked module
+	const { solverRelay } = await import("@defuse-protocol/internal-utils");
+
+	return {
+		getQuote: vi.mocked(solverRelay.getQuote),
+		[Symbol.dispose]() {
+			vi.doUnmock("@defuse-protocol/internal-utils");
+		},
+	};
+}

@@ -8,7 +8,10 @@ import type {
 	MultiPayload,
 } from "./shared-types";
 import type { IIntentSigner } from "./interfaces/intent-signer";
-import { DEFAULT_DEADLINE_MS } from "./intent-payload-factory";
+import {
+	DEFAULT_DEADLINE_MS,
+	DEFAULT_NONCE_DEADLINE_OFFSET_MS,
+} from "./intent-payload-factory";
 
 export interface IntentPayloadBuilderConfig {
 	env: NearIntentsEnv;
@@ -173,8 +176,12 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	buildWithSalt(salt: Salt): IntentPayloadWithSigner<HasSigner> {
 		const deadline =
 			this.deadline ?? new Date(Date.now() + DEFAULT_DEADLINE_MS);
+		const nonceDeadline = new Date(
+			deadline.getTime() + DEFAULT_NONCE_DEADLINE_OFFSET_MS,
+		);
 		const nonce =
-			this.customNonce ?? VersionedNonceBuilder.encodeNonce(salt, deadline);
+			this.customNonce ??
+			VersionedNonceBuilder.encodeNonce(salt, nonceDeadline);
 
 		return {
 			verifying_contract: this.verifyingContract,
