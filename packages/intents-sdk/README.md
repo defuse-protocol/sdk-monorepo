@@ -423,7 +423,7 @@ const payload = await sdk.intentBuilder()
 
 ### Versioned Nonce Builder
 
-By default, the nonce is generated during the intent construction process, but it is possible to generate and pass the nonce within the builder independently. All of the nonces have specific [requirements](https://github.com/near/intents/tree/main/defuse/README.md) for the structure reflecting their validity.
+By default, the nonce is generated during the intent construction process, but it is possible to generate and pass the nonce within the builder independently. All of the nonces have specific [requirements](https://github.com/near/intents/tree/main/defuse#nonces) for the structure reflecting their validity.
 
 ```typescript
 import {VersionedNonceBuilder} from '@defuse-protocol/intents-sdk';
