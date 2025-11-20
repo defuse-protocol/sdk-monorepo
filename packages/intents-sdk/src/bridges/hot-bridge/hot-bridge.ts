@@ -66,7 +66,6 @@ export class HotBridge implements Bridge {
 		env: NearIntentsEnv;
 		hotSdk: HotSdk;
 		solverRelayApiKey?: string;
-		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.hotSdk = hotSdk;

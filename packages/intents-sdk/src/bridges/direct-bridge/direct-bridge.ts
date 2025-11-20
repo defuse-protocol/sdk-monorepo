@@ -64,7 +64,6 @@ export class DirectBridge implements Bridge {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
-		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;

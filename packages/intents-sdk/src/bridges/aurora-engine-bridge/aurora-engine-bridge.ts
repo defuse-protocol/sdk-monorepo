@@ -50,7 +50,6 @@ export class AuroraEngineBridge implements Bridge {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
-		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;

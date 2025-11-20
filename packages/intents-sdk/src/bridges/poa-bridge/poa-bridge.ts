@@ -48,7 +48,7 @@ export class PoaBridge implements Bridge {
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
 
-	constructor({ env }: { env: NearIntentsEnv; apiTimeoutMs?: number }) {
+	constructor({ env }: { env: NearIntentsEnv }) {
 		this.env = env;
 		this.configuration = getSdkConfiguration();
 	}

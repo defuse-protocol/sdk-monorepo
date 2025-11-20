@@ -82,7 +82,6 @@ export interface IntentsSDKConfig {
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
 	solverRelayApiKey?: string;
-	apiTimeoutMs?: number;
 }
 
 export class IntentsSDK implements IIntentsSDK {
