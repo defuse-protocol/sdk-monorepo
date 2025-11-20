@@ -148,6 +148,12 @@ export interface IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<IntentSettlementStatus>;
 
+	invalidateNonces(args: {
+		nonces: string[];
+		signer?: IIntentSigner;
+		logger?: ILogger;
+	}): Promise<void>;
+
 	estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 		quoteOptions?: QuoteOptions;

@@ -23,6 +23,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
     - [Intent Management](#intent-management)
+    - [Nonce Invalidation](#nonce-invalidation)
     - [Configure Withdrawal Routes](#configure-withdrawal-routes)
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
@@ -422,6 +423,33 @@ const payload = await sdk.intentBuilder()
     .build();
 ```
 
+### Versioned Nonce Builder
+
+By default, the nonce is generated during the intent construction process, but it is possible to generate and pass the nonce within the builder independently. All of the nonces have specific [requirements](https://github.com/near/intents/tree/main/defuse#nonces) for the structure reflecting their validity.
+
+```typescript
+import {VersionedNonceBuilder} from '@defuse-protocol/intents-sdk';
+
+// Fetch current salt from the verifier contract
+const salt_hex = await nearRPC.viewFunction({
+  contractId: "intents.near",
+  methodName: "current_salt",
+});
+
+// Example: 5-minute deadline, but actual deadline should not be greater than intent's deadline
+const deadline = new Date(Date.now() + 5 * 60 * 1000)
+
+// Create ready to use versioned nonce from salt and deadline
+const versionedNonce = VersionedNonceBuilder.encodeNonce(
+  Uint8Array.from(Buffer.from(salt_hex, "hex")),
+  deadline
+);
+
+// Create intent builder with specified nonce
+const builder = await sdk.intentBuilder().setNonce(versionedNonce);
+```
+
+
 ### Intent Publishing Hooks
 
 Use the `onBeforePublishIntent` hook to intercept and process intent data before it's published to the relayer. This is
@@ -572,6 +600,17 @@ if (status.status === 'SETTLED') {
 - `TX_BROADCASTED` - Intent being processed, transaction broadcasted
 - `SETTLED` - Intent successfully completed
 - `NOT_FOUND_OR_NOT_VALID` - Intent not found or invalid, it isn't executed onchain
+
+### Nonce Invalidation
+
+Invalidate nonces to prevent execution of previously created intent payloads. Primarily used by **solvers** to revoke quotes due to price volatility, liquidity changes, or risk management.
+
+```typescript
+await sdk.invalidateNonces({
+    nonces: ['VigoxLwmUGf35MGLVBG9Fh5cCtJw3D68pSKFcqGCkHU='],
+    signer: customIntentSigner, // optional - uses SDK default if not provided
+});
+```
 
 ### Configure Withdrawal Routes
 

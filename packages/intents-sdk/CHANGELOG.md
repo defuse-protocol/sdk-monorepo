@@ -1,5 +1,25 @@
 # @defuse-protocol/intents-sdk
 
+## 0.33.1
+
+### Patch Changes
+
+- 27a6923: Extend generated nonce deadlines by 30 seconds past intent deadlines so solvers can reliably invalidate soon-to-expire quotas.
+
+## 0.33.0
+
+### Minor Changes
+
+- d78f077: Add new `sdk.invalidateNonces()` method.
+
+## 0.32.3
+
+### Patch Changes
+
+- Updated dependencies [2d38a96]
+  - @defuse-protocol/contract-types@0.3.1
+  - @defuse-protocol/internal-utils@0.19.1
+
 ## 0.32.2
 
 ### Patch Changes

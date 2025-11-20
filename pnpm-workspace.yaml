@@ -1,3 +1,4 @@
 packages:
-  - 'packages/*'
+  - "packages/*"
 minimumReleaseAge: 1440
+ignoreScripts: true

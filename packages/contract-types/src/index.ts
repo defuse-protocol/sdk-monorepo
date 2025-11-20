@@ -6,7 +6,7 @@
  */
 
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Intent".
  */
 export type Intent =
@@ -164,12 +164,12 @@ export type Intent =
  *
  * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "AccountId".
  */
 export type AccountId = string;
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Deadline".
  */
 export type Deadline = string;
@@ -186,26 +186,26 @@ export type Deadline = string;
  *
  * [`FromStr`]: std::str::FromStr [`Path`]: std::path::Path
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "AccountIdRef".
  */
 export type AccountIdRef = string;
 /**
  * 1 pip == 1/100th of bip == 0.0001%
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Pips".
  */
 export type Pips = number;
 /**
  * See [ERC-191](https://github.com/ethereum/ercs/blob/master/ERCS/erc-191.md)
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Erc191Payload".
  */
 export type Erc191Payload = string;
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "InvariantViolated".
  */
 export type InvariantViolated =
@@ -225,7 +225,7 @@ export type InvariantViolated =
  *
  * For example, because we support ERC-191 and know how to verify messages with that standard, we can allow wallets, like Metamask, sign messages to perform intents without having to support new cryptographic primitives and signing standards.
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "MultiPayload".
  */
 export type MultiPayload =
@@ -262,6 +262,16 @@ export type MultiPayload =
 			[k: string]: unknown;
 	  }
 	| {
+			/**
+			 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
+			 */
+			authenticator_data: string;
+			/**
+			 * Serialized [clientDataJSON](https://w3c.github.io/webauthn/#dom-authenticatorresponse-clientdatajson)
+			 */
+			client_data_json: string;
+			payload: string;
+			standard: "webauthn";
 			public_key: string;
 			signature: string;
 			[k: string]: unknown;
@@ -295,14 +305,14 @@ export type MultiPayload =
 /**
  * See [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md)
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Tip191Payload".
  */
 export type Tip191Payload = string;
 /**
  * See <https://docs.tonconsole.com/academy/sign-data#choosing-the-right-format>
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchema".
  */
 export type TonConnectPayloadSchema =
@@ -323,31 +333,31 @@ export type TonConnectPayloadSchema =
 			[k: string]: unknown;
 	  };
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PickFirst(DateTimeint64)".
  */
 export type PickFirstDateTimeint64 = string | number;
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PromiseOrValueArray_of_String".
  */
 export type PromiseOrValueArrayOf_String = string[];
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PromiseOrValueBoolean".
  */
 export type PromiseOrValueBoolean = boolean;
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PromiseOrValueString".
  */
 export type PromiseOrValueString = string;
 
-export interface DefuseContractABI {
+export interface NEARIntentsContractABI {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "AbiHelper".
  */
 export interface AbiHelper {
@@ -356,7 +366,7 @@ export interface AbiHelper {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "AbiPayloadHelper".
  */
 export interface AbiPayloadHelper {
@@ -365,7 +375,7 @@ export interface AbiPayloadHelper {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "DefusePayload_for_DefuseIntents".
  */
 export interface DefusePayloadFor_DefuseIntents {
@@ -380,7 +390,7 @@ export interface DefusePayloadFor_DefuseIntents {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Nep413DefuseMessage_for_DefuseIntents".
  */
 export interface Nep413DefuseMessageFor_DefuseIntents {
@@ -395,7 +405,7 @@ export interface Nep413DefuseMessageFor_DefuseIntents {
 /**
  * Call [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) with `signer_id` of intent.
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "AuthCall".
  */
 export interface AuthCall {
@@ -422,7 +432,7 @@ export interface AuthCall {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "DefuseConfig".
  */
 export interface DefuseConfig {
@@ -432,7 +442,7 @@ export interface DefuseConfig {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "FeesConfig".
  */
 export interface FeesConfig {
@@ -441,7 +451,7 @@ export interface FeesConfig {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "RolesConfig".
  */
 export interface RolesConfig {
@@ -457,7 +467,7 @@ export interface RolesConfig {
 /**
  * Withdraw given FT tokens from the intents contract to a given external account id (external being outside of intents).
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "FtWithdraw".
  */
 export interface FtWithdraw {
@@ -482,7 +492,7 @@ export interface FtWithdraw {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "IntentEvent_for_AccountEvent_for_NonceEvent".
  */
 export interface IntentEventFor_AccountEventFor_NonceEvent {
@@ -496,7 +506,7 @@ export interface IntentEventFor_AccountEventFor_NonceEvent {
  *
  * If `msg` is given, `mt_batch_transfer_call()` will be used to transfer to the `receiver_id`. Otherwise, `mt_batch_transfer()` will be used.
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "MtWithdraw".
  */
 export interface MtWithdraw {
@@ -524,7 +534,7 @@ export interface MtWithdraw {
 /**
  * See [NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md)
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Nep413Payload".
  */
 export interface Nep413Payload {
@@ -537,7 +547,7 @@ export interface Nep413Payload {
 /**
  * Withdraw native tokens (NEAR) from the intents contract to a given external account id (external being outside of intents). This will subtract from the account's wNEAR balance, and will be sent to the account specified as native NEAR. NOTE: the `wNEAR` will not be refunded in case of fail (e.g. `receiver_id` account does not exist).
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "NativeWithdraw".
  */
 export interface NativeWithdraw {
@@ -548,7 +558,7 @@ export interface NativeWithdraw {
 /**
  * Withdraw given NFT tokens from the intents contract to a given external account id (external being outside of intents).
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "NftWithdraw".
  */
 export interface NftWithdraw {
@@ -589,7 +599,7 @@ export interface NftWithdraw {
  *
  * Account ids returned in vectors are unique but not ordered.
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PermissionedAccounts".
  */
 export interface PermissionedAccounts {
@@ -612,7 +622,7 @@ export interface PermissionedAccounts {
  *
  * Account ids returned in vectors are unique but not ordered.
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PermissionedAccountsPerRole".
  */
 export interface PermissionedAccountsPerRole {
@@ -627,7 +637,7 @@ export interface PermissionedAccountsPerRole {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "SimulationOutput".
  */
 export interface SimulationOutput {
@@ -645,7 +655,7 @@ export interface SimulationOutput {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "StateOutput".
  */
 export interface StateOutput {
@@ -658,7 +668,7 @@ export interface StateOutput {
  *
  * WARNING: use this intent only if paying storage_deposit is not a prerequisite for other intents to succeed. If some intent (e.g. ft_withdraw) requires storage_deposit, then use storage_deposit field of corresponding intent instead of adding a separate `StorageDeposit` intent. This is due to the fact that intents that fire `Promise`s are not guaranteed to be executed sequentially, in the order of the provided intents in `DefuseIntents`.
  *
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "StorageDeposit".
  */
 export interface StorageDeposit {
@@ -668,7 +678,7 @@ export interface StorageDeposit {
 	[k: string]: unknown;
 }
 /**
- * This interface was referenced by `DefuseContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Token".
  */
 export interface Token {
