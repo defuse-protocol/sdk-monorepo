@@ -61,11 +61,13 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
+	getBtcBridgeConfig,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import {
 	InvalidDestinationAddressForWithdrawalError,
+	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
@@ -262,6 +264,26 @@ export class OmniBridge implements Bridge {
 				? minStorageBalance - currentStorageBalance
 				: 0n;
 
+		let maxGasFee = 0n;
+		// Withdrawal to Bitcoin need max_gas_fee value indicated in the msg
+		if (omniChainKind === ChainKind.Btc) {
+			const fee = await this.omniBridgeAPI.getFee(
+				omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
+				omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+				omniAddress(ChainKind.Near, assetInfo.contractId),
+				args.withdrawalParams.amount,
+			);
+			assert(
+				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
+				"Failed to receive max gas fee value for a BTC transfer",
+			);
+			assert(
+				fee.max_gas_fee > 0n,
+				`Invalid max_gas_fee value ${fee.max_gas_fee}`,
+			);
+			maxGasFee = fee.max_gas_fee;
+		}
+
 		const intents: IntentPrimitive[] = [];
 
 		if (args.feeEstimation.quote !== null) {
@@ -277,10 +299,12 @@ export class OmniBridge implements Bridge {
 			});
 		}
 
+		// args.feeEstimation.quote === null  only for withdrawing nep141:wrap.near
 		const nativeFee =
 			(args.feeEstimation.quote === null
 				? args.feeEstimation.amount
-				: BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
+				: // args.feeEstimation.quote.amount_out is always nep141:wrap.near
+					BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
 
 		assert(
 			nativeFee >= 0n,
@@ -299,6 +323,7 @@ export class OmniBridge implements Bridge {
 				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
 				nativeFee,
 				storageDepositAmount,
+				maxGasFee,
 			}),
 		);
 
@@ -394,13 +419,29 @@ export class OmniBridge implements Bridge {
 				intentsNearStorageBalance.toString(),
 			);
 		}
+
+		if (omniChainKind === ChainKind.Btc) {
+			const config = await getBtcBridgeConfig(this.nearProvider);
+			// args.amount is without fee
+			// BTC connector that actually do the withdrawal has a custom
+			// min withdraw amount which is not harcoded and can be updated in the contract.
+			const minAmount = BigInt(config.min_withdraw_amount);
+			if (args.amount < minAmount) {
+				throw new MinWithdrawalAmountError(
+					minAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
+		}
+
 		return;
 	}
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<
 			WithdrawalParams,
-			"assetId" | "destinationAddress" | "routeConfig"
+			"assetId" | "destinationAddress" | "routeConfig" | "amount"
 		>;
 		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
@@ -419,24 +460,25 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-
 		const fee = await this.omniBridgeAPI.getFee(
 			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
 			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 			omniAddress(ChainKind.Near, assetInfo.contractId),
+			args.withdrawalParams.amount,
 		);
-
 		if (fee.native_token_fee === null) {
 			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
 		}
 
+		let totalAmountToQuote = fee.native_token_fee;
+
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const totalAmountToQuote =
-			fee.native_token_fee +
-			(minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n);
+
+		if (minStorageBalance > currentStorageBalance) {
+			totalAmountToQuote += minStorageBalance - currentStorageBalance;
+		}
+
 		// withdraw of nep141:wrap.near
 		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
@@ -455,8 +497,31 @@ export class OmniBridge implements Bridge {
 			solverRelayApiKey: this.solverRelayApiKey,
 		});
 
+		let amount = BigInt(quote.amount_in);
+		// For btc withdrawal we also need to take into consideration
+		// max_gas_fee - max amount of BTC that can be spent on gas in Bitcoin network
+		// protocol_fee - constant fee taken by the relayer
+		if (omniChainKind === ChainKind.Btc) {
+			assert(
+				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
+				"Invalid max_gas_fee value returned from omni bridge api for BTC withdrawal",
+			);
+			assert(
+				fee.max_gas_fee > 0n,
+				`Invalid max_gas_fee value ${fee.max_gas_fee}`,
+			);
+			assert(
+				fee.protocol_fee !== null && fee.protocol_fee !== undefined,
+				"Invalid protocol_fee value returned from omni bridge api for BTC withdrawal",
+			);
+			assert(
+				fee.protocol_fee >= 0n,
+				`Invalid protocol_fee value ${fee.protocol_fee}`,
+			);
+			amount += fee.max_gas_fee + fee.protocol_fee;
+		}
 		return {
-			amount: BigInt(quote.amount_in),
+			amount,
 			quote,
 		};
 	}
@@ -489,6 +554,8 @@ export class OmniBridge implements Bridge {
 					txHash = transfer.finalised?.EVMLog?.transaction_hash;
 				} else if (destinationChain === ChainKind.Sol) {
 					txHash = transfer.finalised?.Solana?.signature;
+				} else if (destinationChain === ChainKind.Btc) {
+					txHash = transfer.finalised?.UtxoLog?.transaction_hash;
 				} else {
 					return { hash: null };
 				}
