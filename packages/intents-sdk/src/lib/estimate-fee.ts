@@ -46,7 +46,6 @@ export async function getFeeQuote({
 				logBalanceSufficient: false,
 				logger: logger,
 				solverRelayApiKey,
-				timeout,
 			},
 		});
 	} catch (err: unknown) {
@@ -104,7 +103,6 @@ export async function getFeeQuote({
 				logBalanceSufficient: false,
 				logger: logger,
 				solverRelayApiKey,
-				timeout,
 			},
 		});
 
