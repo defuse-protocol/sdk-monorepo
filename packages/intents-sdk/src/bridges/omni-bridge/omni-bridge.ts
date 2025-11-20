@@ -48,6 +48,7 @@ import {
 	TokenNotFoundInDestinationChainError,
 	FailedToFetchFeeError,
 	IntentsNearOmniAvailableBalanceTooLowError,
+	OmniWithdrawalApiFeeRequestTimeoutError,
 } from "./error";
 import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
@@ -436,7 +437,10 @@ export class OmniBridge implements Bridge {
 					omniAddress(ChainKind.Near, assetInfo.contractId),
 				),
 
-			{ timeout: this.apiTimeoutMs },
+			{
+				timeout: this.apiTimeoutMs,
+				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
+			},
 		);
 
 		if (fee.native_token_fee === null) {
