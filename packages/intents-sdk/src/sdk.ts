@@ -625,7 +625,7 @@ export class IntentsSDK implements IIntentsSDK {
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger,
 				solverRelayApiKey: this.solverRelayApiKey,
-				timeout: this.configuration.apiTimeoutMs,
+				timeout: this.configuration.api.timeout.default,
 			},
 		);
 	}

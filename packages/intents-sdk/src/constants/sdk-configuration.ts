@@ -1,16 +1,31 @@
 export type sdkConfiguration = {
-	apiTimeoutMs: number;
-	solverRelayPublishIntentsTimeout: number;
+	api: {
+		timeout: {
+			default: number;
+			bridgeFee: number;
+			solverRelayPublishIntents: number;
+		};
+	};
 };
 
 export const FRONT_END_CONFIGURATION = {
-	apiTimeoutMs: 10_000,
-	solverRelayPublishIntentsTimeout: 30_000,
+	api: {
+		timeout: {
+			default: 10_000,
+			bridgeFee: 10_000,
+			solverRelayPublishIntents: 30_000,
+		},
+	},
 };
 
 export const BACK_END_CONFIGURATION = {
-	apiTimeoutMs: 3_000,
-	solverRelayPublishIntentsTimeout: 30_000,
+	api: {
+		timeout: {
+			default: 10_000,
+			bridgeFee: 3_000,
+			solverRelayPublishIntents: 30_000,
+		},
+	},
 };
 
 export function getSdkConfiguration() {

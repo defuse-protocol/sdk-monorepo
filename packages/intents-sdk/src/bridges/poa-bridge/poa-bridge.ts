@@ -179,7 +179,7 @@ export class PoaBridge implements Bridge {
 			{
 				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 				logger: args.logger,
-				timeout: this.configuration.apiTimeoutMs,
+				timeout: this.configuration.api.timeout.default,
 			},
 		);
 
@@ -203,7 +203,7 @@ export class PoaBridge implements Bridge {
 			retryOptions: args.retryOptions,
 			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 			logger: args.logger,
-			timeout: this.configuration.apiTimeoutMs,
+			timeout: this.configuration.api.timeout.default,
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
@@ -231,7 +231,7 @@ export class PoaBridge implements Bridge {
 			{
 				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 				logger,
-				timeout: this.configuration.apiTimeoutMs,
+				timeout: this.configuration.api.timeout.default,
 			},
 		);
 

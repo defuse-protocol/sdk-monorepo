@@ -439,7 +439,7 @@ export class OmniBridge implements Bridge {
 				),
 
 			{
-				timeout: this.configuration.apiTimeoutMs,
+				timeout: this.configuration.api.timeout.bridgeFee,
 				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 			},
 		);
@@ -471,7 +471,7 @@ export class OmniBridge implements Bridge {
 			env: this.env,
 			quoteOptions: args.quoteOptions,
 			solverRelayApiKey: this.solverRelayApiKey,
-			timeout: this.configuration.apiTimeoutMs,
+			timeout: this.configuration.api.timeout.default,
 		});
 
 		return {

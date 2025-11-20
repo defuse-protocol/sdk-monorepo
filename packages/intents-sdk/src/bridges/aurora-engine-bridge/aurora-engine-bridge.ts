@@ -188,7 +188,7 @@ export class AuroraEngineBridge implements Bridge {
 						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
-						timeout: this.configuration.apiTimeoutMs,
+						timeout: this.configuration.api.timeout.default,
 					});
 
 		return {

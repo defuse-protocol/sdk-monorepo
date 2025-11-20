@@ -71,7 +71,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger: ctx.logger,
 				solverRelayApiKey: this.solverRelayApiKey,
-				timeout: this.configuration.solverRelayPublishIntentsTimeout,
+				timeout: this.configuration.api.timeout.solverRelayPublishIntents,
 			},
 		);
 		if (result.isOk()) {
@@ -91,7 +91,7 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 			logger: ctx.logger,
 			solverRelayApiKey: this.solverRelayApiKey,
-			timeout: this.configuration.apiTimeoutMs,
+			timeout: this.configuration.api.timeout.default,
 		});
 		return {
 			tx: {
