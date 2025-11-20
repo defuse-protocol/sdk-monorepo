@@ -501,7 +501,7 @@ describe("near_withdrawal", () => {
 			},
 		});
 
-		await expect(fee).resolves.toEqual({
+		expect(fee).toEqual({
 			amount: expect.any(BigInt),
 			quote: {
 				amount_in: "1000",
@@ -760,8 +760,8 @@ describe("omni_bridge", () => {
 			},
 		});
 
-		await expect(fee).resolves.toEqual({
-			amount: "5",
+		expect(fee).toEqual({
+			amount: 5n,
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: {
 					omniRelayerNativeFee: expect.any(BigInt),
