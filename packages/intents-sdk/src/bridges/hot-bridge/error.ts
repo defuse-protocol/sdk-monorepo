@@ -52,7 +52,7 @@ export type HotWithdrawalApiFeeRequestTimeoutErrorType =
 export class HotWithdrawalApiFeeRequestTimeoutError extends BaseError {
 	constructor() {
 		super("Hot bridge withdrawal fee request timed out.", {
-			name: "HotWithdrawalApiFeeRequestTimeout",
+			name: "HotWithdrawalApiFeeRequestTimeoutError",
 		});
 	}
 }

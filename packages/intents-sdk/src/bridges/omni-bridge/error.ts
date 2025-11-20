@@ -114,7 +114,7 @@ export type OmniWithdrawalApiFeeRequestTimeoutErrorType =
 export class OmniWithdrawalApiFeeRequestTimeoutError extends BaseError {
 	constructor() {
 		super("Omni bridge withdrawal fee request timed out.", {
-			name: "OmniWithdrawalApiFeeRequestTimeout",
+			name: "OmniWithdrawalApiFeeRequestTimeoutError",
 		});
 	}
 }
