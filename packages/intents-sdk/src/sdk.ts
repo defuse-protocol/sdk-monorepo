@@ -71,7 +71,10 @@ import {
 import { IntentPayloadBuilder } from "./intents/intent-payload-builder";
 import { DEFAULT_DEADLINE_MS } from "./intents/intent-payload-factory";
 import * as v from "valibot";
-import { DEFAULT_API_TIMEOUT } from "./constants/api";
+import {
+	getSdkConfiguration,
+	type sdkConfiguration,
+} from "./constants/sdk-configuration";
 
 export interface IntentsSDKConfig {
 	env?: NearIntentsEnv;
@@ -90,13 +93,13 @@ export class IntentsSDK implements IIntentsSDK {
 	protected bridges: Bridge[];
 	protected solverRelayApiKey: string | undefined;
 	protected saltManager: ISaltManager;
-	protected apiTimeoutMs?: number;
+	protected configuration: sdkConfiguration;
 
 	constructor(args: IntentsSDKConfig) {
 		this.env = args.env ?? "production";
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
-		this.apiTimeoutMs = args.apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
+		this.configuration = getSdkConfiguration();
 
 		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
 		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
@@ -123,11 +126,9 @@ export class IntentsSDK implements IIntentsSDK {
 				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				apiTimeoutMs: this.apiTimeoutMs,
 			}),
 			new PoaBridge({
 				env: this.env,
-				apiTimeoutMs: this.apiTimeoutMs,
 			}),
 			new HotBridge({
 				env: this.env,
@@ -144,26 +145,22 @@ export class IntentsSDK implements IIntentsSDK {
 						throw new Error("not implemented");
 					},
 				}),
-				apiTimeoutMs: this.apiTimeoutMs,
 			}),
 			new OmniBridge({
 				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				apiTimeoutMs: this.apiTimeoutMs,
 			}),
 			new DirectBridge({
 				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				apiTimeoutMs: this.apiTimeoutMs,
 			}),
 		];
 
 		this.intentRelayer = new IntentRelayerPublic({
 			env: this.env,
 			solverRelayApiKey: this.solverRelayApiKey,
-			apiTimeoutMs: this.apiTimeoutMs,
 		});
 
 		this.intentSigner = args.intentSigner;
@@ -629,7 +626,7 @@ export class IntentsSDK implements IIntentsSDK {
 				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 				logger,
 				solverRelayApiKey: this.solverRelayApiKey,
-				timeout: this.apiTimeoutMs,
+				timeout: this.configuration.apiTimeoutMs,
 			},
 		);
 	}

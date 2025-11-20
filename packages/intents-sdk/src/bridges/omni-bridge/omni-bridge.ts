@@ -71,7 +71,10 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
-import { DEFAULT_API_TIMEOUT } from "../../constants/api";
+import {
+	getSdkConfiguration,
+	type sdkConfiguration,
+} from "../../constants/sdk-configuration";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -91,12 +94,11 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
-	protected apiTimeoutMs: number;
+	protected configuration: sdkConfiguration;
 	constructor({
 		env,
 		nearProvider,
 		solverRelayApiKey,
-		apiTimeoutMs,
 	}: {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
@@ -107,7 +109,7 @@ export class OmniBridge implements Bridge {
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
+		this.configuration = getSdkConfiguration();
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -438,7 +440,7 @@ export class OmniBridge implements Bridge {
 				),
 
 			{
-				timeout: this.apiTimeoutMs,
+				timeout: this.configuration.apiTimeoutMs,
 				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 			},
 		);
@@ -470,7 +472,7 @@ export class OmniBridge implements Bridge {
 			env: this.env,
 			quoteOptions: args.quoteOptions,
 			solverRelayApiKey: this.solverRelayApiKey,
-			timeout: this.apiTimeoutMs,
+			timeout: this.configuration.apiTimeoutMs,
 		});
 
 		return {

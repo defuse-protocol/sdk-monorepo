@@ -48,18 +48,20 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
-import { DEFAULT_API_TIMEOUT } from "../../constants/api";
+import {
+	getSdkConfiguration,
+	type sdkConfiguration,
+} from "../../constants/sdk-configuration";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
-	protected apiTimeoutMs: number;
+	protected configuration: sdkConfiguration;
 	constructor({
 		env,
 		hotSdk,
 		solverRelayApiKey,
-		apiTimeoutMs,
 	}: {
 		env: NearIntentsEnv;
 		hotSdk: HotSdk;
@@ -69,7 +71,7 @@ export class HotBridge implements Bridge {
 		this.env = env;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.apiTimeoutMs = apiTimeoutMs ?? DEFAULT_API_TIMEOUT;
+		this.configuration = getSdkConfiguration();
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -266,7 +268,7 @@ export class HotBridge implements Bridge {
 				}),
 			{
 				errorInstance: new HotWithdrawalApiFeeRequestTimeoutError(),
-				timeout: this.apiTimeoutMs,
+				timeout: this.configuration.apiTimeoutMs,
 			},
 		);
 
@@ -283,7 +285,7 @@ export class HotBridge implements Bridge {
 						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
-						timeout: this.apiTimeoutMs,
+						timeout: this.configuration.apiTimeoutMs,
 					});
 
 		return {

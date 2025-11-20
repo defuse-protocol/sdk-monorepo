@@ -1,1 +1,0 @@
-export const DEFAULT_API_TIMEOUT = 10_000;
