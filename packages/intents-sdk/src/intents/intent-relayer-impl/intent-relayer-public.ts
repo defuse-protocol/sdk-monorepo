@@ -23,7 +23,6 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 	}: {
 		env: NearIntentsEnv;
 		solverRelayApiKey?: string;
-		apiTimeoutMs?: number;
 	}) {
 		this.env = env;
 		this.solverRelayApiKey = solverRelayApiKey;
