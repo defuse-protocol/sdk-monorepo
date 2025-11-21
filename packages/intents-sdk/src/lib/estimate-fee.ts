@@ -67,6 +67,9 @@ export async function getFeeQuote({
 			throw err;
 		}
 
+		validatePrice(feeAssetPrice.price, "feeAssetPrice.price");
+		validatePrice(tokenAssetPrice.price, "tokenAssetPrice.price");
+
 		// Precision-safe computation using fixed-point BigInt
 		// Scale USD prices to 1e6 (micro-dollars) for stable integer math
 		const USD_SCALE = 1_000_000; // 1e6
@@ -76,6 +79,24 @@ export async function getFeeQuote({
 		);
 		const feeDecimals = BigInt(feeAssetPrice.decimals);
 		const tokenDecimals = BigInt(tokenAssetPrice.decimals);
+
+		const MAX_DECIMALS = 18n;
+
+		if (feeDecimals > MAX_DECIMALS) {
+			throw new Error(
+				`Fee asset decimals (${feeDecimals}) exceeds maximum allowed (${MAX_DECIMALS})`,
+			);
+		}
+
+		if (tokenDecimals > MAX_DECIMALS) {
+			throw new Error(
+				`Token asset decimals (${tokenDecimals}) exceeds maximum allowed (${MAX_DECIMALS})`,
+			);
+		}
+
+		if (feeDecimals < 0n || tokenDecimals < 0n) {
+			throw new Error("Decimals cannot be negative");
+		}
 
 		// ceil( feeAmount * feePrice / 10^feeDecimals / tokenPrice * 10^tokenDecimals * 1.2 )
 		const num = feeAmount * feePriceScaled * 12n * 10n ** tokenDecimals;
@@ -125,3 +146,16 @@ export async function getFeeQuote({
 		return quote;
 	}
 }
+
+const validatePrice = (price: number, fieldName: string) => {
+	if (!Number.isFinite(price) || price <= 0) {
+		throw new Error(
+			`Invalid ${fieldName}: ${price}. Must be a positive finite number.`,
+		);
+	}
+	if (price < 1e-6) {
+		throw new Error(
+			`Price too small: ${price}. Minimum supported price is 1e-6.`,
+		);
+	}
+};
