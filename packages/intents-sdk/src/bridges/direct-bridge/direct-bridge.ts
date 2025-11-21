@@ -1,10 +1,10 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	utils,
+	config,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
@@ -36,15 +36,10 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import { LRUCache } from "lru-cache";
-import {
-	getSdkConfiguration,
-	type sdkConfiguration,
-} from "../../constants/sdk-configuration";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class DirectBridge implements Bridge {
-	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
 	private storageDepositCache = new LRUCache<
@@ -55,20 +50,16 @@ export class DirectBridge implements Bridge {
 		max: 100,
 		ttl: 3600000,
 	});
-	protected configuration: sdkConfiguration;
+
 	constructor({
-		env,
 		nearProvider,
 		solverRelayApiKey,
 	}: {
-		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 	}) {
-		this.env = env;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.configuration = getSdkConfiguration();
 	}
 
 	is(routeConfig: RouteConfig) {
@@ -225,10 +216,9 @@ export class DirectBridge implements Bridge {
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
-						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
-						timeout: this.configuration.api.timeout.default,
+						timeout: config.api.timeout.default,
 					});
 
 		return {

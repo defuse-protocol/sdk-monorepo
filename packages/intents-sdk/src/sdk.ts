@@ -1,14 +1,13 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
 	PUBLIC_NEAR_RPC_URLS,
 	RETRY_CONFIGS,
 	type RetryOptions,
-	configsByEnvironment,
 	nearFailoverRpcProvider,
 	solverRelay,
 	RelayPublishError,
+	config,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -71,13 +70,8 @@ import {
 import { IntentPayloadBuilder } from "./intents/intent-payload-builder";
 import { DEFAULT_DEADLINE_MS } from "./intents/intent-payload-factory";
 import * as v from "valibot";
-import {
-	getSdkConfiguration,
-	type sdkConfiguration,
-} from "./constants/sdk-configuration";
 
 export interface IntentsSDKConfig {
-	env?: NearIntentsEnv;
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
@@ -85,20 +79,16 @@ export interface IntentsSDKConfig {
 }
 
 export class IntentsSDK implements IIntentsSDK {
-	protected env: NearIntentsEnv;
 	protected referral: string;
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 	protected solverRelayApiKey: string | undefined;
 	protected saltManager: ISaltManager;
-	protected configuration: sdkConfiguration;
 
 	constructor(args: IntentsSDKConfig) {
-		this.env = args.env ?? "production";
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
-		this.configuration = getSdkConfiguration();
 
 		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
 		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
@@ -122,15 +112,11 @@ export class IntentsSDK implements IIntentsSDK {
 		this.bridges = [
 			new IntentsBridge(),
 			new AuroraEngineBridge({
-				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
-			new PoaBridge({
-				env: this.env,
-			}),
+			new PoaBridge(),
 			new HotBridge({
-				env: this.env,
 				solverRelayApiKey: this.solverRelayApiKey,
 				hotSdk: new hotLabsOmniSdk_HotBridge({
 					logger: console,
@@ -146,26 +132,22 @@ export class IntentsSDK implements IIntentsSDK {
 				}),
 			}),
 			new OmniBridge({
-				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 			new DirectBridge({
-				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 		];
 
 		this.intentRelayer = new IntentRelayerPublic({
-			env: this.env,
 			solverRelayApiKey: this.solverRelayApiKey,
 		});
 
 		this.intentSigner = args.intentSigner;
 
 		this.saltManager = new SaltManager({
-			env: this.env,
 			nearProvider,
 		});
 	}
@@ -200,7 +182,6 @@ export class IntentsSDK implements IIntentsSDK {
 	 */
 	public intentBuilder(): IntentPayloadBuilder {
 		return new IntentPayloadBuilder({
-			env: this.env,
 			saltManager: this.saltManager,
 		});
 	}
@@ -500,7 +481,6 @@ export class IntentsSDK implements IIntentsSDK {
 		assert(intentSigner != null, "Intent signer is not provided");
 
 		const intentExecuter = new IntentExecuter({
-			env: this.env,
 			logger: args.logger,
 			intentSigner,
 			intentRelayer: this.intentRelayer,
@@ -600,7 +580,6 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<NearTxInfo> {
 		const intentExecuter = new IntentExecuter({
-			env: this.env,
 			logger: args.logger,
 			intentSigner: noopIntentSigner,
 			intentRelayer: this.intentRelayer,
@@ -622,10 +601,10 @@ export class IntentsSDK implements IIntentsSDK {
 				intent_hash: intentHash,
 			},
 			{
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				baseURL: config.env.solverRelayBaseURL,
 				logger,
 				solverRelayApiKey: this.solverRelayApiKey,
-				timeout: this.configuration.api.timeout.default,
+				timeout: config.api.timeout.default,
 			},
 		);
 	}

@@ -1,13 +1,12 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
-	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	withTimeout,
+	config,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -71,15 +70,10 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
-import {
-	getSdkConfiguration,
-	type sdkConfiguration,
-} from "../../constants/sdk-configuration";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class OmniBridge implements Bridge {
-	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
@@ -94,21 +88,17 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
-	protected configuration: sdkConfiguration;
+
 	constructor({
-		env,
 		nearProvider,
 		solverRelayApiKey,
 	}: {
-		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 	}) {
-		this.env = env;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.configuration = getSdkConfiguration();
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -300,7 +290,7 @@ export class OmniBridge implements Bridge {
 				destinationAddress: args.withdrawalParams.destinationAddress,
 				amount: args.withdrawalParams.amount,
 				omniChainKind,
-				intentsContract: configsByEnvironment[this.env].contractID,
+				intentsContract: config.env.contractID,
 				// we need to calculate relayer fee
 				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
 				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
@@ -386,7 +376,7 @@ export class OmniBridge implements Bridge {
 
 		const storageBalance = await getAccountOmniStorageBalance(
 			this.nearProvider,
-			configsByEnvironment[this.env].contractID,
+			config.env.contractID,
 		);
 
 		const intentsNearStorageBalance =
@@ -430,16 +420,13 @@ export class OmniBridge implements Bridge {
 		const fee = await withTimeout(
 			() =>
 				this.omniBridgeAPI.getFee(
-					omniAddress(
-						ChainKind.Near,
-						configsByEnvironment[this.env].contractID,
-					),
+					omniAddress(ChainKind.Near, config.env.contractID),
 					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 					omniAddress(ChainKind.Near, assetInfo.contractId),
 				),
 
 			{
-				timeout: this.configuration.api.timeout.bridgeFee,
+				timeout: config.api.timeout.bridgeFee,
 				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 			},
 		);
@@ -468,10 +455,9 @@ export class OmniBridge implements Bridge {
 			feeAssetId: NEAR_NATIVE_ASSET_ID,
 			tokenAssetId: args.withdrawalParams.assetId,
 			logger: args.logger,
-			env: this.env,
 			quoteOptions: args.quoteOptions,
 			solverRelayApiKey: this.solverRelayApiKey,
-			timeout: this.configuration.api.timeout.default,
+			timeout: config.api.timeout.default,
 		});
 
 		return {

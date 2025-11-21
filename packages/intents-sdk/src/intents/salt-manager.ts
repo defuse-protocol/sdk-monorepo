@@ -1,7 +1,4 @@
-import {
-	configsByEnvironment,
-	type NearIntentsEnv,
-} from "@defuse-protocol/internal-utils";
+import { config } from "@defuse-protocol/internal-utils";
 import type { ISaltManager } from "./interfaces/salt-manager";
 import type { providers } from "near-api-js";
 import type { Salt } from "./expirable-nonce";
@@ -19,13 +16,11 @@ export class SaltManager implements ISaltManager {
 	private lastFetchTime = 0;
 
 	constructor({
-		env,
 		nearProvider,
 	}: {
-		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 	}) {
-		this.intentsContract = configsByEnvironment[env].contractID;
+		this.intentsContract = config.env.contractID;
 		this.nearProvider = nearProvider;
 	}
 

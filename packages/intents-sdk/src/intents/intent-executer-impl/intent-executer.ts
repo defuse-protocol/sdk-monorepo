@@ -1,8 +1,4 @@
-import {
-	type ILogger,
-	type NearIntentsEnv,
-	configsByEnvironment,
-} from "@defuse-protocol/internal-utils";
+import { config, type ILogger } from "@defuse-protocol/internal-utils";
 import type { SignedIntentsComposition, NearTxInfo } from "../../shared-types";
 import { computeIntentHash } from "../intent-hash";
 import { defaultIntentPayloadFactory } from "../intent-payload-factory";
@@ -36,7 +32,6 @@ export type OnBeforePublishIntentHook<
 }) => Promise<void> | void;
 
 export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
-	protected env: NearIntentsEnv;
 	protected logger: ILogger | undefined;
 	protected intentPayloadFactory: IntentPayloadFactory | undefined;
 	protected intentSigner: IIntentSigner;
@@ -44,14 +39,12 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	protected onBeforePublishIntent: OnBeforePublishIntentHook | undefined;
 
 	constructor(args: {
-		env: NearIntentsEnv;
 		logger?: ILogger;
 		intentPayloadFactory?: IntentPayloadFactory;
 		intentRelayer: IIntentRelayer<Ticket>;
 		intentSigner: IIntentSigner;
 		onBeforePublishIntent?: OnBeforePublishIntentHook;
 	}) {
-		this.env = args.env;
 		this.logger = args.logger;
 		this.intentPayloadFactory = args.intentPayloadFactory;
 		this.intentRelayer = args.intentRelayer;
@@ -71,7 +64,7 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	} & Partial<Parameters<IntentPayloadFactory>[0]>): Promise<{
 		ticket: Ticket;
 	}> {
-		const verifyingContract = configsByEnvironment[this.env].contractID;
+		const verifyingContract = config.env.contractID;
 
 		let intentPayload = defaultIntentPayloadFactory(salt, {
 			verifying_contract: verifyingContract,

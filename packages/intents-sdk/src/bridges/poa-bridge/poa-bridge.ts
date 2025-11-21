@@ -1,11 +1,10 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
 	type RetryOptions,
-	configsByEnvironment,
 	poaBridge,
 	utils,
+	config,
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import {
@@ -33,25 +32,15 @@ import {
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
-import {
-	getSdkConfiguration,
-	type sdkConfiguration,
-} from "../../constants/sdk-configuration";
 
 export class PoaBridge implements Bridge {
-	protected env: NearIntentsEnv;
-	protected configuration: sdkConfiguration;
-
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
 		string,
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
 
-	constructor({ env }: { env: NearIntentsEnv }) {
-		this.env = env;
-		this.configuration = getSdkConfiguration();
-	}
+	constructor() {}
 
 	is(routeConfig: RouteConfig) {
 		return routeConfig.route === RouteEnum.PoaBridge;
@@ -79,7 +68,7 @@ export class PoaBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 		const contractIdSatisfies = parsed.contractId.endsWith(
-			`.${configsByEnvironment[this.env].poaTokenFactoryContractID}`,
+			`.${config.env.poaTokenFactoryContractID}`,
 		);
 
 		if (!contractIdSatisfies) {
@@ -177,9 +166,9 @@ export class PoaBridge implements Bridge {
 				chain: toPoaNetwork(assetInfo.blockchain) as any,
 			},
 			{
-				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				baseURL: config.env.poaBridgeBaseURL,
 				logger: args.logger,
-				timeout: this.configuration.api.timeout.default,
+				timeout: config.api.timeout.default,
 			},
 		);
 
@@ -201,9 +190,9 @@ export class PoaBridge implements Bridge {
 			index: args.index,
 			signal: args.signal ?? new AbortController().signal,
 			retryOptions: args.retryOptions,
-			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+			baseURL: config.env.poaBridgeBaseURL,
 			logger: args.logger,
-			timeout: this.configuration.api.timeout.default,
+			timeout: config.api.timeout.default,
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
@@ -229,9 +218,9 @@ export class PoaBridge implements Bridge {
 		const data = await poaBridge.httpClient.getSupportedTokens(
 			{ chains },
 			{
-				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				baseURL: config.env.poaBridgeBaseURL,
 				logger,
-				timeout: this.configuration.api.timeout.default,
+				timeout: config.api.timeout.default,
 			},
 		);
 

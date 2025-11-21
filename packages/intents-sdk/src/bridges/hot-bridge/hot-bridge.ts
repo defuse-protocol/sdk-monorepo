@@ -1,7 +1,7 @@
 import {
 	assert,
+	config,
 	type ILogger,
-	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
 	withTimeout,
@@ -48,29 +48,20 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
-import {
-	getSdkConfiguration,
-	type sdkConfiguration,
-} from "../../constants/sdk-configuration";
 
 export class HotBridge implements Bridge {
-	protected env: NearIntentsEnv;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
-	protected configuration: sdkConfiguration;
+
 	constructor({
-		env,
 		hotSdk,
 		solverRelayApiKey,
 	}: {
-		env: NearIntentsEnv;
 		hotSdk: HotSdk;
 		solverRelayApiKey?: string;
 	}) {
-		this.env = env;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.configuration = getSdkConfiguration();
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -267,7 +258,7 @@ export class HotBridge implements Bridge {
 				}),
 			{
 				errorInstance: new HotWithdrawalApiFeeRequestTimeoutError(),
-				timeout: this.configuration.api.timeout.bridgeFee,
+				timeout: config.api.timeout.bridgeFee,
 			},
 		);
 
@@ -281,10 +272,9 @@ export class HotBridge implements Bridge {
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
-						env: this.env,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
-						timeout: this.configuration.api.timeout.default,
+						timeout: config.api.timeout.default,
 					});
 
 		return {

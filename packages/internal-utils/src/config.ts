@@ -6,6 +6,15 @@ interface SDKConfig {
 	features: {
 		hyperliquid: boolean;
 	};
+	api: ApiConfig;
+}
+
+export interface ApiConfig {
+	timeout: {
+		default: number;
+		bridgeFee: number;
+		solverRelayPublishIntents: number;
+	};
 }
 
 export interface EnvConfig {
@@ -18,6 +27,22 @@ export interface EnvConfig {
 }
 
 export type NearIntentsEnv = "production" | "stage";
+
+export const FRONT_END_API_CONFIGURATION = {
+	timeout: {
+		default: 10_000,
+		bridgeFee: 10_000,
+		solverRelayPublishIntents: 30_000,
+	},
+};
+
+export const BACK_END_API_CONFIGURATION = {
+	timeout: {
+		default: 10_000,
+		bridgeFee: 3_000,
+		solverRelayPublishIntents: 30_000,
+	},
+};
 
 export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 	production: {
@@ -43,18 +68,24 @@ export let config: SDKConfig = {
 	features: {
 		hyperliquid: false,
 	},
+	api:
+		typeof window !== "undefined"
+			? FRONT_END_API_CONFIGURATION
+			: BACK_END_API_CONFIGURATION,
 };
 
 export interface ConfigureSDKArgs {
 	env?: EnvConfig | NearIntentsEnv;
 	features?: { [K in keyof SDKConfig["features"]]?: boolean };
 	environments?: Record<NearIntentsEnv, Partial<EnvConfig>>;
+	api?: ApiConfig;
 }
 
 export function configureSDK({
 	env,
 	features,
 	environments,
+	api,
 }: ConfigureSDKArgs): void {
 	if (environments) {
 		for (const [key, value] of Object.entries(environments)) {
@@ -76,6 +107,10 @@ export function configureSDK({
 		features: {
 			...config.features,
 			...features,
+		},
+		api: {
+			...config.api,
+			...api,
 		},
 	};
 }

@@ -1,32 +1,21 @@
 import {
 	type ILogger,
-	type NearIntentsEnv,
-	configsByEnvironment,
+	config,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import type { NearTxInfo } from "../../shared-types";
 import type { IIntentRelayer } from "../interfaces/intent-relayer";
 import type { IntentHash, MultiPayload } from "../shared-types";
-import {
-	getSdkConfiguration,
-	type sdkConfiguration,
-} from "../../constants/sdk-configuration";
 
 export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
-	protected env: NearIntentsEnv;
 	protected solverRelayApiKey: string | undefined;
-	protected configuration: sdkConfiguration;
 
 	constructor({
-		env,
 		solverRelayApiKey,
 	}: {
-		env: NearIntentsEnv;
 		solverRelayApiKey?: string;
 	}) {
-		this.env = env;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.configuration = getSdkConfiguration();
 	}
 
 	async publishIntent(
@@ -68,10 +57,10 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 				signed_datas: multiPayloads,
 			},
 			{
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				baseURL: config.env.solverRelayBaseURL,
 				logger: ctx.logger,
 				solverRelayApiKey: this.solverRelayApiKey,
-				timeout: this.configuration.api.timeout.solverRelayPublishIntents,
+				timeout: config.api.timeout.solverRelayPublishIntents,
 			},
 		);
 		if (result.isOk()) {
@@ -88,17 +77,17 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 		const result = await solverRelay.waitForIntentSettlement({
 			intentHash: ticket,
 			signal: new AbortController().signal,
-			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+			baseURL: config.env.solverRelayBaseURL,
 			logger: ctx.logger,
 			solverRelayApiKey: this.solverRelayApiKey,
-			timeout: this.configuration.api.timeout.default,
+			timeout: config.api.timeout.default,
 		});
 		return {
 			tx: {
 				hash: result.txHash,
 				// Usually relayer's account id is the verifying contract (`intents.near`),
 				// but it is not set in stone and may change in the future.
-				accountId: configsByEnvironment[this.env].contractID,
+				accountId: config.env.contractID,
 			},
 		};
 	}

@@ -1,7 +1,6 @@
 import {
-	configsByEnvironment,
+	config,
 	type ILogger,
-	type NearIntentsEnv,
 	QuoteError,
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
@@ -16,7 +15,6 @@ export async function getFeeQuote({
 	feeAssetId,
 	tokenAssetId,
 	quoteOptions,
-	env,
 	logger,
 	solverRelayApiKey,
 	timeout,
@@ -25,7 +23,6 @@ export async function getFeeQuote({
 	feeAssetId: string;
 	tokenAssetId: string;
 	quoteOptions?: QuoteOptions;
-	env: NearIntentsEnv;
 	logger?: ILogger;
 	solverRelayApiKey?: string;
 	timeout?: number;
@@ -42,7 +39,7 @@ export async function getFeeQuote({
 				trusted_metadata: quoteOptions?.trustedMetadata,
 			},
 			config: {
-				baseURL: configsByEnvironment[env].solverRelayBaseURL,
+				baseURL: config.env.solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: logger,
 				solverRelayApiKey,
@@ -57,7 +54,7 @@ export async function getFeeQuote({
 			"Can't get exact out quote, trying to get exact in quote with x1.2",
 		);
 
-		const prices = await tokens({ env, timeout });
+		const prices = await tokens({ timeout });
 		const feeAssetPrice = prices.items.find(
 			(t) => t.defuse_asset_id === feeAssetId,
 		);
@@ -99,7 +96,7 @@ export async function getFeeQuote({
 				trusted_metadata: quoteOptions?.trustedMetadata,
 			},
 			config: {
-				baseURL: configsByEnvironment[env].solverRelayBaseURL,
+				baseURL: config.env.solverRelayBaseURL,
 				logBalanceSufficient: false,
 				logger: logger,
 				solverRelayApiKey,
