@@ -8,7 +8,7 @@ export type sdkConfiguration = {
 	};
 };
 
-export const FRONT_END_CONFIGURATION = {
+export const FRONT_END_CONFIGURATION: sdkConfiguration = {
 	api: {
 		timeout: {
 			default: 10_000,
@@ -18,7 +18,7 @@ export const FRONT_END_CONFIGURATION = {
 	},
 };
 
-export const BACK_END_CONFIGURATION = {
+export const BACK_END_CONFIGURATION: sdkConfiguration = {
 	api: {
 		timeout: {
 			default: 10_000,
@@ -28,7 +28,7 @@ export const BACK_END_CONFIGURATION = {
 	},
 };
 
-export function getSdkConfiguration() {
+export function getSdkConfiguration(): sdkConfiguration {
 	return typeof window !== "undefined"
 		? FRONT_END_CONFIGURATION
 		: BACK_END_CONFIGURATION;
