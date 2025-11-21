@@ -5,7 +5,7 @@ import type {
 } from "@defuse-protocol/internal-utils";
 import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
-import type { RouteEnum } from "./constants/route-enum";
+import { RouteEnum } from "./constants/route-enum";
 import type { OnBeforePublishIntentHook } from "./intents/intent-executer-impl/intent-executer";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type {
@@ -277,9 +277,46 @@ export type RouteConfig =
 	| HotBridgeRouteConfig
 	| OmniBridgeRouteConfig;
 
+/**
+ * Represents the different categories of fees that may apply across various withdrawal operations.
+ */
+export interface UnderlyingFees {
+	[RouteEnum.HotBridge]?: {
+		/** Fee for using the Hot Bridge, taken in base token of destination chain. */
+		hotBridgeFee: bigint;
+	};
+
+	[RouteEnum.PoaBridge]?: {
+		/** Fee for POA bridge transfers, taken in transferred token. */
+		poaBridgeFee: bigint;
+	};
+
+	[RouteEnum.NearWithdrawal]?: {
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. */
+		storageDepositFee: bigint;
+	};
+
+	[RouteEnum.OmniBridge]?: {
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. */
+		storageDepositFee?: bigint;
+		/** Fee for transferring tokens via Omni Bridge to other supported blockchains, taken in wrap.near token. */
+		omniRelayerNativeFee: bigint;
+		/** Fee taken when making a withdrawal via UTXO connector (e.g., btc-connector.bridge.near), taken in transferred token. */
+		utxoProtocolFee?: bigint;
+		/** Maximum amount of tokens that can be spent on gas when making a withdrawal via UTXO connector (e.g., btc-connector.bridge.near), taken in transferred token. */
+		utxoMaxGasFee?: bigint;
+	};
+
+	[RouteEnum.VirtualChain]?: {
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. */
+		storageDepositFee: bigint;
+	};
+}
+
 export interface FeeEstimation {
 	amount: bigint;
 	quote: null | solverRelay.Quote;
+	underlyingFees: null | UnderlyingFees;
 }
 
 export interface Bridge {

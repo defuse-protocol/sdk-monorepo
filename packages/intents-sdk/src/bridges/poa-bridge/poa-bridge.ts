@@ -101,9 +101,15 @@ export class PoaBridge implements Bridge {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]> {
+		const poaBridgeFee =
+			args.feeEstimation.underlyingFees?.[RouteEnum.PoaBridge]?.poaBridgeFee;
+		assert(
+			poaBridgeFee !== undefined && poaBridgeFee > 0n,
+			"Invalid poa bridge fee, must be greater than zero.",
+		);
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
-			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
+			amount: args.withdrawalParams.amount + poaBridgeFee,
 			destinationMemo: args.withdrawalParams.destinationMemo,
 		});
 		return Promise.resolve([intent]);
@@ -175,10 +181,19 @@ export class PoaBridge implements Bridge {
 				logger: args.logger,
 			},
 		);
-
+		const poaBridgeFee = BigInt(estimation.withdrawalFee);
+		assert(
+			poaBridgeFee > 0n,
+			"Invalid poa bridge fee, must be greater than zero.",
+		);
 		return {
-			amount: BigInt(estimation.withdrawalFee),
+			amount: poaBridgeFee,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.PoaBridge]: {
+					poaBridgeFee,
+				},
+			},
 		};
 	}
 

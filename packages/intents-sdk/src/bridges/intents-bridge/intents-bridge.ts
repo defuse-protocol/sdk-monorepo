@@ -71,6 +71,7 @@ export class IntentsBridge implements Bridge {
 		return {
 			amount: 0n,
 			quote: null,
+			underlyingFees: null,
 		};
 	}
 

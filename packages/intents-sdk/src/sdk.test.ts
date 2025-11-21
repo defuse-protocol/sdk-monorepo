@@ -8,7 +8,6 @@ import {
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
-import { RouteEnum } from "./constants/route-enum";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
@@ -24,6 +23,8 @@ import {
 	ChainKind,
 	omniAddress,
 } from "omni-bridge-sdk";
+import type { FeeEstimation } from "./shared-types";
+import { RouteEnum } from "./constants/route-enum";
 
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
@@ -45,6 +46,11 @@ describe.concurrent("poa_bridge", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 1500n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.PoaBridge]: {
+					poaBridgeFee: expect.any(BigInt),
+				},
+			},
 		});
 	});
 
@@ -76,6 +82,11 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						poaBridgeFee: 1500n,
+					},
+				},
 			},
 		});
 
@@ -99,6 +110,11 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						poaBridgeFee: 1500n,
+					},
+				},
 			},
 		});
 
@@ -126,6 +142,11 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						poaBridgeFee: 1600n,
+					},
+				},
 			},
 		});
 
@@ -158,6 +179,11 @@ describe.concurrent("hot_bridge", () => {
 				expiration_time: expect.any(String),
 				quote_hash: expect.any(String),
 			},
+			underlyingFees: {
+				[RouteEnum.HotBridge]: {
+					hotBridgeFee: expect.any(BigInt),
+				},
+			},
 		});
 	});
 
@@ -179,7 +205,7 @@ describe.concurrent("hot_bridge", () => {
 	it("createWithdrawalIntents(): returns intents array", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 1662n,
 			quote: {
 				defuse_asset_identifier_in:
@@ -190,6 +216,11 @@ describe.concurrent("hot_bridge", () => {
 				amount_out: "6600000024640000",
 				expiration_time: "2025-07-22T03:52:23.747Z",
 				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+			},
+			underlyingFees: {
+				[RouteEnum.HotBridge]: {
+					hotBridgeFee: 6600000024640000n,
+				},
 			},
 		};
 
@@ -252,6 +283,11 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).resolves.toEqual({
 				amount: expect.any(BigInt),
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						hotBridgeFee: expect.any(BigInt),
+					},
+				},
 			});
 		});
 
@@ -285,6 +321,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -305,6 +342,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -319,6 +357,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -369,6 +408,7 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: null,
 				},
 			});
 
@@ -400,6 +440,7 @@ describe.concurrent.each([
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			underlyingFees: null,
 		});
 	});
 
@@ -414,7 +455,7 @@ describe.concurrent.each([
 				feeInclusive: false,
 				routeConfig: createInternalTransferRoute(),
 			},
-			feeEstimation: { amount: 0n, quote: null },
+			feeEstimation: { amount: 0n, quote: null, underlyingFees: null },
 		});
 
 		await expect(intents).resolves.toEqual([
@@ -460,7 +501,22 @@ describe("near_withdrawal", () => {
 			},
 		});
 
-		expect(fee).toEqual({ amount: 1000n, quote });
+		expect(fee).toEqual({
+			amount: expect.any(BigInt),
+			quote: {
+				amount_in: "1000",
+				amount_out: "1250000000000000000000",
+				defuse_asset_identifier_in: "nep141:btc.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				expiration_time: "",
+				quote_hash: "",
+			},
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
+			},
+		});
 	});
 
 	it("estimateWithdrawalFee(): returns fee without quote for wrap.near with msg", async () => {
@@ -479,6 +535,11 @@ describe("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 1250000000000000000000n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
+			},
 		});
 	});
 
@@ -498,6 +559,7 @@ describe("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			underlyingFees: null,
 		});
 	});
 
@@ -517,13 +579,14 @@ describe("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			underlyingFees: null,
 		});
 	});
 
 	it("createWithdrawalIntents(): returns intents array with storage swap", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 1000n,
 			quote: {
 				defuse_asset_identifier_in: "nep141:btc.omft.near",
@@ -532,6 +595,11 @@ describe("near_withdrawal", () => {
 				amount_out: "1250000000000000000000",
 				expiration_time: "2025-07-22T03:52:23.747Z",
 				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+			},
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
 			},
 		};
 
@@ -572,6 +640,7 @@ describe("near_withdrawal", () => {
 		const feeEstimation = {
 			amount: 0n,
 			quote: null,
+			underlyingFees: null,
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -603,6 +672,7 @@ describe("near_withdrawal", () => {
 		const feeEstimation = {
 			amount: 0n,
 			quote: null,
+			underlyingFees: null,
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -634,13 +704,12 @@ describe("near_withdrawal", () => {
 				amount: 700n,
 				destinationAddress: "hello.near",
 				feeInclusive: false,
-				routeConfig: {
-					route: RouteEnum.NearWithdrawal,
-				},
+				routeConfig: createNearWithdrawalRoute(),
 			},
 			feeEstimation: {
 				amount: 0n,
 				quote: null,
+				underlyingFees: null,
 			},
 		});
 
@@ -691,7 +760,22 @@ describe("omni_bridge", () => {
 			},
 		});
 
-		expect(fee).toEqual({ amount: 5n, quote });
+		expect(fee).toEqual({
+			amount: 5n,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: expect.any(BigInt),
+				},
+			},
+			quote: {
+				defuse_asset_identifier_in: "nep141:zec.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "5",
+				amount_out: "7",
+				expiration_time: "0",
+				quote_hash: "mock-hash",
+			},
+		});
 	});
 
 	it("estimateWithdrawalFee(): should return fee without quote for withdrawal of nep141:wrap.near", async () => {
@@ -710,6 +794,11 @@ describe("omni_bridge", () => {
 		await expect(fee).resolves.toEqual({
 			amount: expect.any(BigInt),
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: expect.any(BigInt),
+				},
+			},
 		});
 	});
 
@@ -732,6 +821,11 @@ describe("omni_bridge", () => {
 				amount_out: "32692131726749337649152",
 				expiration_time: "2025-09-26T06:41:05.827Z",
 				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: 32692131726749337649152n,
+				},
 			},
 		};
 
@@ -805,6 +899,11 @@ describe("omni_bridge", () => {
 				amount_out: "32692131726749337649152",
 				expiration_time: "2025-09-26T06:41:05.827Z",
 				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: 32692131726749337649152n,
+				},
 			},
 		};
 
@@ -915,6 +1014,11 @@ describe("omni_bridge", () => {
 				amount_out: "195753412200812731432960",
 				expiration_time: "2025-09-26T07:22:24.708Z",
 				quote_hash: "BTUmMusz94gpRVaVanpoM1gcyjS2rT3iDpwoyqrSQEG5",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					omniRelayerNativeFee: 195753412200812731432960n,
+				},
 			},
 		};
 

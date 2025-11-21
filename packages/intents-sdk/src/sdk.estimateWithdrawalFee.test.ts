@@ -25,6 +25,7 @@ describe("sdk.estimateWithdrawalFee()", () => {
 	const feeEstimation = {
 		amount: 10n,
 		quote: null,
+		underlyingFees: null,
 	};
 
 	it("supports single withdrawal", async () => {
