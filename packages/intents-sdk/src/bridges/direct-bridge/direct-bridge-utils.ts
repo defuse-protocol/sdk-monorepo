@@ -38,7 +38,7 @@ export function createWithdrawIntentPrimitive(params: {
 		receiver_id: params.destinationAddress,
 		amount: params.amount.toString(),
 		storage_deposit:
-			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
+			params.storageDeposit > 0n ? params.storageDeposit.toString() : undefined,
 		msg: params.msg,
 	};
 }
