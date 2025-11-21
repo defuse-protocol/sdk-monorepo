@@ -26,7 +26,9 @@ export function createWithdrawIntentPrimitive(params: {
 			amount: params.amount.toString(),
 			msg: makeAuroraEngineDepositMsg(params.destinationAddress),
 			storage_deposit:
-				params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
+				params.storageDeposit > 0n
+					? params.storageDeposit.toString()
+					: undefined,
 		};
 	}
 
@@ -38,7 +40,7 @@ export function createWithdrawIntentPrimitive(params: {
 		amount: params.amount.toString(),
 		msg: `${params.auroraEngineContractId}:${makeAuroraEngineDepositMsg(params.destinationAddress)}`,
 		storage_deposit:
-			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
+			params.storageDeposit > 0n ? params.storageDeposit.toString() : undefined,
 	};
 }
 
