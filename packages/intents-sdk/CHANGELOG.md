@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.33.2
+
+### Patch Changes
+
+- 39171a2: Save gas on not including storage_deposit with null values
+
 ## 0.33.1
 
 ### Patch Changes
