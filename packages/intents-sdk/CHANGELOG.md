@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.34.0
+
+### Minor Changes
+
+- 903c092: Add timeout for omni and hot bridges fee requests
+
 ## 0.33.2
 
 ### Patch Changes
