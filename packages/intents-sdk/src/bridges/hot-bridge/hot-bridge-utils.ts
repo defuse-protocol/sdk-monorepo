@@ -3,9 +3,13 @@ import { Network } from "@hot-labs/omni-sdk";
 import { type Chain, Chains } from "../../lib/caip2";
 import { type HotBridgeChain, HotBridgeChains } from "./hot-bridge-chains";
 
+// HOT SDK still maps Network.Monad (10143) to their testnet, so force mainnet id.
+const MONAD_MAINNET_NETWORK_ID = 143 as Network;
+
 const nativeTokenMapping: Record<HotBridgeChain, string> = {
 	[Chains.BNB]: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",
 	[Chains.Polygon]: "nep245:v2_1.omni.hot.tg:137_11111111111111111111",
+	[Chains.Monad]: "nep245:v2_1.omni.hot.tg:143_11111111111111111111",
 	[Chains.TON]: "nep245:v2_1.omni.hot.tg:1117_",
 	[Chains.Optimism]: "nep245:v2_1.omni.hot.tg:10_11111111111111111111",
 	[Chains.Avalanche]: "nep245:v2_1.omni.hot.tg:43114_11111111111111111111",
@@ -17,6 +21,7 @@ const nativeTokenMapping: Record<HotBridgeChain, string> = {
 const caip2NetworkIdMapping: Record<HotBridgeChain, Network> = {
 	[Chains.BNB]: Network.Bnb,
 	[Chains.Polygon]: Network.Polygon,
+	[Chains.Monad]: MONAD_MAINNET_NETWORK_ID,
 	[Chains.TON]: Network.Ton,
 	[Chains.Optimism]: Network.Optimism,
 	[Chains.Avalanche]: Network.Avalanche,
@@ -39,9 +44,9 @@ export function toHotNetworkId(caip2: Chain): Network {
 }
 
 export function hotNetworkIdToCAIP2(network: string): Chain {
-	if (networkIdCAIP2Mapping[network as unknown as Network] != null) {
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
-		return networkIdCAIP2Mapping[network as unknown as Network]!;
+	const mappedChain = networkIdCAIP2Mapping[network as unknown as Network];
+	if (mappedChain != null) {
+		return mappedChain;
 	}
 
 	throw new Error(`Unsupported HOT Bridge chain = ${network}`);
