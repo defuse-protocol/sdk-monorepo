@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.35.0
+
+### Minor Changes
+
+- a8ff564: Monad mainnet withdrawals are now available through the HOT bridge with the correct 143 network id.
+
 ## 0.34.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.0.3
+
+### Patch Changes
+
+- a8ff564: Monad mainnet withdrawals are now available through the HOT bridge with the correct 143 network id.
+
 ## 1.0.2
 
 ### Patch Changes
