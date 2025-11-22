@@ -59,7 +59,7 @@ const caip2Mapping = {
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
 		keyof typeof poaBridge.PoaBridgeNetworkReference,
-		"NEAR" | "POLYGON" | "BSC"
+		"NEAR" | "POLYGON" | "BSC" | "MONAD"
 	>]
 >;
 
