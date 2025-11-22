@@ -108,6 +108,8 @@ export {
 	type HotWithdrawalNotFoundErrorType,
 	HotWithdrawalCancelledError,
 	type HotWithdrawalCancelledErrorType,
+	HotWithdrawalApiFeeRequestTimeoutError,
+	type HotWithdrawalApiFeeRequestTimeoutErrorType,
 } from "./src/bridges/hot-bridge/error";
 
 // Omni Bridge Errors
@@ -124,6 +126,8 @@ export {
 	type OmniTokenNormalisationCheckErrorType,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	type IntentsNearOmniAvailableBalanceTooLowErrorType,
+	OmniWithdrawalApiFeeRequestTimeoutError,
+	type OmniWithdrawalApiFeeRequestTimeoutErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors

@@ -4,6 +4,7 @@ import {
 	type NearIntentsEnv,
 	RETRY_CONFIGS,
 	type RetryOptions,
+	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
@@ -30,6 +31,7 @@ import type {
 	WithdrawalParams,
 } from "../../shared-types";
 import {
+	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalCancelledError,
 	HotWithdrawalNotFoundError,
 	HotWithdrawalPendingError,
@@ -247,12 +249,18 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee({
-			chain: toHotNetworkId(assetInfo.blockchain),
-			token: "native" in assetInfo ? "native" : assetInfo.address,
-			receiver: args.withdrawalParams.destinationAddress,
-		});
-
+		const { gasPrice: feeAmount } = await withTimeout(
+			() =>
+				this.hotSdk.getGaslessWithdrawFee({
+					chain: toHotNetworkId(assetInfo.blockchain),
+					token: "native" in assetInfo ? "native" : assetInfo.address,
+					receiver: args.withdrawalParams.destinationAddress,
+				}),
+			{
+				errorInstance: new HotWithdrawalApiFeeRequestTimeoutError(),
+				timeout: typeof window !== "undefined" ? 10_000 : 3000,
+			},
+		);
 		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
