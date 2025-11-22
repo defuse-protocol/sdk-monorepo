@@ -8,6 +8,7 @@ import type { RPCEndpointMap } from "../shared-types";
 export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChain, string[]> = {
 	[Chains.BNB]: ["https://bsc-rpc.publicnode.com"],
 	[Chains.Polygon]: ["https://polygon-bor-rpc.publicnode.com"],
+	[Chains.Monad]: ["https://rpc.monad.xyz"],
 	[Chains.Optimism]: ["https://optimism-rpc.publicnode.com"],
 	[Chains.Avalanche]: ["https://avalanche-c-chain-rpc.publicnode.com"],
 	[Chains.LayerX]: ["https://rpc.xlayer.tech"],
