@@ -59,7 +59,7 @@ export function createWithdrawIntentsPrimitive(params: {
 			storage_deposit:
 				params.storageDepositAmount > 0n
 					? params.storageDepositAmount.toString()
-					: null,
+					: undefined,
 			msg: JSON.stringify({
 				recipient,
 				fee: "0",

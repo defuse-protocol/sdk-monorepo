@@ -1,5 +1,23 @@
 # @defuse-protocol/intents-sdk
 
+## 0.35.0
+
+### Minor Changes
+
+- a8ff564: Monad mainnet withdrawals are now available through the HOT bridge with the correct 143 network id.
+
+## 0.34.0
+
+### Minor Changes
+
+- 903c092: Add timeout for omni and hot bridges fee requests
+
+## 0.33.2
+
+### Patch Changes
+
+- 39171a2: Save gas on not including storage_deposit with null values
+
 ## 0.33.1
 
 ### Patch Changes

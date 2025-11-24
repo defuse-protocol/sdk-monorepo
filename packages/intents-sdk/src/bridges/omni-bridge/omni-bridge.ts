@@ -7,6 +7,7 @@ import {
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
+	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -47,6 +48,7 @@ import {
 	TokenNotFoundInDestinationChainError,
 	InvalidOmniNativeFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
+	OmniWithdrawalApiFeeRequestTimeoutError,
 } from "./error";
 import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
@@ -409,10 +411,20 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
-		const fee = await this.omniBridgeAPI.getFee(
-			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
-			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
-			omniAddress(ChainKind.Near, assetInfo.contractId),
+		const fee = await withTimeout(
+			() =>
+				this.omniBridgeAPI.getFee(
+					omniAddress(
+						ChainKind.Near,
+						configsByEnvironment[this.env].contractID,
+					),
+					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+					omniAddress(ChainKind.Near, assetInfo.contractId),
+				),
+			{
+				timeout: typeof window !== "undefined" ? 10_000 : 3000,
+				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
+			},
 		);
 
 		if (fee.native_token_fee === null || fee.native_token_fee <= 0n) {

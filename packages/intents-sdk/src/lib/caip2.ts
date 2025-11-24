@@ -13,6 +13,7 @@ export const Chains = {
 	BNB: "eip155:56",
 	Gnosis: "eip155:100",
 	Polygon: "eip155:137",
+	Monad: "eip155:143",
 	LayerX: "eip155:196",
 	Base: "eip155:8453",
 	Arbitrum: "eip155:42161",

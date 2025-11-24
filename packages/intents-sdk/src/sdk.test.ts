@@ -660,7 +660,7 @@ describe("near_withdrawal", () => {
 				intent: "ft_withdraw",
 				msg: "hey",
 				receiver_id: "0x0000000000000000000000000000000000000000",
-				storage_deposit: null,
+				storage_deposit: undefined,
 				token: "wrap.near",
 			},
 		]);
@@ -719,7 +719,7 @@ describe("near_withdrawal", () => {
 				token: "nbtc.bridge.near",
 				receiver_id: "hello.near",
 				amount: "700",
-				storage_deposit: null,
+				storage_deposit: undefined,
 				msg: undefined,
 			},
 		]);
@@ -870,7 +870,7 @@ describe("omni_bridge", () => {
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
-				storage_deposit: null,
+				storage_deposit: undefined,
 				msg: JSON.stringify({
 					recipient,
 					fee: "0",
@@ -948,7 +948,7 @@ describe("omni_bridge", () => {
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
-				storage_deposit: null,
+				storage_deposit: undefined,
 				msg: JSON.stringify({
 					recipient,
 					fee: "0",
