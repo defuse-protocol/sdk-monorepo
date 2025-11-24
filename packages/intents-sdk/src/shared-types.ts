@@ -297,7 +297,7 @@ export interface UnderlyingFees {
 	};
 
 	[RouteEnum.OmniBridge]?: {
-		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. */
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. Paid for omni bridge contract. */
 		storageDepositFee?: bigint;
 		/** Fee for transferring tokens via Omni Bridge to other supported blockchains, taken in wrap.near token. */
 		omniRelayerNativeFee: bigint;
@@ -308,7 +308,7 @@ export interface UnderlyingFees {
 	};
 
 	[RouteEnum.VirtualChain]?: {
-		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. */
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. Paid for virtual chain contract */
 		storageDepositFee: bigint;
 	};
 }
