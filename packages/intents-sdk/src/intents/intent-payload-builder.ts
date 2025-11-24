@@ -208,11 +208,15 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	 * Convenience method that combines build() and signing.
 	 *
 	 * @param signer - The intent signer to use
-	 * @returns Promise resolving to the signed multi-payload
+	 * @returns Promise resolving to the signed multi-payload and the raw payload
 	 */
-	async buildAndSign(signer: IIntentSigner): Promise<MultiPayload> {
+	async buildAndSign(signer: IIntentSigner): Promise<{
+		signed: MultiPayload;
+		payload: IntentPayloadWithSigner<HasSigner>;
+	}> {
 		const payload = await this.build();
-		return signer.signIntent(payload);
+		const signed = await signer.signIntent(payload);
+		return { signed, payload };
 	}
 
 	/**
