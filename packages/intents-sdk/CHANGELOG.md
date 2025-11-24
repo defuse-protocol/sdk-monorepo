@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.36.1
+
+### Patch Changes
+
+- 7e21e9a: Improve nonce encoding performance, which reduced singing time to half.
+
 ## 0.36.0
 
 ### Minor Changes
