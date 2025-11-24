@@ -9,7 +9,7 @@ import * as v from "valibot";
 import { utils } from "@defuse-protocol/internal-utils";
 import { hex } from "@scure/base";
 
-export const SALT_TTL_MS = 30 * 1000; // 30 seconds
+export const SALT_TTL_MS = 5 * 60 * 1000; // 5 mins
 
 export class SaltManager implements ISaltManager {
 	protected intentsContract: string;
