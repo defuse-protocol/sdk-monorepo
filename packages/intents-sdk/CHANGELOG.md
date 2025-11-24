@@ -1,5 +1,12 @@
 # @defuse-protocol/intents-sdk
 
+## 0.36.2
+
+### Patch Changes
+
+- Updated dependencies [a241015]
+  - @defuse-protocol/internal-utils@0.19.2
+
 ## 0.36.1
 
 ### Patch Changes
