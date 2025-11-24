@@ -269,7 +269,8 @@ export class IntentsSDK implements IIntentsSDK {
 					// The builder will use default 1 minute deadline
 				}
 
-				return builder.buildAndSign(intentSigner);
+				const { signed } = await builder.buildAndSign(intentSigner);
+				return signed;
 			}),
 		);
 
