@@ -292,7 +292,7 @@ export interface UnderlyingFees {
 	};
 
 	[RouteEnum.NearWithdrawal]?: {
-		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. */
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. Paid for a token recipient. */
 		storageDepositFee: bigint;
 	};
 
