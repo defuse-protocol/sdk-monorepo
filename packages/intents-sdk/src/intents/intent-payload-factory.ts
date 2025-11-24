@@ -2,9 +2,10 @@ import { VersionedNonceBuilder, type Salt } from "./expirable-nonce";
 import type { IntentPayload } from "./shared-types";
 
 export const DEFAULT_DEADLINE_MS = 60 * 1000; // 1 minute
-// Nonces embed their own deadline, so add 30s buffer so solvers can still send
-// empty intents that invalidate near-expiry quotas without missing the nonce deadline.
-export const DEFAULT_NONCE_DEADLINE_OFFSET_MS = 30 * 1000;
+// In coming future separate deadline fields will be removed from intents.
+// Nonces are the only places where deadlines remain.
+// So it's important they have the same value.
+export const DEFAULT_NONCE_DEADLINE_OFFSET_MS = DEFAULT_DEADLINE_MS;
 
 export function defaultIntentPayloadFactory(
 	salt: Salt,
