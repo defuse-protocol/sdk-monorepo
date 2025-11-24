@@ -1,5 +1,12 @@
 # @defuse-protocol/intents-sdk
 
+## 0.35.1
+
+### Patch Changes
+
+- 8640fc3: Remove 30sec offset from nonce's deadline.
+- 8640fc3: Increase salt cache ttl to 5 minutes.
+
 ## 0.35.0
 
 ### Minor Changes
