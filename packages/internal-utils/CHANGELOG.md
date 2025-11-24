@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.19.2
+
+### Patch Changes
+
+- a241015: Release trigger. No changes.
+
 ## 0.19.1
 
 ### Patch Changes
