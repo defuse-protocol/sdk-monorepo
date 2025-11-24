@@ -19,6 +19,8 @@ import {
 } from "../../constants/public-rpc-urls";
 import { HotBridgeEVMChains } from "./hot-bridge-chains";
 import type { IntentPrimitive } from "../../intents/shared-types";
+import { RouteEnum } from "../../constants/route-enum";
+import type { FeeEstimation } from "../../shared-types";
 
 describe("HotBridge", () => {
 	describe("supports()", () => {
@@ -298,7 +300,15 @@ describe("HotBridge", () => {
 			expect(getGaslessWithdrawFee).toHaveBeenCalledWith(
 				expect.objectContaining({ chain: 143, token: "native" }),
 			);
-			expect(feeEstimation).toEqual({ amount: 10n, quote: null });
+			expect(feeEstimation).toEqual({
+				amount: 10n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						hotBridgeFee: 10n,
+					},
+				},
+			});
 		});
 	});
 
@@ -322,7 +332,15 @@ describe("HotBridge", () => {
 				hotSdk,
 			});
 
-			const feeEstimation = { amount: 10n, quote: null };
+			const feeEstimation: FeeEstimation = {
+				amount: 10n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						hotBridgeFee: 10n,
+					},
+				},
+			};
 			const withdrawalParams = {
 				assetId: "nep245:v2_1.omni.hot.tg:143_11111111111111111111",
 				amount: 100n,
