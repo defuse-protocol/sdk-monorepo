@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.36.0
+
+### Minor Changes
+
+- 78ce1cf: Change return type of `sdk.intentBuilder().buildAndSign()`. Now it returns both `signed` intent and raw `payload`.
+
 ## 0.35.1
 
 ### Patch Changes
