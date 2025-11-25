@@ -37,10 +37,12 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
+	RouteFeeStructures,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	OmniTokenNormalisationCheckError,
 	OmniTransferDestinationChainHashNotFoundError,
@@ -272,12 +274,14 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-		const nativeFee =
-			args.feeEstimation.underlyingFees?.[RouteEnum.OmniBridge]
-				?.omniRelayerNativeFee;
+		const relayerFee = getUnderlyingFee(
+			args.feeEstimation,
+			RouteEnum.OmniBridge,
+			"relayerFee",
+		);
 		assert(
-			nativeFee !== undefined && nativeFee > 0n,
-			`Native fee must be a big int greater than zero. Current value is ${nativeFee}`,
+			relayerFee > 0n,
+			`Invalid Omni bridge relayer fee: expected > 0, got ${relayerFee}`,
 		);
 		intents.push(
 			...createWithdrawIntentsPrimitive({
@@ -286,10 +290,12 @@ export class OmniBridge implements Bridge {
 				amount: args.withdrawalParams.amount,
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
-				nativeFee,
-				storageDepositAmount:
-					args.feeEstimation.underlyingFees?.[RouteEnum.OmniBridge]
-						?.storageDepositFee ?? 0n,
+				nativeFee: relayerFee,
+				storageDepositAmount: getUnderlyingFee(
+					args.feeEstimation,
+					RouteEnum.OmniBridge,
+					"storageDepositFee",
+				),
 			}),
 		);
 
@@ -433,10 +439,9 @@ export class OmniBridge implements Bridge {
 				fee.native_token_fee,
 			);
 		}
-		const underlyingFees: NonNullable<
-			FeeEstimation["underlyingFees"]
-		>[RouteEnum["OmniBridge"]] = {
-			omniRelayerNativeFee: fee.native_token_fee,
+		const underlyingFees: RouteFeeStructures[RouteEnum["OmniBridge"]] = {
+			relayerFee: fee.native_token_fee,
+			storageDepositFee: 0n,
 		};
 		let totalAmountToQuote = fee.native_token_fee;
 

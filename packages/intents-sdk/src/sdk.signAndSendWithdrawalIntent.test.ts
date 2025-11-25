@@ -1,6 +1,7 @@
 import { AssertionError } from "@defuse-protocol/internal-utils";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
+import { RouteEnum } from "./constants/route-enum";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { createInternalTransferRoute } from "./lib/route-config-factory";
@@ -16,7 +17,11 @@ describe("sdk.signAndSendWithdrawalIntent()", () => {
 		feeInclusive: true,
 		routeConfig: createInternalTransferRoute(),
 	};
-	const fee = { amount: 0n, quote: null, underlyingFees: null };
+	const fee = {
+		amount: 0n,
+		quote: null,
+		underlyingFees: { [RouteEnum.InternalTransfer]: null },
+	};
 
 	it("supports single withdrawal", async () => {
 		const { sdk, intentRelayer, defaultIntentSigner } = setupMocks();

@@ -207,7 +207,8 @@ describe("OmniBridge", () => {
 							quote: null,
 							underlyingFees: {
 								[RouteEnum.OmniBridge]: {
-									omniRelayerNativeFee: 25_000_000_000n,
+									relayerFee: 25_000_000_000n,
+									storageDepositFee: 0n,
 								},
 							},
 						},
@@ -250,7 +251,8 @@ describe("OmniBridge", () => {
 							quote: null,
 							underlyingFees: {
 								[RouteEnum.OmniBridge]: {
-									omniRelayerNativeFee: 25_000_000_000n,
+									relayerFee: 25_000_000_000n,
+									storageDepositFee: 0n,
 								},
 							},
 						},

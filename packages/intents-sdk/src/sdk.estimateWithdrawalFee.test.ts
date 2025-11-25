@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { FeeExceedsAmountError } from "./classes/errors";
+import { RouteEnum } from "./constants/route-enum";
 import { noopIntentSigner } from "./intents/intent-signer-impl/intent-signer-noop";
 import type { IntentPrimitive } from "./intents/shared-types";
 import { wait } from "./lib/async";
@@ -25,7 +26,7 @@ describe("sdk.estimateWithdrawalFee()", () => {
 	const feeEstimation = {
 		amount: 10n,
 		quote: null,
-		underlyingFees: null,
+		underlyingFees: { [RouteEnum.InternalTransfer]: null },
 	};
 
 	it("supports single withdrawal", async () => {

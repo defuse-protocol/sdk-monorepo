@@ -48,7 +48,7 @@ describe.concurrent("poa_bridge", () => {
 			quote: null,
 			underlyingFees: {
 				[RouteEnum.PoaBridge]: {
-					poaBridgeFee: expect.any(BigInt),
+					relayerFee: expect.any(BigInt),
 				},
 			},
 		});
@@ -84,7 +84,7 @@ describe.concurrent("poa_bridge", () => {
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.PoaBridge]: {
-						poaBridgeFee: 1500n,
+						relayerFee: 1500n,
 					},
 				},
 			},
@@ -112,7 +112,7 @@ describe.concurrent("poa_bridge", () => {
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.PoaBridge]: {
-						poaBridgeFee: 1500n,
+						relayerFee: 1500n,
 					},
 				},
 			},
@@ -144,7 +144,7 @@ describe.concurrent("poa_bridge", () => {
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.PoaBridge]: {
-						poaBridgeFee: 1600n,
+						relayerFee: 1600n,
 					},
 				},
 			},
@@ -181,7 +181,7 @@ describe.concurrent("hot_bridge", () => {
 			},
 			underlyingFees: {
 				[RouteEnum.HotBridge]: {
-					hotBridgeFee: expect.any(BigInt),
+					relayerFee: expect.any(BigInt),
 				},
 			},
 		});
@@ -219,7 +219,7 @@ describe.concurrent("hot_bridge", () => {
 			},
 			underlyingFees: {
 				[RouteEnum.HotBridge]: {
-					hotBridgeFee: 6600000024640000n,
+					relayerFee: 6600000024640000n,
 				},
 			},
 		};
@@ -285,7 +285,7 @@ describe.concurrent("hot_bridge", () => {
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.HotBridge]: {
-						hotBridgeFee: expect.any(BigInt),
+						relayerFee: expect.any(BigInt),
 					},
 				},
 			});
@@ -321,7 +321,11 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					underlyingFees: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 0n,
+						},
+					},
 				},
 			});
 
@@ -342,7 +346,11 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					underlyingFees: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 0n,
+						},
+					},
 				},
 			});
 
@@ -357,10 +365,13 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					underlyingFees: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 0n,
+						},
+					},
 				},
 			});
-
 			await expect(intentsNative).resolves.toEqual([
 				{
 					amounts: ["1"],
@@ -408,7 +419,9 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
-					underlyingFees: null,
+					underlyingFees: {
+						[RouteEnum.InternalTransfer]: null,
+					},
 				},
 			});
 
@@ -440,7 +453,9 @@ describe.concurrent.each([
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
-			underlyingFees: null,
+			underlyingFees: {
+				[RouteEnum.InternalTransfer]: null,
+			},
 		});
 	});
 
@@ -455,7 +470,13 @@ describe.concurrent.each([
 				feeInclusive: false,
 				routeConfig: createInternalTransferRoute(),
 			},
-			feeEstimation: { amount: 0n, quote: null, underlyingFees: null },
+			feeEstimation: {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.InternalTransfer]: null,
+				},
+			},
 		});
 
 		await expect(intents).resolves.toEqual([
@@ -559,7 +580,11 @@ describe("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
-			underlyingFees: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		});
 	});
 
@@ -579,7 +604,11 @@ describe("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
-			underlyingFees: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		});
 	});
 
@@ -637,10 +666,14 @@ describe("near_withdrawal", () => {
 	it("createWithdrawalIntents(): returns intents array with msg", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 0n,
 			quote: null,
-			underlyingFees: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -669,10 +702,14 @@ describe("near_withdrawal", () => {
 	it("createWithdrawalIntents(): returns intents array with native", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 0n,
 			quote: null,
-			underlyingFees: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -709,7 +746,11 @@ describe("near_withdrawal", () => {
 			feeEstimation: {
 				amount: 0n,
 				quote: null,
-				underlyingFees: null,
+				underlyingFees: {
+					[RouteEnum.NearWithdrawal]: {
+						storageDepositFee: 0n,
+					},
+				},
 			},
 		});
 
@@ -764,7 +805,8 @@ describe("omni_bridge", () => {
 			amount: 5n,
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: {
-					omniRelayerNativeFee: expect.any(BigInt),
+					relayerFee: expect.any(BigInt),
+					storageDepositFee: 0n,
 				},
 			},
 			quote: {
@@ -796,7 +838,8 @@ describe("omni_bridge", () => {
 			quote: null,
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: {
-					omniRelayerNativeFee: expect.any(BigInt),
+					relayerFee: expect.any(BigInt),
+					storageDepositFee: 0n,
 				},
 			},
 		});
@@ -824,7 +867,8 @@ describe("omni_bridge", () => {
 			},
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: {
-					omniRelayerNativeFee: 32692131726749337649152n,
+					relayerFee: 32692131726749337649152n,
+					storageDepositFee: 0n,
 				},
 			},
 		};
@@ -902,7 +946,8 @@ describe("omni_bridge", () => {
 			},
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: {
-					omniRelayerNativeFee: 32692131726749337649152n,
+					relayerFee: 32692131726749337649152n,
+					storageDepositFee: 0n,
 				},
 			},
 		};
@@ -1017,7 +1062,8 @@ describe("omni_bridge", () => {
 			},
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: {
-					omniRelayerNativeFee: 195753412200812731432960n,
+					relayerFee: 195753412200812731432960n,
+					storageDepositFee: 0n,
 				},
 			},
 		};

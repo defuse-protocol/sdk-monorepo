@@ -30,6 +30,7 @@ import type {
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalCancelledError,
@@ -152,9 +153,11 @@ export class HotBridge implements Bridge {
 		}
 
 		const intents: IntentPrimitive[] = [];
-		const feeAmount: bigint =
-			args.feeEstimation.underlyingFees?.[RouteEnum.HotBridge]?.hotBridgeFee ??
-			0n;
+		const feeAmount = getUnderlyingFee(
+			args.feeEstimation,
+			RouteEnum.HotBridge,
+			"relayerFee",
+		);
 
 		if (args.feeEstimation.quote !== null) {
 			intents.push({
@@ -278,10 +281,9 @@ export class HotBridge implements Bridge {
 		return {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
 			quote: feeQuote,
-			underlyingFees:
-				feeAmount > 0n
-					? { [RouteEnum.HotBridge]: { hotBridgeFee: feeAmount } }
-					: null,
+			underlyingFees: {
+				[RouteEnum.HotBridge]: { relayerFee: feeAmount },
+			},
 		};
 	}
 

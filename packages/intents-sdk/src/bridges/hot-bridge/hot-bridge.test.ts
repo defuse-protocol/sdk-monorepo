@@ -305,7 +305,7 @@ describe("HotBridge", () => {
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.HotBridge]: {
-						hotBridgeFee: 10n,
+						relayerFee: 10n,
 					},
 				},
 			});
@@ -337,7 +337,7 @@ describe("HotBridge", () => {
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.HotBridge]: {
-						hotBridgeFee: 10n,
+						relayerFee: 10n,
 					},
 				},
 			};

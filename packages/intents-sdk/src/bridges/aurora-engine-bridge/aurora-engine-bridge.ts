@@ -18,6 +18,7 @@ import type {
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import { NEAR_NATIVE_ASSET_ID } from "./aurora-engine-bridge-constants";
 import {
 	createWithdrawIntentPrimitive,
@@ -108,9 +109,11 @@ export class AuroraEngineBridge implements Bridge {
 				args.withdrawalParams.routeConfig.proxyTokenContractId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
-			storageDeposit:
-				args.feeEstimation.underlyingFees?.[RouteEnum.VirtualChain]
-					?.storageDepositFee ?? 0n,
+			storageDeposit: getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.VirtualChain,
+				"storageDepositFee",
+			),
 		});
 
 		intents.push(intent);
@@ -165,7 +168,11 @@ export class AuroraEngineBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
-				underlyingFees: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: 0n,
+					},
+				},
 			};
 		}
 
