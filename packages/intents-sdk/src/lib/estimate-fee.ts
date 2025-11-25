@@ -6,7 +6,11 @@ import {
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import { tokens } from "./tokensUsdPricesHttpClient";
-import type { FeeEstimation, QuoteOptions, UnderlyingFees } from "../shared-types";
+import type {
+	FeeEstimation,
+	QuoteOptions,
+	UnderlyingFees,
+} from "../shared-types";
 
 /**
  * Helper to extract a specific fee from FeeEstimation's underlyingFees.
