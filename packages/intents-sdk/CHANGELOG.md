@@ -1,5 +1,31 @@
 # @defuse-protocol/intents-sdk
 
+## 0.36.2
+
+### Patch Changes
+
+- Updated dependencies [a241015]
+  - @defuse-protocol/internal-utils@0.19.2
+
+## 0.36.1
+
+### Patch Changes
+
+- 7e21e9a: Improve nonce encoding performance, which reduced singing time to half.
+
+## 0.36.0
+
+### Minor Changes
+
+- 78ce1cf: Change return type of `sdk.intentBuilder().buildAndSign()`. Now it returns both `signed` intent and raw `payload`.
+
+## 0.35.1
+
+### Patch Changes
+
+- 8640fc3: Remove 30sec offset from nonce's deadline.
+- 8640fc3: Increase salt cache ttl to 5 minutes.
+
 ## 0.35.0
 
 ### Minor Changes

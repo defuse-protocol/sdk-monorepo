@@ -329,13 +329,22 @@ describe("IntentPayloadBuilder", () => {
 				receiver_id: "user.near",
 			};
 
-			const multiPayload = await builder
+			const result = await builder
 				.setSigner("0x1234")
 				.addIntent(intent)
 				.buildAndSign(mockSigner);
 
 			expect(mockSigner.signIntent).toHaveBeenCalled();
-			expect(multiPayload).toBeTruthy();
+			expect(result.signed).toEqual({
+				payload: "signed-payload",
+				signature: "signature",
+			});
+			expect(result.payload).toMatchObject({
+				signer_id: "0x1234",
+				intents: [intent],
+				verifying_contract: "intents.near",
+				nonce: expect.any(String),
+			});
 		});
 	});
 
