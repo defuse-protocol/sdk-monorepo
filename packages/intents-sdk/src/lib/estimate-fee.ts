@@ -6,7 +6,40 @@ import {
 	solverRelay,
 } from "@defuse-protocol/internal-utils";
 import { tokens } from "./tokensUsdPricesHttpClient";
-import type { QuoteOptions } from "../shared-types";
+import type {
+	FeeEstimation,
+	QuoteOptions,
+	UnderlyingFees,
+} from "../shared-types";
+
+/**
+ * Helper to extract a specific fee from FeeEstimation's underlyingFees.
+ * Throws if the route's fee object doesn't exist (invariant: bridges must populate their fees during estimation).
+ * Returns the fee value which may be undefined for optional fees within the route object.
+ *
+ * @example
+ * ```typescript
+ * const relayerFee = getUnderlyingFee(feeEstimation, RouteEnum.HotBridge, 'relayerFee');
+ * const storageDepositFee = getUnderlyingFee(feeEstimation, RouteEnum.OmniBridge, 'storageDepositFee');
+ * ```
+ * @throws {Error} If the route's fee object is not found in underlyingFees
+ */
+export function getUnderlyingFee<
+	R extends keyof UnderlyingFees,
+	K extends keyof NonNullable<UnderlyingFees[R]>,
+>(
+	feeEstimation: FeeEstimation,
+	route: R,
+	feeKey: K,
+): NonNullable<UnderlyingFees[R]>[K] {
+	const routeFees = feeEstimation.underlyingFees?.[route];
+	if (routeFees === undefined) {
+		throw new Error(
+			`Missing underlying fees for route "${String(route)}". Fee estimation must populate underlyingFees before creating withdrawal intents.`,
+		);
+	}
+	return (routeFees as NonNullable<UnderlyingFees[R]>)[feeKey];
+}
 
 /**
  * ExactIn fallback with 1.2x multiplier

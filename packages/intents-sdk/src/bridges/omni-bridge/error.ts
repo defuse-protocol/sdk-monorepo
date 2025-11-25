@@ -54,14 +54,17 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 	}
 }
 
-export type FailedToFetchFeeErrorType = FailedToFetchFeeError & {
-	name: "FailedToFetchFeeError";
+export type InvalidFeeValueErrorType = InvalidFeeValueError & {
+	name: "InvalidFeeValueError";
 };
-export class FailedToFetchFeeError extends BaseError {
-	constructor(public token: string) {
-		super(`Failed to fetch fee data for ${token}`, {
-			metaMessages: [`Token: ${token}`],
-			name: "FailedToFetchFeeError",
+export class InvalidFeeValueError extends BaseError {
+	constructor(
+		public token: string,
+		value: unknown,
+	) {
+		super(`Invalid fee value`, {
+			metaMessages: [`Token: ${token}`, `Fee value: ${value}`],
+			name: "InvalidFeeValueError",
 		});
 	}
 }

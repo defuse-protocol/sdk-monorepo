@@ -37,16 +37,18 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
+	RouteFeeStructures,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	OmniTokenNormalisationCheckError,
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
-	FailedToFetchFeeError,
+	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
 } from "./error";
@@ -257,12 +259,6 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-		const [minStorageBalance, currentStorageBalance] =
-			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const storageDepositAmount =
-			minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n;
 
 		const intents: IntentPrimitive[] = [];
 
@@ -278,17 +274,15 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-
-		const nativeFee =
-			(args.feeEstimation.quote === null
-				? args.feeEstimation.amount
-				: BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
-
-		assert(
-			nativeFee >= 0n,
-			`Native fee cannot be negative. Storage deposit amount (${storageDepositAmount}) exceeds fee estimation (${args.feeEstimation.quote === null ? args.feeEstimation.amount : BigInt(args.feeEstimation.quote.amount_out)}). This may indicate a race condition where storage balance changed between fee estimation and intent creation.`,
+		const relayerFee = getUnderlyingFee(
+			args.feeEstimation,
+			RouteEnum.OmniBridge,
+			"relayerFee",
 		);
-
+		assert(
+			relayerFee > 0n,
+			`Invalid Omni bridge relayer fee: expected > 0, got ${relayerFee}`,
+		);
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
@@ -296,11 +290,12 @@ export class OmniBridge implements Bridge {
 				amount: args.withdrawalParams.amount,
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
-				// we need to calculate relayer fee
-				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
-				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
-				nativeFee,
-				storageDepositAmount,
+				nativeFee: relayerFee,
+				storageDepositAmount: getUnderlyingFee(
+					args.feeEstimation,
+					RouteEnum.OmniBridge,
+					"storageDepositFee",
+				),
 			}),
 		);
 
@@ -432,28 +427,41 @@ export class OmniBridge implements Bridge {
 					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 					omniAddress(ChainKind.Near, assetInfo.contractId),
 				),
-
 			{
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 			},
 		);
-		if (fee.native_token_fee === null) {
-			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
+
+		if (fee.native_token_fee === null || fee.native_token_fee <= 0n) {
+			throw new InvalidFeeValueError(
+				args.withdrawalParams.assetId,
+				fee.native_token_fee,
+			);
 		}
+		const underlyingFees: RouteFeeStructures[RouteEnum["OmniBridge"]] = {
+			relayerFee: fee.native_token_fee,
+			storageDepositFee: 0n,
+		};
+		let totalAmountToQuote = fee.native_token_fee;
 
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const totalAmountToQuote =
-			fee.native_token_fee +
-			(minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n);
+
+		const storageDepositFee = minStorageBalance - currentStorageBalance;
+		if (storageDepositFee > 0n) {
+			totalAmountToQuote += storageDepositFee;
+			underlyingFees.storageDepositFee = storageDepositFee;
+		}
+
 		// withdraw of nep141:wrap.near
 		if (args.withdrawalParams.assetId === NEAR_NATIVE_ASSET_ID) {
 			return {
 				amount: totalAmountToQuote,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: underlyingFees,
+				},
 			};
 		}
 
@@ -470,6 +478,9 @@ export class OmniBridge implements Bridge {
 		return {
 			amount: BigInt(quote.amount_in),
 			quote,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: underlyingFees,
+			},
 		};
 	}
 
