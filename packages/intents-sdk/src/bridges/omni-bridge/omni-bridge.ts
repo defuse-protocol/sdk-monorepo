@@ -46,7 +46,7 @@ import {
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
-	InvalidOmniNativeFeeValueError,
+	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
 } from "./error";
@@ -428,7 +428,7 @@ export class OmniBridge implements Bridge {
 		);
 
 		if (fee.native_token_fee === null || fee.native_token_fee <= 0n) {
-			throw new InvalidOmniNativeFeeValueError(
+			throw new InvalidFeeValueError(
 				args.withdrawalParams.assetId,
 				fee.native_token_fee,
 			);

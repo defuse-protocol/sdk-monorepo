@@ -54,18 +54,17 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 	}
 }
 
-export type InvalidOmniNativeFeeValueErrorType =
-	InvalidOmniNativeFeeValueError & {
-		name: "InvalidOmniNativeFeeValueError";
-	};
-export class InvalidOmniNativeFeeValueError extends BaseError {
+export type InvalidFeeValueErrorType = InvalidFeeValueError & {
+	name: "InvalidFeeValueError";
+};
+export class InvalidFeeValueError extends BaseError {
 	constructor(
 		public token: string,
 		value: unknown,
 	) {
-		super(`Invalid omni native token fee value`, {
-			metaMessages: [`Token: ${token}`, `Native token fee value: ${value}`],
-			name: "InvalidOmniNativeFeeValueError",
+		super(`Invalid fee value`, {
+			metaMessages: [`Token: ${token}`, `Fee value: ${value}`],
+			name: "InvalidFeeValueError",
 		});
 	}
 }
