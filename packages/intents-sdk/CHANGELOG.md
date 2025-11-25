@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.37.0
+
+### Minor Changes
+
+- 27360a5: Change structure of `FeeEstimation`. Now it includes detailed info about fees.
+
 ## 0.36.2
 
 ### Patch Changes
