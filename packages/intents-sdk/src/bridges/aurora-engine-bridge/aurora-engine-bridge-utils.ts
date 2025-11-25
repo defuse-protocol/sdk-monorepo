@@ -63,7 +63,11 @@ export function withdrawalParamsInvariant<
 		{ route: RouteEnum["VirtualChain"] }
 	>;
 } {
-	assert(params.routeConfig != null, "Bridge config is required");
+	const routeConfigNullErrorMessage = "Bridge config is required";
+	assert(params.routeConfig != null, routeConfigNullErrorMessage);
+	if (params.routeConfig === undefined) {
+		throw new Error(routeConfigNullErrorMessage);
+	}
 	assert(
 		params.routeConfig.route === RouteEnum.VirtualChain,
 		"Bridge is not aurora_engine",

@@ -139,7 +139,9 @@ export class HotBridge implements Bridge {
 	}): Promise<IntentPrimitive[]> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-
+		if (assetInfo === null) {
+			throw new Error("Asset is not supported");
+		}
 		// Validate that `destinationMemo` is not accidentally used with Stellar or TON
 		if (
 			args.withdrawalParams.destinationMemo != null &&
@@ -210,6 +212,9 @@ export class HotBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+		if (assetInfo === null) {
+			throw new Error("Asset is not supported");
+		}
 		hotBlockchainInvariant(assetInfo.blockchain);
 
 		if (
@@ -247,6 +252,9 @@ export class HotBridge implements Bridge {
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
+		if (assetInfo === null) {
+			throw new Error("Asset is not supported");
+		}
 		hotBlockchainInvariant(assetInfo.blockchain);
 
 		const { gasPrice: feeAmount } = await withTimeout(

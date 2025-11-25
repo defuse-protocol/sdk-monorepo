@@ -169,7 +169,7 @@ export class AuroraEngineBridge implements Bridge {
 		}
 
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
-		const feeAmount = minStorageBalance - userStorageBalance;
+		const feeAmount = BigInt(minStorageBalance) - BigInt(userStorageBalance);
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId
