@@ -316,8 +316,6 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
 });
 
 console.log('Fee amount:', feeEstimation.amount);
-console.log('Quote info:', feeEstimation.quote); // null if fee paid with withdrawn token
-console.log('Underlying fees:', feeEstimation.underlyingFees); // describes paid fees, null if there are no fees
 
 // Batch fee estimation
 const batchFees = await sdk.estimateWithdrawalFee({

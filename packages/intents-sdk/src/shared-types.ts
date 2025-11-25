@@ -326,7 +326,15 @@ export type UnderlyingFees = {
 
 export interface FeeEstimation {
 	amount: bigint;
+	/**
+	 * @internal Implementation detail - do not use directly.
+	 * This field may change or be removed without notice.
+	 */
 	quote: null | solverRelay.Quote;
+	/**
+	 * @internal Implementation detail - do not use directly.
+	 * This field may change or be removed without notice.
+	 */
 	underlyingFees: UnderlyingFees;
 }
 
