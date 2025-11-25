@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Adds description of underlying fees in estimateWithdrawalFee
+Change structure of `FeeEstimation`. Now it includes detailed info about fees.
