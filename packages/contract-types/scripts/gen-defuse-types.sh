@@ -51,7 +51,7 @@ else
   echo "JSON file found. Processing existing file..."
 
   # Apply jq filter to the existing file
-  schema=$(jq "$jq_filter" "$existing_json")
+  schema=$(jq "$jq_filter" "$existing_json" | node "lib/fix-contract-schema.js")
 fi
 
 # Step 2: Pass the modified JSON directly to json-schema-to-typescript
