@@ -56,6 +56,8 @@ fi
 
 # Save to files
 echo "$schema" > "schemas/intents.schema.json"
+# Prettify the output
+pnpm biome format "schemas/intents.schema.json" --write
 
 # Step 2: Pass the modified JSON directly to json-schema-to-typescript
 echo "$schema" | npm_config_registry="https://registry.npmjs.org" npx json-schema-to-typescript -o "$type_output" --unreachableDefinitions
