@@ -121,3 +121,15 @@ export class OmniWithdrawalApiFeeRequestTimeoutError extends BaseError {
 		});
 	}
 }
+export type InsufficientUtxoForOmniBridgeWithdrawalErrorType =
+	InsufficientUtxoForOmniBridgeWithdrawalError & {
+		name: "InsufficientUtxoForOmniBridgeWithdrawalError";
+	};
+export class InsufficientUtxoForOmniBridgeWithdrawalError extends BaseError {
+	constructor(public destinationChain: Chain) {
+		super("Insufficient utxo for withdrawal to a utxo chain.", {
+			metaMessages: [`Destination Chain: ${destinationChain}`],
+			name: "InsufficientUtxoForOmniBridgeWithdrawalError",
+		});
+	}
+}

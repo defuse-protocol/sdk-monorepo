@@ -51,6 +51,7 @@ import {
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
+	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
@@ -65,7 +66,6 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
-	getBtcBridgeConfig,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
@@ -399,11 +399,35 @@ export class OmniBridge implements Bridge {
 		}
 
 		if (omniChainKind === ChainKind.Btc) {
-			const config = await getBtcBridgeConfig(this.nearProvider);
-			// args.amount is without fee
-			// BTC connector that actually do the withdrawal has a custom
-			// min withdraw amount which is not harcoded and can be updated in the contract.
-			const minAmount = BigInt(config.min_withdraw_amount);
+			const fee = await withTimeout(
+				() =>
+					this.omniBridgeAPI.getFee(
+						omniAddress(
+							ChainKind.Near,
+							configsByEnvironment[this.env].contractID,
+						),
+						omniAddress(omniChainKind, args.destinationAddress),
+						omniAddress(ChainKind.Near, assetInfo.contractId),
+						args.amount,
+					),
+				{
+					timeout: typeof window !== "undefined" ? 10_000 : 3000,
+					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
+				},
+			);
+			if (fee.insufficient_utxo) {
+				throw new InsufficientUtxoForOmniBridgeWithdrawalError(
+					assetInfo.blockchain,
+				);
+			}
+
+			assert(
+				fee.min_amount !== null &&
+					fee.min_amount !== undefined &&
+					BigInt(fee.min_amount) > 0n,
+				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
+			);
+			const minAmount = BigInt(fee.min_amount);
 			if (args.amount < minAmount) {
 				throw new MinWithdrawalAmountError(
 					minAmount,
