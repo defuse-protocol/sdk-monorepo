@@ -52,7 +52,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	if (params.utxoMaxGasFee !== undefined && isUtxoChain(params.omniChainKind)) {
 		assert(
 			params.utxoMaxGasFee > 0n,
-			`Invalid utxo max gas fee: expected >= 0, got ${params.utxoMaxGasFee}`,
+			`Invalid utxo max gas fee: expected > 0, got ${params.utxoMaxGasFee}`,
 		);
 		msg = JSON.stringify({
 			MaxGasFee: params.utxoMaxGasFee.toString(),
