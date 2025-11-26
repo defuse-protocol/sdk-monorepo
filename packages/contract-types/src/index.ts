@@ -6,148 +6,6 @@
  */
 
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "Intent".
- */
-export type Intent =
-	| {
-			intent: "add_public_key";
-			public_key: string;
-			[k: string]: unknown;
-	  }
-	| {
-			intent: "remove_public_key";
-			public_key: string;
-			[k: string]: unknown;
-	  }
-	| {
-			intent: "transfer";
-			memo?: string | null;
-			receiver_id: AccountId;
-			tokens: {
-				[k: string]: string;
-			};
-			[k: string]: unknown;
-	  }
-	| {
-			amount: string;
-			intent: "ft_withdraw";
-			memo?: string | null;
-			/**
-			 * Optional minimum required Near gas for created Promise to succeed: * `ft_transfer`:      minimum: 15TGas, default: 15TGas * `ft_transfer_call`: minimum: 30TGas, default: 50TGas
-			 *
-			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
-			 */
-			min_gas?: string | null;
-			/**
-			 * Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
-			 */
-			msg?: string | null;
-			receiver_id: AccountId;
-			/**
-			 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
-			 */
-			storage_deposit?: string | null;
-			token: AccountId;
-			[k: string]: unknown;
-	  }
-	| {
-			intent: "nft_withdraw";
-			memo?: string | null;
-			/**
-			 * Optional minimum required Near gas for created Promise to succeed: * `nft_transfer`:      minimum: 15TGas, default: 15TGas * `nft_transfer_call`: minimum: 30TGas, default: 50TGas
-			 *
-			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
-			 */
-			min_gas?: string | null;
-			/**
-			 * Message to pass to `nft_transfer_call`. Otherwise, `nft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
-			 */
-			msg?: string | null;
-			receiver_id: AccountId;
-			/**
-			 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
-			 */
-			storage_deposit?: string | null;
-			token: AccountId;
-			token_id: string;
-			[k: string]: unknown;
-	  }
-	| {
-			amounts: string[];
-			intent: "mt_withdraw";
-			memo?: string | null;
-			/**
-			 * Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
-			 *
-			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
-			 */
-			min_gas?: string | null;
-			/**
-			 * Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
-			 */
-			msg?: string | null;
-			receiver_id: AccountId;
-			/**
-			 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
-			 */
-			storage_deposit?: string | null;
-			token: AccountId;
-			token_ids: string[];
-			[k: string]: unknown;
-	  }
-	| {
-			amount: string;
-			intent: "native_withdraw";
-			receiver_id: AccountId;
-			[k: string]: unknown;
-	  }
-	| {
-			amount: string;
-			contract_id: AccountId;
-			deposit_for_account_id: AccountId;
-			intent: "storage_deposit";
-			[k: string]: unknown;
-	  }
-	| {
-			diff: {
-				[k: string]: string;
-			};
-			intent: "token_diff";
-			memo?: string | null;
-			referral?: AccountId | null;
-			[k: string]: unknown;
-	  }
-	| {
-			enabled: boolean;
-			intent: "set_auth_by_predecessor_id";
-			[k: string]: unknown;
-	  }
-	| {
-			/**
-			 * Optionally, attach deposit to [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) call. The amount will be subtracted from user's NEP-141 `wNEAR` balance.
-			 *
-			 * NOTE: the `wNEAR` will not be refunded in case of fail.
-			 */
-			attached_deposit?: string;
-			/**
-			 * Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
-			 */
-			contract_id: AccountId;
-			intent: "auth_call";
-			/**
-			 * Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.
-			 *
-			 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
-			 */
-			min_gas?: string | null;
-			/**
-			 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
-			 */
-			msg: string;
-			[k: string]: unknown;
-	  };
-/**
  * NEAR Account Identifier.
  *
  * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
@@ -169,11 +27,6 @@ export type Intent =
  */
 export type AccountId = string;
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "Deadline".
- */
-export type Deadline = string;
-/**
  * Account identifier. This is the human readable UTF-8 string which is used internally to index accounts on the network and their respective state.
  *
  * This is the "referenced" version of the account ID. It is to [`AccountId`] what [`str`] is to [`String`], and works quite similarly to [`Path`]. Like with [`str`] and [`Path`], you can't have a value of type `AccountIdRef`, but you can have a reference like `&AccountIdRef` or `&mut AccountIdRef`.
@@ -191,12 +44,33 @@ export type Deadline = string;
  */
 export type AccountIdRef = string;
 /**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "Deadline".
+ */
+export type Deadline = string;
+/**
  * 1 pip == 1/100th of bip == 0.0001%
  *
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "Pips".
  */
 export type Pips = number;
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "Intent".
+ */
+export type Intent =
+	| IntentAddPublicKey
+	| IntentRemovePublicKey
+	| IntentTransfer
+	| IntentFtWithdraw
+	| IntentNftWithdraw
+	| IntentMtWithdraw
+	| IntentNativeWithdraw
+	| IntentStorageDeposit
+	| IntentTokenDiff
+	| IntentSetAuthByPredecessorId
+	| IntentAuthCall;
 /**
  * See [ERC-191](https://github.com/ethereum/ercs/blob/master/ERCS/erc-191.md)
  *
@@ -209,17 +83,8 @@ export type Erc191Payload = string;
  * via the `definition` "InvariantViolated".
  */
 export type InvariantViolated =
-	| {
-			error: "unmatched_deltas";
-			unmatched_deltas: {
-				[k: string]: string;
-			};
-			[k: string]: unknown;
-	  }
-	| {
-			error: "overflow";
-			[k: string]: unknown;
-	  };
+	| InvariantViolatedUnmatchedDeltas
+	| InvariantViolatedOverflow;
 /**
  * Assuming wallets want to interact with Intents protocol, besides preparing the data in a certain form, they have to have the capability to sign raw messages (off-chain signatures) using an algorithm we understand. This enum solves that problem.
  *
@@ -229,79 +94,13 @@ export type InvariantViolated =
  * via the `definition` "MultiPayload".
  */
 export type MultiPayload =
-	| {
-			payload: Nep413Payload;
-			public_key: string;
-			signature: string;
-			standard: "nep413";
-			[k: string]: unknown;
-	  }
-	| {
-			payload: Erc191Payload;
-			/**
-			 * There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature
-			 */
-			signature: string;
-			standard: "erc191";
-			[k: string]: unknown;
-	  }
-	| {
-			payload: Tip191Payload;
-			/**
-			 * There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature
-			 */
-			signature: string;
-			standard: "tip191";
-			[k: string]: unknown;
-	  }
-	| {
-			payload: string;
-			public_key: string;
-			signature: string;
-			standard: "raw_ed25519";
-			[k: string]: unknown;
-	  }
-	| {
-			/**
-			 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
-			 */
-			authenticator_data: string;
-			/**
-			 * Serialized [clientDataJSON](https://w3c.github.io/webauthn/#dom-authenticatorresponse-clientdatajson)
-			 */
-			client_data_json: string;
-			payload: string;
-			standard: "webauthn";
-			public_key: string;
-			signature: string;
-			[k: string]: unknown;
-	  }
-	| {
-			/**
-			 * Wallet address in either [Raw](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#raw-address) representation or [user-friendly](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#user-friendly-address) format
-			 */
-			address: string;
-			/**
-			 * dApp domain
-			 */
-			domain: string;
-			payload: TonConnectPayloadSchema;
-			public_key: string;
-			signature: string;
-			standard: "ton_connect";
-			/**
-			 * UNIX timestamp (in seconds or RFC3339) at the time of singing
-			 */
-			timestamp: PickFirstDateTimeint64;
-			[k: string]: unknown;
-	  }
-	| {
-			payload: string;
-			public_key: string;
-			signature: string;
-			standard: "sep53";
-			[k: string]: unknown;
-	  };
+	| MultiPayloadNep413
+	| MultiPayloadErc191
+	| MultiPayloadTip191
+	| MultiPayloadRawEd25519
+	| MultiPayloadWebauthn
+	| MultiPayloadTonConnect
+	| MultiPayloadSep53;
 /**
  * See [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md)
  *
@@ -316,90 +115,16 @@ export type Tip191Payload = string;
  * via the `definition` "TonConnectPayloadSchema".
  */
 export type TonConnectPayloadSchema =
-	| {
-			text: string;
-			type: "text";
-			[k: string]: unknown;
-	  }
-	| {
-			bytes: string;
-			type: "binary";
-			[k: string]: unknown;
-	  }
-	| {
-			cell: string;
-			schema_crc: number;
-			type: "cell";
-			[k: string]: unknown;
-	  };
+	| TonConnectPayloadSchemaText
+	| TonConnectPayloadSchemaBinary
+	| TonConnectPayloadSchemaCell;
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
  * via the `definition` "PickFirst(DateTimeint64)".
  */
 export type PickFirstDateTimeint64 = string | number;
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "PromiseOrValueArray_of_String".
- */
-export type PromiseOrValueArrayOf_String = string[];
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "PromiseOrValueBoolean".
- */
-export type PromiseOrValueBoolean = boolean;
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "PromiseOrValueString".
- */
-export type PromiseOrValueString = string;
 
 export interface NEARIntentsContractABI {
-	[k: string]: unknown;
-}
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "AbiHelper".
- */
-export interface AbiHelper {
-	intent: Intent;
-	payload: AbiPayloadHelper;
-	[k: string]: unknown;
-}
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "AbiPayloadHelper".
- */
-export interface AbiPayloadHelper {
-	defuse: DefusePayloadFor_DefuseIntents;
-	nep413: Nep413DefuseMessageFor_DefuseIntents;
-	[k: string]: unknown;
-}
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "DefusePayload_for_DefuseIntents".
- */
-export interface DefusePayloadFor_DefuseIntents {
-	deadline: Deadline;
-	/**
-	 * Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure
-	 */
-	intents?: Intent[];
-	nonce: string;
-	signer_id: AccountId;
-	verifying_contract: AccountId;
-	[k: string]: unknown;
-}
-/**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
- * via the `definition` "Nep413DefuseMessage_for_DefuseIntents".
- */
-export interface Nep413DefuseMessageFor_DefuseIntents {
-	deadline: Deadline;
-	/**
-	 * Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure
-	 */
-	intents?: Intent[];
-	signer_id: AccountId;
 	[k: string]: unknown;
 }
 /**
@@ -429,7 +154,6 @@ export interface AuthCall {
 	 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
 	 */
 	msg: string;
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -439,7 +163,6 @@ export interface DefuseConfig {
 	fees: FeesConfig;
 	roles: RolesConfig;
 	wnear_id: AccountId;
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -448,7 +171,6 @@ export interface DefuseConfig {
 export interface FeesConfig {
 	fee: Pips;
 	fee_collector: AccountId;
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -462,7 +184,212 @@ export interface RolesConfig {
 		[k: string]: AccountId[];
 	};
 	super_admins: AccountId[];
-	[k: string]: unknown;
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "DefusePayload_for_DefuseIntents".
+ */
+export interface DefusePayloadFor_DefuseIntents {
+	deadline: Deadline;
+	/**
+	 * Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure
+	 */
+	intents?: Intent[];
+	nonce: string;
+	signer_id: AccountId;
+	verifying_contract: AccountId;
+}
+/**
+ * See [`AddPublicKey`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentAddPublicKey".
+ */
+export interface IntentAddPublicKey {
+	intent: "add_public_key";
+	public_key: string;
+}
+/**
+ * See [`RemovePublicKey`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentRemovePublicKey".
+ */
+export interface IntentRemovePublicKey {
+	intent: "remove_public_key";
+	public_key: string;
+}
+/**
+ * See [`Transfer`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentTransfer".
+ */
+export interface IntentTransfer {
+	intent: "transfer";
+	memo?: string | null;
+	receiver_id: AccountId;
+	tokens: {
+		[k: string]: string;
+	};
+}
+/**
+ * See [`FtWithdraw`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentFtWithdraw".
+ */
+export interface IntentFtWithdraw {
+	amount: string;
+	intent: "ft_withdraw";
+	memo?: string | null;
+	/**
+	 * Optional minimum required Near gas for created Promise to succeed: * `ft_transfer`:      minimum: 15TGas, default: 15TGas * `ft_transfer_call`: minimum: 30TGas, default: 50TGas
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
+	 */
+	msg?: string | null;
+	receiver_id: AccountId;
+	/**
+	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
+	 */
+	storage_deposit?: string | null;
+	token: AccountId;
+}
+/**
+ * See [`NftWithdraw`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentNftWithdraw".
+ */
+export interface IntentNftWithdraw {
+	intent: "nft_withdraw";
+	memo?: string | null;
+	/**
+	 * Optional minimum required Near gas for created Promise to succeed: * `nft_transfer`:      minimum: 15TGas, default: 15TGas * `nft_transfer_call`: minimum: 30TGas, default: 50TGas
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * Message to pass to `nft_transfer_call`. Otherwise, `nft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
+	 */
+	msg?: string | null;
+	receiver_id: AccountId;
+	/**
+	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
+	 */
+	storage_deposit?: string | null;
+	token: AccountId;
+	token_id: string;
+}
+/**
+ * See [`MtWithdraw`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentMtWithdraw".
+ */
+export interface IntentMtWithdraw {
+	amounts: string[];
+	intent: "mt_withdraw";
+	memo?: string | null;
+	/**
+	 * Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
+	 */
+	msg?: string | null;
+	receiver_id: AccountId;
+	/**
+	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
+	 */
+	storage_deposit?: string | null;
+	token: AccountId;
+	token_ids: string[];
+}
+/**
+ * See [`NativeWithdraw`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentNativeWithdraw".
+ */
+export interface IntentNativeWithdraw {
+	amount: string;
+	intent: "native_withdraw";
+	receiver_id: AccountId;
+}
+/**
+ * See [`StorageDeposit`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentStorageDeposit".
+ */
+export interface IntentStorageDeposit {
+	amount: string;
+	contract_id: AccountId;
+	deposit_for_account_id: AccountId;
+	intent: "storage_deposit";
+}
+/**
+ * See [`TokenDiff`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentTokenDiff".
+ */
+export interface IntentTokenDiff {
+	diff: {
+		[k: string]: string;
+	};
+	intent: "token_diff";
+	memo?: string | null;
+	referral?: AccountId | null;
+}
+/**
+ * See [`SetAuthByPredecessorId`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentSetAuthByPredecessorId".
+ */
+export interface IntentSetAuthByPredecessorId {
+	enabled: boolean;
+	intent: "set_auth_by_predecessor_id";
+}
+/**
+ * See [`AuthCall`]
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "IntentAuthCall".
+ */
+export interface IntentAuthCall {
+	/**
+	 * Optionally, attach deposit to [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) call. The amount will be subtracted from user's NEP-141 `wNEAR` balance.
+	 *
+	 * NOTE: the `wNEAR` will not be refunded in case of fail.
+	 */
+	attached_deposit?: string;
+	/**
+	 * Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
+	 */
+	contract_id: AccountId;
+	intent: "auth_call";
+	/**
+	 * Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
+	 */
+	msg: string;
 }
 /**
  * Withdraw given FT tokens from the intents contract to a given external account id (external being outside of intents).
@@ -489,7 +416,6 @@ export interface FtWithdraw {
 	 */
 	storage_deposit?: string | null;
 	token: AccountId;
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -499,7 +425,23 @@ export interface IntentEventFor_AccountEventFor_NonceEvent {
 	account_id: AccountIdRef;
 	intent_hash: string;
 	nonce: string;
-	[k: string]: unknown;
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "InvariantViolatedUnmatchedDeltas".
+ */
+export interface InvariantViolatedUnmatchedDeltas {
+	error: "unmatched_deltas";
+	unmatched_deltas: {
+		[k: string]: string;
+	};
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "InvariantViolatedOverflow".
+ */
+export interface InvariantViolatedOverflow {
+	error: "overflow";
 }
 /**
  * Withdraw given MT tokens (i.e. [NEP-245](https://github.com/near/NEPs/blob/master/neps/nep-0245.md)) from the intents contract to a given to an external account id (external being outside of intents).
@@ -529,7 +471,18 @@ export interface MtWithdraw {
 	storage_deposit?: string | null;
 	token: AccountId;
 	token_ids: string[];
-	[k: string]: unknown;
+}
+/**
+ * NEP-413: The standard for message signing in Near Protocol. For more details, refer to [NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md).
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadNep413".
+ */
+export interface MultiPayloadNep413 {
+	payload: Nep413Payload;
+	public_key: string;
+	signature: string;
+	standard: "nep413";
 }
 /**
  * See [NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md)
@@ -542,7 +495,127 @@ export interface Nep413Payload {
 	message: string;
 	nonce: string;
 	recipient: string;
-	[k: string]: unknown;
+}
+/**
+ * ERC-191: The standard for message signing in Ethereum, commonly used with `personal_sign()`. For more details, refer to [EIP-191](https://eips.ethereum.org/EIPS/eip-191).
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadErc191".
+ */
+export interface MultiPayloadErc191 {
+	payload: Erc191Payload;
+	/**
+	 * There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature
+	 */
+	signature: string;
+	standard: "erc191";
+}
+/**
+ * TIP-191: The standard for message signing in Tron. For more details, refer to [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md).
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadTip191".
+ */
+export interface MultiPayloadTip191 {
+	payload: Tip191Payload;
+	/**
+	 * There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature
+	 */
+	signature: string;
+	standard: "tip191";
+}
+/**
+ * Raw Ed25519: The standard used by Solana Phantom wallets for message signing. For more details, refer to [Phantom Wallet's documentation](https://docs.phantom.com/solana/signing-a-message).
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadRawEd25519".
+ */
+export interface MultiPayloadRawEd25519 {
+	payload: string;
+	public_key: string;
+	signature: string;
+	standard: "raw_ed25519";
+}
+/**
+ * [COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadWebauthn".
+ */
+export interface MultiPayloadWebauthn {
+	/**
+	 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
+	 */
+	authenticator_data: string;
+	/**
+	 * Serialized [clientDataJSON](https://w3c.github.io/webauthn/#dom-authenticatorresponse-clientdatajson)
+	 */
+	client_data_json: string;
+	payload: string;
+	standard: "webauthn";
+	public_key: string;
+	signature: string;
+}
+/**
+ * TonConnect: The standard for data signing in TON blockchain platform. For more details, refer to [TonConnect documentation](https://docs.tonconsole.com/academy/sign-data).
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadTonConnect".
+ */
+export interface MultiPayloadTonConnect {
+	/**
+	 * Wallet address in either [Raw](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#raw-address) representation or [user-friendly](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#user-friendly-address) format
+	 */
+	address: string;
+	/**
+	 * dApp domain
+	 */
+	domain: string;
+	payload: TonConnectPayloadSchema;
+	public_key: string;
+	signature: string;
+	standard: "ton_connect";
+	/**
+	 * UNIX timestamp (in seconds or RFC3339) at the time of singing
+	 */
+	timestamp: PickFirstDateTimeint64;
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "TonConnectPayloadSchemaText".
+ */
+export interface TonConnectPayloadSchemaText {
+	text: string;
+	type: "text";
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "TonConnectPayloadSchemaBinary".
+ */
+export interface TonConnectPayloadSchemaBinary {
+	bytes: string;
+	type: "binary";
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "TonConnectPayloadSchemaCell".
+ */
+export interface TonConnectPayloadSchemaCell {
+	cell: string;
+	schema_crc: number;
+	type: "cell";
+}
+/**
+ * SEP-53: The standard for signing data off-chain for Stellar accounts. See [SEP-53](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0053.md)
+ *
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "MultiPayloadSep53".
+ */
+export interface MultiPayloadSep53 {
+	payload: string;
+	public_key: string;
+	signature: string;
+	standard: "sep53";
 }
 /**
  * Withdraw native tokens (NEAR) from the intents contract to a given external account id (external being outside of intents). This will subtract from the account's wNEAR balance, and will be sent to the account specified as native NEAR. NOTE: the `wNEAR` will not be refunded in case of fail (e.g. `receiver_id` account does not exist).
@@ -553,7 +626,18 @@ export interface Nep413Payload {
 export interface NativeWithdraw {
 	amount: string;
 	receiver_id: AccountId;
-	[k: string]: unknown;
+}
+/**
+ * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * via the `definition` "Nep413DefuseMessage_for_DefuseIntents".
+ */
+export interface Nep413DefuseMessageFor_DefuseIntents {
+	deadline: Deadline;
+	/**
+	 * Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure
+	 */
+	intents?: Intent[];
+	signer_id: AccountId;
 }
 /**
  * Withdraw given NFT tokens from the intents contract to a given external account id (external being outside of intents).
@@ -580,7 +664,6 @@ export interface NftWithdraw {
 	storage_deposit?: string | null;
 	token: AccountId;
 	token_id: string;
-	[k: string]: unknown;
 }
 /**
  * Collects super admin accounts and accounts that have been granted permissions defined by `AccessControlRole`.
@@ -613,7 +696,6 @@ export interface PermissionedAccounts {
 	 * The accounts that have super admin permissions.
 	 */
 	super_admins: AccountId[];
-	[k: string]: unknown;
 }
 /**
  * Collects all admins and grantees of a role.
@@ -634,7 +716,6 @@ export interface PermissionedAccountsPerRole {
 	 * The accounts that have been granted the role.
 	 */
 	grantees: AccountId[];
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -652,7 +733,6 @@ export interface SimulationOutput {
 	 * Additional info about current state
 	 */
 	state: StateOutput;
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -661,7 +741,6 @@ export interface SimulationOutput {
 export interface StateOutput {
 	current_salt: string;
 	fee: Pips;
-	[k: string]: unknown;
 }
 /**
  * Make [NEP-145](https://nomicon.io/Standards/StorageManagement#nep-145) `storage_deposit` for an `account_id` on `contract_id`. The `amount` will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in any case.
@@ -675,7 +754,6 @@ export interface StorageDeposit {
 	amount: string;
 	contract_id: AccountId;
 	deposit_for_account_id: AccountId;
-	[k: string]: unknown;
 }
 /**
  * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
@@ -684,5 +762,4 @@ export interface StorageDeposit {
 export interface Token {
 	owner_id?: AccountId | null;
 	token_id: string;
-	[k: string]: unknown;
 }
