@@ -5,4 +5,8 @@ export default defineConfig({
 	format: ["esm", "cjs"],
 	platform: "neutral",
 	dts: true,
+	unbundle: true,
+	define: {
+		"import.meta.vitest": "undefined",
+	},
 });

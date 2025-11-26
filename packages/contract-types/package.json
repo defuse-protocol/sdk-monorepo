@@ -13,7 +13,8 @@
 			"import": "./dist/index.js",
 			"require": "./dist/index.cjs",
 			"default": "./dist/index.js"
-		}
+		},
+		"./schemas/intents.schema.json": "./schemas/intents.schema.json"
 	},
 	"files": [
 		"dist"
