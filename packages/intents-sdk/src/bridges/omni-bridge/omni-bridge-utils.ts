@@ -44,15 +44,12 @@ export function createWithdrawIntentsPrimitive(params: {
 		fee: "0",
 		native_token_fee: params.nativeFee.toString(),
 	};
-	// For withdrawals to Bitcoin we need to specify maxGasFee to the relayer
-	// that is picking up our TX and sends it to btc connector.
+	// For withdrawals to Bitcoin and other UTXO chains we need to specify maxGasFee to the relayer
+	// that is picking up our TX and sends it to a connector (btc connector for example).
 	// Technically we can avoid specifying it in the message and relayer just takes the same value
-	// however this introduces a risk that a maclicious actor can pick up this tx and submit it to the btc connector
-	// with big max gas fee value that will result in recipient getting less BTC.
-	if (
-		params.utxoMaxGasFee !== undefined &&
-		params.omniChainKind === ChainKind.Btc
-	) {
+	// however this introduces a risk that a maclicious actor can pick up this tx and submit it to the connector
+	// with higher big max gas fee value that can result in recipient getting less BTC.
+	if (params.utxoMaxGasFee !== undefined && isUtxoChain(params.omniChainKind)) {
 		assert(
 			params.utxoMaxGasFee > 0n,
 			`Invalid utxo max gas fee: expected >= 0, got ${params.utxoMaxGasFee}`,
@@ -128,6 +125,14 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 			return Chains.Bitcoin;
 		default:
 			return null;
+	}
+}
+export function isUtxoChain(network: ChainKind): boolean {
+	switch (network) {
+		case ChainKind.Btc:
+			return true;
+		default:
+			return false;
 	}
 }
 

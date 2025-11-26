@@ -66,6 +66,7 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
+	isUtxoChain,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
@@ -398,7 +399,7 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		if (omniChainKind === ChainKind.Btc) {
+		if (isUtxoChain(omniChainKind)) {
 			const fee = await withTimeout(
 				() =>
 					this.omniBridgeAPI.getFee(
@@ -528,10 +529,10 @@ export class OmniBridge implements Bridge {
 			amount += BigInt(quote.amount_in);
 		}
 
-		// For btc withdrawal we also need to take into consideration
-		// gas_fee - max amount of BTC that can be spent on gas in Bitcoin network
+		// For withdrawals to UTXO chains we also need to take into consideration
+		// gas_fee - max amount of tokens that can be spent on gas in a UTXO network
 		// protocol_fee - constant fee taken by the relayer
-		if (omniChainKind === ChainKind.Btc) {
+		if (isUtxoChain(omniChainKind)) {
 			assert(
 				fee.gas_fee !== null && fee.gas_fee !== undefined && fee.gas_fee > 0n,
 				`Invalid Omni Bridge utxo gas fee: expected > 0, got ${fee.gas_fee}`,
