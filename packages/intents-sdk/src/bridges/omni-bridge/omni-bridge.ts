@@ -263,7 +263,6 @@ export class OmniBridge implements Bridge {
 		);
 
 		const intents: IntentPrimitive[] = [];
-
 		if (args.feeEstimation.quote !== null) {
 			intents.push({
 				intent: "token_diff",
@@ -293,18 +292,16 @@ export class OmniBridge implements Bridge {
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
 				nativeFee: relayerFee,
-				storageDepositAmount:
-					getUnderlyingFee(
-						args.feeEstimation,
-						RouteEnum.OmniBridge,
-						"storageDepositFee",
-					) ?? 0n,
-				maxGasFee:
-					getUnderlyingFee(
-						args.feeEstimation,
-						RouteEnum.OmniBridge,
-						"utxoMaxGasFee",
-					) ?? 0n,
+				storageDepositAmount: getUnderlyingFee(
+					args.feeEstimation,
+					RouteEnum.OmniBridge,
+					"storageDepositFee",
+				),
+				utxoMaxGasFee: getUnderlyingFee(
+					args.feeEstimation,
+					RouteEnum.OmniBridge,
+					"utxoMaxGasFee",
+				),
 			}),
 		);
 
@@ -492,38 +489,39 @@ export class OmniBridge implements Bridge {
 			};
 		}
 
-		const quote = await getFeeQuote({
-			feeAmount: totalAmountToQuote,
-			feeAssetId: NEAR_NATIVE_ASSET_ID,
-			tokenAssetId: args.withdrawalParams.assetId,
-			logger: args.logger,
-			env: this.env,
-			quoteOptions: args.quoteOptions,
-			solverRelayApiKey: this.solverRelayApiKey,
-		});
+		let amount = 0n;
+		let quote = null;
+		if (totalAmountToQuote > 0n) {
+			quote = await getFeeQuote({
+				feeAmount: totalAmountToQuote,
+				feeAssetId: NEAR_NATIVE_ASSET_ID,
+				tokenAssetId: args.withdrawalParams.assetId,
+				logger: args.logger,
+				env: this.env,
+				quoteOptions: args.quoteOptions,
+				solverRelayApiKey: this.solverRelayApiKey,
+			});
+			amount += BigInt(quote.amount_in);
+		}
 
-		let amount = BigInt(quote.amount_in);
 		// For btc withdrawal we also need to take into consideration
-		// max_gas_fee - max amount of BTC that can be spent on gas in Bitcoin network
+		// gas_fee - max amount of BTC that can be spent on gas in Bitcoin network
 		// protocol_fee - constant fee taken by the relayer
 		if (omniChainKind === ChainKind.Btc) {
 			assert(
-				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
-				"Invalid max_gas_fee value returned from omni bridge api for BTC withdrawal",
+				fee.gas_fee !== null && fee.gas_fee !== undefined && fee.gas_fee > 0n,
+				`Invalid Omni Bridge utxo gas fee: expected > 0, got ${fee.gas_fee}`,
 			);
 			assert(
-				fee.max_gas_fee > 0n,
-				`Invalid max_gas_fee value ${fee.max_gas_fee}`,
+				fee.protocol_fee !== null &&
+					fee.protocol_fee !== undefined &&
+					fee.protocol_fee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${fee.protocol_fee}`,
 			);
-			assert(
-				fee.protocol_fee !== null && fee.protocol_fee !== undefined,
-				"Invalid protocol_fee value returned from omni bridge api for BTC withdrawal",
-			);
-			assert(
-				fee.protocol_fee >= 0n,
-				`Invalid protocol_fee value ${fee.protocol_fee}`,
-			);
-			amount += fee.max_gas_fee + fee.protocol_fee;
+
+			amount += fee.gas_fee + fee.protocol_fee;
+			underlyingFees.utxoMaxGasFee = fee.gas_fee;
+			underlyingFees.utxoProtocolFee = fee.protocol_fee;
 		}
 		return {
 			amount,

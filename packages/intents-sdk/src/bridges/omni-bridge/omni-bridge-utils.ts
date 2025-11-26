@@ -26,11 +26,12 @@ export function createWithdrawIntentsPrimitive(params: {
 	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
 	intentsContract: string;
-	maxGasFee: bigint;
+	utxoMaxGasFee?: bigint;
 }): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
 	);
+	assert(standard === "nep141", "Only NEP-141 is supported");
 	const recipient = omniAddress(
 		params.omniChainKind,
 		params.destinationAddress,
@@ -51,45 +52,52 @@ export function createWithdrawIntentsPrimitive(params: {
 	// Technically we can avoid specifying it in the message and relayer just takes the same value
 	// however this introduces a risk that a maclicious actor can pick up this tx and submit it to the btc connector
 	// with big max gas fee value that will result in recipient getting less BTC.
-	if (params.maxGasFee > 0n && params.omniChainKind === ChainKind.Btc) {
+	if (
+		params.utxoMaxGasFee !== undefined &&
+		params.omniChainKind === ChainKind.Btc
+	) {
+		assert(
+			params.utxoMaxGasFee > 0n,
+			`Invalid utxo max gas fee: expected >= 0, got ${params.utxoMaxGasFee}`,
+		);
 		msg = JSON.stringify({
-			// update after contract update on mainnet
-			V0: { max_fee: params.maxGasFee.toString() },
+			MaxGasFee: params.utxoMaxGasFee.toString(),
 		});
 		ftWithdrawPayload.msg = msg;
 	}
-	const implicitAccount = calculateStorageAccountId({
-		token: `near:${tokenAccountId}`,
-		amount: params.amount,
-		recipient,
-		fee: {
-			fee: 0n,
-			native_fee: params.nativeFee,
-		},
-		sender: `near:${params.intentsContract}`,
-		msg,
-	});
-	assert(standard === "nep141", "Only NEP-141 is supported");
 
-	return [
-		{
-			deposit_for_account_id: implicitAccount,
+	const intents: IntentPrimitive[] = [];
+	if (params.nativeFee > 0n) {
+		intents.push({
+			deposit_for_account_id: calculateStorageAccountId({
+				token: `near:${tokenAccountId}`,
+				amount: params.amount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: params.nativeFee,
+				},
+				sender: `near:${params.intentsContract}`,
+				msg,
+			}),
 			amount: params.nativeFee.toString(),
 			contract_id: OMNI_BRIDGE_CONTRACT,
 			intent: "storage_deposit",
-		},
-		{
-			intent: "ft_withdraw",
-			token: tokenAccountId,
-			receiver_id: OMNI_BRIDGE_CONTRACT,
-			amount: params.amount.toString(),
-			storage_deposit:
-				params.storageDepositAmount > 0n
-					? params.storageDepositAmount.toString()
-					: undefined,
-			msg: JSON.stringify(ftWithdrawPayload),
-		},
-	];
+		});
+	}
+	intents.push({
+		intent: "ft_withdraw",
+		token: tokenAccountId,
+		receiver_id: OMNI_BRIDGE_CONTRACT,
+		amount: params.amount.toString(),
+		storage_deposit:
+			params.storageDepositAmount > 0n
+				? params.storageDepositAmount.toString()
+				: undefined,
+		msg: JSON.stringify(ftWithdrawPayload),
+	});
+
+	return intents;
 }
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
