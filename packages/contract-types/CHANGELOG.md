@@ -1,5 +1,16 @@
 # @defuse-protocol/contract-types
 
+## 0.4.0
+
+### Minor Changes
+
+- ae31e9e: Export JSON Schema. It is located in "/schemas/intents.schema.json".
+- ae31e9e: Re-generate types from contract ABI:
+
+  - Remove internal types
+  - Disallow extra fields from objects
+  - Improve polymorphic (discriminated union) objects
+
 ## 0.3.1
 
 ### Patch Changes
