@@ -22,7 +22,7 @@
  *
  * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "AccountId".
  */
 export type AccountId = string;
@@ -39,24 +39,24 @@ export type AccountId = string;
  *
  * [`FromStr`]: std::str::FromStr [`Path`]: std::path::Path
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "AccountIdRef".
  */
 export type AccountIdRef = string;
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Deadline".
  */
 export type Deadline = string;
 /**
  * 1 pip == 1/100th of bip == 0.0001%
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Pips".
  */
 export type Pips = number;
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Intent".
  */
 export type Intent =
@@ -74,12 +74,12 @@ export type Intent =
 /**
  * See [ERC-191](https://github.com/ethereum/ercs/blob/master/ERCS/erc-191.md)
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Erc191Payload".
  */
 export type Erc191Payload = string;
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "InvariantViolated".
  */
 export type InvariantViolated =
@@ -90,7 +90,7 @@ export type InvariantViolated =
  *
  * For example, because we support ERC-191 and know how to verify messages with that standard, we can allow wallets, like Metamask, sign messages to perform intents without having to support new cryptographic primitives and signing standards.
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayload".
  */
 export type MultiPayload =
@@ -104,14 +104,14 @@ export type MultiPayload =
 /**
  * See [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md)
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Tip191Payload".
  */
 export type Tip191Payload = string;
 /**
  * See <https://docs.tonconsole.com/academy/sign-data#choosing-the-right-format>
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchema".
  */
 export type TonConnectPayloadSchema =
@@ -119,18 +119,18 @@ export type TonConnectPayloadSchema =
 	| TonConnectPayloadSchemaBinary
 	| TonConnectPayloadSchemaCell;
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "PickFirst(DateTimeint64)".
  */
 export type PickFirstDateTimeint64 = string | number;
 
-export interface NEARIntentsContractABI {
+export interface NEARIntentsSchema {
 	[k: string]: unknown;
 }
 /**
  * Call [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) with `signer_id` of intent.
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "AuthCall".
  */
 export interface AuthCall {
@@ -156,7 +156,7 @@ export interface AuthCall {
 	msg: string;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "DefuseConfig".
  */
 export interface DefuseConfig {
@@ -165,7 +165,7 @@ export interface DefuseConfig {
 	wnear_id: AccountId;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "FeesConfig".
  */
 export interface FeesConfig {
@@ -173,7 +173,7 @@ export interface FeesConfig {
 	fee_collector: AccountId;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "RolesConfig".
  */
 export interface RolesConfig {
@@ -186,7 +186,7 @@ export interface RolesConfig {
 	super_admins: AccountId[];
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "DefusePayload_for_DefuseIntents".
  */
 export interface DefusePayloadFor_DefuseIntents {
@@ -202,7 +202,7 @@ export interface DefusePayloadFor_DefuseIntents {
 /**
  * See [`AddPublicKey`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentAddPublicKey".
  */
 export interface IntentAddPublicKey {
@@ -212,7 +212,7 @@ export interface IntentAddPublicKey {
 /**
  * See [`RemovePublicKey`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentRemovePublicKey".
  */
 export interface IntentRemovePublicKey {
@@ -222,7 +222,7 @@ export interface IntentRemovePublicKey {
 /**
  * See [`Transfer`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentTransfer".
  */
 export interface IntentTransfer {
@@ -236,7 +236,7 @@ export interface IntentTransfer {
 /**
  * See [`FtWithdraw`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentFtWithdraw".
  */
 export interface IntentFtWithdraw {
@@ -263,7 +263,7 @@ export interface IntentFtWithdraw {
 /**
  * See [`NftWithdraw`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentNftWithdraw".
  */
 export interface IntentNftWithdraw {
@@ -290,7 +290,7 @@ export interface IntentNftWithdraw {
 /**
  * See [`MtWithdraw`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentMtWithdraw".
  */
 export interface IntentMtWithdraw {
@@ -318,7 +318,7 @@ export interface IntentMtWithdraw {
 /**
  * See [`NativeWithdraw`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentNativeWithdraw".
  */
 export interface IntentNativeWithdraw {
@@ -329,7 +329,7 @@ export interface IntentNativeWithdraw {
 /**
  * See [`StorageDeposit`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentStorageDeposit".
  */
 export interface IntentStorageDeposit {
@@ -341,7 +341,7 @@ export interface IntentStorageDeposit {
 /**
  * See [`TokenDiff`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentTokenDiff".
  */
 export interface IntentTokenDiff {
@@ -355,7 +355,7 @@ export interface IntentTokenDiff {
 /**
  * See [`SetAuthByPredecessorId`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentSetAuthByPredecessorId".
  */
 export interface IntentSetAuthByPredecessorId {
@@ -365,7 +365,7 @@ export interface IntentSetAuthByPredecessorId {
 /**
  * See [`AuthCall`]
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentAuthCall".
  */
 export interface IntentAuthCall {
@@ -394,7 +394,7 @@ export interface IntentAuthCall {
 /**
  * Withdraw given FT tokens from the intents contract to a given external account id (external being outside of intents).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "FtWithdraw".
  */
 export interface FtWithdraw {
@@ -418,7 +418,7 @@ export interface FtWithdraw {
 	token: AccountId;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentEvent_for_AccountEvent_for_NonceEvent".
  */
 export interface IntentEventFor_AccountEventFor_NonceEvent {
@@ -427,7 +427,7 @@ export interface IntentEventFor_AccountEventFor_NonceEvent {
 	nonce: string;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "InvariantViolatedUnmatchedDeltas".
  */
 export interface InvariantViolatedUnmatchedDeltas {
@@ -437,7 +437,7 @@ export interface InvariantViolatedUnmatchedDeltas {
 	};
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "InvariantViolatedOverflow".
  */
 export interface InvariantViolatedOverflow {
@@ -448,7 +448,7 @@ export interface InvariantViolatedOverflow {
  *
  * If `msg` is given, `mt_batch_transfer_call()` will be used to transfer to the `receiver_id`. Otherwise, `mt_batch_transfer()` will be used.
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MtWithdraw".
  */
 export interface MtWithdraw {
@@ -475,7 +475,7 @@ export interface MtWithdraw {
 /**
  * NEP-413: The standard for message signing in Near Protocol. For more details, refer to [NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadNep413".
  */
 export interface MultiPayloadNep413 {
@@ -487,7 +487,7 @@ export interface MultiPayloadNep413 {
 /**
  * See [NEP-413](https://github.com/near/NEPs/blob/master/neps/nep-0413.md)
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Nep413Payload".
  */
 export interface Nep413Payload {
@@ -499,7 +499,7 @@ export interface Nep413Payload {
 /**
  * ERC-191: The standard for message signing in Ethereum, commonly used with `personal_sign()`. For more details, refer to [EIP-191](https://eips.ethereum.org/EIPS/eip-191).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadErc191".
  */
 export interface MultiPayloadErc191 {
@@ -513,7 +513,7 @@ export interface MultiPayloadErc191 {
 /**
  * TIP-191: The standard for message signing in Tron. For more details, refer to [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadTip191".
  */
 export interface MultiPayloadTip191 {
@@ -527,7 +527,7 @@ export interface MultiPayloadTip191 {
 /**
  * Raw Ed25519: The standard used by Solana Phantom wallets for message signing. For more details, refer to [Phantom Wallet's documentation](https://docs.phantom.com/solana/signing-a-message).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadRawEd25519".
  */
 export interface MultiPayloadRawEd25519 {
@@ -539,7 +539,7 @@ export interface MultiPayloadRawEd25519 {
 /**
  * [COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadWebauthn".
  */
 export interface MultiPayloadWebauthn {
@@ -559,7 +559,7 @@ export interface MultiPayloadWebauthn {
 /**
  * TonConnect: The standard for data signing in TON blockchain platform. For more details, refer to [TonConnect documentation](https://docs.tonconsole.com/academy/sign-data).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadTonConnect".
  */
 export interface MultiPayloadTonConnect {
@@ -581,7 +581,7 @@ export interface MultiPayloadTonConnect {
 	timestamp: PickFirstDateTimeint64;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchemaText".
  */
 export interface TonConnectPayloadSchemaText {
@@ -589,7 +589,7 @@ export interface TonConnectPayloadSchemaText {
 	type: "text";
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchemaBinary".
  */
 export interface TonConnectPayloadSchemaBinary {
@@ -597,7 +597,7 @@ export interface TonConnectPayloadSchemaBinary {
 	type: "binary";
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchemaCell".
  */
 export interface TonConnectPayloadSchemaCell {
@@ -608,7 +608,7 @@ export interface TonConnectPayloadSchemaCell {
 /**
  * SEP-53: The standard for signing data off-chain for Stellar accounts. See [SEP-53](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0053.md)
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadSep53".
  */
 export interface MultiPayloadSep53 {
@@ -620,7 +620,7 @@ export interface MultiPayloadSep53 {
 /**
  * Withdraw native tokens (NEAR) from the intents contract to a given external account id (external being outside of intents). This will subtract from the account's wNEAR balance, and will be sent to the account specified as native NEAR. NOTE: the `wNEAR` will not be refunded in case of fail (e.g. `receiver_id` account does not exist).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "NativeWithdraw".
  */
 export interface NativeWithdraw {
@@ -628,7 +628,7 @@ export interface NativeWithdraw {
 	receiver_id: AccountId;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Nep413DefuseMessage_for_DefuseIntents".
  */
 export interface Nep413DefuseMessageFor_DefuseIntents {
@@ -642,7 +642,7 @@ export interface Nep413DefuseMessageFor_DefuseIntents {
 /**
  * Withdraw given NFT tokens from the intents contract to a given external account id (external being outside of intents).
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "NftWithdraw".
  */
 export interface NftWithdraw {
@@ -682,7 +682,7 @@ export interface NftWithdraw {
  *
  * Account ids returned in vectors are unique but not ordered.
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "PermissionedAccounts".
  */
 export interface PermissionedAccounts {
@@ -704,7 +704,7 @@ export interface PermissionedAccounts {
  *
  * Account ids returned in vectors are unique but not ordered.
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "PermissionedAccountsPerRole".
  */
 export interface PermissionedAccountsPerRole {
@@ -718,7 +718,7 @@ export interface PermissionedAccountsPerRole {
 	grantees: AccountId[];
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "SimulationOutput".
  */
 export interface SimulationOutput {
@@ -735,7 +735,7 @@ export interface SimulationOutput {
 	state: StateOutput;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "StateOutput".
  */
 export interface StateOutput {
@@ -747,7 +747,7 @@ export interface StateOutput {
  *
  * WARNING: use this intent only if paying storage_deposit is not a prerequisite for other intents to succeed. If some intent (e.g. ft_withdraw) requires storage_deposit, then use storage_deposit field of corresponding intent instead of adding a separate `StorageDeposit` intent. This is due to the fact that intents that fire `Promise`s are not guaranteed to be executed sequentially, in the order of the provided intents in `DefuseIntents`.
  *
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "StorageDeposit".
  */
 export interface StorageDeposit {
@@ -756,7 +756,7 @@ export interface StorageDeposit {
 	deposit_for_account_id: AccountId;
 }
 /**
- * This interface was referenced by `NEARIntentsContractABI`'s JSON-Schema
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Token".
  */
 export interface Token {
