@@ -108,6 +108,8 @@ export {
 	type HotWithdrawalNotFoundErrorType,
 	HotWithdrawalCancelledError,
 	type HotWithdrawalCancelledErrorType,
+	HotWithdrawalApiFeeRequestTimeoutError,
+	type HotWithdrawalApiFeeRequestTimeoutErrorType,
 } from "./src/bridges/hot-bridge/error";
 
 // Omni Bridge Errors
@@ -116,14 +118,16 @@ export {
 	type OmniTransferNotFoundErrorType,
 	OmniTransferDestinationChainHashNotFoundError,
 	type OmniTransferDestinationChainHashNotFoundErrorType,
-	FailedToFetchFeeError,
-	type FailedToFetchFeeErrorType,
+	InvalidFeeValueError,
+	type InvalidFeeValueErrorType,
 	TokenNotFoundInDestinationChainError,
 	type TokenNotFoundInDestinationChainErrorType,
 	OmniTokenNormalisationCheckError,
 	type OmniTokenNormalisationCheckErrorType,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	type IntentsNearOmniAvailableBalanceTooLowErrorType,
+	OmniWithdrawalApiFeeRequestTimeoutError,
+	type OmniWithdrawalApiFeeRequestTimeoutErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors
@@ -188,3 +192,13 @@ export type { OnBeforePublishIntentHook } from "./src/intents/intent-executer-im
 // Nonce helpers
 // ============================================================================
 export { VersionedNonceBuilder } from "./src/intents/expirable-nonce";
+
+// ============================================================================
+// Intent Payload Builder
+// ============================================================================
+export { IntentPayloadBuilder } from "./src/intents/intent-payload-builder";
+
+// ============================================================================
+// Intent Hash
+// ============================================================================
+export { computeIntentHash } from "./src/intents/intent-hash";

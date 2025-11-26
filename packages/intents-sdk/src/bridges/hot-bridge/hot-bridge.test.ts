@@ -18,6 +18,9 @@ import {
 	PUBLIC_STELLAR_RPC_URLS,
 } from "../../constants/public-rpc-urls";
 import { HotBridgeEVMChains } from "./hot-bridge-chains";
+import type { IntentPrimitive } from "../../intents/shared-types";
+import { RouteEnum } from "../../constants/route-enum";
+import type { FeeEstimation } from "../../shared-types";
 
 describe("HotBridge", () => {
 	describe("supports()", () => {
@@ -184,7 +187,7 @@ describe("HotBridge", () => {
 			async ({ assetId, destinationAddress }) => {
 				const bridge = new HotBridge({
 					env: "production",
-					hotSdk: {} as any,
+					hotSdk: {} as unknown as hotOmniSdk.HotBridge,
 				});
 
 				await expect(
@@ -268,6 +271,93 @@ describe("HotBridge", () => {
 				"HOT Bridge incorrect destination tx hash detected",
 				{ value: "invalid_tx_hash" },
 			);
+		});
+	});
+
+	describe("estimateWithdrawalFee()", () => {
+		it("uses Monad mainnet network id", async () => {
+			const getGaslessWithdrawFee = vi
+				.fn()
+				.mockResolvedValue({ gasPrice: 10n });
+
+			const hotSdk = {
+				getGaslessWithdrawFee,
+			} as unknown as hotOmniSdk.HotBridge;
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk,
+			});
+
+			const assetId = "nep245:v2_1.omni.hot.tg:143_11111111111111111111";
+			const feeEstimation = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId,
+					destinationAddress: zeroAddress,
+				},
+			});
+
+			expect(getGaslessWithdrawFee).toHaveBeenCalledWith(
+				expect.objectContaining({ chain: 143, token: "native" }),
+			);
+			expect(feeEstimation).toEqual({
+				amount: 10n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: 10n,
+					},
+				},
+			});
+		});
+	});
+
+	describe("createWithdrawalIntents()", () => {
+		it("uses Monad mainnet network id", async () => {
+			const mockIntent = {
+				intent: "mt_withdraw",
+				token: "foo.near",
+				token_ids: ["nep245:v2_1.omni.hot.tg:143_11111111111111111111"],
+				amounts: ["110"],
+				receiver_id: zeroAddress,
+			} satisfies Extract<IntentPrimitive, { intent: "mt_withdraw" }>;
+			const buildGaslessWithdrawIntent = vi.fn().mockResolvedValue(mockIntent);
+
+			const hotSdk = {
+				buildGaslessWithdrawIntent,
+			} as unknown as hotOmniSdk.HotBridge;
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk,
+			});
+
+			const feeEstimation: FeeEstimation = {
+				amount: 10n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: 10n,
+					},
+				},
+			};
+			const withdrawalParams = {
+				assetId: "nep245:v2_1.omni.hot.tg:143_11111111111111111111",
+				amount: 100n,
+				destinationAddress: zeroAddress,
+				feeInclusive: true,
+				routeConfig: createHotBridgeRoute(Chains.Monad),
+			};
+
+			const intents = await bridge.createWithdrawalIntents({
+				withdrawalParams,
+				feeEstimation,
+			});
+
+			expect(buildGaslessWithdrawIntent).toHaveBeenCalledWith(
+				expect.objectContaining({ chain: 143 }),
+			);
+			expect(intents).toEqual([mockIntent]);
 		});
 	});
 });

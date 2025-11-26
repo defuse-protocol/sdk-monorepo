@@ -1,4 +1,7 @@
-import type { DefusePayloadFor_DefuseIntents } from "@defuse-protocol/contract-types";
+import type {
+	DefusePayloadFor_DefuseIntents,
+	TonConnectPayloadSchema,
+} from "@defuse-protocol/contract-types";
 
 // Message for EVM wallets
 export type ERC191Message = {
@@ -91,20 +94,7 @@ export type TonConnectSignatureData = {
 		address: string;
 		timestamp: number;
 		domain: string;
-		payload:
-			| {
-					type: "text";
-					text: string;
-			  }
-			| {
-					type: "cell";
-					schema: string;
-					cell: string;
-			  }
-			| {
-					type: "binary";
-					bytes: string;
-			  };
+		payload: TonConnectPayloadSchema;
 	};
 	signedData: TonConnectMessage;
 };

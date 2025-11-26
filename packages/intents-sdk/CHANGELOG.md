@@ -1,5 +1,144 @@
 # @defuse-protocol/intents-sdk
 
+## 0.37.0
+
+### Minor Changes
+
+- 27360a5: Change structure of `FeeEstimation`. Now it includes detailed info about fees.
+
+## 0.36.2
+
+### Patch Changes
+
+- Updated dependencies [a241015]
+  - @defuse-protocol/internal-utils@0.19.2
+
+## 0.36.1
+
+### Patch Changes
+
+- 7e21e9a: Improve nonce encoding performance, which reduced singing time to half.
+
+## 0.36.0
+
+### Minor Changes
+
+- 78ce1cf: Change return type of `sdk.intentBuilder().buildAndSign()`. Now it returns both `signed` intent and raw `payload`.
+
+## 0.35.1
+
+### Patch Changes
+
+- 8640fc3: Remove 30sec offset from nonce's deadline.
+- 8640fc3: Increase salt cache ttl to 5 minutes.
+
+## 0.35.0
+
+### Minor Changes
+
+- a8ff564: Monad mainnet withdrawals are now available through the HOT bridge with the correct 143 network id.
+
+## 0.34.0
+
+### Minor Changes
+
+- 903c092: Add timeout for omni and hot bridges fee requests
+
+## 0.33.2
+
+### Patch Changes
+
+- 39171a2: Save gas on not including storage_deposit with null values
+
+## 0.33.1
+
+### Patch Changes
+
+- 27a6923: Extend generated nonce deadlines by 30 seconds past intent deadlines so solvers can reliably invalidate soon-to-expire quotas.
+
+## 0.33.0
+
+### Minor Changes
+
+- d78f077: Add new `sdk.invalidateNonces()` method.
+
+## 0.32.3
+
+### Patch Changes
+
+- Updated dependencies [2d38a96]
+  - @defuse-protocol/contract-types@0.3.1
+  - @defuse-protocol/internal-utils@0.19.1
+
+## 0.32.2
+
+### Patch Changes
+
+- 8cfa8a4: fix xlayer
+
+## 0.32.1
+
+### Patch Changes
+
+- 0199fb6: fix litecoin withdrawal
+
+## 0.32.0
+
+### Minor Changes
+
+- 00f0115: Add Litecoin and LayerX support.
+
+### Patch Changes
+
+- Updated dependencies [00f0115]
+  - @defuse-protocol/internal-utils@0.19.0
+
+## 0.31.0
+
+### Minor Changes
+
+- ae1afbc: Implement intent hash computation of all standards. Expose `computeIntentHash()` function.
+
+### Patch Changes
+
+- Updated dependencies [ae1afbc]
+  - @defuse-protocol/internal-utils@0.18.3
+
+## 0.30.1
+
+### Patch Changes
+
+- ec3976b: Fix importing providers from near-api-js.
+- Updated dependencies [ec3976b]
+  - @defuse-protocol/internal-utils@0.18.2
+
+## 0.30.0
+
+### Minor Changes
+
+- 9f4538b: Add IntentPayloadBuilder for generating an intent payload.
+
+### Patch Changes
+
+- Updated dependencies [5edb8fa]
+  - @defuse-protocol/contract-types@0.3.0
+  - @defuse-protocol/internal-utils@0.18.1
+
+## 0.29.2
+
+### Patch Changes
+
+- 8b87855: Fix generating nonce when deadline is overridden via `payload()`.
+
+## 0.29.1
+
+### Patch Changes
+
+- 5f66088: feat: zcash validation for UA address
+  - Added support for Unified Addresses for Zcash network in validateAddress function.
+- 95bee77: Fix incorrect length calculation for strings with non ASCII characters when calculating ERC-191 hash
+- 4e3405d: Prevent negative native fee in Omni bridge withdrawal.
+
 ## 0.29.0
 
 ### Minor Changes

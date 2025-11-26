@@ -1,6 +1,6 @@
 import { zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OMNI_BRIDGE_CONTRACT } from "./bridges/omni-bridge/omni-bridge-constants";
 import {
 	FeeExceedsAmountError,
@@ -8,7 +8,6 @@ import {
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
-import { RouteEnum } from "./constants/route-enum";
 import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import {
 	createInternalTransferRoute,
@@ -24,6 +23,8 @@ import {
 	ChainKind,
 	omniAddress,
 } from "omni-bridge-sdk";
+import type { FeeEstimation } from "./shared-types";
+import { RouteEnum } from "./constants/route-enum";
 
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
@@ -45,6 +46,11 @@ describe.concurrent("poa_bridge", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 1500n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.PoaBridge]: {
+					relayerFee: expect.any(BigInt),
+				},
+			},
 		});
 	});
 
@@ -76,6 +82,11 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						relayerFee: 1500n,
+					},
+				},
 			},
 		});
 
@@ -99,6 +110,11 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						relayerFee: 1500n,
+					},
+				},
 			},
 		});
 
@@ -126,6 +142,11 @@ describe.concurrent("poa_bridge", () => {
 			feeEstimation: {
 				amount: 1500n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						relayerFee: 1600n,
+					},
+				},
 			},
 		});
 
@@ -158,6 +179,11 @@ describe.concurrent("hot_bridge", () => {
 				expiration_time: expect.any(String),
 				quote_hash: expect.any(String),
 			},
+			underlyingFees: {
+				[RouteEnum.HotBridge]: {
+					relayerFee: expect.any(BigInt),
+				},
+			},
 		});
 	});
 
@@ -179,7 +205,7 @@ describe.concurrent("hot_bridge", () => {
 	it("createWithdrawalIntents(): returns intents array", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 1662n,
 			quote: {
 				defuse_asset_identifier_in:
@@ -190,6 +216,11 @@ describe.concurrent("hot_bridge", () => {
 				amount_out: "6600000024640000",
 				expiration_time: "2025-07-22T03:52:23.747Z",
 				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+			},
+			underlyingFees: {
+				[RouteEnum.HotBridge]: {
+					relayerFee: 6600000024640000n,
+				},
 			},
 		};
 
@@ -252,6 +283,11 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).resolves.toEqual({
 				amount: expect.any(BigInt),
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: expect.any(BigInt),
+					},
+				},
 			});
 		});
 
@@ -285,6 +321,11 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 0n,
+						},
+					},
 				},
 			});
 
@@ -305,6 +346,11 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 0n,
+						},
+					},
 				},
 			});
 
@@ -319,9 +365,13 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 0n,
+						},
+					},
 				},
 			});
-
 			await expect(intentsNative).resolves.toEqual([
 				{
 					amounts: ["1"],
@@ -369,6 +419,9 @@ describe.concurrent("hot_bridge", () => {
 				feeEstimation: {
 					amount: 0n,
 					quote: null,
+					underlyingFees: {
+						[RouteEnum.InternalTransfer]: null,
+					},
 				},
 			});
 
@@ -400,6 +453,9 @@ describe.concurrent.each([
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.InternalTransfer]: null,
+			},
 		});
 	});
 
@@ -414,7 +470,13 @@ describe.concurrent.each([
 				feeInclusive: false,
 				routeConfig: createInternalTransferRoute(),
 			},
-			feeEstimation: { amount: 0n, quote: null },
+			feeEstimation: {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.InternalTransfer]: null,
+				},
+			},
 		});
 
 		await expect(intents).resolves.toEqual([
@@ -427,11 +489,30 @@ describe.concurrent.each([
 	});
 });
 
-describe.concurrent("near_withdrawal", () => {
+describe("near_withdrawal", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
 	it("estimateWithdrawalFee(): returns fee", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const fee = sdk.estimateWithdrawalFee({
+		const quote = {
+			amount_in: "1000",
+			amount_out: "1250000000000000000000",
+			defuse_asset_identifier_in: "nep141:btc.omft.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			expiration_time: "",
+			quote_hash: "",
+		};
+		solverRelay.getQuote.mockResolvedValue(quote);
+
+		const fee = await sdk.estimateWithdrawalFee({
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
@@ -441,15 +522,20 @@ describe.concurrent("near_withdrawal", () => {
 			},
 		});
 
-		await expect(fee).resolves.toEqual({
+		expect(fee).toEqual({
 			amount: expect.any(BigInt),
 			quote: {
-				amount_in: expect.any(String),
+				amount_in: "1000",
 				amount_out: "1250000000000000000000",
 				defuse_asset_identifier_in: "nep141:btc.omft.near",
 				defuse_asset_identifier_out: "nep141:wrap.near",
-				expiration_time: expect.any(String),
-				quote_hash: expect.any(String),
+				expiration_time: "",
+				quote_hash: "",
+			},
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
 			},
 		});
 	});
@@ -470,6 +556,11 @@ describe.concurrent("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 1250000000000000000000n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
+			},
 		});
 	});
 
@@ -489,6 +580,11 @@ describe.concurrent("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		});
 	});
 
@@ -508,13 +604,18 @@ describe.concurrent("near_withdrawal", () => {
 		await expect(fee).resolves.toEqual({
 			amount: 0n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		});
 	});
 
 	it("createWithdrawalIntents(): returns intents array with storage swap", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 1000n,
 			quote: {
 				defuse_asset_identifier_in: "nep141:btc.omft.near",
@@ -523,6 +624,11 @@ describe.concurrent("near_withdrawal", () => {
 				amount_out: "1250000000000000000000",
 				expiration_time: "2025-07-22T03:52:23.747Z",
 				quote_hash: "cHgzmF7GMpVrec83a7bJ6j3jYUtqHnqp583R2Yh36um",
+			},
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
 			},
 		};
 
@@ -560,9 +666,14 @@ describe.concurrent("near_withdrawal", () => {
 	it("createWithdrawalIntents(): returns intents array with msg", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 0n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -582,7 +693,7 @@ describe.concurrent("near_withdrawal", () => {
 				intent: "ft_withdraw",
 				msg: "hey",
 				receiver_id: "0x0000000000000000000000000000000000000000",
-				storage_deposit: null,
+				storage_deposit: undefined,
 				token: "wrap.near",
 			},
 		]);
@@ -591,9 +702,14 @@ describe.concurrent("near_withdrawal", () => {
 	it("createWithdrawalIntents(): returns intents array with native", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const feeEstimation = {
+		const feeEstimation: FeeEstimation = {
 			amount: 0n,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 0n,
+				},
+			},
 		};
 
 		const intents = sdk.createWithdrawalIntents({
@@ -625,13 +741,16 @@ describe.concurrent("near_withdrawal", () => {
 				amount: 700n,
 				destinationAddress: "hello.near",
 				feeInclusive: false,
-				routeConfig: {
-					route: RouteEnum.NearWithdrawal,
-				},
+				routeConfig: createNearWithdrawalRoute(),
 			},
 			feeEstimation: {
 				amount: 0n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.NearWithdrawal]: {
+						storageDepositFee: 0n,
+					},
+				},
 			},
 		});
 
@@ -641,38 +760,66 @@ describe.concurrent("near_withdrawal", () => {
 				token: "nbtc.bridge.near",
 				receiver_id: "hello.near",
 				amount: "700",
-				storage_deposit: null,
+				storage_deposit: undefined,
 				msg: undefined,
 			},
 		]);
 	});
 });
 
-describe.concurrent("omni_bridge", () => {
+describe("omni_bridge", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
 	it("estimateWithdrawalFee(): should return fee", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
-		const fee = sdk.estimateWithdrawalFee({
+		const quote = {
+			defuse_asset_identifier_in: "nep141:zec.omft.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			amount_in: "5",
+			amount_out: "7",
+			expiration_time: "0",
+			quote_hash: "mock-hash",
+		};
+
+		solverRelay.getQuote.mockResolvedValueOnce(quote);
+
+		const fee = await sdk.estimateWithdrawalFee({
 			withdrawalParams: {
-				assetId: "nep141:eth.bridge.near",
-				amount: 1000000000000000000n,
-				destinationAddress: zeroAddress,
+				assetId: "nep141:zec.omft.near",
+				amount: 10000n,
+				destinationAddress: "1nc1nerator11111111111111111111111111111111",
 				feeInclusive: false,
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			},
 		});
 
-		await expect(fee).resolves.toEqual({
-			amount: expect.any(BigInt),
+		expect(fee).toEqual({
+			amount: 5n,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: expect.any(BigInt),
+					storageDepositFee: 0n,
+				},
+			},
 			quote: {
-				defuse_asset_identifier_in: "nep141:eth.bridge.near",
+				defuse_asset_identifier_in: "nep141:zec.omft.near",
 				defuse_asset_identifier_out: "nep141:wrap.near",
-				amount_in: expect.any(String),
-				amount_out: expect.any(String),
-				expiration_time: expect.any(String),
-				quote_hash: expect.any(String),
+				amount_in: "5",
+				amount_out: "7",
+				expiration_time: "0",
+				quote_hash: "mock-hash",
 			},
 		});
 	});
+
 	it("estimateWithdrawalFee(): should return fee without quote for withdrawal of nep141:wrap.near", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
@@ -689,6 +836,12 @@ describe.concurrent("omni_bridge", () => {
 		await expect(fee).resolves.toEqual({
 			amount: expect.any(BigInt),
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: expect.any(BigInt),
+					storageDepositFee: 0n,
+				},
+			},
 		});
 	});
 
@@ -711,6 +864,12 @@ describe.concurrent("omni_bridge", () => {
 				amount_out: "32692131726749337649152",
 				expiration_time: "2025-09-26T06:41:05.827Z",
 				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 32692131726749337649152n,
+					storageDepositFee: 0n,
+				},
 			},
 		};
 
@@ -745,7 +904,7 @@ describe.concurrent("omni_bridge", () => {
 				referral,
 			},
 			{
-				account_id: implicitAccount,
+				deposit_for_account_id: implicitAccount,
 				amount: feeEstimation.quote.amount_out,
 				contract_id: OMNI_BRIDGE_CONTRACT,
 				intent: "storage_deposit",
@@ -755,7 +914,7 @@ describe.concurrent("omni_bridge", () => {
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
-				storage_deposit: null,
+				storage_deposit: undefined,
 				msg: JSON.stringify({
 					recipient,
 					fee: "0",
@@ -764,6 +923,7 @@ describe.concurrent("omni_bridge", () => {
 			},
 		]);
 	});
+
 	it("createWithdrawalIntents(): returns valid intents array with feeInclusive = true", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({ referral, intentSigner });
@@ -783,6 +943,12 @@ describe.concurrent("omni_bridge", () => {
 				amount_out: "32692131726749337649152",
 				expiration_time: "2025-09-26T06:41:05.827Z",
 				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 32692131726749337649152n,
+					storageDepositFee: 0n,
+				},
 			},
 		};
 
@@ -817,7 +983,7 @@ describe.concurrent("omni_bridge", () => {
 				referral,
 			},
 			{
-				account_id: implicitAccount,
+				deposit_for_account_id: implicitAccount,
 				amount: feeEstimation.quote.amount_out,
 				contract_id: OMNI_BRIDGE_CONTRACT,
 				intent: "storage_deposit",
@@ -827,7 +993,7 @@ describe.concurrent("omni_bridge", () => {
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
-				storage_deposit: null,
+				storage_deposit: undefined,
 				msg: JSON.stringify({
 					recipient,
 					fee: "0",
@@ -838,7 +1004,24 @@ describe.concurrent("omni_bridge", () => {
 	});
 
 	it("estimateWithdrawalFee(): rejects when amount is lower than fee", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+		const { FeeExceedsAmountError } = await import("./classes/errors");
+
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const quote = {
+			defuse_asset_identifier_in: "nep141:eth.bridge.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			amount_in: "99",
+			amount_out: "7",
+			expiration_time: "0",
+			quote_hash: "mock-hash",
+		};
+
+		solverRelay.getQuote.mockResolvedValueOnce(quote);
 
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
@@ -851,6 +1034,7 @@ describe.concurrent("omni_bridge", () => {
 
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 	});
+
 	it("validateWithdrawal(): prevents transfers that normalize to zero after decimal adjustment", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 		// The NEP-141 token (token.publicailab.near) uses 18 decimals on NEAR,
@@ -875,6 +1059,12 @@ describe.concurrent("omni_bridge", () => {
 				amount_out: "195753412200812731432960",
 				expiration_time: "2025-09-26T07:22:24.708Z",
 				quote_hash: "BTUmMusz94gpRVaVanpoM1gcyjS2rT3iDpwoyqrSQEG5",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 195753412200812731432960n,
+					storageDepositFee: 0n,
+				},
 			},
 		};
 
@@ -934,3 +1124,31 @@ describe("sdk.parseAssetId()", () => {
 		);
 	});
 });
+
+/**
+ * Use it for easy mocking of `solverRelay.getQuote()`
+ */
+async function useMockedSolverRelay() {
+	// Mock at runtime
+	vi.doMock("@defuse-protocol/internal-utils", async (importOriginal) => {
+		const actual =
+			await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+		return {
+			...actual,
+			solverRelay: {
+				...actual.solverRelay,
+				getQuote: vi.fn(),
+			},
+		};
+	});
+
+	// Import the mocked module
+	const { solverRelay } = await import("@defuse-protocol/internal-utils");
+
+	return {
+		getQuote: vi.mocked(solverRelay.getQuote),
+		[Symbol.dispose]() {
+			vi.doUnmock("@defuse-protocol/internal-utils");
+		},
+	};
+}

@@ -5,7 +5,7 @@ import type {
 } from "@defuse-protocol/internal-utils";
 import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
-import type { RouteEnum } from "./constants/route-enum";
+import { RouteEnum, type RouteEnumValues } from "./constants/route-enum";
 import type { OnBeforePublishIntentHook } from "./intents/intent-executer-impl/intent-executer";
 import type { IIntentSigner } from "./intents/interfaces/intent-signer";
 import type {
@@ -148,6 +148,12 @@ export interface IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<IntentSettlementStatus>;
 
+	invalidateNonces(args: {
+		nonces: string[];
+		signer?: IIntentSigner;
+		logger?: ILogger;
+	}): Promise<void>;
+
 	estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 		quoteOptions?: QuoteOptions;
@@ -271,9 +277,65 @@ export type RouteConfig =
 	| HotBridgeRouteConfig
 	| OmniBridgeRouteConfig;
 
+/**
+ * Fee structure definitions for each route type.
+ */
+export interface RouteFeeStructures {
+	[RouteEnum.HotBridge]: {
+		/** Relayer fee for processing the withdrawal on destination chain, taken in base token of destination chain. */
+		relayerFee: bigint;
+	};
+
+	[RouteEnum.PoaBridge]: {
+		/** Relayer fee for POA bridge transfers, taken in transferred token. */
+		relayerFee: bigint;
+	};
+
+	[RouteEnum.NearWithdrawal]: {
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. Paid for a token recipient. */
+		storageDepositFee: bigint;
+	};
+
+	[RouteEnum.OmniBridge]: {
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. Paid for omni bridge contract. */
+		storageDepositFee: bigint;
+		/** Relayer fee for transferring tokens via Omni Bridge to other supported blockchains, taken in wrap.near token. */
+		relayerFee: bigint;
+		/** Fee taken when making a withdrawal via UTXO connector (e.g., btc-connector.bridge.near), taken in transferred token. */
+		utxoProtocolFee?: bigint;
+		/** Maximum amount of tokens that can be spent on gas when making a withdrawal via UTXO connector (e.g., btc-connector.bridge.near), taken in transferred token. */
+		utxoMaxGasFee?: bigint;
+	};
+
+	[RouteEnum.VirtualChain]: {
+		/** Fee for nep141 storage deposit in NEAR blockchain, taken in wrap.near token. Paid for virtual chain contract */
+		storageDepositFee: bigint;
+	};
+
+	/** Internal transfers have no fees */
+	[RouteEnum.InternalTransfer]: null;
+}
+
+/**
+ * Represents the different categories of fees that may apply across various withdrawal operations.
+ * Each route type has an optional fee structure. Uses a mapped type to ensure all RouteEnum values are covered.
+ */
+export type UnderlyingFees = {
+	[K in RouteEnumValues]?: RouteFeeStructures[K];
+};
+
 export interface FeeEstimation {
 	amount: bigint;
+	/**
+	 * @internal Implementation detail - do not use directly.
+	 * This field may change or be removed without notice.
+	 */
 	quote: null | solverRelay.Quote;
+	/**
+	 * @internal Implementation detail - do not use directly.
+	 * This field may change or be removed without notice.
+	 */
+	underlyingFees: UnderlyingFees;
 }
 
 export interface Bridge {

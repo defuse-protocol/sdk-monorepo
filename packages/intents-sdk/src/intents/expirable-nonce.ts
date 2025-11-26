@@ -1,12 +1,27 @@
 import { base64 } from "@scure/base";
-import { serialize, deserialize } from "near-api-js/lib/utils/serialize";
+import { deserialize } from "near-api-js/lib/utils/serialize";
 import type { Schema } from "near-api-js/lib/utils/serialize";
+import * as v from "valibot";
 
 //  Magic prefix (first 4 bytes of `sha256(<versioned_nonce>)`) used to mark versioned nonces
 export const VERSIONED_MAGIC_PREFIX = new Uint8Array([0x56, 0x28, 0xf6, 0xc6]);
 export const LATEST_VERSION = 0;
 
 export type Salt = Uint8Array;
+
+/**
+ * Schema for validating decoded salted nonce structure.
+ * The decoded value from `VersionedNonceBuilder.decodeNonce()` should match this structure.
+ */
+export const saltedNonceSchema = v.object({
+	salt: v.array(v.number()),
+	inner: v.object({
+		deadline: v.bigint(),
+		nonce: v.array(v.number()),
+	}),
+});
+
+export type SaltedNonceValue = v.InferOutput<typeof saltedNonceSchema>;
 
 class ExpirableNonce {
 	constructor(
@@ -64,24 +79,35 @@ export namespace VersionedNonceBuilder {
 	 * @returns The encoded nonce as a base64 string
 	 */
 	export function encodeNonce(salt: Salt, deadline: Date): string {
-		const expirableNonce = {
-			deadline: BigInt(deadline.getTime()) * 1_000_000n,
-			nonce: crypto.getRandomValues(new Uint8Array(15)),
-		};
+		if (salt.length !== 4) {
+			throw new Error(`Invalid salt length: ${salt.length}, expected 4`);
+		}
 
-		const versionedNonce = VersionedNonce.latest(
-			new SaltedNonce(salt, expirableNonce),
-		);
+		const deadlineBigInt = BigInt(deadline.getTime()) * 1_000_000n;
+		const nonceBytes = crypto.getRandomValues(new Uint8Array(15));
 
-		const borshBytes = serialize(
-			SALTED_NONCE_BORSH_SCHEMA,
-			versionedNonce.value,
+		// Manual serialization of SaltedNonce
+		// salt (4) + deadline (8) + nonce (15) = 27 bytes
+		const borshBytes = new Uint8Array(27);
+
+		// Salt
+		borshBytes.set(salt, 0);
+
+		// Deadline (u64 little endian)
+		const view = new DataView(
+			borshBytes.buffer,
+			borshBytes.byteOffset,
+			borshBytes.byteLength,
 		);
+		view.setBigUint64(4, deadlineBigInt, true);
+
+		// Nonce
+		borshBytes.set(nonceBytes, 12);
 
 		// Serializing in full format: MAGIC_PREFIX (4) | VERSION (1) | NONCE_BYTES (27)
 		const result = new Uint8Array(4 + 1 + borshBytes.length);
 		result.set(VERSIONED_MAGIC_PREFIX, 0);
-		result.set([versionedNonce.version], 4);
+		result.set([LATEST_VERSION], 4);
 		result.set(borshBytes, 5);
 
 		return base64.encode(result);

@@ -24,6 +24,9 @@ export const PoaBridgeNetworkReference = {
 	STELLAR: "stellar:mainnet",
 	APTOS: "aptos:mainnet",
 	CARDANO: "cardano:mainnet",
+	LITECOIN: "ltc:mainnet",
+	MONAD: "eth:143",
+	LAYERX: "eth:196",
 } as const;
 
 export const VirtualNetworkReference = {

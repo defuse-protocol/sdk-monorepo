@@ -54,14 +54,17 @@ export class TokenNotFoundInDestinationChainError extends BaseError {
 	}
 }
 
-export type FailedToFetchFeeErrorType = FailedToFetchFeeError & {
-	name: "FailedToFetchFeeError";
+export type InvalidFeeValueErrorType = InvalidFeeValueError & {
+	name: "InvalidFeeValueError";
 };
-export class FailedToFetchFeeError extends BaseError {
-	constructor(public token: string) {
-		super(`Failed to fetch fee data for ${token}`, {
-			metaMessages: [`Token: ${token}`],
-			name: "FailedToFetchFeeError",
+export class InvalidFeeValueError extends BaseError {
+	constructor(
+		public token: string,
+		value: unknown,
+	) {
+		super(`Invalid fee value`, {
+			metaMessages: [`Token: ${token}`, `Fee value: ${value}`],
+			name: "InvalidFeeValueError",
 		});
 	}
 }
@@ -104,5 +107,17 @@ export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
 				details: `The available Omni storage balance for intents contract is ${balance}, which is too low to complete this transaction safely. The balance needs to be topped up before retrying.`,
 			},
 		);
+	}
+}
+
+export type OmniWithdrawalApiFeeRequestTimeoutErrorType =
+	OmniWithdrawalApiFeeRequestTimeoutError & {
+		name: "OmniWithdrawalApiFeeRequestTimeoutError";
+	};
+export class OmniWithdrawalApiFeeRequestTimeoutError extends BaseError {
+	constructor() {
+		super("Omni bridge withdrawal fee request timed out.", {
+			name: "OmniWithdrawalApiFeeRequestTimeoutError",
+		});
 	}
 }

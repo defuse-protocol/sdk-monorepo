@@ -54,11 +54,12 @@ const caip2Mapping = {
 	[Chains.Sui]: "sui:mainnet",
 	[Chains.Aptos]: "aptos:mainnet",
 	[Chains.Cardano]: "cardano:mainnet",
+	[Chains.Litecoin]: "ltc:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
 		keyof typeof poaBridge.PoaBridgeNetworkReference,
-		"NEAR" | "POLYGON" | "BSC"
+		"NEAR" | "POLYGON" | "BSC" | "MONAD"
 	>]
 >;
 
@@ -84,6 +85,7 @@ const tokenPrefixMapping = {
 	sui: Chains.Sui,
 	aptos: Chains.Aptos,
 	cardano: Chains.Cardano,
+	ltc: Chains.Litecoin,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {

@@ -21,6 +21,7 @@ import type {
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
 import {
 	accountExistsInNEAR,
@@ -128,9 +129,11 @@ export class DirectBridge implements Bridge {
 			assetId: args.withdrawalParams.assetId,
 			destinationAddress: args.withdrawalParams.destinationAddress,
 			amount: args.withdrawalParams.amount,
-			storageDeposit: args.feeEstimation.quote
-				? BigInt(args.feeEstimation.quote.amount_out)
-				: args.feeEstimation.amount,
+			storageDeposit: getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.NearWithdrawal,
+				"storageDepositFee",
+			),
 			msg: args.withdrawalParams.routeConfig?.msg,
 		});
 
@@ -193,6 +196,11 @@ export class DirectBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.NearWithdrawal]: {
+						storageDepositFee: 0n,
+					},
+				},
 			};
 
 		const [minStorageBalance, userStorageBalance] =
@@ -205,6 +213,11 @@ export class DirectBridge implements Bridge {
 			return {
 				amount: 0n,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.NearWithdrawal]: {
+						storageDepositFee: 0n,
+					},
+				},
 			};
 		}
 
@@ -227,6 +240,11 @@ export class DirectBridge implements Bridge {
 		return {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
 			quote: feeQuote,
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: feeAmount,
+				},
+			},
 		};
 	}
 

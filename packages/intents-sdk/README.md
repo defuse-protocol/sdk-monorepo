@@ -19,9 +19,11 @@ interacting with various bridge implementations across multiple blockchains.
 - [Advanced Usage](#advanced-usage)
     - [Custom RPC URLs](#custom-rpc-urls)
     - [Other Intent Signers](#other-intent-signers)
+    - [Intent Payload Builder](#intent-payload-builder)
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
     - [Intent Management](#intent-management)
+    - [Nonce Invalidation](#nonce-invalidation)
     - [Configure Withdrawal Routes](#configure-withdrawal-routes)
     - [Asset Information Parsing](#asset-information-parsing)
     - [Waiting for Completion](#waiting-for-completion)
@@ -314,7 +316,6 @@ const feeEstimation = await sdk.estimateWithdrawalFee({
 });
 
 console.log('Fee amount:', feeEstimation.amount);
-console.log('Quote info:', feeEstimation.quote); // null if fee paid with withdrawn token
 
 // Batch fee estimation
 const batchFees = await sdk.estimateWithdrawalFee({
@@ -402,6 +403,50 @@ const signer = createIntentSignerViem({ signer: account });
 // Set the signer at runtime
 sdk.setIntentSigner(signer);
 ```
+
+### Intent Payload Builder
+
+For API builders who need to generate intent payloads based on user metadata (e.g., generating payloads server-side for users to sign with MetaMask), the SDK provides a fluent `IntentPayloadBuilder`:
+
+```typescript
+// Build an intent payload for your users
+const payload = await sdk.intentBuilder()
+    .setSigner('0x742d35cc6634c0532925a3b8d84b2021f90a51a3') // User's EVM address
+    .setDeadline(new Date(Date.now() + 5 * 60 * 1000)) // 5 minutes
+    .addIntent({
+        intent: "transfer",
+        tokens: { "token.near": "100" },
+        receiver_id: "receiver.near",
+    })
+    .build();
+```
+
+### Versioned Nonce Builder
+
+By default, the nonce is generated during the intent construction process, but it is possible to generate and pass the nonce within the builder independently. All of the nonces have specific [requirements](https://github.com/near/intents/tree/main/defuse#nonces) for the structure reflecting their validity.
+
+```typescript
+import {VersionedNonceBuilder} from '@defuse-protocol/intents-sdk';
+
+// Fetch current salt from the verifier contract
+const salt_hex = await nearRPC.viewFunction({
+  contractId: "intents.near",
+  methodName: "current_salt",
+});
+
+// Example: 5-minute deadline, but actual deadline should not be greater than intent's deadline
+const deadline = new Date(Date.now() + 5 * 60 * 1000)
+
+// Create ready to use versioned nonce from salt and deadline
+const versionedNonce = VersionedNonceBuilder.encodeNonce(
+  Uint8Array.from(Buffer.from(salt_hex, "hex")),
+  deadline
+);
+
+// Create intent builder with specified nonce
+const builder = await sdk.intentBuilder().setNonce(versionedNonce);
+```
+
 
 ### Intent Publishing Hooks
 
@@ -553,6 +598,17 @@ if (status.status === 'SETTLED') {
 - `TX_BROADCASTED` - Intent being processed, transaction broadcasted
 - `SETTLED` - Intent successfully completed
 - `NOT_FOUND_OR_NOT_VALID` - Intent not found or invalid, it isn't executed onchain
+
+### Nonce Invalidation
+
+Invalidate nonces to prevent execution of previously created intent payloads. Primarily used by **solvers** to revoke quotes due to price volatility, liquidity changes, or risk management.
+
+```typescript
+await sdk.invalidateNonces({
+    nonces: ['VigoxLwmUGf35MGLVBG9Fh5cCtJw3D68pSKFcqGCkHU='],
+    signer: customIntentSigner, // optional - uses SDK default if not provided
+});
+```
 
 ### Configure Withdrawal Routes
 

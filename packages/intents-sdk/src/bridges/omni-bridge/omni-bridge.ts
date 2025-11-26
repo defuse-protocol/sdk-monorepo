@@ -7,6 +7,7 @@ import {
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
+	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -36,17 +37,20 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
+	RouteFeeStructures,
 	TxInfo,
 	TxNoInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	OmniTokenNormalisationCheckError,
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
-	FailedToFetchFeeError,
+	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
+	OmniWithdrawalApiFeeRequestTimeoutError,
 } from "./error";
 import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
@@ -257,32 +261,6 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-		const [minStorageBalance, currentStorageBalance] =
-			await this.getCachedStorageDepositValue(assetInfo.contractId);
-		const storageDepositAmount =
-			minStorageBalance > currentStorageBalance
-				? minStorageBalance - currentStorageBalance
-				: 0n;
-
-		let maxGasFee = 0n;
-		// Withdrawal to Bitcoin need max_gas_fee value indicated in the msg
-		if (omniChainKind === ChainKind.Btc) {
-			const fee = await this.omniBridgeAPI.getFee(
-				omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
-				omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
-				omniAddress(ChainKind.Near, assetInfo.contractId),
-				args.withdrawalParams.amount,
-			);
-			assert(
-				fee.max_gas_fee !== null && fee.max_gas_fee !== undefined,
-				"Failed to receive max gas fee value for a BTC transfer",
-			);
-			assert(
-				fee.max_gas_fee > 0n,
-				`Invalid max_gas_fee value ${fee.max_gas_fee}`,
-			);
-			maxGasFee = fee.max_gas_fee;
-		}
 
 		const intents: IntentPrimitive[] = [];
 
@@ -298,19 +276,15 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-
-		// args.feeEstimation.quote === null  only for withdrawing nep141:wrap.near
-		const nativeFee =
-			(args.feeEstimation.quote === null
-				? args.feeEstimation.amount
-				: // args.feeEstimation.quote.amount_out is always nep141:wrap.near
-					BigInt(args.feeEstimation.quote.amount_out)) - storageDepositAmount;
-
-		assert(
-			nativeFee >= 0n,
-			`Native fee cannot be negative. Storage deposit amount (${storageDepositAmount}) exceeds fee estimation (${args.feeEstimation.quote === null ? args.feeEstimation.amount : BigInt(args.feeEstimation.quote.amount_out)}). This may indicate a race condition where storage balance changed between fee estimation and intent creation.`,
+		const relayerFee = getUnderlyingFee(
+			args.feeEstimation,
+			RouteEnum.OmniBridge,
+			"relayerFee",
 		);
-
+		assert(
+			relayerFee >= 0n,
+			`Invalid Omni bridge relayer fee: expected >= 0, got ${relayerFee}`,
+		);
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
@@ -318,12 +292,19 @@ export class OmniBridge implements Bridge {
 				amount: args.withdrawalParams.amount,
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
-				// we need to calculate relayer fee
-				// if we send nep141:wrap.near total fee in NEAR is args.feeEstimation.amount
-				// if we send any other token total fee in NEAR is args.feeEstimation.quote.amount_out
-				nativeFee,
-				storageDepositAmount,
-				maxGasFee,
+				nativeFee: relayerFee,
+				storageDepositAmount:
+					getUnderlyingFee(
+						args.feeEstimation,
+						RouteEnum.OmniBridge,
+						"storageDepositFee",
+					) ?? 0n,
+				maxGasFee:
+					getUnderlyingFee(
+						args.feeEstimation,
+						RouteEnum.OmniBridge,
+						"utxoMaxGasFee",
+					) ?? 0n,
 			}),
 		);
 
@@ -460,23 +441,44 @@ export class OmniBridge implements Bridge {
 			omniChainKind !== null,
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
-		const fee = await this.omniBridgeAPI.getFee(
-			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
-			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
-			omniAddress(ChainKind.Near, assetInfo.contractId),
-			args.withdrawalParams.amount,
+
+		const fee = await withTimeout(
+			() =>
+				this.omniBridgeAPI.getFee(
+					omniAddress(
+						ChainKind.Near,
+						configsByEnvironment[this.env].contractID,
+					),
+					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+					omniAddress(ChainKind.Near, assetInfo.contractId),
+					args.withdrawalParams.amount,
+				),
+			{
+				timeout: typeof window !== "undefined" ? 10_000 : 3000,
+				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
+			},
 		);
-		if (fee.native_token_fee === null) {
-			throw new FailedToFetchFeeError(args.withdrawalParams.assetId);
+
+		if (fee.native_token_fee === null || fee.native_token_fee < 0n) {
+			throw new InvalidFeeValueError(
+				args.withdrawalParams.assetId,
+				fee.native_token_fee,
+			);
 		}
+		const underlyingFees: RouteFeeStructures[RouteEnum["OmniBridge"]] = {
+			relayerFee: fee.native_token_fee,
+			storageDepositFee: 0n,
+		};
 
 		let totalAmountToQuote = fee.native_token_fee;
 
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
 
-		if (minStorageBalance > currentStorageBalance) {
-			totalAmountToQuote += minStorageBalance - currentStorageBalance;
+		const storageDepositFee = minStorageBalance - currentStorageBalance;
+		if (storageDepositFee > 0n) {
+			totalAmountToQuote += storageDepositFee;
+			underlyingFees.storageDepositFee = storageDepositFee;
 		}
 
 		// withdraw of nep141:wrap.near
@@ -484,6 +486,9 @@ export class OmniBridge implements Bridge {
 			return {
 				amount: totalAmountToQuote,
 				quote: null,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: underlyingFees,
+				},
 			};
 		}
 
@@ -523,6 +528,9 @@ export class OmniBridge implements Bridge {
 		return {
 			amount,
 			quote,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: underlyingFees,
+			},
 		};
 	}
 

@@ -25,6 +25,7 @@ import type {
 	TxInfo,
 	WithdrawalParams,
 } from "../../shared-types";
+import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
@@ -101,9 +102,18 @@ export class PoaBridge implements Bridge {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]> {
+		const relayerFee = getUnderlyingFee(
+			args.feeEstimation,
+			RouteEnum.PoaBridge,
+			"relayerFee",
+		);
+		assert(
+			relayerFee > 0n,
+			`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
+		);
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
-			amount: args.withdrawalParams.amount + args.feeEstimation.amount,
+			amount: args.withdrawalParams.amount + relayerFee,
 			destinationMemo: args.withdrawalParams.destinationMemo,
 		});
 		return Promise.resolve([intent]);
@@ -175,10 +185,19 @@ export class PoaBridge implements Bridge {
 				logger: args.logger,
 			},
 		);
-
+		const relayerFee = BigInt(estimation.withdrawalFee);
+		assert(
+			relayerFee > 0n,
+			`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
+		);
 		return {
-			amount: BigInt(estimation.withdrawalFee),
+			amount: relayerFee,
 			quote: null,
+			underlyingFees: {
+				[RouteEnum.PoaBridge]: {
+					relayerFee,
+				},
+			},
 		};
 	}
 

@@ -4,6 +4,7 @@ import {
 	LATEST_VERSION,
 	VERSIONED_MAGIC_PREFIX,
 	VersionedNonceBuilder,
+	saltedNonceSchema,
 } from "./expirable-nonce";
 import { serialize } from "near-api-js/lib/utils/serialize";
 import * as v from "valibot";
@@ -19,16 +20,8 @@ describe("expirable nonce", () => {
 
 		expect(decoded.version).toBe(LATEST_VERSION);
 
-		const value = v.parse(
-			v.object({
-				salt: v.array(v.number()),
-				inner: v.object({
-					deadline: v.bigint(),
-					nonce: v.array(v.number()),
-				}),
-			}),
-			decoded.value,
-		);
+		// Use the exported schema for validation
+		const value = v.parse(saltedNonceSchema, decoded.value);
 
 		expect(Array.from(value.salt)).toEqual(Array.from(salt));
 		expect(value.inner.nonce.length).toBe(15);

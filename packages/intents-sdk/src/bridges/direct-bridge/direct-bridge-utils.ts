@@ -7,7 +7,7 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
-import { TypedError, type Provider } from "near-api-js/lib/providers";
+import { providers } from "near-api-js";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -38,7 +38,7 @@ export function createWithdrawIntentPrimitive(params: {
 		receiver_id: params.destinationAddress,
 		amount: params.amount.toString(),
 		storage_deposit:
-			params.storageDeposit > 0n ? params.storageDeposit.toString() : null,
+			params.storageDeposit > 0n ? params.storageDeposit.toString() : undefined,
 		msg: params.msg,
 	};
 }
@@ -62,7 +62,7 @@ export function withdrawalParamsInvariant<
 }
 
 export async function accountExistsInNEAR(
-	provider: Provider,
+	provider: providers.Provider,
 	accountId: string,
 ): Promise<boolean> {
 	try {
@@ -74,7 +74,10 @@ export async function accountExistsInNEAR(
 		});
 		return true;
 	} catch (error) {
-		if (error instanceof TypedError && error.type === "AccountDoesNotExist") {
+		if (
+			error instanceof providers.TypedError &&
+			error.type === "AccountDoesNotExist"
+		) {
 			return false;
 		}
 		throw error;

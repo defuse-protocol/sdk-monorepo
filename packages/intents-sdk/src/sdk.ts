@@ -64,6 +64,13 @@ import type {
 import type { ISaltManager } from "./intents/interfaces/salt-manager";
 import { SaltManager } from "./intents/salt-manager";
 import type { Salt } from "./intents/expirable-nonce";
+import {
+	VersionedNonceBuilder,
+	saltedNonceSchema,
+} from "./intents/expirable-nonce";
+import { IntentPayloadBuilder } from "./intents/intent-payload-builder";
+import { DEFAULT_DEADLINE_MS } from "./intents/intent-payload-factory";
+import * as v from "valibot";
 
 export interface IntentsSDKConfig {
 	env?: NearIntentsEnv;
@@ -159,6 +166,121 @@ export class IntentsSDK implements IIntentsSDK {
 
 	public setIntentSigner(signer: IIntentSigner) {
 		this.intentSigner = signer;
+	}
+
+	/**
+	 * Create a new intent payload builder with environment context.
+	 * Use this to build custom intent payloads for your API or advanced use cases.
+	 *
+	 * @returns A new IntentPayloadBuilder instance configured with the SDK's environment
+	 *
+	 * @example
+	 * ```typescript
+	 * // Build a custom intent payload
+	 * const payload = await sdk.intentBuilder()
+	 *   .setSigner('0x1234...') // User's EVM address
+	 *   .setDeadline(new Date(Date.now() + 5 * 60 * 1000))
+	 *   .addIntent({
+	 *     intent: 'ft_withdraw',
+	 *     token: 'usdc.omft.near',
+	 *     amount: '1000000',
+	 *     receiver_id: 'user.near'
+	 *   })
+	 *   .build();
+	 *
+	 * // Return to user for signing with their preferred method (MetaMask, etc.)
+	 * return payload;
+	 * ```
+	 */
+	public intentBuilder(): IntentPayloadBuilder {
+		return new IntentPayloadBuilder({
+			env: this.env,
+			saltManager: this.saltManager,
+		});
+	}
+
+	/**
+	 * Invalidate multiple nonces by creating and sending empty signed intents.
+	 * This prevents previously created but unused intent payloads from being executed.
+	 *
+	 * For expirable nonces (versioned nonces with embedded deadlines), the intent's
+	 * deadline is automatically set to the minimum of:
+	 * 1. The nonce's embedded deadline (can't exceed this)
+	 * 2. 1 minute from now (for quick invalidation when possible)
+	 *
+	 * @param args.nonces - Array of nonce strings to invalidate (up to 400 nonces per call, but depends on gas consumption)
+	 * @param args.signer - Optional intent signer to use (defaults to SDK's configured signer)
+	 * @param args.logger - Optional logger for debugging
+	 *
+	 * @example
+	 * ```typescript
+	 * // Invalidate unused nonces
+	 * await sdk.invalidateNonces({
+	 *   nonces: ['nonce1', 'nonce2', 'nonce3']
+	 * });
+	 * ```
+	 */
+	public async invalidateNonces(args: {
+		nonces: string[];
+		signer?: IIntentSigner;
+		logger?: ILogger;
+	}): Promise<void> {
+		if (args.nonces.length === 0) {
+			return;
+		}
+
+		const intentSigner = args.signer ?? this.intentSigner;
+		assert(intentSigner != null, "Intent signer is not provided");
+
+		// Create empty signed intents for each nonce
+		const signedIntents = await Promise.all(
+			args.nonces.map(async (nonce) => {
+				const builder = this.intentBuilder().setNonce(nonce);
+
+				// For expirable nonces, extract the deadline and use the minimum of:
+				// 1. Nonce's deadline (can't exceed this)
+				// 2. 1 minute from now (prefer shorter deadline for quick invalidation)
+				try {
+					const decoded = VersionedNonceBuilder.decodeNonce(nonce);
+
+					// Validate the decoded structure using valibot
+					if (v.is(saltedNonceSchema, decoded.value)) {
+						// Convert nanoseconds to milliseconds and create Date
+						const nonceDeadlineMs = Number(
+							decoded.value.inner.deadline / 1_000_000n,
+						);
+						const nonceDeadline = new Date(nonceDeadlineMs);
+
+						// Use 1 minute from now, but cap at nonce's deadline
+						const oneMinuteFromNow = new Date(Date.now() + DEFAULT_DEADLINE_MS);
+						const deadline =
+							oneMinuteFromNow < nonceDeadline
+								? oneMinuteFromNow
+								: nonceDeadline;
+
+						builder.setDeadline(deadline);
+					} else {
+						args.logger?.warn?.(
+							"Decoded nonce has unexpected structure, using default deadline",
+						);
+					}
+				} catch {
+					// If decoding fails (e.g., old nonce format), continue without setting deadline
+					// The builder will use default 1 minute deadline
+				}
+
+				const { signed } = await builder.buildAndSign(intentSigner);
+				return signed;
+			}),
+		);
+
+		// Publish all invalidation intents atomically
+		// As for 15 Nov 2025, it's impossible to track onchain invalidation,
+		// because Relayer doesn't publish such intents onchain. It invalidates in-memory only.
+		await this.intentRelayer.publishIntents(
+			{ multiPayloads: signedIntents, quoteHashes: [] },
+			{ logger: args.logger },
+		);
 	}
 
 	public async createWithdrawalIntents(args: {

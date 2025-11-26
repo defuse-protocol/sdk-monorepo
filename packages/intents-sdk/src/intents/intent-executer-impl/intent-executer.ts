@@ -82,6 +82,7 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 			intentPayload = await mergeIntentPayloads(
 				intentPayload,
 				this.intentPayloadFactory,
+				salt,
 			);
 		}
 
@@ -146,19 +147,22 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 }
 
 async function mergeIntentPayloads(
-	basePayload: IntentPayload,
+	defaultPayload: IntentPayload,
 	intentPayloadFactory: IntentPayloadFactory,
+	salt: Salt,
 ): Promise<IntentPayload> {
-	const customPayload = await intentPayloadFactory(basePayload);
+	const customPayload = await intentPayloadFactory(defaultPayload);
 	const customPayloadIntents = customPayload.intents ?? [];
 
-	return {
+	const { nonce: _nonce, ...basePayload } = defaultPayload;
+
+	return defaultIntentPayloadFactory(salt, {
 		...basePayload,
 		...customPayload,
 		intents: Array.from(
 			new Set([...customPayloadIntents, ...basePayload.intents]),
 		),
-	};
+	});
 }
 
 /**

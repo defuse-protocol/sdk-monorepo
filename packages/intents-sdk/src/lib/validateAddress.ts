@@ -1,4 +1,4 @@
-import { sha256 } from "@noble/hashes/sha256";
+import { sha256 } from "@noble/hashes/sha2";
 import { base58, bech32m, hex, bech32 } from "@scure/base";
 import { PublicKey } from "@solana/web3.js";
 import {
@@ -10,19 +10,21 @@ import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
 
 export function validateAddress(address: string, blockchain: Chain): boolean {
-	if (blockchain.startsWith("eip155:")) {
-		return validateEthAddress(address);
-	}
 	switch (blockchain) {
 		case Chains.Near:
 			return utils.validateNearAddress(address);
+
 		case Chains.Bitcoin:
 			return validateBtcAddress(address);
+
 		case Chains.Solana:
 			return validateSolAddress(address);
 
 		case Chains.Dogecoin:
 			return validateDogeAddress(address);
+
+		case Chains.Litecoin:
+			return validateLitecoinAddress(address);
 
 		case Chains.XRPL:
 			return validateXrpAddress(address);
@@ -48,7 +50,21 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Cardano:
 			return validateCardanoAddress(address);
 
+		case Chains.Ethereum:
+		case Chains.Optimism:
+		case Chains.BNB:
+		case Chains.Gnosis:
+		case Chains.Polygon:
+		case Chains.Monad:
+		case Chains.LayerX:
+		case Chains.Base:
+		case Chains.Arbitrum:
+		case Chains.Avalanche:
+		case Chains.Berachain:
+			return validateEthAddress(address);
+
 		default:
+			blockchain satisfies never;
 			return false;
 	}
 }
@@ -104,6 +120,17 @@ function validateZcashAddress(address: string) {
 				return false;
 			}
 			return decoded.bytes.length === 20;
+		} catch {
+			return false;
+		}
+	}
+
+	// Unified address validation
+	const uaHrp = "u";
+	if (address.startsWith(`${uaHrp}1`)) {
+		try {
+			const decoded = bech32m.decodeToBytes(address);
+			return decoded.prefix === uaHrp;
 		} catch {
 			return false;
 		}
@@ -193,4 +220,118 @@ export function validateCardanoAddress(address: string) {
 	} catch {
 		return false;
 	}
+}
+
+export function validateLitecoinAddress(address: string): boolean {
+	const first = address[0];
+
+	// ---- Base58 (mainnet) ----
+
+	// P2PKH: L... (0x30)
+	if (first === "L") {
+		return validateLitecoinBase58Address(address, 0x30);
+	}
+
+	// P2SH (new): M... (0x32)
+	if (first === "M") {
+		return validateLitecoinBase58Address(address, 0x32);
+	}
+
+	// P2SH (legacy): 3... (0x05)
+	// [Inference] This also matches Bitcoin P2SH; cannot distinguish by prefix+version alone.
+	if (first === "3") {
+		return validateLitecoinBase58Address(address, 0x05);
+	}
+
+	// ---- Bech32 / Bech32m (SegWit) ----
+
+	const lower = address.toLowerCase();
+	if (!lower.startsWith("ltc1")) {
+		return false;
+	}
+
+	return validateLitecoinBech32Address(address);
+}
+
+function validateLitecoinBase58Address(
+	address: string,
+	expectedVersion: number,
+): boolean {
+	let decoded: Uint8Array;
+
+	try {
+		decoded = base58.decode(address);
+	} catch {
+		return false;
+	}
+
+	// version (1) + payload (20) + checksum (4)
+	if (decoded.length !== 25) return false;
+
+	const version = decoded[0];
+	if (version !== expectedVersion) return false;
+
+	const payload = decoded.subarray(0, 21); // version + hash160
+	const checksum = decoded.subarray(21, 25);
+
+	const hash1 = sha256(payload);
+	const hash2 = sha256(hash1);
+	const expectedChecksum = hash2.subarray(0, 4);
+
+	for (let i = 0; i < 4; i++) {
+		if (checksum[i] !== expectedChecksum[i]) return false;
+	}
+
+	return true;
+}
+
+function validateLitecoinBech32Address(address: string): boolean {
+	let decoded: {
+		prefix: string;
+		words: number[];
+	};
+	let isBech32m = false;
+
+	try {
+		// Try Bech32 (v0)
+		decoded = bech32.decode(address as `${string}1${string}`);
+	} catch {
+		try {
+			// If Bech32 failed, try Bech32m (v1+)
+			decoded = bech32m.decode(address as `${string}1${string}`);
+			isBech32m = true;
+		} catch {
+			return false;
+		}
+	}
+
+	// HRP must be "ltc" (case-insensitive)
+	if (decoded.prefix.toLowerCase() !== "ltc") return false;
+
+	const { words } = decoded;
+	if (!words || words.length < 1) return false;
+
+	const version = words[0];
+	if (version == null || version < 0 || version > 16) return false;
+
+	const program = bech32.fromWords(words.slice(1));
+	const progLen = program.length;
+
+	// Generic SegWit constraints
+	if (progLen < 2 || progLen > 40) return false;
+
+	// v0: Bech32 only, 20 or 32 bytes
+	if (version === 0) {
+		if (isBech32m) return false;
+		return progLen === 20 || progLen === 32;
+	}
+
+	// v1 (Taproot on LTC): Bech32m only, 32 bytes
+	if (version === 1) {
+		if (!isBech32m) return false;
+		return progLen === 32;
+	}
+
+	// Other versions
+	return false;
 }

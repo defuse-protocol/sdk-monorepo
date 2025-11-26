@@ -1,5 +1,43 @@
 # @defuse-protocol/internal-utils
 
+## 0.19.2
+
+### Patch Changes
+
+- a241015: Release trigger. No changes.
+
+## 0.19.1
+
+### Patch Changes
+
+- Updated dependencies [2d38a96]
+  - @defuse-protocol/contract-types@0.3.1
+
+## 0.19.0
+
+### Minor Changes
+
+- 00f0115: Add Litecoin and LayerX support.
+
+## 0.18.3
+
+### Patch Changes
+
+- ae1afbc: Export Uint8Array utils.
+
+## 0.18.2
+
+### Patch Changes
+
+- ec3976b: Fix importing providers from near-api-js.
+
+## 0.18.1
+
+### Patch Changes
+
+- Updated dependencies [5edb8fa]
+  - @defuse-protocol/contract-types@0.3.0
+
 ## 0.18.0
 
 ### Minor Changes
