@@ -17,7 +17,8 @@
 		"./schemas/intents.schema.json": "./schemas/intents.schema.json"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"schemas"
 	],
 	"scripts": {
 		"build": "tsdown",
