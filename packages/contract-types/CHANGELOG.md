@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.4.1
+
+### Patch Changes
+
+- d3c1bfd: Add the "schemas" folder to the package.
+
 ## 0.4.0
 
 ### Minor Changes
