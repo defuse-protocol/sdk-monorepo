@@ -557,7 +557,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		// For withdrawals to UTXO chains we also need to take into consideration
-		// gas_fee - max amount of tokens that can be spent on gas in a UTXO network
+		// gas_fee - max amount of tokens that can be spent on gas in a UTXO network (this is maximum possible that can be spent and the actual spent amount can be lower)
 		// protocol_fee - constant fee taken by the relayer
 		if (isUtxoChain(omniChainKind)) {
 			assert(
