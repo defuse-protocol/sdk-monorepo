@@ -23,7 +23,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
 	intentsContract: string;
-	utxoMaxGasFee?: bigint;
+	utxoMaxGasFee: bigint | null;
 }): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -49,7 +49,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	// Technically we can avoid specifying it in the message and relayer just takes the same value
 	// however this introduces a risk that a maclicious actor can pick up this tx and submit it to the connector
 	// with higher big max gas fee value that can result in recipient getting less BTC.
-	if (params.utxoMaxGasFee !== undefined && isUtxoChain(params.omniChainKind)) {
+	if (params.utxoMaxGasFee !== null && isUtxoChain(params.omniChainKind)) {
 		assert(
 			params.utxoMaxGasFee > 0n,
 			`Invalid utxo max gas fee: expected > 0, got ${params.utxoMaxGasFee}`,

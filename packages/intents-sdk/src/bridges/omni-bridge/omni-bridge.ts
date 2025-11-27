@@ -285,11 +285,39 @@ export class OmniBridge implements Bridge {
 			relayerFee >= 0n,
 			`Invalid Omni bridge relayer fee: expected >= 0, got ${relayerFee}`,
 		);
+
+		let amount = args.withdrawalParams.amount;
+		let utxoMaxGasFee = null;
+		// we need to add to the amount the protocol fee and max gas fee for UTXO withdrawals
+		// because the fee in this case is take from the transferred amount and not other token
+		if (isUtxoChain(omniChainKind)) {
+			utxoMaxGasFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoMaxGasFee",
+			);
+			const utxoProtocolFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoProtocolFee",
+			);
+			assert(
+				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
+				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
+			);
+			assert(
+				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
+			);
+
+			amount += utxoMaxGasFee + utxoProtocolFee;
+		}
+
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
 				destinationAddress: args.withdrawalParams.destinationAddress,
-				amount: args.withdrawalParams.amount,
+				amount,
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
 				nativeFee: relayerFee,
@@ -298,11 +326,7 @@ export class OmniBridge implements Bridge {
 					RouteEnum.OmniBridge,
 					"storageDepositFee",
 				),
-				utxoMaxGasFee: getUnderlyingFee(
-					args.feeEstimation,
-					RouteEnum.OmniBridge,
-					"utxoMaxGasFee",
-				),
+				utxoMaxGasFee,
 			}),
 		);
 
@@ -430,11 +454,12 @@ export class OmniBridge implements Bridge {
 				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
 			);
 			const minAmount = BigInt(fee.min_amount);
-			// args.amount is without fees
-			if (args.amount < minAmount) {
+			// args.amount is without fee, we need to pass an amount with fee
+			const actualAmountWithFee = args.amount + args.feeEstimation.amount;
+			if (actualAmountWithFee < minAmount) {
 				throw new MinWithdrawalAmountError(
 					minAmount,
-					args.amount,
+					actualAmountWithFee,
 					args.assetId,
 				);
 			}
