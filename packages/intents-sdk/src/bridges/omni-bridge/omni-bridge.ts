@@ -430,6 +430,7 @@ export class OmniBridge implements Bridge {
 				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
 			);
 			const minAmount = BigInt(fee.min_amount);
+			// args.amount is without fees
 			if (args.amount < minAmount) {
 				throw new MinWithdrawalAmountError(
 					minAmount,
