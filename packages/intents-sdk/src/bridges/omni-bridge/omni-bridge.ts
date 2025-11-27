@@ -400,6 +400,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		if (isUtxoChain(omniChainKind)) {
+			// Information about available UTXOs and min amount for withdrawals to UTXO chains is retrieved from Omni Bridge indexer
 			const fee = await withTimeout(
 				() =>
 					this.omniBridgeAPI.getFee(
