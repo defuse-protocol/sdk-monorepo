@@ -79,6 +79,8 @@ export function caip2ToChainKind(network: Chain): ChainKind | null {
 			return ChainKind.Arb;
 		case Chains.Solana:
 			return ChainKind.Sol;
+		case Chains.BNB:
+			return ChainKind.Bnb;
 		// case Chains.Bitcoin:
 		// 	return ChainKind.Btc;
 		default:
