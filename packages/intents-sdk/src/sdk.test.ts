@@ -845,6 +845,33 @@ describe("omni_bridge", () => {
 		});
 	});
 
+	it("estimateWithdrawalFee(): should return correct fee data for btc with zero relayer fee and without quote", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 6700n,
+				destinationAddress: "bc1q6k0r2enhtmxmqfv2kdeyp8f9q7r9h78096644z",
+				feeInclusive: false,
+				routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+			},
+		});
+
+		await expect(fee).resolves.toEqual({
+			amount: expect.any(BigInt),
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee: expect.any(BigInt),
+					utxoProtocolFee: expect.any(BigInt),
+				},
+			},
+		});
+	});
+
 	it("createWithdrawalIntents(): returns intents array with feeInclusive = false", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({ referral, intentSigner });
