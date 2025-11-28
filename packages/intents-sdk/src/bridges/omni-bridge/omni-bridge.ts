@@ -289,9 +289,9 @@ export class OmniBridge implements Bridge {
 
 		let amount = args.withdrawalParams.amount;
 		let utxoMaxGasFee = null;
-		// For UTXO withdrawals, the protocol fee and max gas fee must be added to the
-		// withdrawal amount because the fee is deducted from the transferred asset itself,
-		// not from a separate token.
+		// For UTXO withdrawals, include the protocol fee and max gas fee in the withdrawal
+		// amount because these fees are deducted from the transferred asset itself rather
+		// than paid using wrap.near.
 		if (isUtxoChain(omniChainKind)) {
 			utxoMaxGasFee = getUnderlyingFee(
 				args.feeEstimation,
