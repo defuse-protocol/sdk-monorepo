@@ -1,5 +1,12 @@
 # @defuse-protocol/internal-utils
 
+## 0.19.5
+
+### Patch Changes
+
+- Updated dependencies [50b1597]
+  - @defuse-protocol/contract-types@0.4.2
+
 ## 0.19.4
 
 ### Patch Changes
