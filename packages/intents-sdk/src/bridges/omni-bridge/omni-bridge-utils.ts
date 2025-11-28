@@ -49,9 +49,9 @@ export function createWithdrawIntentsPrimitive(params: {
 	// Technically we can avoid specifying it in the message and relayer just takes the same value
 	// however this introduces a risk that a malicious actor can pick up this tx and submit it to the connector
 	// with a higher max gas fee value that can result in recipient getting less BTC.
-	if (params.utxoMaxGasFee !== null && isUtxoChain(params.omniChainKind)) {
+	if (isUtxoChain(params.omniChainKind)) {
 		assert(
-			params.utxoMaxGasFee > 0n,
+			params.utxoMaxGasFee !== null && params.utxoMaxGasFee > 0n,
 			`Invalid utxo max gas fee: expected > 0, got ${params.utxoMaxGasFee}`,
 		);
 		msg = JSON.stringify({
