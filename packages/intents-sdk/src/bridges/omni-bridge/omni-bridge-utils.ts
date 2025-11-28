@@ -47,8 +47,8 @@ export function createWithdrawIntentsPrimitive(params: {
 	// For withdrawals to Bitcoin and other UTXO chains we need to specify maxGasFee to the relayer
 	// that is picking up our TX and sends it to a connector (btc connector for example).
 	// Technically we can avoid specifying it in the message and relayer just takes the same value
-	// however this introduces a risk that a maclicious actor can pick up this tx and submit it to the connector
-	// with higher big max gas fee value that can result in recipient getting less BTC.
+	// however this introduces a risk that a malicious actor can pick up this tx and submit it to the connector
+	// with a higher max gas fee value that can result in recipient getting less BTC.
 	if (params.utxoMaxGasFee !== null && isUtxoChain(params.omniChainKind)) {
 		assert(
 			params.utxoMaxGasFee > 0n,
