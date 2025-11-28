@@ -172,7 +172,20 @@
 				}
 			],
 			"discriminator": {
-				"propertyName": "intent"
+				"propertyName": "intent",
+				"mapping": {
+					"add_public_key": "#/definitions/IntentAddPublicKey",
+					"remove_public_key": "#/definitions/IntentRemovePublicKey",
+					"transfer": "#/definitions/IntentTransfer",
+					"ft_withdraw": "#/definitions/IntentFtWithdraw",
+					"nft_withdraw": "#/definitions/IntentNftWithdraw",
+					"mt_withdraw": "#/definitions/IntentMtWithdraw",
+					"native_withdraw": "#/definitions/IntentNativeWithdraw",
+					"storage_deposit": "#/definitions/IntentStorageDeposit",
+					"token_diff": "#/definitions/IntentTokenDiff",
+					"set_auth_by_predecessor_id": "#/definitions/IntentSetAuthByPredecessorId",
+					"auth_call": "#/definitions/IntentAuthCall"
+				}
 			}
 		},
 		"IntentEvent_for_AccountEvent_for_NonceEvent": {
@@ -203,7 +216,11 @@
 				}
 			],
 			"discriminator": {
-				"propertyName": "error"
+				"propertyName": "error",
+				"mapping": {
+					"unmatched_deltas": "#/definitions/InvariantViolatedUnmatchedDeltas",
+					"overflow": "#/definitions/InvariantViolatedOverflow"
+				}
 			}
 		},
 		"MtWithdraw": {
@@ -276,7 +293,16 @@
 				}
 			],
 			"discriminator": {
-				"propertyName": "standard"
+				"propertyName": "standard",
+				"mapping": {
+					"nep413": "#/definitions/MultiPayloadNep413",
+					"erc191": "#/definitions/MultiPayloadErc191",
+					"tip191": "#/definitions/MultiPayloadTip191",
+					"raw_ed25519": "#/definitions/MultiPayloadRawEd25519",
+					"webauthn": "#/definitions/MultiPayloadWebauthn",
+					"ton_connect": "#/definitions/MultiPayloadTonConnect",
+					"sep53": "#/definitions/MultiPayloadSep53"
+				}
 			}
 		},
 		"NativeWithdraw": {
@@ -577,7 +603,12 @@
 				}
 			],
 			"discriminator": {
-				"propertyName": "type"
+				"propertyName": "type",
+				"mapping": {
+					"text": "#/definitions/TonConnectPayloadSchemaText",
+					"binary": "#/definitions/TonConnectPayloadSchemaBinary",
+					"cell": "#/definitions/TonConnectPayloadSchemaCell"
+				}
 			}
 		},
 		"IntentAddPublicKey": {

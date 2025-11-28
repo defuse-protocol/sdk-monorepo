@@ -19,10 +19,16 @@
  *       { "$ref": "#/definitions/IntentAddPublicKey" },
  *       { "$ref": "#/definitions/IntentTransfer" }
  *     ],
- *     "discriminator": { "propertyName": "intent" }
+ *     "discriminator": {
+ *       "propertyName": "intent",
+ *       "mapping": {
+ *         "add_public_key": "#/definitions/IntentAddPublicKey",
+ *         "transfer": "#/definitions/IntentTransfer"
+ *       }
+ *     }
  *   },
- *   "Intent_add_public_key": { "properties": { "intent": { "enum": ["add_public_key"] }, ... } },
- *   "Intent_transfer": { "properties": { "intent": { "enum": ["transfer"] }, ... } }
+ *   "IntentAddPublicKey": { "properties": { "intent": { "enum": ["add_public_key"] }, ... } },
+ *   "IntentTransfer": { "properties": { "intent": { "enum": ["transfer"] }, ... } }
  * }
  */
 
@@ -69,6 +75,18 @@ function toSchemaNameSuffix(discriminatorValue) {
 }
 
 /**
+ * Extracts the discriminator value from a variant, handling both inline schemas and $refs.
+ */
+function getDiscriminatorValue(variant, discriminatorProp, definitions) {
+	if ("$ref" in variant) {
+		const refName = variant.$ref.replace("#/definitions/", "");
+		const refDef = definitions[refName];
+		return refDef?.properties?.[discriminatorProp]?.enum?.[0] ?? null;
+	}
+	return variant.properties?.[discriminatorProp]?.enum?.[0] ?? null;
+}
+
+/**
  * Pre-processes a JSON Schema to extract inline oneOf variants into named definitions.
  * This creates a new schema object without modifying the original.
  */
@@ -86,28 +104,45 @@ export function extractDiscriminatedUnions(schema) {
 			continue;
 		}
 
-		// Check if variants are inline (not $ref)
-		const hasInlineVariants = def.oneOf.some(
+		// Separate inline variants and $refs
+		const inlineVariants = def.oneOf.filter(
 			(variant) => !("$ref" in variant) && variant.properties,
 		);
+		const refVariants = def.oneOf.filter((variant) => "$ref" in variant);
 
-		if (!hasInlineVariants) {
-			continue;
+		// Find the discriminator property from inline variants, or from referenced definitions
+		let discriminatorProp = findDiscriminatorProperty(inlineVariants);
+
+		// If no inline variants or couldn't find discriminator, try from existing $refs
+		if (!discriminatorProp && refVariants.length > 0) {
+			const resolvedRefs = refVariants
+				.map((v) => {
+					const refName = v.$ref.replace("#/definitions/", "");
+					return result.definitions[refName];
+				})
+				.filter(Boolean);
+			discriminatorProp = findDiscriminatorProperty(resolvedRefs);
 		}
-
-		// Find the discriminator property
-		const discriminatorProp = findDiscriminatorProperty(def.oneOf);
 
 		if (!discriminatorProp) {
 			continue;
 		}
 
-		// Extract each variant to a named definition
+		// Build the new oneOf array and mapping
 		const newOneOf = [];
+		const mapping = {};
 
 		for (const variant of def.oneOf) {
-			// Skip if already a $ref
+			// Handle existing $ref variants
 			if ("$ref" in variant) {
+				const discriminatorValue = getDiscriminatorValue(
+					variant,
+					discriminatorProp,
+					result.definitions,
+				);
+				if (discriminatorValue) {
+					mapping[discriminatorValue] = variant.$ref;
+				}
 				newOneOf.push(variant);
 				continue;
 			}
@@ -121,18 +156,23 @@ export function extractDiscriminatedUnions(schema) {
 
 			// Create the variant definition name
 			const variantName = `${name}${toSchemaNameSuffix(discriminatorValue)}`;
+			const refPath = `#/definitions/${variantName}`;
 
 			// Add the variant as a new definition
 			newDefinitions[variantName] = variant;
 
+			// Add to mapping
+			mapping[discriminatorValue] = refPath;
+
 			// Replace inline variant with $ref
-			newOneOf.push({ $ref: `#/definitions/${variantName}` });
+			newOneOf.push({ $ref: refPath });
 		}
 
-		// Update the original definition to use $refs and add discriminator
+		// Update the original definition to use $refs and add discriminator with mapping
 		def.oneOf = newOneOf;
 		def.discriminator = {
 			propertyName: discriminatorProp,
+			mapping,
 		};
 	}
 
