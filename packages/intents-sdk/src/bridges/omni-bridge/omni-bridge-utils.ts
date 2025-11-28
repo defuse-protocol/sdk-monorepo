@@ -114,13 +114,11 @@ export function caip2ToChainKind(network: Chain): ChainKind | null {
 export function chainKindToCaip2(network: ChainKind): Chain | null {
 	return CHAIN_MAPPINGS.find(([_, kind]) => kind === network)?.[0] ?? null;
 }
+
+const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc];
+
 export function isUtxoChain(network: ChainKind): boolean {
-	switch (network) {
-		case ChainKind.Btc:
-			return true;
-		default:
-			return false;
-	}
+	return UTXO_CHAINS.includes(network);
 }
 
 export function validateOmniToken(nearAddress: string): boolean {
