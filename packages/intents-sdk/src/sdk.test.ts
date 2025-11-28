@@ -774,6 +774,7 @@ describe("near_withdrawal", () => {
 describe("omni_bridge", () => {
 	beforeEach(() => {
 		vi.resetModules();
+		vi.restoreAllMocks();
 	});
 
 	it("estimateWithdrawalFee(): should return fee", async () => {
