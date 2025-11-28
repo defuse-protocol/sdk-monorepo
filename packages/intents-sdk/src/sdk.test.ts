@@ -852,7 +852,7 @@ describe("omni_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:nbtc.bridge.near",
 				amount: 6700n,
-				destinationAddress: "bc1q6k0r2enhtmxmqfv2kdeyp8f9q7r9h78096644z",
+				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
 				feeInclusive: false,
 				routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
 			},
@@ -1030,6 +1030,109 @@ describe("omni_bridge", () => {
 		]);
 	});
 
+	it("createWithdrawalIntents(): create a btc utxo withdrawal without token_diff and storage_deposit intents with fee inclusive = false", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const utxoMaxGasFee = 500n;
+		const utxoProtocolFee = 500n;
+		const feeEstimation = {
+			amount: 1000n,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+		const destinationAddress = "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml";
+		const withdrawalParams = {
+			assetId: "nep141:nbtc.bridge.near",
+			amount: 6500n,
+			destinationAddress,
+			feeInclusive: false,
+			routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		const actualAmount =
+			withdrawalParams.amount + utxoMaxGasFee + utxoProtocolFee;
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "nbtc.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: actualAmount.toString(),
+				storage_deposit: undefined,
+				msg: JSON.stringify({
+					recipient: omniAddress(ChainKind.Btc, destinationAddress),
+					fee: "0",
+					native_token_fee: "0",
+					msg: JSON.stringify({
+						MaxGasFee: utxoMaxGasFee.toString(),
+					}),
+				}),
+			},
+		]);
+	});
+
+	it("createWithdrawalIntents(): create a btc utxo withdrawal without token_diff and storage_deposit intents with fee inclusive = true", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const utxoMaxGasFee = 500n;
+		const utxoProtocolFee = 500n;
+		const feeEstimation = {
+			amount: 1000n,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+		const destinationAddress = "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml";
+		const withdrawalParams = {
+			assetId: "nep141:nbtc.bridge.near",
+			amount: 6500n,
+			destinationAddress,
+			feeInclusive: true,
+			routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		const actualAmount = withdrawalParams.amount;
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				token: "nbtc.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: actualAmount.toString(),
+				storage_deposit: undefined,
+				msg: JSON.stringify({
+					recipient: omniAddress(ChainKind.Btc, destinationAddress),
+					fee: "0",
+					native_token_fee: "0",
+					msg: JSON.stringify({
+						MaxGasFee: utxoMaxGasFee.toString(),
+					}),
+				}),
+			},
+		]);
+	});
+
 	it("estimateWithdrawalFee(): rejects when amount is lower than fee", async () => {
 		using solverRelay = await useMockedSolverRelay();
 
@@ -1102,6 +1205,36 @@ describe("omni_bridge", () => {
 
 		await expect(intents).rejects.toThrow(OmniTokenNormalisationCheckError);
 	});
+});
+
+it("validateWithdrawal(): prevents btc utxo transfer to be submitted due to amount lower than allowed by btc connector", async () => {
+	const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+	const feeEstimation = {
+		amount: 1000n,
+		quote: null,
+		underlyingFees: {
+			[RouteEnum.OmniBridge]: {
+				relayerFee: 0n,
+				storageDepositFee: 0n,
+				utxoMaxGasFee: 500n,
+				utxoProtocolFee: 500n,
+			},
+		},
+	};
+
+	const intents = sdk.createWithdrawalIntents({
+		withdrawalParams: {
+			assetId: "nep141:nbtc.bridge.near",
+			amount: 4000n,
+			destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+			feeInclusive: false,
+			routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+		},
+		feeEstimation,
+	});
+
+	await expect(intents).rejects.toThrow(MinWithdrawalAmountError);
 });
 
 describe("sdk.parseAssetId()", () => {
