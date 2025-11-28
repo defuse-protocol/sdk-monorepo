@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.38.0
+
+### Minor Changes
+
+- 7b911a8: Add BNB to Omni Bridge supported networks.
+
 ## 0.37.2
 
 ### Patch Changes
