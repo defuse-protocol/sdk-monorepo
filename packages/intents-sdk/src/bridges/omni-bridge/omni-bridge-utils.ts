@@ -104,7 +104,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Arbitrum, ChainKind.Arb],
 	[Chains.Solana, ChainKind.Sol],
 	[Chains.BNB, ChainKind.Bnb],
-	// [Chains.Bitcoin, ChainKind.Btc],
+	[Chains.Bitcoin, ChainKind.Btc],
 ];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
