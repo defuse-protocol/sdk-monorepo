@@ -1,5 +1,5 @@
 ---
-"@defuse-protocol/intents-sdk": patch
+"@defuse-protocol/intents-sdk": minor
 ---
 
 Add BNB to Omni Bridge supported networks.
