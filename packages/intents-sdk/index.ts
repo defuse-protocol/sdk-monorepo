@@ -128,6 +128,8 @@ export {
 	type IntentsNearOmniAvailableBalanceTooLowErrorType,
 	OmniWithdrawalApiFeeRequestTimeoutError,
 	type OmniWithdrawalApiFeeRequestTimeoutErrorType,
+	InsufficientUtxoForOmniBridgeWithdrawalError,
+	type InsufficientUtxoForOmniBridgeWithdrawalErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors

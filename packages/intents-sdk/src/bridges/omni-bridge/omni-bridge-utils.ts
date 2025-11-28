@@ -23,50 +23,75 @@ export function createWithdrawIntentsPrimitive(params: {
 	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
 	intentsContract: string;
+	utxoMaxGasFee: bigint | null;
 }): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
 	);
+	assert(standard === "nep141", "Only NEP-141 is supported");
 	const recipient = omniAddress(
 		params.omniChainKind,
 		params.destinationAddress,
 	);
-	const implicitAccount = calculateStorageAccountId({
-		token: `near:${tokenAccountId}`,
-		amount: params.amount,
+	let msg = "";
+	const ftWithdrawPayload: {
+		recipient: OmniAddress;
+		fee: string;
+		native_token_fee: string;
+		msg?: string;
+	} = {
 		recipient,
-		fee: {
-			fee: 0n,
-			native_fee: params.nativeFee,
-		},
-		sender: `near:${params.intentsContract}`,
-		msg: "",
-	});
-	assert(standard === "nep141", "Only NEP-141 is supported");
+		fee: "0",
+		native_token_fee: params.nativeFee.toString(),
+	};
+	// For withdrawals to Bitcoin and other UTXO chains we need to specify maxGasFee to the relayer
+	// that is picking up our TX and sends it to a connector (btc connector for example).
+	// Technically we can avoid specifying it in the message and relayer just takes the same value
+	// however this introduces a risk that a malicious actor can pick up this tx and submit it to the connector
+	// with a higher max gas fee value that can result in recipient getting less BTC.
+	if (isUtxoChain(params.omniChainKind)) {
+		assert(
+			params.utxoMaxGasFee !== null && params.utxoMaxGasFee > 0n,
+			`Invalid utxo max gas fee: expected > 0, got ${params.utxoMaxGasFee}`,
+		);
+		msg = JSON.stringify({
+			MaxGasFee: params.utxoMaxGasFee.toString(),
+		});
+		ftWithdrawPayload.msg = msg;
+	}
 
-	return [
-		{
-			deposit_for_account_id: implicitAccount,
+	const intents: IntentPrimitive[] = [];
+	if (params.nativeFee > 0n) {
+		intents.push({
+			deposit_for_account_id: calculateStorageAccountId({
+				token: `near:${tokenAccountId}`,
+				amount: params.amount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: params.nativeFee,
+				},
+				sender: `near:${params.intentsContract}`,
+				msg,
+			}),
 			amount: params.nativeFee.toString(),
 			contract_id: OMNI_BRIDGE_CONTRACT,
 			intent: "storage_deposit",
-		},
-		{
-			intent: "ft_withdraw",
-			token: tokenAccountId,
-			receiver_id: OMNI_BRIDGE_CONTRACT,
-			amount: params.amount.toString(),
-			storage_deposit:
-				params.storageDepositAmount > 0n
-					? params.storageDepositAmount.toString()
-					: undefined,
-			msg: JSON.stringify({
-				recipient,
-				fee: "0",
-				native_token_fee: params.nativeFee.toString(),
-			}),
-		},
-	];
+		});
+	}
+	intents.push({
+		intent: "ft_withdraw",
+		token: tokenAccountId,
+		receiver_id: OMNI_BRIDGE_CONTRACT,
+		amount: params.amount.toString(),
+		storage_deposit:
+			params.storageDepositAmount > 0n
+				? params.storageDepositAmount.toString()
+				: undefined,
+		msg: JSON.stringify(ftWithdrawPayload),
+	});
+
+	return intents;
 }
 
 /**
@@ -79,7 +104,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Arbitrum, ChainKind.Arb],
 	[Chains.Solana, ChainKind.Sol],
 	[Chains.BNB, ChainKind.Bnb],
-	// [Chains.Bitcoin, ChainKind.Btc],
+	[Chains.Bitcoin, ChainKind.Btc],
 ];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
@@ -88,6 +113,12 @@ export function caip2ToChainKind(network: Chain): ChainKind | null {
 
 export function chainKindToCaip2(network: ChainKind): Chain | null {
 	return CHAIN_MAPPINGS.find(([_, kind]) => kind === network)?.[0] ?? null;
+}
+
+const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc];
+
+export function isUtxoChain(network: ChainKind): boolean {
+	return UTXO_CHAINS.includes(network);
 }
 
 export function validateOmniToken(nearAddress: string): boolean {
