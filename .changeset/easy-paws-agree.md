@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Add support of BTC withdrawals trough Omni Bridge
+Add support of BTC withdrawals through Omni Bridge

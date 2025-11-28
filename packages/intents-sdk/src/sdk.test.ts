@@ -17,11 +17,15 @@ import {
 import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
-import { OmniTokenNormalisationCheckError } from "./bridges/omni-bridge/error";
+import {
+	InsufficientUtxoForOmniBridgeWithdrawalError,
+	OmniTokenNormalisationCheckError,
+} from "./bridges/omni-bridge/error";
 import {
 	calculateStorageAccountId,
 	ChainKind,
 	omniAddress,
+	OmniBridgeAPI,
 } from "omni-bridge-sdk";
 import type { FeeEstimation } from "./shared-types";
 import { RouteEnum } from "./constants/route-enum";
@@ -1234,6 +1238,47 @@ describe("omni_bridge", () => {
 		});
 
 		await expect(intents).rejects.toThrow(MinWithdrawalAmountError);
+	});
+
+	it("validateWithdrawal(): prevents btc withdrawal if there is not enough available UTXOs in btc connector", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const feeEstimation = {
+			amount: 1000n,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee: 500n,
+					utxoProtocolFee: 500n,
+				},
+			},
+		};
+
+		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: 231n,
+			protocol_fee: 400n,
+			min_amount: "6400",
+			usd_fee: 0.58,
+			insufficient_utxo: true, // flag that contains the check for available utxo amount
+		});
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 40000n,
+				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+				feeInclusive: false,
+				routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+			},
+			feeEstimation,
+		});
+
+		await expect(intents).rejects.toThrow(
+			InsufficientUtxoForOmniBridgeWithdrawalError,
+		);
 	});
 });
 
