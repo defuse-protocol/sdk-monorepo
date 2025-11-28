@@ -264,6 +264,7 @@ export class OmniBridge implements Bridge {
 		);
 
 		const intents: IntentPrimitive[] = [];
+
 		if (args.feeEstimation.quote !== null) {
 			intents.push({
 				intent: "token_diff",
