@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": patch
 ---
 
-Add BNB network to caip2ToChainKind and reverse mapping.
+Add BNB to Omni Bridge supported networks.

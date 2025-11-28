@@ -69,42 +69,25 @@ export function createWithdrawIntentsPrimitive(params: {
 	];
 }
 
+/**
+ * Mapping between CAIP-2 chain identifiers and Omni Bridge ChainKind.
+ * This serves as a single source of truth for bidirectional chain conversions.
+ */
+const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
+	[Chains.Ethereum, ChainKind.Eth],
+	[Chains.Base, ChainKind.Base],
+	[Chains.Arbitrum, ChainKind.Arb],
+	[Chains.Solana, ChainKind.Sol],
+	[Chains.BNB, ChainKind.Bnb],
+	// [Chains.Bitcoin, ChainKind.Btc],
+];
+
 export function caip2ToChainKind(network: Chain): ChainKind | null {
-	switch (network) {
-		case Chains.Ethereum:
-			return ChainKind.Eth;
-		case Chains.Base:
-			return ChainKind.Base;
-		case Chains.Arbitrum:
-			return ChainKind.Arb;
-		case Chains.Solana:
-			return ChainKind.Sol;
-		case Chains.BNB:
-			return ChainKind.Bnb;
-		// case Chains.Bitcoin:
-		// 	return ChainKind.Btc;
-		default:
-			return null;
-	}
+	return CHAIN_MAPPINGS.find(([chain]) => chain === network)?.[1] ?? null;
 }
 
 export function chainKindToCaip2(network: ChainKind): Chain | null {
-	switch (network) {
-		case ChainKind.Eth:
-			return Chains.Ethereum;
-		case ChainKind.Base:
-			return Chains.Base;
-		case ChainKind.Arb:
-			return Chains.Arbitrum;
-		case ChainKind.Sol:
-			return Chains.Solana;
-		case ChainKind.Bnb:
-			return Chains.BNB;
-		// case ChainKind.Btc:
-		// 	return Chains.Bitcoin;
-		default:
-			return null;
-	}
+	return CHAIN_MAPPINGS.find(([_, kind]) => kind === network)?.[0] ?? null;
 }
 
 export function validateOmniToken(nearAddress: string): boolean {
