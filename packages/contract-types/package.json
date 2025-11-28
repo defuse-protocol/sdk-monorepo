@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/contract-types",
-	"version": "0.3.1",
+	"version": "0.4.1",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
@@ -13,10 +13,12 @@
 			"import": "./dist/index.js",
 			"require": "./dist/index.cjs",
 			"default": "./dist/index.js"
-		}
+		},
+		"./schemas/intents.schema.json": "./schemas/intents.schema.json"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"schemas"
 	],
 	"scripts": {
 		"build": "tsdown",

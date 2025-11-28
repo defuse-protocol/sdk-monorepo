@@ -73,8 +73,6 @@ describe("computeIntentHash()", () => {
 			domain: "tonconnect-demo-dapp-with-wallet.vercel.app",
 			timestamp: 1762354640,
 			payload: {
-				network: "-239",
-				from: "0:fa63f5195b0f8682d3f3413e2b40decfae7778b3691748a2d55dae5b243a3054",
 				type: "text",
 				text: '{\n  "signer_id": "d1e7c122f8a43c7d7433548c4604edd4dffcfe5bb1d036499684980c115500bf",\n  "verifying_contract": "intents.near",\n  "deadline": "2035-11-03T14:57:16.445Z",\n  "nonce": "s7ne425+Pw+eVR7j02peS/wIxHKu64znkTJYeCTAfPk=",\n  "intents": []\n}',
 			},

@@ -467,9 +467,11 @@ describe("IntentPayloadBuilder", () => {
 			const payload = builder.addIntents(intents).buildWithSalt(testSalt);
 
 			expect(payload.intents).toHaveLength(3);
-			expect(payload.intents[0]?.token).toBe("usdc.omft.near");
-			expect(payload.intents[1]?.token).toBe("btc.omft.near");
-			expect(payload.intents[2]?.token).toBe("eth.omft.near");
+			expect(payload.intents).toEqual([
+				expect.objectContaining({ token: "usdc.omft.near" }),
+				expect.objectContaining({ token: "btc.omft.near" }),
+				expect.objectContaining({ token: "eth.omft.near" }),
+			]);
 		});
 	});
 

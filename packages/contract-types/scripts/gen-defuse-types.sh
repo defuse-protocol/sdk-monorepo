@@ -12,7 +12,7 @@ jq_filter='
 | del(.type)
 
 # Set reasonable title
-| .title = "NEAR Intents Contract ABI"
+| .title = "NEAR Intents Schema"
 
 # Problem: WebAuthn definition includes "properties" and "onOf" together.
 #          Tools cannot resolve such ambiguity. So we separate them into
@@ -51,8 +51,13 @@ else
   echo "JSON file found. Processing existing file..."
 
   # Apply jq filter to the existing file
-  schema=$(jq "$jq_filter" "$existing_json")
+  schema=$(jq "$jq_filter" "$existing_json" | node "lib/fix-contract-schema.js")
 fi
+
+# Save to files
+echo "$schema" > "schemas/intents.schema.json"
+# Prettify the output
+pnpm biome format "schemas/intents.schema.json" --write
 
 # Step 2: Pass the modified JSON directly to json-schema-to-typescript
 echo "$schema" | npm_config_registry="https://registry.npmjs.org" npx json-schema-to-typescript -o "$type_output" --unreachableDefinitions

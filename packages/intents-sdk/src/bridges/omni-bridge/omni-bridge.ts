@@ -225,8 +225,8 @@ export class OmniBridge implements Bridge {
 	makeAssetInfo(assetId: string, routeConfig?: RouteConfig) {
 		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		let omniChainKind = null;
-		let blockchain = null;
+		let omniChainKind: ChainKind | null = null;
+		let blockchain: Chain | null = null;
 		if (this.targetChainSpecified(routeConfig)) {
 			omniChainKind = caip2ToChainKind(routeConfig.chain);
 			blockchain = routeConfig.chain;
