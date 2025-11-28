@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.4.2
+
+### Patch Changes
+
+- 50b1597: Add "discriminator"."mapping" to polymorphic objects for better Openapi compatibility.
+
 ## 0.4.1
 
 ### Patch Changes
