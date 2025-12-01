@@ -457,8 +457,27 @@ export class OmniBridge implements Bridge {
 				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
 			);
 			const minAmount = BigInt(fee.min_amount);
+			const utxoMaxGasFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoMaxGasFee",
+			);
+			const utxoProtocolFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoProtocolFee",
+			);
+			assert(
+				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
+				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
+			);
+			assert(
+				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
+			);
+
 			// args.amount is without fee, we need to pass an amount with fee
-			const actualAmountWithFee = args.amount + args.feeEstimation.amount;
+			const actualAmountWithFee = args.amount + utxoMaxGasFee + utxoProtocolFee;
 			if (actualAmountWithFee < minAmount) {
 				throw new MinWithdrawalAmountError(
 					minAmount,
