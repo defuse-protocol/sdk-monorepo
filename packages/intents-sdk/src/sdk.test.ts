@@ -1052,6 +1052,16 @@ describe("omni_bridge", () => {
 				},
 			},
 		};
+
+		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: "6400",
+			usd_fee: 0.58,
+			insufficient_utxo: false,
+		});
 		const destinationAddress = "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml";
 		const withdrawalParams = {
 			assetId: "nep141:nbtc.bridge.near",
@@ -1104,6 +1114,17 @@ describe("omni_bridge", () => {
 				},
 			},
 		};
+
+		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: "6400",
+			usd_fee: 0.58,
+			insufficient_utxo: false,
+		});
+
 		const destinationAddress = "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml";
 		const withdrawalParams = {
 			assetId: "nep141:nbtc.bridge.near",
@@ -1214,6 +1235,8 @@ describe("omni_bridge", () => {
 	it("validateWithdrawal(): prevents btc utxo transfer to be submitted due to amount lower than allowed by btc connector", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
+		const utxoMaxGasFee = 500n;
+		const utxoProtocolFee = 500n;
 		const feeEstimation = {
 			amount: 1000n,
 			quote: null,
@@ -1221,11 +1244,21 @@ describe("omni_bridge", () => {
 				[RouteEnum.OmniBridge]: {
 					relayerFee: 0n,
 					storageDepositFee: 0n,
-					utxoMaxGasFee: 500n,
-					utxoProtocolFee: 500n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
 				},
 			},
 		};
+
+		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: "6400",
+			usd_fee: 0.58,
+			insufficient_utxo: false,
+		});
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams: {
@@ -1244,6 +1277,8 @@ describe("omni_bridge", () => {
 	it("validateWithdrawal(): prevents btc withdrawal if there is not enough available UTXOs in btc connector", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
+		const utxoMaxGasFee = 500n;
+		const utxoProtocolFee = 500n;
 		const feeEstimation = {
 			amount: 1000n,
 			quote: null,
@@ -1251,8 +1286,8 @@ describe("omni_bridge", () => {
 				[RouteEnum.OmniBridge]: {
 					relayerFee: 0n,
 					storageDepositFee: 0n,
-					utxoMaxGasFee: 500n,
-					utxoProtocolFee: 500n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
 				},
 			},
 		};
@@ -1260,8 +1295,8 @@ describe("omni_bridge", () => {
 		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
-			gas_fee: 231n,
-			protocol_fee: 400n,
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: true, // flag that contains the check for available utxo amount
