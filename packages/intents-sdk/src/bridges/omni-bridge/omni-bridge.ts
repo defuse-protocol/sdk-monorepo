@@ -288,11 +288,31 @@ export class OmniBridge implements Bridge {
 		);
 
 		let amount = args.withdrawalParams.amount;
-		// For UTXO withdrawals, include  all the fees (the protocol fee, max gas fee, and possible relayer and storage deposit fees) in the withdrawal
+		let utxoMaxGasFee = null;
+		// For UTXO withdrawals, include the protocol fee and max gas fee in the withdrawal
 		// amount because these fees are deducted from the transferred asset itself rather
 		// than paid using wrap.near.
 		if (isUtxoChain(omniChainKind)) {
-			amount += args.feeEstimation.amount;
+			utxoMaxGasFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoMaxGasFee",
+			);
+			const utxoProtocolFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoProtocolFee",
+			);
+			assert(
+				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
+				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
+			);
+			assert(
+				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
+			);
+
+			amount += utxoMaxGasFee + utxoProtocolFee;
 		}
 
 		intents.push(
@@ -308,11 +328,7 @@ export class OmniBridge implements Bridge {
 					RouteEnum.OmniBridge,
 					"storageDepositFee",
 				),
-				utxoMaxGasFee: getUnderlyingFee(
-					args.feeEstimation,
-					RouteEnum.OmniBridge,
-					"utxoMaxGasFee",
-				),
+				utxoMaxGasFee,
 			}),
 		);
 

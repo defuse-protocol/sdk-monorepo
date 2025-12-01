@@ -1316,7 +1316,7 @@ describe("omni_bridge", () => {
 			InsufficientUtxoForOmniBridgeWithdrawalError,
 		);
 	});
-	it("validateWithdrawal(): calculate btc withdrawal with native relayer fee in case it is turned on", async () => {
+	it("validateWithdrawal(): calculate btc withdrawal with native relayer fee in case it is turned on and feeInclusive = false", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 		using solverRelay = await useMockedSolverRelay();
 		const relayerFee = 9000676692078110965760n;
@@ -1365,7 +1365,106 @@ describe("omni_bridge", () => {
 			},
 			feeEstimation,
 		});
-		const actualAmount = feeEstimation.amount + amount;
+		const actualAmount = amount + utxoMaxGasFee + utxoProtocolFee;
+		const utxoMsg = JSON.stringify({
+			MaxGasFee: utxoMaxGasFee.toString(),
+		});
+		const implicitAccount = calculateStorageAccountId({
+			token: "near:nbtc.bridge.near",
+			amount: actualAmount,
+			recipient: omniAddress(ChainKind.Btc, recipient),
+			fee: {
+				fee: 0n,
+				native_fee: BigInt(feeEstimation.quote.amount_out),
+			},
+			sender: "near:intents.near",
+			msg: utxoMsg,
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "token_diff",
+				diff: {
+					[feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${feeEstimation.quote.amount_in}`,
+					[feeEstimation.quote.defuse_asset_identifier_out]:
+						feeEstimation.quote.amount_out,
+				},
+				referral: "",
+			},
+			{
+				deposit_for_account_id: implicitAccount,
+				amount: feeEstimation.quote.amount_out,
+				contract_id: OMNI_BRIDGE_CONTRACT,
+				intent: "storage_deposit",
+			},
+			{
+				intent: "ft_withdraw",
+				token: "nbtc.bridge.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: actualAmount.toString(),
+				storage_deposit: undefined,
+				msg: JSON.stringify({
+					recipient: omniAddress(ChainKind.Btc, recipient),
+					fee: "0",
+					native_token_fee: feeEstimation.quote.amount_out,
+					msg: utxoMsg,
+				}),
+			},
+		]);
+	});
+	it("validateWithdrawal(): calculate btc withdrawal with native relayer fee in case it is turned on  and feeInclusive = true", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+		using solverRelay = await useMockedSolverRelay();
+		const relayerFee = 9000676692078110965760n;
+		const quote = {
+			amount_in: "2",
+			amount_out: relayerFee.toString(),
+			defuse_asset_identifier_in: "nep141:nbtc.bridge.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			expiration_time: "",
+			quote_hash: "",
+		};
+		const amount = 40000n;
+		solverRelay.getQuote.mockResolvedValue(quote);
+		const recipient = "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml";
+		const utxoMaxGasFee = 500n;
+		const utxoProtocolFee = 500n;
+		const feeEstimation = {
+			amount: utxoMaxGasFee + utxoProtocolFee + BigInt(quote.amount_in),
+			quote,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+
+		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: "6400",
+			usd_fee: 0.58,
+			insufficient_utxo: false,
+		});
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:nbtc.bridge.near",
+				amount,
+				destinationAddress: recipient,
+				feeInclusive: true,
+				routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+			},
+			feeEstimation,
+		});
+		// we only remove 2 satoshis here cause they are paid for possible relayerFee and/or storageDeposit
+		// utxoProtocolFee and utxoMaxGasFee are taken in transferred token
+		const actualAmount = amount - BigInt(quote.amount_in);
 		const utxoMsg = JSON.stringify({
 			MaxGasFee: utxoMaxGasFee.toString(),
 		});

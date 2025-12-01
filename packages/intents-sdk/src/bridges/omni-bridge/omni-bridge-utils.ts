@@ -23,7 +23,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	storageDepositAmount: bigint;
 	omniChainKind: ChainKind;
 	intentsContract: string;
-	utxoMaxGasFee?: bigint;
+	utxoMaxGasFee: bigint | null;
 }): IntentPrimitive[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -51,7 +51,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	// with a higher max gas fee value that can result in recipient getting less BTC.
 	if (isUtxoChain(params.omniChainKind)) {
 		assert(
-			params.utxoMaxGasFee !== undefined && params.utxoMaxGasFee > 0n,
+			params.utxoMaxGasFee !== null && params.utxoMaxGasFee > 0n,
 			`Invalid utxo max gas fee: expected > 0, got ${params.utxoMaxGasFee}`,
 		);
 		msg = JSON.stringify({
