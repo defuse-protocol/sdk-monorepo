@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.4.3
+
+### Patch Changes
+
+- 487f6e2: Remove `contentEncoding` and related `format` properties.
+
 ## 0.4.2
 
 ### Patch Changes
