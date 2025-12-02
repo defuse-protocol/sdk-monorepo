@@ -435,7 +435,25 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		if (isUtxoChain(omniChainKind)) {
+		const utxoChainWithdrawal = isUtxoChain(omniChainKind);
+		if (utxoChainWithdrawal === false) {
+			const relayerFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"relayerFee",
+			);
+			// Currently only UTXO chains withdrawals can have 0 relayerFee
+			assert(
+				getUnderlyingFee(
+					args.feeEstimation,
+					RouteEnum.OmniBridge,
+					"relayerFee",
+				) > 0n,
+				`Invalid Omni Bridge relayer fee for non UTXO chain withdrawal: expected > 0, got ${relayerFee}`,
+			);
+		}
+
+		if (utxoChainWithdrawal) {
 			// UTXO availability and minimum withdrawal thresholds for UTXO chains are sourced
 			// from the Omni Bridge indexer.
 			const fee = await withTimeout(
