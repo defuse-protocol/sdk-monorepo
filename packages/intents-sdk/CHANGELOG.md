@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.39.0
+
+### Minor Changes
+
+- d3fe3eb: Add support of BTC withdrawals through Omni Bridge
+
 ## 0.38.1
 
 ### Patch Changes
