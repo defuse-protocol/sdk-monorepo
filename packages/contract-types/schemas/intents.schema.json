@@ -74,8 +74,7 @@
 				},
 				"nonce": {
 					"examples": ["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="],
-					"type": "string",
-					"format": "base64"
+					"type": "string"
 				},
 				"signer_id": {
 					"$ref": "#/definitions/AccountId"
@@ -196,12 +195,10 @@
 					"$ref": "#/definitions/AccountIdRef"
 				},
 				"intent_hash": {
-					"type": "string",
-					"format": "base58"
+					"type": "string"
 				},
 				"nonce": {
-					"type": "string",
-					"format": "base64"
+					"type": "string"
 				}
 			},
 			"additionalProperties": false
@@ -351,8 +348,7 @@
 					"type": "string"
 				},
 				"nonce": {
-					"type": "string",
-					"format": "base64"
+					"type": "string"
 				},
 				"recipient": {
 					"type": "string"
@@ -539,8 +535,7 @@
 			"required": ["current_salt", "fee"],
 			"properties": {
 				"current_salt": {
-					"type": "string",
-					"format": "hex"
+					"type": "string"
 				},
 				"fee": {
 					"$ref": "#/definitions/Pips"
@@ -625,8 +620,7 @@
 						"ed25519:5TagutioHgKLh7KZ1VEFBYfgRkPtqnKm9LoMnJMJugxm",
 						"secp256k1:3aMVMxsoAnHUbweXMtdKaN1uJaNwsfKv7wnc97SDGjXhyK62VyJwhPUPLZefKVthcoUcuWK6cqkSU4M542ipNxS3"
 					],
-					"type": "string",
-					"format": "base58"
+					"type": "string"
 				}
 			},
 			"additionalProperties": false
@@ -645,8 +639,7 @@
 						"ed25519:5TagutioHgKLh7KZ1VEFBYfgRkPtqnKm9LoMnJMJugxm",
 						"secp256k1:3aMVMxsoAnHUbweXMtdKaN1uJaNwsfKv7wnc97SDGjXhyK62VyJwhPUPLZefKVthcoUcuWK6cqkSU4M542ipNxS3"
 					],
-					"type": "string",
-					"format": "base58"
+					"type": "string"
 				}
 			},
 			"additionalProperties": false
@@ -947,13 +940,11 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"standard": {
 					"type": "string",
@@ -973,8 +964,7 @@
 				"signature": {
 					"description": "There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature",
 					"type": "string",
-					"pattern": "^secp256k1:",
-					"format": "base58"
+					"pattern": "^secp256k1:"
 				},
 				"standard": {
 					"type": "string",
@@ -994,8 +984,7 @@
 				"signature": {
 					"description": "There is no public key member because the public key can be recovered via `ecrecover()` knowing the data and the signature",
 					"type": "string",
-					"pattern": "^secp256k1:",
-					"format": "base58"
+					"pattern": "^secp256k1:"
 				},
 				"standard": {
 					"type": "string",
@@ -1014,13 +1003,11 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"standard": {
 					"type": "string",
@@ -1043,8 +1030,7 @@
 			"properties": {
 				"authenticator_data": {
 					"description": "Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)",
-					"type": "string",
-					"format": "base64"
+					"type": "string"
 				},
 				"client_data_json": {
 					"description": "Serialized [clientDataJSON](https://w3c.github.io/webauthn/#dom-authenticatorresponse-clientdatajson)",
@@ -1059,13 +1045,11 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^p256:",
-					"format": "base58"
+					"pattern": "^p256:"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^p256:",
-					"format": "base58"
+					"pattern": "^p256:"
 				}
 			},
 			"additionalProperties": false
@@ -1096,13 +1080,11 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"standard": {
 					"type": "string",
@@ -1129,13 +1111,11 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^ed25519:",
-					"format": "base58"
+					"pattern": "^ed25519:"
 				},
 				"standard": {
 					"type": "string",
@@ -1163,8 +1143,7 @@
 			"required": ["bytes", "type"],
 			"properties": {
 				"bytes": {
-					"type": "string",
-					"format": "base64"
+					"type": "string"
 				},
 				"type": {
 					"type": "string",
@@ -1178,8 +1157,7 @@
 			"required": ["cell", "schema_crc", "type"],
 			"properties": {
 				"cell": {
-					"type": "string",
-					"format": "base64"
+					"type": "string"
 				},
 				"schema_crc": {
 					"type": "integer",
