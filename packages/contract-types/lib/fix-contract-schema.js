@@ -3,24 +3,22 @@
 
 import { extractDiscriminatedUnions } from "./discr-union.js";
 
-function replaceContentEncodingWithFormat(schema) {
+function removeContentEncoding(schema) {
 	if (schema === null || typeof schema !== "object") {
 		return schema;
 	}
 
 	if (Array.isArray(schema)) {
-		return schema.map((item) => replaceContentEncodingWithFormat(item));
+		return schema.map((item) => removeContentEncoding(item));
 	}
 
 	const result = {};
 
 	for (const [key, value] of Object.entries(schema)) {
 		if (key === "contentEncoding") {
-			if (!("format" in schema)) {
-				result.format = value;
-			}
+			// remove the property
 		} else {
-			result[key] = replaceContentEncodingWithFormat(value);
+			result[key] = removeContentEncoding(value);
 		}
 	}
 
@@ -68,7 +66,7 @@ function addStrictAdditionalProperties(schema) {
 
 async function transformSchema(schema) {
 	let result = schema;
-	result = replaceContentEncodingWithFormat(result);
+	result = removeContentEncoding(result);
 	result = removeDefinitions(result, [
 		"Promise",
 		"PromiseOrValueArray_of_String",
