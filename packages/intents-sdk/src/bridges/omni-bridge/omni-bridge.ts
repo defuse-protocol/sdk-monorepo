@@ -51,6 +51,7 @@ import {
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
+	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
@@ -65,11 +66,13 @@ import {
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
+	isUtxoChain,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import {
 	InvalidDestinationAddressForWithdrawalError,
+	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
@@ -280,14 +283,53 @@ export class OmniBridge implements Bridge {
 			"relayerFee",
 		);
 		assert(
-			relayerFee > 0n,
-			`Invalid Omni bridge relayer fee: expected > 0, got ${relayerFee}`,
+			relayerFee >= 0n,
+			`Invalid Omni bridge relayer fee: expected >= 0, got ${relayerFee}`,
 		);
+
+		let amount = args.withdrawalParams.amount;
+		let utxoMaxGasFee = null;
+		/**
+		 * UTXO withdrawals add protocol + max gas fees to the intent amount since they're paid
+		 * from the withdrawn asset, not wrap.near.
+		 *
+		 * Example with nep141:nbtc.bridge.near (made-up values):
+		 * utxoFees = 50 + 50 = 100, relayerFee = 2 (excluded; paid in wrap.near)
+		 *
+		 * feeInclusive=false:
+		 *   - amount = 4000 → intent = 4000 + 100 = 4100 → user receives 4000
+		 *
+		 * feeInclusive=true:
+		 *   - amount = 3898 (4000 − 102) → intent = 3898 + 100 = 3998 → user receives 3898
+		 **/
+		if (isUtxoChain(omniChainKind)) {
+			utxoMaxGasFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoMaxGasFee",
+			);
+			const utxoProtocolFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoProtocolFee",
+			);
+			assert(
+				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
+				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
+			);
+			assert(
+				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
+			);
+
+			amount += utxoMaxGasFee + utxoProtocolFee;
+		}
+
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
 				destinationAddress: args.withdrawalParams.destinationAddress,
-				amount: args.withdrawalParams.amount,
+				amount,
 				omniChainKind,
 				intentsContract: configsByEnvironment[this.env].contractID,
 				nativeFee: relayerFee,
@@ -296,6 +338,7 @@ export class OmniBridge implements Bridge {
 					RouteEnum.OmniBridge,
 					"storageDepositFee",
 				),
+				utxoMaxGasFee,
 			}),
 		);
 
@@ -391,13 +434,97 @@ export class OmniBridge implements Bridge {
 				intentsNearStorageBalance.toString(),
 			);
 		}
+
+		const utxoChainWithdrawal = isUtxoChain(omniChainKind);
+		if (utxoChainWithdrawal === false) {
+			const relayerFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"relayerFee",
+			);
+			// Currently only UTXO chains withdrawals can have 0 relayerFee
+			assert(
+				getUnderlyingFee(
+					args.feeEstimation,
+					RouteEnum.OmniBridge,
+					"relayerFee",
+				) > 0n,
+				`Invalid Omni Bridge relayer fee for non UTXO chain withdrawal: expected > 0, got ${relayerFee}`,
+			);
+		}
+
+		if (utxoChainWithdrawal) {
+			// UTXO availability and minimum withdrawal thresholds for UTXO chains are sourced
+			// from the Omni Bridge indexer.
+			const fee = await withTimeout(
+				() =>
+					this.omniBridgeAPI.getFee(
+						omniAddress(
+							ChainKind.Near,
+							configsByEnvironment[this.env].contractID,
+						),
+						omniAddress(omniChainKind, args.destinationAddress),
+						omniAddress(ChainKind.Near, assetInfo.contractId),
+						args.amount,
+					),
+				{
+					timeout: typeof window !== "undefined" ? 10_000 : 3000,
+					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
+				},
+			);
+			// This adds a safeguard against insufficient UTXOs on the connector contract.
+			// It cannot guarantee full protection, there is always a potential race condition—
+			// but it helps reduce the chance of withdrawals getting stuck due to missing UTXOs.
+			if (fee.insufficient_utxo) {
+				throw new InsufficientUtxoForOmniBridgeWithdrawalError(
+					assetInfo.blockchain,
+				);
+			}
+
+			assert(
+				fee.min_amount !== null &&
+					fee.min_amount !== undefined &&
+					BigInt(fee.min_amount) > 0n,
+				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
+			);
+			const minAmount = BigInt(fee.min_amount);
+			const utxoMaxGasFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoMaxGasFee",
+			);
+			const utxoProtocolFee = getUnderlyingFee(
+				args.feeEstimation,
+				RouteEnum.OmniBridge,
+				"utxoProtocolFee",
+			);
+			assert(
+				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
+				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
+			);
+			assert(
+				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
+			);
+
+			// args.amount is without fee, we need to pass an amount with fee
+			const actualAmountWithFee = args.amount + utxoMaxGasFee + utxoProtocolFee;
+			if (actualAmountWithFee < minAmount) {
+				throw new MinWithdrawalAmountError(
+					minAmount,
+					actualAmountWithFee,
+					args.assetId,
+				);
+			}
+		}
+
 		return;
 	}
 
 	async estimateWithdrawalFee(args: {
 		withdrawalParams: Pick<
 			WithdrawalParams,
-			"assetId" | "destinationAddress" | "routeConfig"
+			"assetId" | "destinationAddress" | "routeConfig" | "amount"
 		>;
 		quoteOptions?: QuoteOptions;
 		logger?: ILogger;
@@ -426,14 +553,15 @@ export class OmniBridge implements Bridge {
 					),
 					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 					omniAddress(ChainKind.Near, assetInfo.contractId),
+					args.withdrawalParams.amount,
 				),
 			{
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 			},
 		);
-
-		if (fee.native_token_fee === null || fee.native_token_fee <= 0n) {
+		// Native token fee can be zero for BTC withdrawals
+		if (fee.native_token_fee === null || fee.native_token_fee < 0n) {
 			throw new InvalidFeeValueError(
 				args.withdrawalParams.assetId,
 				fee.native_token_fee,
@@ -443,6 +571,7 @@ export class OmniBridge implements Bridge {
 			relayerFee: fee.native_token_fee,
 			storageDepositFee: 0n,
 		};
+
 		let totalAmountToQuote = fee.native_token_fee;
 
 		const [minStorageBalance, currentStorageBalance] =
@@ -465,18 +594,43 @@ export class OmniBridge implements Bridge {
 			};
 		}
 
-		const quote = await getFeeQuote({
-			feeAmount: totalAmountToQuote,
-			feeAssetId: NEAR_NATIVE_ASSET_ID,
-			tokenAssetId: args.withdrawalParams.assetId,
-			logger: args.logger,
-			env: this.env,
-			quoteOptions: args.quoteOptions,
-			solverRelayApiKey: this.solverRelayApiKey,
-		});
+		let amount = 0n;
+		let quote = null;
+		// Skip quoting when native fee = 0 and no storage deposit is needed.
+		if (totalAmountToQuote > 0n) {
+			quote = await getFeeQuote({
+				feeAmount: totalAmountToQuote,
+				feeAssetId: NEAR_NATIVE_ASSET_ID,
+				tokenAssetId: args.withdrawalParams.assetId,
+				logger: args.logger,
+				env: this.env,
+				quoteOptions: args.quoteOptions,
+				solverRelayApiKey: this.solverRelayApiKey,
+			});
+			amount += BigInt(quote.amount_in);
+		}
 
+		// For withdrawals to UTXO chains we also need to take into consideration
+		// gas_fee - max amount of tokens that can be spent on gas in a UTXO network (this is maximum possible that can be spent and the actual spent amount can be lower)
+		// protocol_fee - constant fee taken by the relayer
+		if (isUtxoChain(omniChainKind)) {
+			assert(
+				fee.gas_fee !== null && fee.gas_fee !== undefined && fee.gas_fee > 0n,
+				`Invalid Omni Bridge utxo gas fee: expected > 0, got ${fee.gas_fee}`,
+			);
+			assert(
+				fee.protocol_fee !== null &&
+					fee.protocol_fee !== undefined &&
+					fee.protocol_fee > 0n,
+				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${fee.protocol_fee}`,
+			);
+
+			amount += fee.gas_fee + fee.protocol_fee;
+			underlyingFees.utxoMaxGasFee = fee.gas_fee;
+			underlyingFees.utxoProtocolFee = fee.protocol_fee;
+		}
 		return {
-			amount: BigInt(quote.amount_in),
+			amount,
 			quote,
 			underlyingFees: {
 				[RouteEnum.OmniBridge]: underlyingFees,
@@ -512,6 +666,15 @@ export class OmniBridge implements Bridge {
 					txHash = transfer.finalised?.EVMLog?.transaction_hash;
 				} else if (destinationChain === ChainKind.Sol) {
 					txHash = transfer.finalised?.Solana?.signature;
+				} else if (destinationChain === ChainKind.Btc) {
+					// transfer.utxo_transfer?.btc_pending_id is not the finalised transaction hash. In rare cases, the hash may change
+					// if the BTC transfer fails to be submitted. Waiting for the finalised hash may
+					// take up to 10 minutes or longer.
+					// We return fast hash for FE and wait for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE
+					txHash =
+						typeof window !== "undefined"
+							? transfer.utxo_transfer?.btc_pending_id
+							: transfer.finalised?.UtxoLog?.transaction_hash;
 				} else {
 					return { hash: null };
 				}
