@@ -289,9 +289,19 @@ export class OmniBridge implements Bridge {
 
 		let amount = args.withdrawalParams.amount;
 		let utxoMaxGasFee = null;
-		// For UTXO withdrawals, include the protocol fee and max gas fee in the withdrawal
-		// amount because these fees are deducted from the transferred asset itself rather
-		// than paid using wrap.near.
+		/**
+		 * UTXO withdrawals add protocol + max gas fees to the intent amount since they're paid
+		 * from the withdrawn asset, not wrap.near.
+		 *
+		 * Example with nep141:nbtc.bridge.near (made-up values):
+		 * utxoFees = 50 + 50 = 100, relayerFee = 2 (excluded; paid in wrap.near)
+		 *
+		 * feeInclusive=false:
+		 *   - amount = 4000 → intent = 4000 + 100 = 4100 → user receives 4000
+		 *
+		 * feeInclusive=true:
+		 *   - amount = 3898 (4000 − 102) → intent = 3898 + 100 = 3998 → user receives 3898
+		 **/
 		if (isUtxoChain(omniChainKind)) {
 			utxoMaxGasFee = getUnderlyingFee(
 				args.feeEstimation,
@@ -444,6 +454,9 @@ export class OmniBridge implements Bridge {
 					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 				},
 			);
+			// This adds a safeguard against insufficient UTXOs on the connector contract.
+			// It cannot guarantee full protection, there is always a potential race condition—
+			// but it helps reduce the chance of withdrawals getting stuck due to missing UTXOs.
 			if (fee.insufficient_utxo) {
 				throw new InsufficientUtxoForOmniBridgeWithdrawalError(
 					assetInfo.blockchain,
@@ -529,7 +542,7 @@ export class OmniBridge implements Bridge {
 				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 			},
 		);
-
+		// Native token fee can be zero for BTC withdrawals
 		if (fee.native_token_fee === null || fee.native_token_fee < 0n) {
 			throw new InvalidFeeValueError(
 				args.withdrawalParams.assetId,
@@ -565,6 +578,7 @@ export class OmniBridge implements Bridge {
 
 		let amount = 0n;
 		let quote = null;
+		// Skip quoting when native fee = 0 and no storage deposit is needed.
 		if (totalAmountToQuote > 0n) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
@@ -638,7 +652,7 @@ export class OmniBridge implements Bridge {
 					// transfer.utxo_transfer?.btc_pending_id is not the finalised transaction hash. In rare cases, the hash may change
 					// if the BTC transfer fails to be submitted. Waiting for the finalised hash may
 					// take up to 10 minutes or longer.
-					// I suggest to return fast hash for FE and wait for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE
+					// We return fast hash for FE and wait for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE
 					txHash =
 						typeof window !== "undefined"
 							? transfer.utxo_transfer?.btc_pending_id
