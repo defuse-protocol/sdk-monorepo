@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.20.0
+
+### Minor Changes
+
+- 2452006: Adds Hako Virtual Chain to internal-utils
+
 ## 0.19.6
 
 ### Patch Changes
