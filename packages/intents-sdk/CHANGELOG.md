@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.40.0
+
+### Minor Changes
+
+- ad9f3e5: Throw min withdrawal error with decimal normalisation errors
+
 ## 0.39.2
 
 ### Patch Changes
