@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.40.1
+
+### Patch Changes
+
+- 4cf9c72: Update omni sdk to fix client side builds related to node:buffer import
+
 ## 0.40.0
 
 ### Minor Changes
