@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.40.2
+
+### Patch Changes
+
+- 88e27a6: Fix client build by updating omni sdk lib (build fails due to node imports)
+
 ## 0.40.1
 
 ### Patch Changes
