@@ -17,10 +17,7 @@ import {
 import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
-import {
-	InsufficientUtxoForOmniBridgeWithdrawalError,
-	OmniTokenNormalisationCheckError,
-} from "./bridges/omni-bridge/error";
+import { InsufficientUtxoForOmniBridgeWithdrawalError } from "./bridges/omni-bridge/error";
 import {
 	calculateStorageAccountId,
 	ChainKind,
@@ -1191,7 +1188,7 @@ describe("omni_bridge", () => {
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 	});
 
-	it("validateWithdrawal(): prevents transfers that normalize to zero after decimal adjustment", async () => {
+	it("validateWithdrawal(): prevents transfers that normalize to zero after decimal adjustment and throws MinWithdrawalAmountError", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 		// The NEP-141 token (token.publicailab.near) uses 18 decimals on NEAR,
 		// while its Solana equivalent uses 9 decimals.
@@ -1229,7 +1226,7 @@ describe("omni_bridge", () => {
 			feeEstimation,
 		});
 
-		await expect(intents).rejects.toThrow(OmniTokenNormalisationCheckError);
+		await expect(intents).rejects.toThrow(MinWithdrawalAmountError);
 	});
 
 	it("validateWithdrawal(): prevents btc utxo transfer to be submitted due to amount lower than allowed by btc connector", async () => {

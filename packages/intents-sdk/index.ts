@@ -122,8 +122,6 @@ export {
 	type InvalidFeeValueErrorType,
 	TokenNotFoundInDestinationChainError,
 	type TokenNotFoundInDestinationChainErrorType,
-	OmniTokenNormalisationCheckError,
-	type OmniTokenNormalisationCheckErrorType,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	type IntentsNearOmniAvailableBalanceTooLowErrorType,
 	OmniWithdrawalApiFeeRequestTimeoutError,
