@@ -11,6 +11,7 @@ export type SupportedChainName =
 	| "vertex"
 	| "optima"
 	| "easychain"
+	| "hako"
 	| "aurora"
 	| "aurora_devnet"
 	| "xrpledger"

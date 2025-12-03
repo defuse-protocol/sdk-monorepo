@@ -35,6 +35,7 @@ export const VirtualNetworkReference = {
 	VERTEX: "eth:1313161587",
 	OPTIMA: "eth:1313161569",
 	EASYCHAIN: "eth:1313161752",
+	HAKO: "eth:1313161901",
 	AURORA: "eth:1313161554",
 	AURORA_DEVNET: "eth:1313161834",
 } as const;
