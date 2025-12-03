@@ -69,30 +69,6 @@ export class InvalidFeeValueError extends BaseError {
 	}
 }
 
-export type OmniTokenNormalisationCheckErrorType =
-	OmniTokenNormalisationCheckError & {
-		name: "OmniTokenNormalisationCheckError";
-	};
-export class OmniTokenNormalisationCheckError extends BaseError {
-	constructor(
-		public tokenIn: string,
-		public destinationToken: string,
-		public minAmount: bigint,
-		public fee: bigint,
-	) {
-		super(`Transfer too small — normalizes to 0.`, {
-			metaMessages: [
-				`TokenIn: ${tokenIn}`,
-				`DestinationToken: ${destinationToken}`,
-				`MinAmount: ${minAmount}`,
-				`fee: ${fee}`,
-			],
-			name: "OmniTokenNormalisationCheckError",
-			details: `Transfer amount sent to relayer is too small - would result in 0 after decimal normalisation. Minimum transferable amount if feeInclusive=false is >= ${minAmount}. Minimum transferable amount if feeInclusive=true is >= ${minAmount + fee}.`,
-		});
-	}
-}
-
 export type IntentsNearOmniAvailableBalanceTooLowErrorType =
 	IntentsNearOmniAvailableBalanceTooLowError & {
 		name: "IntentsNearOmniAvailableBalanceTooLowError";

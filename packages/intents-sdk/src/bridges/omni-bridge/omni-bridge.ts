@@ -44,7 +44,6 @@ import type {
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
-	OmniTokenNormalisationCheckError,
 	OmniTransferDestinationChainHashNotFoundError,
 	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
@@ -397,9 +396,10 @@ export class OmniBridge implements Bridge {
 			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
+		// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
+		const actualAmountWithFee = args.amount + args.feeEstimation.amount;
 		const normalisationCheckSucceeded = verifyTransferAmount(
-			// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
-			args.amount + args.feeEstimation.amount,
+			actualAmountWithFee,
 			args.feeEstimation.amount,
 			decimals.origin_decimals,
 			decimals.decimals,
@@ -409,11 +409,10 @@ export class OmniBridge implements Bridge {
 				decimals.origin_decimals,
 				decimals.decimals,
 			);
-			throw new OmniTokenNormalisationCheckError(
-				args.assetId,
-				destTokenAddress,
+			throw new MinWithdrawalAmountError(
 				minAmount,
-				args.feeEstimation.amount,
+				actualAmountWithFee,
+				args.assetId,
 			);
 		}
 
