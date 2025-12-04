@@ -6,7 +6,10 @@ import {
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
-import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
+import {
+	MIN_GAS_AMOUNT,
+	NEAR_NATIVE_ASSET_ID,
+} from "./direct-bridge-constants";
 import { providers } from "near-api-js";
 
 export function createWithdrawIntentPrimitive(params: {
@@ -40,6 +43,7 @@ export function createWithdrawIntentPrimitive(params: {
 		storage_deposit:
 			params.storageDeposit > 0n ? params.storageDeposit.toString() : undefined,
 		msg: params.msg,
+		min_gas: MIN_GAS_AMOUNT,
 	};
 }
 
