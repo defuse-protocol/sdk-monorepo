@@ -18,14 +18,14 @@ import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
 import { InsufficientUtxoForOmniBridgeWithdrawalError } from "./bridges/omni-bridge/error";
-import {
-	calculateStorageAccountId,
-	ChainKind,
-	omniAddress,
-	OmniBridgeAPI,
-} from "omni-bridge-sdk";
 import type { FeeEstimation } from "./shared-types";
 import { RouteEnum } from "./constants/route-enum";
+import { ChainKind } from "./bridges/omni-bridge/omni-bridge-types";
+import {
+	omniAddress,
+	calculateStorageAccountId,
+} from "./bridges/omni-bridge/omni-bridge-utils";
+import * as OmniBridgeAPI from "./bridges/omni-bridge/omni-bridge-api";
 
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
@@ -1050,11 +1050,11 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
-			native_token_fee: 0n,
+		vi.spyOn(OmniBridgeAPI, "getFee").mockResolvedValue({
+			native_token_fee: "0",
 			transferred_token_fee: "0",
-			gas_fee: utxoMaxGasFee,
-			protocol_fee: utxoProtocolFee,
+			gas_fee: utxoMaxGasFee.toString(),
+			protocol_fee: utxoProtocolFee.toString(),
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: false,
@@ -1112,11 +1112,11 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
-			native_token_fee: 0n,
+		vi.spyOn(OmniBridgeAPI, "getFee").mockResolvedValue({
+			native_token_fee: "0",
 			transferred_token_fee: "0",
-			gas_fee: utxoMaxGasFee,
-			protocol_fee: utxoProtocolFee,
+			gas_fee: utxoMaxGasFee.toString(),
+			protocol_fee: utxoProtocolFee.toString(),
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: false,
@@ -1247,11 +1247,11 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
-			native_token_fee: 0n,
+		vi.spyOn(OmniBridgeAPI, "getFee").mockResolvedValue({
+			native_token_fee: "0",
 			transferred_token_fee: "0",
-			gas_fee: utxoMaxGasFee,
-			protocol_fee: utxoProtocolFee,
+			gas_fee: utxoMaxGasFee.toString(),
+			protocol_fee: utxoProtocolFee.toString(),
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: false,
@@ -1289,11 +1289,11 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
-			native_token_fee: 0n,
+		vi.spyOn(OmniBridgeAPI, "getFee").mockResolvedValue({
+			native_token_fee: "0",
 			transferred_token_fee: "0",
-			gas_fee: utxoMaxGasFee,
-			protocol_fee: utxoProtocolFee,
+			gas_fee: utxoMaxGasFee.toString(),
+			protocol_fee: utxoProtocolFee.toString(),
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: true, // flag that contains the check for available utxo amount
@@ -1343,11 +1343,11 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
-			native_token_fee: 0n,
+		vi.spyOn(OmniBridgeAPI, "getFee").mockResolvedValue({
+			native_token_fee: "0",
 			transferred_token_fee: "0",
-			gas_fee: utxoMaxGasFee,
-			protocol_fee: utxoProtocolFee,
+			gas_fee: utxoMaxGasFee.toString(),
+			protocol_fee: utxoProtocolFee.toString(),
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: false,
@@ -1440,11 +1440,11 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
-			native_token_fee: 0n,
+		vi.spyOn(OmniBridgeAPI, "getFee").mockResolvedValue({
+			native_token_fee: "0",
 			transferred_token_fee: "0",
-			gas_fee: utxoMaxGasFee,
-			protocol_fee: utxoProtocolFee,
+			gas_fee: utxoMaxGasFee.toString(),
+			protocol_fee: utxoProtocolFee.toString(),
 			min_amount: "6400",
 			usd_fee: 0.58,
 			insufficient_utxo: false,

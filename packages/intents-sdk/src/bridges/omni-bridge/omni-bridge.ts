@@ -7,7 +7,6 @@ import {
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
-	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
@@ -16,15 +15,16 @@ import type { providers } from "near-api-js";
 import {
 	ChainKind,
 	type OmniAddress,
-	OmniBridgeAPI,
 	type TokenDecimals,
-	getChain,
-	getMinimumTransferableAmount,
-	isEvmChain,
+} from "./omni-bridge-types";
+import {
 	omniAddress,
+	getChain,
 	parseOriginChain,
+	getMinimumTransferableAmount,
 	verifyTransferAmount,
-} from "omni-bridge-sdk";
+	isEvmChain,
+} from "./omni-bridge-utils";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -49,7 +49,6 @@ import {
 	TokenNotFoundInDestinationChainError,
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
-	OmniWithdrawalApiFeeRequestTimeoutError,
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
@@ -75,13 +74,13 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { getFee, getTransfer } from "./omni-bridge-api";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class OmniBridge implements Bridge {
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
-	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
 	private storageDepositCache = new LRUCache<
 		string,
@@ -106,7 +105,6 @@ export class OmniBridge implements Bridge {
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
-		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
@@ -455,22 +453,13 @@ export class OmniBridge implements Bridge {
 		if (utxoChainWithdrawal) {
 			// UTXO availability and minimum withdrawal thresholds for UTXO chains are sourced
 			// from the Omni Bridge indexer.
-			const fee = await withTimeout(
-				() =>
-					this.omniBridgeAPI.getFee(
-						omniAddress(
-							ChainKind.Near,
-							configsByEnvironment[this.env].contractID,
-						),
-						omniAddress(omniChainKind, args.destinationAddress),
-						omniAddress(ChainKind.Near, assetInfo.contractId),
-						args.amount,
-					),
-				{
-					timeout: typeof window !== "undefined" ? 10_000 : 3000,
-					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
-				},
+			const fee = await getFee(
+				omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
+				omniAddress(omniChainKind, args.destinationAddress),
+				omniAddress(ChainKind.Near, assetInfo.contractId),
+				args.amount,
 			);
+
 			// This adds a safeguard against insufficient UTXOs on the connector contract.
 			// It cannot guarantee full protection, there is always a potential race condition—
 			// but it helps reduce the chance of withdrawals getting stuck due to missing UTXOs.
@@ -543,35 +532,27 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
-		const fee = await withTimeout(
-			() =>
-				this.omniBridgeAPI.getFee(
-					omniAddress(
-						ChainKind.Near,
-						configsByEnvironment[this.env].contractID,
-					),
-					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
-					omniAddress(ChainKind.Near, assetInfo.contractId),
-					args.withdrawalParams.amount,
-				),
-			{
-				timeout: typeof window !== "undefined" ? 10_000 : 3000,
-				errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
-			},
+		const fee = await getFee(
+			omniAddress(ChainKind.Near, configsByEnvironment[this.env].contractID),
+			omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
+			omniAddress(ChainKind.Near, assetInfo.contractId),
+			args.withdrawalParams.amount,
 		);
+		const nativeTokenFee = BigInt(fee.native_token_fee);
 		// Native token fee can be zero for BTC withdrawals
-		if (fee.native_token_fee === null || fee.native_token_fee < 0n) {
+		if (nativeTokenFee < 0n) {
 			throw new InvalidFeeValueError(
 				args.withdrawalParams.assetId,
-				fee.native_token_fee,
+				nativeTokenFee,
 			);
 		}
+
 		const underlyingFees: RouteFeeStructures[RouteEnum["OmniBridge"]] = {
-			relayerFee: fee.native_token_fee,
+			relayerFee: nativeTokenFee,
 			storageDepositFee: 0n,
 		};
 
-		let totalAmountToQuote = fee.native_token_fee;
+		let totalAmountToQuote = nativeTokenFee;
 
 		const [minStorageBalance, currentStorageBalance] =
 			await this.getCachedStorageDepositValue(assetInfo.contractId);
@@ -614,19 +595,22 @@ export class OmniBridge implements Bridge {
 		// protocol_fee - constant fee taken by the relayer
 		if (isUtxoChain(omniChainKind)) {
 			assert(
-				fee.gas_fee !== null && fee.gas_fee !== undefined && fee.gas_fee > 0n,
+				fee.gas_fee !== null &&
+					fee.gas_fee !== undefined &&
+					BigInt(fee.gas_fee) > 0n,
 				`Invalid Omni Bridge utxo gas fee: expected > 0, got ${fee.gas_fee}`,
 			);
 			assert(
 				fee.protocol_fee !== null &&
 					fee.protocol_fee !== undefined &&
-					fee.protocol_fee > 0n,
+					BigInt(fee.protocol_fee) > 0n,
 				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${fee.protocol_fee}`,
 			);
-
-			amount += fee.gas_fee + fee.protocol_fee;
-			underlyingFees.utxoMaxGasFee = fee.gas_fee;
-			underlyingFees.utxoProtocolFee = fee.protocol_fee;
+			const utxoMaxGasFee = BigInt(fee.gas_fee);
+			const utxoProtocolFee = BigInt(fee.protocol_fee);
+			amount += utxoMaxGasFee + utxoProtocolFee;
+			underlyingFees.utxoMaxGasFee = utxoMaxGasFee;
+			underlyingFees.utxoProtocolFee = utxoProtocolFee;
 		}
 		return {
 			amount,
@@ -650,11 +634,7 @@ export class OmniBridge implements Bridge {
 					throw args.signal.reason;
 				}
 
-				const transfer = (
-					await this.omniBridgeAPI.getTransfer({
-						transactionHash: args.tx.hash,
-					})
-				)[args.index];
+				const transfer = (await getTransfer(args.tx.hash))[args.index];
 				if (transfer == null || transfer.transfer_message == null)
 					throw new OmniTransferNotFoundError(args.tx.hash);
 				const destinationChain = getChain(

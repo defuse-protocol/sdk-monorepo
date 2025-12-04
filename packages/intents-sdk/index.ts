@@ -124,8 +124,6 @@ export {
 	type TokenNotFoundInDestinationChainErrorType,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	type IntentsNearOmniAvailableBalanceTooLowErrorType,
-	OmniWithdrawalApiFeeRequestTimeoutError,
-	type OmniWithdrawalApiFeeRequestTimeoutErrorType,
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 	type InsufficientUtxoForOmniBridgeWithdrawalErrorType,
 } from "./src/bridges/omni-bridge/error";
