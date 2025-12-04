@@ -369,6 +369,7 @@ export const getChain = (addr: OmniAddress): ChainKind => {
 		base: ChainKind.Base,
 		bnb: ChainKind.Bnb,
 		btc: ChainKind.Btc,
+		zec: ChainKind.Zcash,
 	} as const;
 
 	return chainMapping[prefix];
