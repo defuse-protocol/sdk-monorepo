@@ -2,8 +2,7 @@ import { request } from "@defuse-protocol/internal-utils";
 import { API_BASE } from "./omni-bridge-constants";
 import type { OmniAddress } from "./omni-bridge-types";
 import * as v from "valibot";
-// If safeBigInt() had custom parsing/validation logic,
-// replace bigint() below with your custom valibot version.
+
 const ApiFeeResponseSchema = v.object({
 	native_token_fee: v.string(),
 
@@ -201,14 +200,6 @@ export const TransferSchema = v.object({
 // ----------------------------------------------
 // Inferred Types
 // ----------------------------------------------
-export type NearReceiptTransaction = v.InferOutput<
-	typeof NearReceiptTransactionSchema
->;
-export type EVMLogTransaction = v.InferOutput<typeof EVMLogTransactionSchema>;
-export type SolanaTransaction = v.InferOutput<typeof SolanaTransactionSchema>;
-export type UtxoLogTransaction = v.InferOutput<typeof UtxoLogTransactionSchema>;
-export type UtxoTransfer = v.InferOutput<typeof UtxoTransferSchema>;
-export type TransferMessage = v.InferOutput<typeof TransferMessageSchema>;
 export type Transfer = v.InferOutput<typeof TransferSchema>;
 
 export async function getTransfer(
