@@ -1,5 +1,5 @@
 import { request } from "@defuse-protocol/internal-utils";
-import { API_BASE } from "./omni-bridge-constants";
+import { OMNI_API_BASE } from "./omni-bridge-constants";
 import type { OmniAddress } from "./omni-bridge-types";
 import * as v from "valibot";
 
@@ -13,7 +13,7 @@ const ApiFeeResponseSchema = v.object({
 	insufficient_utxo: v.optional(v.boolean()),
 });
 
-export type ApiFeeResponse = v.InferOutput<typeof ApiFeeResponseSchema>;
+type ApiFeeResponse = v.InferOutput<typeof ApiFeeResponseSchema>;
 
 export async function getFee(
 	sender: OmniAddress,
@@ -21,7 +21,7 @@ export async function getFee(
 	tokenAddress: OmniAddress,
 	amount: string | bigint,
 ): Promise<ApiFeeResponse> {
-	const url = new URL("/api/v3/transfer-fee", API_BASE);
+	const url = new URL("/api/v3/transfer-fee", OMNI_API_BASE);
 	url.searchParams.append("sender", sender);
 	url.searchParams.append("recipient", recipient);
 	url.searchParams.append("token", tokenAddress);
@@ -49,7 +49,7 @@ const intMin0 = v.pipe(v.number(), v.integer(), v.minValue(0));
 // ----------------------------------------------
 // NearReceiptTransactionSchema
 // ----------------------------------------------
-export const NearReceiptTransactionSchema = v.object({
+const NearReceiptTransactionSchema = v.object({
 	block_height: intMin0,
 	block_timestamp_seconds: intMin0,
 	transaction_hash: v.string(),
@@ -58,7 +58,7 @@ export const NearReceiptTransactionSchema = v.object({
 // ----------------------------------------------
 // EVMLogTransactionSchema
 // ----------------------------------------------
-export const EVMLogTransactionSchema = v.object({
+const EVMLogTransactionSchema = v.object({
 	block_height: intMin0,
 	block_timestamp_seconds: intMin0,
 	transaction_hash: v.string(),
@@ -67,7 +67,7 @@ export const EVMLogTransactionSchema = v.object({
 // ----------------------------------------------
 // SolanaTransactionSchema (all optional)
 // ----------------------------------------------
-export const SolanaTransactionSchema = v.object({
+const SolanaTransactionSchema = v.object({
 	slot: v.optional(intMin0),
 	block_timestamp_seconds: v.optional(intMin0),
 	signature: v.optional(v.string()),
@@ -76,7 +76,7 @@ export const SolanaTransactionSchema = v.object({
 // ----------------------------------------------
 // UtxoLogTransactionSchema
 // ----------------------------------------------
-export const UtxoLogTransactionSchema = v.object({
+const UtxoLogTransactionSchema = v.object({
 	transaction_hash: v.string(),
 	block_height: v.nullable(intMin0),
 	block_time: v.nullable(intMin0),
@@ -85,7 +85,7 @@ export const UtxoLogTransactionSchema = v.object({
 // ----------------------------------------------
 // UtxoTransferSchema
 // ----------------------------------------------
-export const UtxoTransferSchema = v.object({
+const UtxoTransferSchema = v.object({
 	chain: v.string(),
 	amount: v.string(),
 	recipient: v.string(),
@@ -99,7 +99,7 @@ export const UtxoTransferSchema = v.object({
 // ----------------------------------------------
 // Chain enum
 // ----------------------------------------------
-export const ChainSchema = v.picklist([
+const ChainSchema = v.picklist([
 	"Eth",
 	"Near",
 	"Sol",
@@ -112,7 +112,7 @@ export const ChainSchema = v.picklist([
 // ----------------------------------------------
 // TransactionSchema (must have exactly 1 field)
 // ----------------------------------------------
-export const TransactionSchema = v.pipe(
+const TransactionSchema = v.pipe(
 	v.object({
 		NearReceipt: v.optional(NearReceiptTransactionSchema),
 		EVMLog: v.optional(EVMLogTransactionSchema),
@@ -134,7 +134,7 @@ export const TransactionSchema = v.pipe(
 // ----------------------------------------------
 // TransferMessageSchema
 // ----------------------------------------------
-export const TransferMessageSchema = v.object({
+const TransferMessageSchema = v.object({
 	token: v.string(),
 	amount: v.string(),
 	sender: v.string(),
@@ -149,7 +149,7 @@ export const TransferMessageSchema = v.object({
 // ----------------------------------------------
 // TransferSchema
 // ----------------------------------------------
-export const TransferSchema = v.object({
+const TransferSchema = v.object({
 	id: v.nullable(
 		v.optional(
 			v.object({
@@ -196,12 +196,12 @@ export const TransferSchema = v.object({
 // ----------------------------------------------
 // Inferred Types
 // ----------------------------------------------
-export type Transfer = v.InferOutput<typeof TransferSchema>;
+type Transfer = v.InferOutput<typeof TransferSchema>;
 
 export async function getTransfer(
 	transactionHash: string,
 ): Promise<Transfer[]> {
-	const url = new URL("/api/v3/transfers/transfer", API_BASE);
+	const url = new URL("/api/v3/transfers/transfer", OMNI_API_BASE);
 	url.searchParams.append("transaction_hash", transactionHash);
 
 	const response = await request({

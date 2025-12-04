@@ -5,7 +5,8 @@ export type ChainPrefix =
 	| "arb"
 	| "base"
 	| "bnb"
-	| "btc";
+	| "btc"
+	| "zec";
 
 export enum ChainKind {
 	Eth = 0,
@@ -25,7 +26,8 @@ export type OmniAddress =
 	| `arb:${string}`
 	| `base:${string}`
 	| `btc:${string}`
-	| `bnb:${string}`;
+	| `bnb:${string}`
+	| `zec:${string}`;
 
 export interface TokenDecimals {
 	decimals: number;
