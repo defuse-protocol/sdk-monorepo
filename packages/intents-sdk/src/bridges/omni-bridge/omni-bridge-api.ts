@@ -5,15 +5,11 @@ import * as v from "valibot";
 
 const ApiFeeResponseSchema = v.object({
 	native_token_fee: v.string(),
-
 	gas_fee: v.optional(v.nullable(v.string())),
 	protocol_fee: v.optional(v.nullable(v.string())),
-
 	usd_fee: v.number(),
-
 	transferred_token_fee: v.optional(v.nullable(v.string())),
 	min_amount: v.optional(v.nullable(v.string())),
-
 	insufficient_utxo: v.optional(v.boolean()),
 });
 
@@ -205,7 +201,7 @@ export type Transfer = v.InferOutput<typeof TransferSchema>;
 export async function getTransfer(
 	transactionHash: string,
 ): Promise<Transfer[]> {
-	const url = new URL("/api/v3/transfer-fee", API_BASE);
+	const url = new URL("/api/v3/transfers/transfer", API_BASE);
 	url.searchParams.append("transaction_hash", transactionHash);
 
 	const response = await request({
