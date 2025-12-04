@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.41.0
+
+### Minor Changes
+
+- 3a6d3cc: Update omni sdk to fix issues with near-kit
+
 ## 0.40.2
 
 ### Patch Changes
