@@ -107,6 +107,7 @@ const ChainSchema = v.picklist([
 	"Base",
 	"Bnb",
 	"Btc",
+	"Zcash",
 ]);
 
 // ----------------------------------------------
@@ -209,6 +210,7 @@ export async function getTransfer(
 		fetchOptions: {
 			method: "GET",
 		},
+		timeout: typeof window !== "undefined" ? 10_000 : 3000,
 	});
 	const data = await response.json();
 	return v.parse(v.array(TransferSchema), data);
