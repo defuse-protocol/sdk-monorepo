@@ -86,17 +86,6 @@ export class IntentsNearOmniAvailableBalanceTooLowError extends BaseError {
 	}
 }
 
-export type OmniWithdrawalApiFeeRequestTimeoutErrorType =
-	OmniWithdrawalApiFeeRequestTimeoutError & {
-		name: "OmniWithdrawalApiFeeRequestTimeoutError";
-	};
-export class OmniWithdrawalApiFeeRequestTimeoutError extends BaseError {
-	constructor() {
-		super("Omni bridge withdrawal fee request timed out.", {
-			name: "OmniWithdrawalApiFeeRequestTimeoutError",
-		});
-	}
-}
 export type InsufficientUtxoForOmniBridgeWithdrawalErrorType =
 	InsufficientUtxoForOmniBridgeWithdrawalError & {
 		name: "InsufficientUtxoForOmniBridgeWithdrawalError";

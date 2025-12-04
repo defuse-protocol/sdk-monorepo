@@ -1,19 +1,19 @@
 import { assert, utils } from "@defuse-protocol/internal-utils";
-import {
-	ChainKind,
-	omniAddress,
-	isBridgeToken,
-	calculateStorageAccountId,
-	type OmniAddress,
-	type TokenDecimals,
-	getChain,
-} from "omni-bridge-sdk";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 import type { providers } from "near-api-js";
 import * as v from "valibot";
+import type { ChainPrefix, EVMChainKind } from "./omni-bridge-types";
+import {
+	ChainKind,
+	type OmniAddress,
+	type TokenDecimals,
+} from "./omni-bridge-types";
+import { b } from "@zorsh/zorsh";
+import { hex, base58 } from "@scure/base";
+import { sha256 } from "@noble/hashes/sha2";
 
 export function createWithdrawIntentsPrimitive(params: {
 	assetId: string;
@@ -121,6 +121,25 @@ export function isUtxoChain(network: ChainKind): boolean {
 	return UTXO_CHAINS.includes(network);
 }
 
+/**
+ * Validates if a NEAR address is a recognized omni bridge token
+ * @param nearAddress - The NEAR address to validate
+ * @returns true if the address follows a known omni bridge pattern
+ *
+ * @example
+ * isBridgeToken("foo.omdep.near") // false
+ * isBridgeToken("sol-ABC123.omdep.near") // true
+ * isBridgeToken("random.near") // false
+ */
+export function isBridgeToken(nearAddress: string): boolean {
+	return (
+		nearAddress in CHAIN_PATTERNS ||
+		/\.(omdep\.near|omnidep\.testnet|factory\.bridge\.(near|testnet))$/.test(
+			nearAddress,
+		)
+	);
+}
+
 export function validateOmniToken(nearAddress: string): boolean {
 	// omni bridge function allows testnet tokens, we should not let them pass since we work only with mainnet ones
 	if (nearAddress.endsWith(".testnet")) return false;
@@ -226,4 +245,260 @@ export async function getTokenDecimals(
 			v.object({ decimals: v.number(), origin_decimals: v.number() }),
 		]),
 	});
+}
+
+// Helper function to construct OmniAddress
+export const omniAddress = (chain: ChainKind, address: string): OmniAddress => {
+	const prefix = ChainKind[chain].toLowerCase() as ChainPrefix;
+	return `${prefix}:${address}`;
+};
+
+/**
+ * Transfer message type for storage account calculation
+ */
+export type TransferMessageForStorage = {
+	token: string;
+	amount: bigint;
+	recipient: string;
+	fee: {
+		fee: bigint;
+		native_fee: bigint;
+	};
+	sender: string;
+	msg: string;
+};
+type AccountId = string;
+
+function parseOmniAddress(token: string) {
+	const parts = token.split(":", 2);
+	const chain = parts[0];
+	const address = parts[1];
+	if (!address) {
+		throw new Error(`Invalid token address format: ${token}`);
+	}
+	const decodeHex = (addr: string) => Array.from(hex.decode(addr.slice(2)));
+	const decodeBase58 = (addr: string) => Array.from(base58.decode(addr));
+
+	switch (chain) {
+		case "eth":
+			return { Eth: decodeHex(address) };
+		case "near":
+			return { Near: address };
+		case "sol":
+			return { Sol: decodeBase58(address) };
+		case "arb":
+			return { Arb: decodeHex(address) };
+		case "base":
+			return { Base: decodeHex(address) };
+		case "bnb":
+			return { Bnb: decodeHex(address) };
+		case "btc":
+			return { Btc: address };
+		case "zcash":
+			return { Zcash: address };
+		default:
+			throw new Error(`Unknown chain: ${chain}`);
+	}
+}
+
+const OmniAddressSchemaForTransferMessage = b.enum({
+	Eth: b.array(b.u8(), 20),
+	Near: b.string(),
+	Sol: b.array(b.u8(), 32),
+	Arb: b.array(b.u8(), 20),
+	Base: b.array(b.u8(), 20),
+	Bnb: b.array(b.u8(), 20),
+	Btc: b.string(),
+	Zcash: b.string(),
+});
+
+/**
+ * Borsh schema for TransferMessageStorageAccount
+ * This matches the exact field order and types from the Rust implementation
+ */
+const TransferMessageStorageAccountSchema = b.struct({
+	token: OmniAddressSchemaForTransferMessage,
+	amount: b.u128(),
+	recipient: OmniAddressSchemaForTransferMessage,
+	fee: b.struct({
+		fee: b.u128(),
+		native_fee: b.u128(),
+	}),
+	sender: OmniAddressSchemaForTransferMessage,
+	msg: b.string(),
+});
+/**
+ * Calculates the storage account ID for a transfer message
+ *
+ * This function replicates the Rust implementation:
+ * 1. Serializes the transfer message using Borsh
+ * 2. Hashes the serialized data with SHA256
+ * 3. Converts the hash to hex to create an implicit NEAR account ID
+ *
+ * @param transferMessage - The transfer message data with bigint amounts
+ * @returns The calculated storage account ID as a hex string
+ */
+export function calculateStorageAccountId(
+	transferMessage: TransferMessageForStorage,
+): AccountId {
+	const serializedData = TransferMessageStorageAccountSchema.serialize({
+		token: parseOmniAddress(transferMessage.token),
+		amount: transferMessage.amount,
+		recipient: parseOmniAddress(transferMessage.recipient),
+		fee: {
+			fee: transferMessage.fee.fee,
+			native_fee: transferMessage.fee.native_fee,
+		},
+		sender: parseOmniAddress(transferMessage.sender),
+		msg: transferMessage.msg,
+	});
+
+	const hash = sha256(serializedData);
+	return hex.encode(hash);
+}
+
+// Extract chain from omni address
+export const getChain = (addr: OmniAddress): ChainKind => {
+	const prefix = addr.split(":")[0] as ChainPrefix;
+
+	const chainMapping = {
+		eth: ChainKind.Eth,
+		near: ChainKind.Near,
+		sol: ChainKind.Sol,
+		arb: ChainKind.Arb,
+		base: ChainKind.Base,
+		bnb: ChainKind.Bnb,
+		btc: ChainKind.Btc,
+	} as const;
+
+	return chainMapping[prefix];
+};
+
+const CHAIN_PATTERNS: Record<string, ChainKind> = {
+	"nbtc.bridge.near": ChainKind.Btc,
+	"eth.bridge.near": ChainKind.Eth,
+	"sol.omdep.near": ChainKind.Sol,
+	"base.omdep.near": ChainKind.Base,
+	"arb.omdep.near": ChainKind.Arb,
+	"bnb.omdep.near": ChainKind.Bnb,
+};
+
+/**
+ * Parses the origin chain from a NEAR token address format (offline parsing)
+ *
+ * @param nearAddress - The NEAR token address (e.g., "sol-3ZLekZYq2qkZiSpnSvabjit34tUkjSwD1JFuW9as9wBG.omdep.near")
+ * @returns The origin chain kind, or null if pattern is not recognized
+ */
+export function parseOriginChain(nearAddress: string): ChainKind | null {
+	// Check exact matches
+	const exactMatch = CHAIN_PATTERNS[nearAddress];
+	if (exactMatch !== undefined) return exactMatch;
+
+	// Check prefixed patterns
+	if (
+		/\.(omdep\.near|omnidep\.testnet|factory\.bridge\.(near|testnet))$/.test(
+			nearAddress,
+		)
+	) {
+		if (nearAddress.startsWith("sol-")) return ChainKind.Sol;
+		if (nearAddress.startsWith("base-")) return ChainKind.Base;
+		if (nearAddress.startsWith("arb-")) return ChainKind.Arb;
+		if (nearAddress.startsWith("bnb-")) return ChainKind.Bnb;
+		if (nearAddress.includes("factory.bridge")) return ChainKind.Eth;
+	}
+
+	return null;
+}
+
+/**
+ * Checks if a given chain is an EVM-compatible chain
+ * @param chain - The chain to check
+ * @returns true if the chain is EVM-compatible, false otherwise
+ */
+export function isEvmChain(chain: ChainKind): chain is EVMChainKind {
+	return (
+		chain === ChainKind.Eth ||
+		chain === ChainKind.Base ||
+		chain === ChainKind.Arb ||
+		chain === ChainKind.Bnb
+	);
+}
+
+/**
+ * Gets the minimum transferable amount for a token pair accounting for decimal normalization
+ * @param originDecimals The decimals of the source token
+ * @param destinationDecimals The decimals of the destination token
+ * @returns The minimum transferable amount as a bigint
+ */
+export function getMinimumTransferableAmount(
+	originDecimals: number,
+	destinationDecimals: number,
+): bigint {
+	// Start with 1 in destination decimal system
+	let minAmount = 1n;
+
+	// If origin has more decimals, we need to scale up
+	if (originDecimals > destinationDecimals) {
+		minAmount = minAmount * 10n ** BigInt(originDecimals - destinationDecimals);
+	}
+
+	return minAmount;
+}
+
+/**
+ * Normalizes an amount from one decimal precision to another using BigInt math
+ * @param amount The amount to normalize as a bigint
+ * @param fromDecimals The source decimal precision
+ * @param toDecimals The target decimal precision
+ * @returns The normalized amount as a bigint
+ */
+export function normalizeAmount(
+	amount: bigint,
+	fromDecimals: number,
+	toDecimals: number,
+): bigint {
+	if (fromDecimals === toDecimals) return amount;
+
+	if (fromDecimals > toDecimals) {
+		// Scale down: Divide by power of 10
+		const scale = 10n ** BigInt(fromDecimals - toDecimals);
+		return amount / scale;
+	} else {
+		// Scale up: Multiply by power of 10
+		const scale = 10n ** BigInt(toDecimals - fromDecimals);
+		return amount * scale;
+	}
+}
+
+/**
+ * Verifies if a transfer amount will be valid after normalization
+ * @param amount The amount to transfer
+ * @param fee The fee to be deducted
+ * @param originDecimals The decimals of the token on the source chain
+ * @param destinationDecimals The decimals of the token on the destination chain
+ * @returns true if the normalized amount (minus fee) will be greater than 0
+ */
+export function verifyTransferAmount(
+	amount: bigint,
+	fee: bigint,
+	originDecimals: number,
+	destinationDecimals: number,
+): boolean {
+	try {
+		// Use the minimum of origin and destination decimals for normalization
+		const minDecimals = Math.min(originDecimals, destinationDecimals);
+
+		// First normalize amount minus fee to the minimum decimals
+		const normalizedAmount = normalizeAmount(
+			amount - fee,
+			originDecimals,
+			minDecimals,
+		);
+
+		// Check if amount minus fee is greater than 0
+		return normalizedAmount > 0n;
+	} catch {
+		// If we hit any math errors, the amount is effectively too small
+		return false;
+	}
 }

@@ -4,12 +4,13 @@ import {
 	getAccountOmniStorageBalance,
 	getTokenDecimals,
 	validateOmniToken,
+	omniAddress,
 } from "./omni-bridge-utils";
 import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress } from "omni-bridge-sdk";
+import { ChainKind } from "./omni-bridge-types";
 
 describe("validateOmniToken()", () => {
 	it("valid omni bridge token ids", () => {
