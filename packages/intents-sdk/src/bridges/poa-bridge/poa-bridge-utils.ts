@@ -30,7 +30,14 @@ function createWithdrawMemo({
 	receiverAddress: string;
 	xrpMemo: string | undefined;
 }) {
-	const memo = ["WITHDRAW_TO", receiverAddress];
+	// Strip "bitcoincash:" prefix from BCH CashAddr addresses
+	const normalizedAddress = receiverAddress
+		.toLowerCase()
+		.startsWith("bitcoincash:")
+		? receiverAddress.slice("bitcoincash:".length)
+		: receiverAddress;
+
+	const memo = ["WITHDRAW_TO", normalizedAddress];
 
 	if (xrpMemo != null && xrpMemo !== "") {
 		memo.push(xrpMemo);
@@ -44,6 +51,7 @@ const caip2Mapping = {
 	[Chains.Base]: "eth:8453",
 	[Chains.Arbitrum]: "eth:42161",
 	[Chains.Bitcoin]: "btc:mainnet",
+	[Chains.BitcoinCash]: "bch:mainnet",
 	[Chains.Solana]: "sol:mainnet",
 	[Chains.Dogecoin]: "doge:mainnet",
 	[Chains.XRPL]: "xrp:mainnet",
@@ -75,6 +83,7 @@ const tokenPrefixMapping = {
 	base: Chains.Base,
 	arb: Chains.Arbitrum,
 	btc: Chains.Bitcoin,
+	bch: Chains.BitcoinCash,
 	sol: Chains.Solana,
 	doge: Chains.Dogecoin,
 	xrp: Chains.XRPL,

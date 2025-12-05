@@ -115,6 +115,15 @@ describe("PoaBridge", () => {
 				destinationAddress:
 					"addr1qxg5fnc2dfssnhzygvkqzzy2fcqcph533ek58jngqksaqjwwk2uhs32lj8zh62fq5zdeawrshdfp23t5vcm538glyn6sqngmem",
 			}, // Cardano
+			// BCH tests commented out until POA Bridge API supports BCH
+			// {
+			// 	assetId: "nep141:bch.omft.near",
+			// 	destinationAddress: "qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+			// }, // BCH CashAddr
+			// {
+			// 	assetId: "nep141:bch.omft.near",
+			// 	destinationAddress: "1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu",
+			// }, // BCH Legacy
 		])("allows correct addresses", async ({ assetId, destinationAddress }) => {
 			const bridge = new PoaBridge({
 				env: "production",
@@ -167,6 +176,11 @@ describe("PoaBridge", () => {
 				destinationAddress:
 					"0x3a5e9d40e8bb62a7f6f8b6d934a1e42a7a2f5cc1cb122c1b9a8d2f6cb09a8712",
 			}, // Cardano
+			// BCH test commented out until POA Bridge API supports BCH
+			// {
+			// 	assetId: "nep141:bch.omft.near",
+			// 	destinationAddress: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+			// }, // BCH - wrong prefix (BTC SegWit)
 		])(
 			"blocks non corresponding addresses",
 			async ({ assetId, destinationAddress }) => {

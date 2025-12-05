@@ -4,6 +4,7 @@ export type SupportedChainName =
 	| "base"
 	| "arbitrum"
 	| "bitcoin"
+	| "bitcoincash"
 	| "solana"
 	| "dogecoin"
 	| "turbochain"

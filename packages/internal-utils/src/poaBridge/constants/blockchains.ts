@@ -8,6 +8,7 @@ export const PoaBridgeNetworkReference = {
 	BASE: "eth:8453",
 	ARBITRUM: "eth:42161",
 	BITCOIN: "btc:mainnet",
+	BITCOINCASH: "bch:mainnet",
 	SOLANA: "sol:mainnet",
 	DOGECOIN: "doge:mainnet",
 	XRPLEDGER: "xrp:mainnet",

@@ -17,6 +17,9 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Bitcoin:
 			return validateBtcAddress(address);
 
+		case Chains.BitcoinCash:
+			return validateBchAddress(address);
+
 		case Chains.Solana:
 			return validateSolAddress(address);
 
@@ -80,6 +83,114 @@ function validateBtcAddress(address: string) {
 		/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address) ||
 		/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)
 	);
+}
+
+/**
+ * Validates Bitcoin Cash addresses
+ * Supports:
+ * - Legacy addresses (1... for P2PKH, 3... for P2SH) - shared with Bitcoin
+ * - CashAddr format (bitcoincash:q... or q... for P2PKH, bitcoincash:p... or p... for P2SH)
+ *
+ * CashAddr checksum implementation based on:
+ * @see https://github.com/ealmansi/cashaddrjs (MIT License)
+ * @see https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md
+ */
+export function validateBchAddress(address: string): boolean {
+	// Legacy address format (same as Bitcoin)
+	if (
+		/^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
+		/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address)
+	) {
+		return true;
+	}
+
+	// CashAddr format
+	return validateBchCashAddr(address);
+}
+
+/**
+ * Validates Bitcoin Cash CashAddr format
+ * CashAddr uses a modified Bech32 encoding with polymod checksum
+ */
+function validateBchCashAddr(address: string): boolean {
+	// Normalize the address
+	let normalized = address.toLowerCase();
+
+	// Add prefix if missing
+	if (!normalized.includes(":")) {
+		normalized = `bitcoincash:${normalized}`;
+	}
+
+	// Must start with bitcoincash:
+	if (!normalized.startsWith("bitcoincash:")) {
+		return false;
+	}
+
+	const payload = normalized.slice("bitcoincash:".length);
+
+	// Must start with q (P2PKH) or p (P2SH)
+	if (!payload.startsWith("q") && !payload.startsWith("p")) {
+		return false;
+	}
+
+	// CashAddr charset (excludes 1, b, i, o)
+	const CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+
+	// Check all characters are valid
+	for (const char of payload) {
+		if (!CHARSET.includes(char)) {
+			return false;
+		}
+	}
+
+	// Verify length: 42 chars for 160-bit hash (P2PKH/P2SH), 62 for 256-bit
+	if (payload.length !== 42 && payload.length !== 62) {
+		return false;
+	}
+
+	// Verify checksum using BCH polymod
+	return verifyBchChecksum(normalized);
+}
+
+function verifyBchChecksum(address: string): boolean {
+	const CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+
+	// Split prefix and payload
+	const colonIndex = address.indexOf(":");
+	const prefix = address.slice(0, colonIndex);
+	const payload = address.slice(colonIndex + 1);
+
+	// Expand prefix for checksum (each character's lower 5 bits)
+	const prefixData: number[] = [];
+	for (const char of prefix) {
+		prefixData.push(char.charCodeAt(0) & 0x1f);
+	}
+	prefixData.push(0); // separator
+
+	// Convert payload to 5-bit values
+	const payloadData: number[] = [];
+	for (const char of payload) {
+		const idx = CHARSET.indexOf(char);
+		if (idx === -1) return false;
+		payloadData.push(idx);
+	}
+
+	const values = [...prefixData, ...payloadData];
+
+	// BCH polymod calculation
+	let c = 1n;
+	for (const d of values) {
+		const c0 = c >> 35n;
+		c = ((c & 0x07ffffffffn) << 5n) ^ BigInt(d);
+		if (c0 & 0x01n) c ^= 0x98f2bc8e61n;
+		if (c0 & 0x02n) c ^= 0x79b76d99e2n;
+		if (c0 & 0x04n) c ^= 0xf33e5fb3c4n;
+		if (c0 & 0x08n) c ^= 0xae2eabe2a8n;
+		if (c0 & 0x10n) c ^= 0x1e4f43e470n;
+	}
+
+	// XOR with 1 and check if result is 0
+	return (c ^ 1n) === 0n;
 }
 
 function validateSolAddress(address: string) {
