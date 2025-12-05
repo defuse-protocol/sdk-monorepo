@@ -47,6 +47,8 @@ export const BlockchainEnum = {
 	...VirtualNetworkReference,
 	/* Hyperliquid is only available as a withdrawal destination */
 	HYPERLIQUID: "hyperliquid:999",
+	/* ADI is operated by HOT bridge */
+	ADI: "eth:36900",
 } as const;
 
 export type BlockchainEnum =

@@ -3,4 +3,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Add Bitcoin Cash support.
+Add Bitcoin Cash chain support via PoA Bridge.

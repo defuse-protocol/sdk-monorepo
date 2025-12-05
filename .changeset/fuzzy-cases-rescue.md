@@ -3,4 +3,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Add Starknet support.
+Add StarkNet chain support via PoA Bridge.
