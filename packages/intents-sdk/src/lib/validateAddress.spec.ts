@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateAddress, validateLitecoinAddress } from "./validateAddress";
+import {
+	validateAddress,
+	validateLitecoinAddress,
+	validateBchAddress,
+} from "./validateAddress";
 import { Chains } from "./caip2";
 
 describe("validateZcashAddress", () => {
@@ -75,6 +79,49 @@ describe("validateLitecoinAddress()", () => {
 
 		for (const address of list) {
 			expect(validateLitecoinAddress(address)).toBe(false);
+		}
+	});
+});
+
+describe("validateBchAddress()", () => {
+	it("accepts valid addresses", () => {
+		const list = [
+			// Legacy P2PKH (1...)
+			"1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu",
+			"1KXrWXciRDZUpQwQmuM1DbwsKDLYAYsVLR",
+			// Legacy P2SH (3...)
+			"3CWFddi6m4ndiGyKqzYvsFYagqDLPVMTzC",
+			"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+			// CashAddr P2PKH (q...)
+			"qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+			"bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+			"qp3wjpa3tjlj042z2wv7hahsldgwhwy0rq9sywjpyy",
+			// CashAddr P2SH (p...)
+			"pp8skudq3x5hzw8ew7vzsw8tn4k8wxsqsv0lt0mf3g",
+			"bitcoincash:pp8skudq3x5hzw8ew7vzsw8tn4k8wxsqsv0lt0mf3g",
+		];
+
+		for (const address of list) {
+			expect(validateBchAddress(address)).toBe(true);
+		}
+	});
+
+	it("rejects invalid addresses", () => {
+		const list = [
+			// Invalid checksum
+			"qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6b",
+			// Wrong prefix
+			"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+			// Invalid characters
+			"qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx1a",
+			// Wrong length
+			"qpm2qsznhks23z7629mms6s4cwef74vcw",
+			// Invalid legacy address
+			"1BpEi6DfDAUFd7GtittLSdBeYJvcoaVgg0",
+		];
+
+		for (const address of list) {
+			expect(validateBchAddress(address)).toBe(false);
 		}
 	});
 });

@@ -5,6 +5,7 @@ import { assert } from "@defuse-protocol/internal-utils";
  */
 export const Chains = {
 	Bitcoin: "bip122:000000000019d6689c085ae165831e93",
+	BitcoinCash: "bip122:000000000000000000651ef99cb9fcbe",
 	Zcash: "bip122:00040fe8ec8471911baa1db1266ea15d",
 	Dogecoin: "bip122:1a91e3dace36e2be3bf030a65679fe82",
 	Litecoin: "bip122:12a765e31ffd4059bada1e25190f6e98",
