@@ -397,9 +397,8 @@ export class OmniBridge implements Bridge {
   Ensure the token is supported and the address is correct.`,
 		);
 		// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
-		const actualAmountWithFee = args.amount + args.feeEstimation.amount;
 		const normalisationCheckSucceeded = verifyTransferAmount(
-			actualAmountWithFee,
+			args.amount + args.feeEstimation.amount,
 			args.feeEstimation.amount,
 			decimals.origin_decimals,
 			decimals.decimals,
@@ -409,11 +408,7 @@ export class OmniBridge implements Bridge {
 				decimals.origin_decimals,
 				decimals.decimals,
 			);
-			throw new MinWithdrawalAmountError(
-				minAmount,
-				actualAmountWithFee,
-				args.assetId,
-			);
+			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
 		}
 
 		const storageBalance = await getAccountOmniStorageBalance(
