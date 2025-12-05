@@ -146,8 +146,8 @@ function validateBchCashAddr(address: string): boolean {
 		}
 	}
 
-	// Verify length: 42 chars for 160-bit hash (P2PKH/P2SH), 62 for 256-bit
-	if (payload.length !== 42 && payload.length !== 62) {
+	// Verify length: 42 chars for 160-bit hash (P2PKH/P2SH), 61 for 256-bit
+	if (payload.length !== 42 && payload.length !== 61) {
 		return false;
 	}
 
