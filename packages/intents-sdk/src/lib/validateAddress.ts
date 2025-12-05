@@ -63,6 +63,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Polygon:
 		case Chains.Monad:
 		case Chains.LayerX:
+		case Chains.Adi:
 		case Chains.Base:
 		case Chains.Arbitrum:
 		case Chains.Avalanche:

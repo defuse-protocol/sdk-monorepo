@@ -5,6 +5,7 @@ import { type HotBridgeChain, HotBridgeChains } from "./hot-bridge-chains";
 
 // HOT SDK still maps Network.Monad (10143) to their testnet, so force mainnet id.
 const MONAD_MAINNET_NETWORK_ID = 143 as Network;
+const ADI_NETWORK_ID = 36900 as Network;
 
 const nativeTokenMapping: Record<HotBridgeChain, string> = {
 	[Chains.BNB]: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",
@@ -16,6 +17,7 @@ const nativeTokenMapping: Record<HotBridgeChain, string> = {
 	[Chains.Stellar]:
 		"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
 	[Chains.LayerX]: "nep245:v2_1.omni.hot.tg:196_11111111111111111111",
+	[Chains.Adi]: "nep245:v2_1.omni.hot.tg:36900_11111111111111111111",
 };
 
 const caip2NetworkIdMapping: Record<HotBridgeChain, Network> = {
@@ -27,6 +29,7 @@ const caip2NetworkIdMapping: Record<HotBridgeChain, Network> = {
 	[Chains.Avalanche]: Network.Avalanche,
 	[Chains.Stellar]: Network.Stellar,
 	[Chains.LayerX]: Network.Xlayer,
+	[Chains.Adi]: ADI_NETWORK_ID,
 };
 
 const networkIdCAIP2Mapping: Partial<Record<Network, HotBridgeChain>> =

@@ -12,6 +12,7 @@ export const HotBridgeChains = [
 	Chains.Monad,
 	Chains.Stellar,
 	Chains.LayerX,
+	Chains.Adi,
 ];
 
 export const HotBridgeEVMChains = HotBridgeChains.filter<

@@ -16,6 +16,7 @@ export const Chains = {
 	Polygon: "eip155:137",
 	Monad: "eip155:143",
 	LayerX: "eip155:196",
+	Adi: "eip155:36900",
 	Base: "eip155:8453",
 	Arbitrum: "eip155:42161",
 	Avalanche: "eip155:43114",
