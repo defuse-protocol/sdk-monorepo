@@ -339,8 +339,8 @@ export function validateCardanoAddress(address: string) {
 
 /**
  * Validates Starknet addresses
- * Starknet addresses are 64-character hex strings (256-bit field element)
- * with optional 0x prefix
+ * Starknet addresses are felt252 (252-bit field elements) represented as
+ * hex strings with 0x prefix (up to 64 hex characters)
  */
 function validateStarknetAddress(address: string): boolean {
 	return /^0x[a-fA-F0-9]{1,64}$/.test(address);
