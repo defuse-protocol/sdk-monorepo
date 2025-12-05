@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.41.1
+
+### Patch Changes
+
+- 5963b26: Fix incorrect requested amount in omni bridge min withdrawal amount error that is thrown during validateWithdrawal
+
 ## 0.41.0
 
 ### Minor Changes
