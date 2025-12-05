@@ -28,6 +28,7 @@ export const PoaBridgeNetworkReference = {
 	LITECOIN: "ltc:mainnet",
 	MONAD: "eth:143",
 	LAYERX: "eth:196",
+	STARKNET: "starknet:mainnet",
 } as const;
 
 export const VirtualNetworkReference = {

@@ -63,6 +63,7 @@ const caip2Mapping = {
 	[Chains.Aptos]: "aptos:mainnet",
 	[Chains.Cardano]: "cardano:mainnet",
 	[Chains.Litecoin]: "ltc:mainnet",
+	[Chains.Starknet]: "starknet:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -95,6 +96,7 @@ const tokenPrefixMapping = {
 	aptos: Chains.Aptos,
 	cardano: Chains.Cardano,
 	ltc: Chains.Litecoin,
+	starknet: Chains.Starknet,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {

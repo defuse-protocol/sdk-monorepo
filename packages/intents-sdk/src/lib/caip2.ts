@@ -29,6 +29,7 @@ export const Chains = {
 	Aptos: "aptos:mainnet",
 	Stellar: "stellar:pubnet",
 	Cardano: "cip34:1-764824073",
+	Starknet: "starknet:SN_MAIN",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
