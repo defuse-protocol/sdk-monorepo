@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.0.4
+
+### Patch Changes
+
+- ad79b98: Add ADI chain slug.
+
 ## 1.0.3
 
 ### Patch Changes

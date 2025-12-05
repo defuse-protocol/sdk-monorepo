@@ -1,5 +1,19 @@
 # @defuse-protocol/intents-sdk
 
+## 0.42.0
+
+### Minor Changes
+
+- a496a01: Add StarkNet chain support via PoA Bridge.
+- a5f56be: Add Bitcoin Cash chain support via PoA Bridge.
+- ad79b98: Add ADI chain support via HOT Bridge.
+
+### Patch Changes
+
+- Updated dependencies [a496a01]
+- Updated dependencies [a5f56be]
+  - @defuse-protocol/internal-utils@0.21.0
+
 ## 0.41.1
 
 ### Patch Changes

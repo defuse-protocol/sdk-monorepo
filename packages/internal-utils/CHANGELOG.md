@@ -1,5 +1,12 @@
 # @defuse-protocol/internal-utils
 
+## 0.21.0
+
+### Minor Changes
+
+- a496a01: Add StarkNet chain support via PoA Bridge.
+- a5f56be: Add Bitcoin Cash chain support via PoA Bridge.
+
 ## 0.20.0
 
 ### Minor Changes
