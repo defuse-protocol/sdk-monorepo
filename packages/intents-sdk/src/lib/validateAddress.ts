@@ -53,6 +53,9 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Cardano:
 			return validateCardanoAddress(address);
 
+		case Chains.Starknet:
+			return validateStarknetAddress(address);
+
 		case Chains.Ethereum:
 		case Chains.Optimism:
 		case Chains.BNB:
@@ -331,6 +334,15 @@ export function validateCardanoAddress(address: string) {
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * Validates Starknet addresses
+ * Starknet addresses are 64-character hex strings (256-bit field element)
+ * with optional 0x prefix
+ */
+function validateStarknetAddress(address: string): boolean {
+	return /^0x[a-fA-F0-9]{1,64}$/.test(address);
 }
 
 export function validateLitecoinAddress(address: string): boolean {
