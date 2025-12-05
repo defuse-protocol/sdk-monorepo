@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.41.1",
+	"version": "0.42.0",
 	"private": false,
 	"type": "module",
 	"sideEffects": false,
