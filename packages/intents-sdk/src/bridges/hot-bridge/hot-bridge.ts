@@ -137,16 +137,14 @@ export class HotBridge implements Bridge {
 	}): Promise<IntentPrimitive[]> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-		if (assetInfo === null) {
-			throw new Error("Asset is not supported");
-		}
+
 		// Validate that `destinationMemo` is not accidentally used with Stellar or TON
 		if (
 			args.withdrawalParams.destinationMemo != null &&
 			args.withdrawalParams.destinationMemo !== ""
 		) {
 			throw new UnsupportedDestinationMemoError(
-				assetInfo.blockchain,
+				assetInfo!.blockchain,
 				args.withdrawalParams.assetId,
 			);
 		}
@@ -170,14 +168,14 @@ export class HotBridge implements Bridge {
 			});
 		}
 
-		const isNative = "native" in assetInfo;
+		const isNative = "native" in assetInfo!;
 		const amount = args.withdrawalParams.amount + (isNative ? feeAmount : 0n);
 
 		const intent = await this.hotSdk.buildGaslessWithdrawIntent({
 			feeToken: "native",
 			feeAmount,
-			chain: toHotNetworkId(assetInfo.blockchain),
-			token: isNative ? "native" : assetInfo.address,
+			chain: toHotNetworkId(assetInfo!.blockchain),
+			token: isNative ? "native" : assetInfo!.address,
 			amount,
 			receiver: args.withdrawalParams.destinationAddress,
 			intentAccount: "", // it is not used inside the function
@@ -210,22 +208,20 @@ export class HotBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-		if (assetInfo === null) {
-			throw new Error("Asset is not supported");
-		}
-		hotBlockchainInvariant(assetInfo.blockchain);
+
+		hotBlockchainInvariant(assetInfo!.blockchain);
 
 		if (
-			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+			validateAddress(args.destinationAddress, assetInfo!.blockchain) === false
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				assetInfo.blockchain,
+				assetInfo!.blockchain,
 			);
 		}
 
-		if (assetInfo.blockchain === Chains.Stellar) {
-			const token = "native" in assetInfo ? "native" : assetInfo.address;
+		if (assetInfo!.blockchain === Chains.Stellar) {
+			const token = "native" in assetInfo! ? "native" : assetInfo!.address;
 
 			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
 				args.destinationAddress,
@@ -236,7 +232,7 @@ export class HotBridge implements Bridge {
 				throw new TrustlineNotFoundError(
 					args.destinationAddress,
 					args.assetId,
-					assetInfo.blockchain,
+					assetInfo!.blockchain,
 					token,
 				);
 			}
@@ -250,18 +246,16 @@ export class HotBridge implements Bridge {
 	}): Promise<FeeEstimation> {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-		if (assetInfo === null) {
-			throw new Error("Asset is not supported");
-		}
-		hotBlockchainInvariant(assetInfo.blockchain);
+
+		hotBlockchainInvariant(assetInfo!.blockchain);
 
 		const { gasPrice: feeAmount } = await this.hotSdk.getGaslessWithdrawFee({
-			chain: toHotNetworkId(assetInfo.blockchain),
-			token: "native" in assetInfo ? "native" : assetInfo.address,
+			chain: toHotNetworkId(assetInfo!.blockchain),
+			token: "native" in assetInfo! ? "native" : assetInfo!.address,
 			receiver: args.withdrawalParams.destinationAddress,
 		});
 
-		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
+		const feeAssetId = getFeeAssetIdForChain(assetInfo!.blockchain);
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n

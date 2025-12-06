@@ -123,22 +123,19 @@ export class PoaBridge implements Bridge {
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
-		if (assetInfo === null) {
-			throw new Error("Asset is not supported");
-		}
 
 		if (
-			validateAddress(args.destinationAddress, assetInfo.blockchain) === false
+			validateAddress(args.destinationAddress, assetInfo!.blockchain) === false
 		) {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
-				assetInfo.blockchain,
+				assetInfo!.blockchain,
 			);
 		}
 
 		// Use cached getSupportedTokens to avoid frequent API calls
 		const { tokens } = await this.getCachedSupportedTokens(
-			[toPoaNetwork(assetInfo.blockchain)],
+			[toPoaNetwork(assetInfo!.blockchain)],
 			args.logger,
 		);
 
