@@ -149,7 +149,7 @@ async function mergeIntentPayloads(
 	basePayload: IntentPayload,
 	intentPayloadFactory: IntentPayloadFactory,
 ): Promise<IntentPayload> {
-	const protectedFields = ["verifying_contract", "deadline", "nonce"] as const;
+	const protectedFields = ["verifying_contract"] as const;
 	const customPayload = await intentPayloadFactory(basePayload);
 	const customPayloadIntents = customPayload.intents ?? [];
 
@@ -169,8 +169,6 @@ async function mergeIntentPayloads(
 		...basePayload,
 		...customPayload,
 		verifying_contract: basePayload.verifying_contract,
-		deadline: basePayload.deadline,
-		nonce: basePayload.nonce,
 		intents: Array.from(
 			new Set([...customPayloadIntents, ...basePayload.intents]),
 		),
