@@ -202,3 +202,8 @@ export { IntentPayloadBuilder } from "./src/intents/intent-payload-builder";
 // Intent Hash
 // ============================================================================
 export { computeIntentHash } from "./src/intents/intent-hash";
+
+// ============================================================================
+// Address Validation Helper
+// ============================================================================
+export { validateAddress } from "./src/lib/validateAddress";
