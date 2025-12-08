@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.43.0
+
+### Minor Changes
+
+- 51d25a1: Export `validateAddressFormat` helper for address format validation.
+
 ## 0.42.0
 
 ### Minor Changes
