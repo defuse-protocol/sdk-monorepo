@@ -11,7 +11,7 @@ import {
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
-import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
+import { MIN_GAS_AMOUNT, OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 import type { providers } from "near-api-js";
 import * as v from "valibot";
 
@@ -89,6 +89,7 @@ export function createWithdrawIntentsPrimitive(params: {
 				? params.storageDepositAmount.toString()
 				: undefined,
 		msg: JSON.stringify(ftWithdrawPayload),
+		min_gas: MIN_GAS_AMOUNT,
 	});
 
 	return intents;

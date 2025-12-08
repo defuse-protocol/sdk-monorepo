@@ -37,7 +37,7 @@ import {
 	HotWithdrawalNotFoundError,
 	HotWithdrawalPendingError,
 } from "./error";
-import { HotWithdrawStatus } from "./hot-bridge-constants";
+import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
 	formatTxHash,
 	getFeeAssetIdForChain,
@@ -199,7 +199,13 @@ export class HotBridge implements Bridge {
 			);
 		}
 
-		intents.push(intent as Extract<IntentPrimitive, { intent: "mt_withdraw" }>);
+		const mtWithdrawIntent = intent as Extract<
+			IntentPrimitive,
+			{ intent: "mt_withdraw" }
+		>;
+		mtWithdrawIntent.min_gas = MIN_GAS_AMOUNT;
+
+		intents.push(mtWithdrawIntent);
 
 		return intents;
 	}

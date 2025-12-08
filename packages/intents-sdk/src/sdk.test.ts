@@ -96,6 +96,7 @@ describe.concurrent("poa_bridge", () => {
 				amount: "100001500",
 				intent: "ft_withdraw",
 				memo: "WITHDRAW_TO:bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
+				min_gas: "17050000000000",
 				receiver_id: "btc.omft.near",
 				token: "btc.omft.near",
 			},
@@ -124,6 +125,7 @@ describe.concurrent("poa_bridge", () => {
 				amount: "100000000",
 				intent: "ft_withdraw",
 				memo: "WITHDRAW_TO:bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
+				min_gas: "17050000000000",
 				receiver_id: "btc.omft.near",
 				token: "btc.omft.near",
 			},
@@ -249,6 +251,7 @@ describe.concurrent("hot_bridge", () => {
 			{
 				amounts: ["1", "6600000024640000"],
 				intent: "mt_withdraw",
+				min_gas: "91300000000000",
 				msg: expect.stringMatching(
 					/{"receiver_id":"11111111111111111111","amount_native":"6600000024640000","block_number":\d+}/,
 				),
@@ -381,6 +384,7 @@ describe.concurrent("hot_bridge", () => {
 				{
 					amounts: ["1"],
 					intent: "mt_withdraw",
+					min_gas: "91300000000000",
 					msg: expect.stringMatching(
 						/{"receiver_id":"1114wxgAxsZMgcigrJfNL8z1q1fqaZMQaiz1hhPQb4GcFRELffsLeNcoy4i","amount_native":"0","block_number":\d+}/,
 					),
@@ -396,6 +400,7 @@ describe.concurrent("hot_bridge", () => {
 				{
 					amounts: ["1"],
 					intent: "mt_withdraw",
+					min_gas: "91300000000000",
 					msg: expect.stringMatching(
 						/{"receiver_id":"1114wxgAxsZMgcigrJfNL8z1q1fqaZMQaiz1hhPQb4GcFRELffsLeNcoy4i","amount_native":"0","block_number":\d+}/,
 					),
@@ -660,6 +665,7 @@ describe("near_withdrawal", () => {
 			{
 				amount: "1",
 				intent: "ft_withdraw",
+				min_gas: "17050000000000",
 				msg: undefined,
 				receiver_id: "0x0000000000000000000000000000000000000000",
 				storage_deposit: "1250000000000000000000",
@@ -696,6 +702,7 @@ describe("near_withdrawal", () => {
 			{
 				amount: "1",
 				intent: "ft_withdraw",
+				min_gas: undefined,
 				msg: "hey",
 				receiver_id: "0x0000000000000000000000000000000000000000",
 				storage_deposit: undefined,
@@ -762,6 +769,7 @@ describe("near_withdrawal", () => {
 		await expect(intents).resolves.toEqual([
 			{
 				intent: "ft_withdraw",
+				min_gas: "17050000000000",
 				token: "nbtc.bridge.near",
 				receiver_id: "hello.near",
 				amount: "700",
@@ -944,6 +952,7 @@ describe("omni_bridge", () => {
 			},
 			{
 				intent: "ft_withdraw",
+				min_gas: "37400000000000",
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
@@ -1023,6 +1032,7 @@ describe("omni_bridge", () => {
 			},
 			{
 				intent: "ft_withdraw",
+				min_gas: "37400000000000",
 				token: "eth.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
@@ -1082,6 +1092,7 @@ describe("omni_bridge", () => {
 		await expect(intents).resolves.toEqual([
 			{
 				intent: "ft_withdraw",
+				min_gas: "37400000000000",
 				token: "nbtc.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
@@ -1144,6 +1155,7 @@ describe("omni_bridge", () => {
 		await expect(intents).resolves.toEqual([
 			{
 				intent: "ft_withdraw",
+				min_gas: "37400000000000",
 				token: "nbtc.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
@@ -1401,6 +1413,7 @@ describe("omni_bridge", () => {
 			},
 			{
 				intent: "ft_withdraw",
+				min_gas: "37400000000000",
 				token: "nbtc.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
@@ -1500,6 +1513,7 @@ describe("omni_bridge", () => {
 			},
 			{
 				intent: "ft_withdraw",
+				min_gas: "37400000000000",
 				token: "nbtc.bridge.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),

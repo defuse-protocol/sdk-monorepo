@@ -3,6 +3,10 @@ import { getAddress } from "viem";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
+import {
+	MIN_GAS_AMOUNT,
+	MIN_GAS_AMOUNT_NON_STANDARD_DECIMALS,
+} from "./aurora-engine-bridge-constants";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -29,6 +33,7 @@ export function createWithdrawIntentPrimitive(params: {
 				params.storageDeposit > 0n
 					? params.storageDeposit.toString()
 					: undefined,
+			min_gas: MIN_GAS_AMOUNT,
 		};
 	}
 
@@ -41,6 +46,7 @@ export function createWithdrawIntentPrimitive(params: {
 		msg: `${params.auroraEngineContractId}:${makeAuroraEngineDepositMsg(params.destinationAddress)}`,
 		storage_deposit:
 			params.storageDeposit > 0n ? params.storageDeposit.toString() : undefined,
+		min_gas: MIN_GAS_AMOUNT_NON_STANDARD_DECIMALS,
 	};
 }
 

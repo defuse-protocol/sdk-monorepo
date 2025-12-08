@@ -1,6 +1,7 @@
 import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
+import { MIN_GAS_AMOUNT } from "./poa-constants";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -20,6 +21,7 @@ export function createWithdrawIntentPrimitive(params: {
 			receiverAddress: params.destinationAddress,
 			xrpMemo: params.destinationMemo,
 		}),
+		min_gas: MIN_GAS_AMOUNT,
 	};
 }
 
