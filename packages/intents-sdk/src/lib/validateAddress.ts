@@ -9,6 +9,13 @@ import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
 
+/**
+ * Validates that an address matches the expected format for a given blockchain.
+ *
+ * Note: This validates address FORMAT only. Specific bridges may have
+ * additional requirements (e.g., supported address types, memo requirements).
+ * A valid format does not guarantee a bridge will accept the address.
+ */
 export function validateAddress(address: string, blockchain: Chain): boolean {
 	switch (blockchain) {
 		case Chains.Near:
