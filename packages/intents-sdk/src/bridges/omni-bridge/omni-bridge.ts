@@ -354,7 +354,7 @@ export class OmniBridge implements Bridge {
 	}): Promise<void> {
 		assert(
 			args.feeEstimation.amount > 0n,
-			`Fee must be greater than zero. Current fee is ${args.feeEstimation.amount}.`,
+			`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
 		);
 
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
@@ -396,10 +396,12 @@ export class OmniBridge implements Bridge {
 			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
-		// args.amount is without fee, we need to pass an amount being sent to relayer so we add fee here
+		// verifyTransferAmount ensures (amount - fee) > 0 after normalisation.
+		// We pass the actual amount and a zero fee to avoid fee-handling differences
+		// between different withdrawal types (UTXO transfers vs regular transfers where the fee is paid in wrap.near).
 		const normalisationCheckSucceeded = verifyTransferAmount(
-			args.amount + args.feeEstimation.amount,
-			args.feeEstimation.amount,
+			args.amount, // total amount without fee
+			0n, // fee
 			decimals.origin_decimals,
 			decimals.decimals,
 		);
