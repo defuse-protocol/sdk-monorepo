@@ -158,6 +158,11 @@ export class HotBridge implements Bridge {
 			RouteEnum.HotBridge,
 			"relayerFee",
 		);
+		const blockNumber = getUnderlyingFee(
+			args.feeEstimation,
+			RouteEnum.HotBridge,
+			"blockNumber",
+		);
 
 		if (args.feeEstimation.quote !== null) {
 			intents.push({
@@ -178,11 +183,11 @@ export class HotBridge implements Bridge {
 		const intent = await this.hotSdk.buildGaslessWithdrawIntent({
 			feeToken: "native",
 			feeAmount,
+			blockNumber,
 			chain: toHotNetworkId(assetInfo.blockchain),
 			token: isNative ? "native" : assetInfo.address,
 			amount,
 			receiver: args.withdrawalParams.destinationAddress,
-			intentAccount: "", // it is not used inside the function
 		});
 
 		// Sanity check, in case HOT SDK changes
@@ -257,7 +262,7 @@ export class HotBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
 
-		const { gasPrice: feeAmount } = await withTimeout(
+		const { gasPrice: feeAmount, blockNumber } = await withTimeout(
 			() =>
 				this.hotSdk.getGaslessWithdrawFee({
 					chain: toHotNetworkId(assetInfo.blockchain),
@@ -288,7 +293,7 @@ export class HotBridge implements Bridge {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
 			quote: feeQuote,
 			underlyingFees: {
-				[RouteEnum.HotBridge]: { relayerFee: feeAmount },
+				[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
 			},
 		};
 	}

@@ -4,7 +4,7 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import hotOmniSdk from "@hot-labs/omni-sdk";
+import { HotBridge as HotOmniSdk } from "@hot-labs/omni-sdk";
 import { createHotBridgeRoute } from "../../lib/route-config-factory";
 import { Chains } from "../../lib/caip2";
 import { zeroAddress } from "viem";
@@ -30,7 +30,7 @@ describe("HotBridge", () => {
 		])("supports `v2_1.omni.hot.tg` tokens", async (tokenId) => {
 			const bridge = new HotBridge({
 				env: "production",
-				hotSdk: new hotOmniSdk.HotBridge({
+				hotSdk: new HotOmniSdk({
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
@@ -52,7 +52,7 @@ describe("HotBridge", () => {
 		])("doesn't support `v2_1.omni.hot.tg` tokens", async (tokenId) => {
 			const bridge = new HotBridge({
 				env: "production",
-				hotSdk: new hotOmniSdk.HotBridge({
+				hotSdk: new HotOmniSdk({
 					async executeNearTransaction() {
 						throw new Error("not implemented");
 					},
@@ -70,7 +70,7 @@ describe("HotBridge", () => {
 			async (assetId) => {
 				const bridge = new HotBridge({
 					env: "production",
-					hotSdk: new hotOmniSdk.HotBridge({
+					hotSdk: new HotOmniSdk({
 						async executeNearTransaction() {
 							throw new Error("not implemented");
 						},
@@ -96,7 +96,7 @@ describe("HotBridge", () => {
 			async (assetId) => {
 				const bridge = new HotBridge({
 					env: "production",
-					hotSdk: new hotOmniSdk.HotBridge({
+					hotSdk: new HotOmniSdk({
 						async executeNearTransaction() {
 							throw new Error("not implemented");
 						},
@@ -144,7 +144,7 @@ describe("HotBridge", () => {
 
 			const bridge = new HotBridge({
 				env: "production",
-				hotSdk: new hotOmniSdk.HotBridge({
+				hotSdk: new HotOmniSdk({
 					logger: console,
 					evmRpc: evmRpcUrls,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
@@ -187,7 +187,7 @@ describe("HotBridge", () => {
 			async ({ assetId, destinationAddress }) => {
 				const bridge = new HotBridge({
 					env: "production",
-					hotSdk: {} as unknown as hotOmniSdk.HotBridge,
+					hotSdk: {} as unknown as HotOmniSdk,
 				});
 
 				await expect(
@@ -203,7 +203,7 @@ describe("HotBridge", () => {
 
 	describe("waitForWithdrawalCompletion()", () => {
 		it("returns destination tx hash", async () => {
-			const hotSDK = new hotOmniSdk.HotBridge({
+			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
 				nearRpc: [],
@@ -232,7 +232,7 @@ describe("HotBridge", () => {
 		});
 
 		it("returns no tx if destination tx hash is not valid", async () => {
-			const hotSDK = new hotOmniSdk.HotBridge({
+			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
 				nearRpc: [],
@@ -278,11 +278,11 @@ describe("HotBridge", () => {
 		it("uses Monad mainnet network id", async () => {
 			const getGaslessWithdrawFee = vi
 				.fn()
-				.mockResolvedValue({ gasPrice: 10n });
+				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
 
 			const hotSdk = {
 				getGaslessWithdrawFee,
-			} as unknown as hotOmniSdk.HotBridge;
+			} as unknown as HotOmniSdk;
 
 			const bridge = new HotBridge({
 				env: "production",
@@ -306,6 +306,7 @@ describe("HotBridge", () => {
 				underlyingFees: {
 					[RouteEnum.HotBridge]: {
 						relayerFee: 10n,
+						blockNumber: 12345n,
 					},
 				},
 			});
@@ -325,7 +326,7 @@ describe("HotBridge", () => {
 
 			const hotSdk = {
 				buildGaslessWithdrawIntent,
-			} as unknown as hotOmniSdk.HotBridge;
+			} as unknown as HotOmniSdk;
 
 			const bridge = new HotBridge({
 				env: "production",
@@ -338,6 +339,7 @@ describe("HotBridge", () => {
 				underlyingFees: {
 					[RouteEnum.HotBridge]: {
 						relayerFee: 10n,
+						blockNumber: 0n,
 					},
 				},
 			};

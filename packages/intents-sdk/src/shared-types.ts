@@ -284,6 +284,8 @@ export interface RouteFeeStructures {
 	[RouteEnum.HotBridge]: {
 		/** Relayer fee for processing the withdrawal on destination chain, taken in base token of destination chain. */
 		relayerFee: bigint;
+		/** Block number at the time of fee estimation, required for building gasless withdraw intent. */
+		blockNumber: bigint;
 	};
 
 	[RouteEnum.PoaBridge]: {

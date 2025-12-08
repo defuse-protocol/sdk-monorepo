@@ -221,6 +221,7 @@ describe.concurrent("hot_bridge", () => {
 			underlyingFees: {
 				[RouteEnum.HotBridge]: {
 					relayerFee: 6600000024640000n,
+					blockNumber: 0n,
 				},
 			},
 		};
@@ -325,6 +326,7 @@ describe.concurrent("hot_bridge", () => {
 					underlyingFees: {
 						[RouteEnum.HotBridge]: {
 							relayerFee: 0n,
+							blockNumber: 0n,
 						},
 					},
 				},
@@ -350,6 +352,7 @@ describe.concurrent("hot_bridge", () => {
 					underlyingFees: {
 						[RouteEnum.HotBridge]: {
 							relayerFee: 0n,
+							blockNumber: 0n,
 						},
 					},
 				},
@@ -369,6 +372,7 @@ describe.concurrent("hot_bridge", () => {
 					underlyingFees: {
 						[RouteEnum.HotBridge]: {
 							relayerFee: 0n,
+							blockNumber: 0n,
 						},
 					},
 				},
