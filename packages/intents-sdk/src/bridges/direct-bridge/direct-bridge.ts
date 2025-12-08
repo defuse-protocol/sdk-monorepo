@@ -107,6 +107,7 @@ export class DirectBridge implements Bridge {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 		referral?: string;
+		logger?: ILogger;
 	}): Promise<IntentPrimitive[]> {
 		withdrawalParamsInvariant(args.withdrawalParams);
 
@@ -135,6 +136,7 @@ export class DirectBridge implements Bridge {
 				"storageDepositFee",
 			),
 			msg: args.withdrawalParams.routeConfig?.msg,
+			logger: args.logger,
 		});
 
 		intents.push(intent);

@@ -1,5 +1,6 @@
 import {
 	assert,
+	type ILogger,
 	unwrapNearFailoverRpcProvider,
 	utils,
 } from "@defuse-protocol/internal-utils";
@@ -18,6 +19,7 @@ export function createWithdrawIntentPrimitive(params: {
 	amount: bigint;
 	storageDeposit: bigint;
 	msg: string | undefined;
+	logger?: ILogger;
 }): IntentPrimitive {
 	if (
 		params.assetId === NEAR_NATIVE_ASSET_ID &&
@@ -35,6 +37,12 @@ export function createWithdrawIntentPrimitive(params: {
 		params.assetId,
 	);
 	assert(standard === "nep141", "Only NEP-141 is supported");
+	if (params.msg !== undefined) {
+		params.logger?.warn(
+			"min_gas is not set for direct-bridge withdrawal with msg, gas consumption is unpredictable",
+		);
+	}
+
 	return {
 		intent: "ft_withdraw",
 		token: tokenAccountId,
@@ -43,7 +51,9 @@ export function createWithdrawIntentPrimitive(params: {
 		storage_deposit:
 			params.storageDeposit > 0n ? params.storageDeposit.toString() : undefined,
 		msg: params.msg,
-		min_gas: MIN_GAS_AMOUNT,
+		// Only set min_gas when msg is not provided (simple ft_transfer).
+		// When msg is present, ft_transfer_call is used and gas consumption is unpredictable.
+		min_gas: params.msg == null ? MIN_GAS_AMOUNT : undefined,
 	};
 }
 

@@ -702,7 +702,7 @@ describe("near_withdrawal", () => {
 			{
 				amount: "1",
 				intent: "ft_withdraw",
-				min_gas: "17050000000000",
+				min_gas: undefined,
 				msg: "hey",
 				receiver_id: "0x0000000000000000000000000000000000000000",
 				storage_deposit: undefined,
