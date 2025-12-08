@@ -1,5 +1,5 @@
 ---
-"@defuse-protocol/intents-sdk": patch
+"@defuse-protocol/intents-sdk": minor
 ---
 
-Export `validateAddress` from the intents-sdk.
+Export `validateAddressFormat` helper for address format validation.

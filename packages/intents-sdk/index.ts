@@ -206,4 +206,4 @@ export { computeIntentHash } from "./src/intents/intent-hash";
 // ============================================================================
 // Address Validation Helper
 // ============================================================================
-export { validateAddress } from "./src/lib/validateAddress";
+export { validateAddress as validateAddressFormat } from "./src/lib/validateAddress";
