@@ -3,6 +3,14 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/defuse-protocol/sdk-monorepo.git"
+	},
+	"bugs": {
+		"url": "https://github.com/defuse-protocol/sdk-monorepo/issues"
+	},
+	"homepage": "https://github.com/defuse-protocol/sdk-monorepo#readme",
 	"scripts": {
 		"test": "turbo run test",
 		"build": "turbo run build",
