@@ -3,6 +3,15 @@
 	"version": "1.0.4",
 	"private": false,
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/defuse-protocol/sdk-monorepo.git",
+		"directory": "packages/crosschain-assetid"
+	},
+	"bugs": {
+		"url": "https://github.com/defuse-protocol/sdk-monorepo/issues"
+	},
+	"homepage": "https://github.com/defuse-protocol/sdk-monorepo/tree/main/packages/crosschain-assetid#readme",
 	"sideEffects": false,
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.js",
