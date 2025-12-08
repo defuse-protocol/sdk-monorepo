@@ -1,4 +1,6 @@
+// biome-ignore lint/style/noRestrictedImports: build-time script, not client code
 import { mkdirSync, writeFileSync } from "node:fs";
+// biome-ignore lint/style/noRestrictedImports: build-time script, not client code
 import { dirname } from "node:path";
 
 // ---- Readable regex parts ----

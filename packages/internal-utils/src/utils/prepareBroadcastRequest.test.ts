@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noRestrictedGlobals: Buffer OK in tests
 import { describe, expect, it } from "vitest";
 import type {
 	ERC191SignatureData,

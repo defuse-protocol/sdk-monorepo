@@ -1,6 +1,6 @@
 import { base32 } from "@scure/base";
 
-export function stellarAddressToBytes(encoded: string): Buffer {
+export function stellarAddressToBytes(encoded: string): Uint8Array {
 	if (typeof encoded !== "string") {
 		throw new TypeError("encoded argument must be of type String");
 	}
@@ -20,7 +20,7 @@ export function stellarAddressToBytes(encoded: string): Buffer {
 		throw new Error("invalid checksum");
 	}
 
-	return Buffer.from(data);
+	return new Uint8Array(data);
 }
 
 // Verifies that the calculated checksum matches the provided checksum

@@ -14,7 +14,9 @@ export const getNearNep141StorageBalance = async ({
 }): Promise<bigint> => {
 	try {
 		const args = { account_id: accountId };
-		const argsBase64 = Buffer.from(JSON.stringify(args)).toString("base64");
+		const argsBase64 = base64.encode(
+			new TextEncoder().encode(JSON.stringify(args)),
+		);
 
 		const response = await nearProvider.query({
 			request_type: "call_function",

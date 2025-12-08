@@ -30,7 +30,37 @@
 				"noMisusedPromises": "error"
 			},
 			"style": {
-				"useConsistentCurlyBraces": "error"
+				"useConsistentCurlyBraces": "error",
+				"noRestrictedGlobals": {
+					"level": "error",
+					"options": {
+						"deniedGlobals": {
+							"process": "Node.js process global is not available in browsers",
+							"__dirname": "Node.js __dirname is not available in browsers",
+							"__filename": "Node.js __filename is not available in browsers",
+							"Buffer": "Use Uint8Array instead of Node.js Buffer for browser compatibility",
+							"global": "Use globalThis instead of Node.js global for browser compatibility",
+							"require": "Use ES modules (import) instead of CommonJS require"
+						}
+					}
+				},
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"node:buffer": "Use Uint8Array and TextEncoder instead of Node.js Buffer for browser compatibility",
+							"node:crypto": "Use @noble/hashes or Web Crypto API for browser compatibility",
+							"node:fs": "Node.js fs module is not available in browsers",
+							"node:path": "Node.js path module is not available in browsers",
+							"node:os": "Node.js os module is not available in browsers",
+							"buffer": "Use Uint8Array and TextEncoder instead of Node.js Buffer for browser compatibility",
+							"crypto": "Use @noble/hashes or Web Crypto API for browser compatibility",
+							"fs": "Node.js fs module is not available in browsers",
+							"path": "Node.js path module is not available in browsers",
+							"os": "Node.js os module is not available in browsers"
+						}
+					}
+				}
 			}
 		}
 	},

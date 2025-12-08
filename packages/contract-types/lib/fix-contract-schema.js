@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** biome-ignore-all lint/suspicious/noConsole: it's necessary to use console */
+/** biome-ignore-all lint/suspicious/noConsole: build-time script */
+/** biome-ignore-all lint/style/noRestrictedGlobals: build-time script, not client code */
 
 import { extractDiscriminatedUnions } from "./discr-union.js";
 
