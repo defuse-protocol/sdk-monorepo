@@ -1,5 +1,12 @@
 # @defuse-protocol/intents-sdk
 
+## 0.43.1
+
+### Patch Changes
+
+- cddca5b: Simplify verify transfer amount check to avoid fee handling between different withdrawal types (UTXO and non UTXO).
+- d3d52d7: Update @hot-labs/omni-sdk from 2.20.2 to 2.24.0
+
 ## 0.43.0
 
 ### Minor Changes
