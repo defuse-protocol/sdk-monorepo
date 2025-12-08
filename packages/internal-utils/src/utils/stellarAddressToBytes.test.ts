@@ -11,7 +11,7 @@ describe("stellarAddressToBytes", () => {
 			const userAddressToBytes = stellarAddressToBytes(
 				"GCI423LPYVEX5YCJBWXEI76EKRO72ETQCS3KBUE2SRH4PI2T2LSB55FF",
 			);
-			expect(userAddressToBytes).toBeInstanceOf(Buffer);
+			expect(userAddressToBytes).toBeInstanceOf(Uint8Array);
 			expect(userAddressToBytes.length).toBeGreaterThan(0);
 		});
 
@@ -43,7 +43,7 @@ describe("stellarAddressToBytes", () => {
 			const userAddressToBytes = stellarAddressToBytes(
 				"GCI423LPYVEX5YCJBWXEI76EKRO72ETQCS3KBUE2SRH4PI2T2LSB55FF",
 			);
-			expect(userAddressToBytes).toBeInstanceOf(Buffer);
+			expect(userAddressToBytes).toBeInstanceOf(Uint8Array);
 			// The decoded result should be 32 bytes (Stellar public key length)
 			expect(userAddressToBytes.length).toBe(32);
 		});
