@@ -194,13 +194,13 @@ export class HotBridge implements Bridge {
 			);
 		}
 
-		const mtWitdhrawIntent = intent as Extract<
+		const mtWithdrawIntent = intent as Extract<
 			IntentPrimitive,
 			{ intent: "mt_withdraw" }
 		>;
-		mtWitdhrawIntent.min_gas = MIN_GAS_AMOUNT;
+		mtWithdrawIntent.min_gas = MIN_GAS_AMOUNT;
 
-		intents.push(mtWitdhrawIntent);
+		intents.push(mtWithdrawIntent);
 
 		return intents;
 	}
