@@ -44,3 +44,6 @@ yarn-error.log*
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# LLMs and agents
+.claude/*.local.json
