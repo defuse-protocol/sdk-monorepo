@@ -7,5 +7,6 @@ export default defineConfig({
 			provider: "v8",
 		},
 		testTimeout: 20_000,
+		watch: false,
 	},
 });
