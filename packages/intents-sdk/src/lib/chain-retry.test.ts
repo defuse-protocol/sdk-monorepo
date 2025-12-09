@@ -23,7 +23,9 @@ describe("getRetryOptionsForChain", () => {
 
 	test("faster chains have fewer retry attempts", () => {
 		const fastChain = getRetryOptionsForChain("eip155:56"); // bsc, p99: 36s
-		const slowChain = getRetryOptionsForChain("bip122:000000000019d6689c085ae165831e93"); // bitcoin, p99: 3656s
+		const slowChain = getRetryOptionsForChain(
+			"bip122:000000000019d6689c085ae165831e93",
+		); // bitcoin, p99: 3656s
 
 		expect(fastChain.maxAttempts).toBeLessThan(slowChain.maxAttempts!);
 	});

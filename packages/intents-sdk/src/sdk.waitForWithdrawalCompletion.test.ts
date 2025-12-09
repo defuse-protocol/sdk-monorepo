@@ -181,37 +181,6 @@ describe("sdk.waitForWithdrawalCompletion()", () => {
 
 		expect(result).toEqual([]);
 	});
-
-	it("auto-detects retry options from destination chain", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		const txInfo = { hash: "fake-dest-hash" };
-		vi.mocked(mockBridge.waitForWithdrawalCompletion).mockResolvedValueOnce(
-			txInfo,
-		);
-		vi.mocked(mockBridge.parseAssetId).mockReturnValue({
-			blockchain: Chains.Ethereum, // p99: 1852s
-			bridgeName: BridgeNameEnum.None,
-			standard: "erc20",
-			contractId: "0x123",
-			address: "0x123",
-		});
-
-		await sdk.waitForWithdrawalCompletion({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: withdrawalParams,
-		});
-
-		expect(mockBridge.waitForWithdrawalCompletion).toHaveBeenCalledWith(
-			expect.objectContaining({
-				retryOptions: {
-					delay: 2000,
-					factor: 1.3,
-					maxAttempts: 24,
-				},
-			}),
-		);
-	});
 });
 
 function setupMocks() {

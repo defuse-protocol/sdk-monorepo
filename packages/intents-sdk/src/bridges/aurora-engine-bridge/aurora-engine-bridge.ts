@@ -9,6 +9,7 @@ import {
 import type { providers } from "near-api-js";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
+import { Chains } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -30,7 +31,6 @@ import {
 } from "../../classes/errors";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
-import { Chains } from "../../lib/caip2";
 
 export class AuroraEngineBridge implements Bridge {
 	protected env: NearIntentsEnv;

@@ -2,7 +2,6 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	RETRY_CONFIGS,
 	type RetryOptions,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
@@ -49,6 +48,7 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
+import { getRetryOptionsForChain } from "../../lib/chain-retry";
 
 export class HotBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -316,6 +316,9 @@ export class HotBridge implements Bridge {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
+		const chain = this.getDestinationChain(args.routeConfig);
+		const defaultRetryOptions = getRetryOptionsForChain(chain);
+
 		return retry(
 			async () => {
 				if (args.signal?.aborted) {
@@ -353,7 +356,7 @@ export class HotBridge implements Bridge {
 				throw new HotWithdrawalPendingError(args.tx.hash, args.index);
 			},
 			{
-				...(args.retryOptions ?? RETRY_CONFIGS.TWO_MINS_GRADUAL),
+				...(args.retryOptions ?? defaultRetryOptions),
 				handleError: (err, ctx) => {
 					if (
 						err instanceof HotWithdrawalCancelledError ||
@@ -364,5 +367,12 @@ export class HotBridge implements Bridge {
 				},
 			},
 		);
+	}
+
+	private getDestinationChain(routeConfig: RouteConfig): Chain {
+		if ("chain" in routeConfig && routeConfig.chain) {
+			return routeConfig.chain;
+		}
+		throw new Error("HotBridge requires chain in routeConfig");
 	}
 }

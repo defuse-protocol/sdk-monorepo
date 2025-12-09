@@ -202,6 +202,85 @@ describe("HotBridge", () => {
 	});
 
 	describe("waitForWithdrawalCompletion()", () => {
+		it("uses chain-aware retry options based on routeConfig.chain", async () => {
+			vi.useFakeTimers();
+
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			const getGaslessWithdrawStatus = vi
+				.spyOn(hotSDK, "getGaslessWithdrawStatus")
+				.mockRejectedValue(new Error("pending"));
+
+			// Ethereum has p99=43s, timeout=64.5s -> ~24 attempts with delay=2000, factor=1.3
+			const ethereumPromise = bridge
+				.waitForWithdrawalCompletion({
+					tx: { hash: "", accountId: "" },
+					index: 0,
+					routeConfig: createHotBridgeRoute(Chains.Ethereum),
+				})
+				.catch((err: unknown) => err);
+
+			await vi.runAllTimersAsync();
+			await ethereumPromise;
+
+			expect(getGaslessWithdrawStatus.mock.calls.length).toBe(24);
+
+			vi.useRealTimers();
+		});
+
+		it("respects custom retry options override", async () => {
+			vi.useFakeTimers();
+
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			const getGaslessWithdrawStatus = vi
+				.spyOn(hotSDK, "getGaslessWithdrawStatus")
+				.mockRejectedValue(new Error("pending"));
+
+			const promise = bridge
+				.waitForWithdrawalCompletion({
+					tx: { hash: "", accountId: "" },
+					index: 0,
+					routeConfig: createHotBridgeRoute(Chains.Ethereum),
+					retryOptions: { delay: 100, factor: 1, maxAttempts: 3 },
+				})
+				.catch((err: unknown) => err);
+
+			await vi.runAllTimersAsync();
+
+			const result = await promise;
+			expect(result).toBeInstanceOf(Error);
+			expect(getGaslessWithdrawStatus.mock.calls.length).toBe(3);
+
+			vi.useRealTimers();
+		});
+
 		it("returns destination tx hash", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,

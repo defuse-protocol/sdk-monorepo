@@ -34,6 +34,7 @@ import {
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
+import { getRetryOptionsForChain } from "../../lib/chain-retry";
 
 export class PoaBridge implements Bridge {
 	protected env: NearIntentsEnv;
@@ -204,22 +205,33 @@ export class PoaBridge implements Bridge {
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		withdrawalParams: WithdrawalParams;
+		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<TxInfo> {
+		const chain = this.getDestinationChain(args.routeConfig);
+		const defaultRetryOptions = getRetryOptionsForChain(chain);
+
 		const withdrawalStatus = await poaBridge.waitForWithdrawalCompletion({
 			txHash: args.tx.hash,
 			withdrawalCriteria: {
 				assetId: args.withdrawalParams.assetId,
 			},
 			signal: args.signal ?? new AbortController().signal,
-			retryOptions: args.retryOptions,
+			retryOptions: args.retryOptions ?? defaultRetryOptions,
 			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
 			logger: args.logger,
 		});
 
 		return { hash: withdrawalStatus.destinationTxHash };
+	}
+
+	private getDestinationChain(routeConfig: RouteConfig): Chain {
+		if ("chain" in routeConfig && routeConfig.chain) {
+			return routeConfig.chain;
+		}
+		throw new Error("PoaBridge requires chain in routeConfig");
 	}
 
 	/**

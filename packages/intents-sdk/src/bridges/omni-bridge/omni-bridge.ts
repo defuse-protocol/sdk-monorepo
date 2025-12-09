@@ -2,7 +2,6 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	RETRY_CONFIGS,
 	type RetryOptions,
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
@@ -75,6 +74,7 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { getRetryOptionsForChain } from "../../lib/chain-retry";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -637,9 +637,13 @@ export class OmniBridge implements Bridge {
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
+		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo> {
+		const chain = this.getDestinationChain(args.routeConfig);
+		const defaultRetryOptions = getRetryOptionsForChain(chain);
+
 		return retry(
 			async () => {
 				if (args.signal?.aborted) {
@@ -681,7 +685,7 @@ export class OmniBridge implements Bridge {
 				return { hash: txHash };
 			},
 			{
-				...(args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY),
+				...(args.retryOptions ?? defaultRetryOptions),
 				handleError: (err, ctx) => {
 					if (err === args.signal?.reason) {
 						ctx.abort();
@@ -689,6 +693,13 @@ export class OmniBridge implements Bridge {
 				},
 			},
 		);
+	}
+
+	private getDestinationChain(routeConfig: RouteConfig): Chain {
+		if ("chain" in routeConfig && routeConfig.chain) {
+			return routeConfig.chain;
+		}
+		throw new Error("OmniBridge requires chain in routeConfig");
 	}
 
 	/**
