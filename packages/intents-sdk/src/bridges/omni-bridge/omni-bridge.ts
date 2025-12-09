@@ -637,7 +637,6 @@ export class OmniBridge implements Bridge {
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
-		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 	}): Promise<TxInfo | TxNoInfo> {
