@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.21.1
+
+### Patch Changes
+
+- 8bbd5c6: Fix POA bridge withdrawal matching to use assetId instead of index.
+
 ## 0.21.0
 
 ### Minor Changes

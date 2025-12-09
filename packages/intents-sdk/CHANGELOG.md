@@ -1,5 +1,14 @@
 # @defuse-protocol/intents-sdk
 
+## 0.43.2
+
+### Patch Changes
+
+- 8bbd5c6: Fix POA bridge withdrawal matching to use assetId instead of index.
+- c7738e3: Add `min_gas` to withdrawals, so bridges do not fail with out of gas.
+- Updated dependencies [8bbd5c6]
+  - @defuse-protocol/internal-utils@0.21.1
+
 ## 0.43.1
 
 ### Patch Changes
