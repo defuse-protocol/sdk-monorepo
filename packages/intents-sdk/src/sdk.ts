@@ -10,6 +10,7 @@ import {
 	solverRelay,
 	RelayPublishError,
 } from "@defuse-protocol/internal-utils";
+import { getRetryOptionsForChain } from "./lib/chain-retry";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
@@ -434,24 +435,30 @@ export class IntentsSDK implements IIntentsSDK {
 		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<(TxInfo | TxNoInfo) | Array<TxInfo | TxNoInfo>> {
+		const withdrawalParamsArray = Array.isArray(args.withdrawalParams)
+			? args.withdrawalParams
+			: [args.withdrawalParams];
+
 		const wids = this.getWithdrawalsIdentifiers({
-			withdrawalParams: Array.isArray(args.withdrawalParams)
-				? args.withdrawalParams
-				: [args.withdrawalParams],
+			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 		});
 
 		const result = await Promise.all(
-			wids.map((wid) => {
+			wids.map((wid, idx) => {
 				for (const bridge of this.bridges) {
 					if (bridge.is(wid.routeConfig)) {
+						const retryOptions =
+							args.retryOptions ??
+							this.getChainRetryOptions(withdrawalParamsArray[idx]);
+
 						return bridge.waitForWithdrawalCompletion({
 							tx: args.intentTx,
 							index: wid.index,
 							withdrawalParams: wid.withdrawalParams,
 							routeConfig: wid.routeConfig,
 							signal: args.signal,
-							retryOptions: args.retryOptions,
+							retryOptions,
 							logger: args.logger,
 						});
 					}
@@ -468,6 +475,17 @@ export class IntentsSDK implements IIntentsSDK {
 		assert(result.length === 1, "Unexpected result length");
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		return result[0]!;
+	}
+
+	private getChainRetryOptions(
+		withdrawalParams: WithdrawalParams | undefined,
+	): RetryOptions | undefined {
+		if (withdrawalParams == null) {
+			return undefined;
+		}
+
+		const parsed = this.parseAssetId(withdrawalParams.assetId);
+		return getRetryOptionsForChain(parsed.blockchain);
 	}
 
 	public parseAssetId(assetId: string): ParsedAssetInfo {

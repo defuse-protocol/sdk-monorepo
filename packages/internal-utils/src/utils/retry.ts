@@ -67,12 +67,12 @@ export const RETRY_CONFIGS = {
 };
 
 /**
- * @returns how many tries happen before totalDelay ≥ timeout
+ * Calculates how many attempts fit within a timeout budget.
+ *
+ * @returns number of attempts that fit within the timeout
  */
 export function calculateMaxAttempts(
-	// Max amount of time we're willing to wait
 	timeout: number,
-	// Wait time between retries
 	delay: number,
 	factor: number,
 ): number {
@@ -92,7 +92,7 @@ export function calculateMaxAttempts(
 if (import.meta.vitest) {
 	const { expect, test } = import.meta.vitest;
 
-	test("returns ~max attempts", () => {
+	test("returns max attempts that fit within timeout", () => {
 		expect(calculateMaxAttempts(0, 500, 1.5)).toEqual(1);
 		expect(calculateMaxAttempts(200, 500, 1.5)).toEqual(1);
 		expect(calculateMaxAttempts(500, 500, 1.5)).toEqual(2);
