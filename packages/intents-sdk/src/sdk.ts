@@ -393,27 +393,19 @@ export class IntentsSDK implements IIntentsSDK {
 		withdrawalParams: WithdrawalParams[];
 		intentTx: NearTxInfo;
 	}): WithdrawalIdentifier[] {
-		const indexes = new Map<string, number>(
-			zip(
-				withdrawalParams.map((w) => {
-					const routeConfig = determineRouteConfig(this, w);
-					return routeConfig.route;
-				}),
-				Array(withdrawalParams.length).fill(0),
-			),
-		);
+		const indexes = new Map<string, number>();
 
 		return withdrawalParams.map((w): WithdrawalIdentifier => {
 			const routeConfig = determineRouteConfig(this, w);
 			const route = routeConfig.route;
 
-			const index = indexes.get(route);
-			assert(index != null, "Index is not found for route");
-			indexes.set(route, index + 1);
+			const currentIndex = indexes.get(route) ?? 0;
+			indexes.set(route, currentIndex + 1);
 
 			return {
 				routeConfig: routeConfig,
-				index,
+				index: currentIndex,
+				withdrawalParams: w,
 				tx: intentTx,
 			};
 		});
@@ -456,6 +448,7 @@ export class IntentsSDK implements IIntentsSDK {
 						return bridge.waitForWithdrawalCompletion({
 							tx: args.intentTx,
 							index: wid.index,
+							withdrawalParams: wid.withdrawalParams,
 							routeConfig: wid.routeConfig,
 							signal: args.signal,
 							retryOptions: args.retryOptions,

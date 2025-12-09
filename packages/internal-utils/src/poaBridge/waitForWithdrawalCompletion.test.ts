@@ -5,15 +5,26 @@ import {
 	PoaWithdrawalPendingError,
 } from "./errors/withdrawal";
 import { getWithdrawalStatus } from "./poaBridgeHttpClient";
-import { waitForWithdrawalCompletion } from "./waitForWithdrawalCompletion";
+import {
+	waitForWithdrawalCompletion,
+	type WithdrawalCriteria,
+} from "./waitForWithdrawalCompletion";
 
 vi.mock("./poaBridgeHttpClient");
+
+const testCriteria: WithdrawalCriteria = {
+	assetId: "nep141:usdc.token.near",
+};
 
 const ok = {
 	withdrawals: [
 		{
 			status: "COMPLETED",
-			data: { transfer_tx_hash: "0xfoo", chain: "near:mainnet" },
+			data: {
+				transfer_tx_hash: "0xfoo",
+				chain: "near:mainnet",
+				near_token_id: "usdc.token.near",
+			},
 		},
 	],
 };
@@ -21,6 +32,9 @@ const pending = {
 	withdrawals: [
 		{
 			status: "PENDING",
+			data: {
+				near_token_id: "usdc.token.near",
+			},
 		},
 	],
 };
@@ -41,12 +55,12 @@ describe("waitForWithdrawalCompletion()", () => {
 	});
 
 	test("withdrawal found", async () => {
-		// @ts-expect-error
+		// @ts-expect-error mock contains only fields needed for test
 		vi.mocked(getWithdrawalStatus).mockResolvedValueOnce(ok);
 
 		const p = waitForWithdrawalCompletion({
 			txHash: "foo",
-			index: 0,
+			withdrawalCriteria: testCriteria,
 			signal: new AbortController().signal,
 		});
 
@@ -62,7 +76,7 @@ describe("waitForWithdrawalCompletion()", () => {
 
 		const p = waitForWithdrawalCompletion({
 			txHash: "foo",
-			index: 1,
+			withdrawalCriteria: testCriteria,
 			signal: new AbortController().signal,
 			retryOptions: { maxAttempts: 1 },
 		});
@@ -75,14 +89,14 @@ describe("waitForWithdrawalCompletion()", () => {
 		vi.mocked(getWithdrawalStatus)
 			.mockRejectedValueOnce(forbidden)
 			.mockRejectedValueOnce(notFound)
-			// @ts-expect-error
+			// @ts-expect-error mock contains only fields needed for test
 			.mockResolvedValueOnce(pending)
-			// @ts-expect-error
+			// @ts-expect-error mock contains only fields needed for test
 			.mockResolvedValueOnce(ok);
 
 		const p = waitForWithdrawalCompletion({
 			txHash: "foo",
-			index: 0,
+			withdrawalCriteria: testCriteria,
 			signal: new AbortController().signal,
 			retryOptions: { maxAttempts: 4 },
 		});
@@ -100,7 +114,7 @@ describe("waitForWithdrawalCompletion()", () => {
 
 		const p = waitForWithdrawalCompletion({
 			txHash: "foo",
-			index: 0,
+			withdrawalCriteria: testCriteria,
 			signal: new AbortController().signal,
 			retryOptions: { maxAttempts: 1000 },
 		});
@@ -110,17 +124,53 @@ describe("waitForWithdrawalCompletion()", () => {
 	});
 
 	test("pending", async () => {
-		// @ts-expect-error
+		// @ts-expect-error mock contains only fields needed for test
 		vi.mocked(getWithdrawalStatus).mockResolvedValueOnce(pending);
 
 		const p = waitForWithdrawalCompletion({
 			txHash: "foo",
-			index: 0,
+			withdrawalCriteria: testCriteria,
 			signal: new AbortController().signal,
 			retryOptions: { maxAttempts: 1 },
 		});
 
 		await expect(p).rejects.toBeInstanceOf(PoaWithdrawalPendingError);
 		expect(getWithdrawalStatus).toHaveBeenCalledTimes(1);
+	});
+
+	test("matches withdrawal by criteria when multiple withdrawals exist", async () => {
+		const multipleWithdrawals = {
+			withdrawals: [
+				{
+					status: "COMPLETED",
+					data: {
+						transfer_tx_hash: "0xother",
+						chain: "eth:1",
+						near_token_id: "other.token.near",
+					},
+				},
+				{
+					status: "COMPLETED",
+					data: {
+						transfer_tx_hash: "0xmatched",
+						chain: "near:mainnet",
+						near_token_id: "usdc.token.near",
+					},
+				},
+			],
+		};
+		// @ts-expect-error mock contains only fields needed for test
+		vi.mocked(getWithdrawalStatus).mockResolvedValueOnce(multipleWithdrawals);
+
+		const p = waitForWithdrawalCompletion({
+			txHash: "foo",
+			withdrawalCriteria: testCriteria,
+			signal: new AbortController().signal,
+		});
+
+		await expect(p).resolves.toEqual({
+			destinationTxHash: "0xmatched",
+			chain: "near:mainnet",
+		});
 	});
 });

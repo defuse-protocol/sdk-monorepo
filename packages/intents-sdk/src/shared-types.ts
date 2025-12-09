@@ -382,6 +382,7 @@ export interface Bridge {
 	waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
 		index: number;
+		withdrawalParams: WithdrawalParams;
 		routeConfig: RouteConfig;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
@@ -392,6 +393,7 @@ export interface Bridge {
 export interface WithdrawalIdentifier {
 	routeConfig: RouteConfig;
 	index: number;
+	withdrawalParams: WithdrawalParams;
 	tx: NearTxInfo;
 }
 

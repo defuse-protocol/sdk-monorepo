@@ -301,10 +301,7 @@ export class DirectBridge implements Bridge {
 		return exist;
 	}
 
-	async waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
-		index: number;
-	}): Promise<TxInfo> {
+	async waitForWithdrawalCompletion(args: { tx: NearTxInfo }): Promise<TxInfo> {
 		return { hash: args.tx.hash };
 	}
 }

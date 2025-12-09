@@ -203,14 +203,16 @@ export class PoaBridge implements Bridge {
 
 	async waitForWithdrawalCompletion(args: {
 		tx: NearTxInfo;
-		index: number;
+		withdrawalParams: WithdrawalParams;
 		signal?: AbortSignal;
 		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<TxInfo> {
 		const withdrawalStatus = await poaBridge.waitForWithdrawalCompletion({
 			txHash: args.tx.hash,
-			index: args.index,
+			withdrawalCriteria: {
+				assetId: args.withdrawalParams.assetId,
+			},
 			signal: args.signal ?? new AbortController().signal,
 			retryOptions: args.retryOptions,
 			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,

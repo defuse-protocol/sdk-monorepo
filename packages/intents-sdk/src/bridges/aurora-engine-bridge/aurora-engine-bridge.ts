@@ -12,7 +12,6 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
 	FeeEstimation,
-	NearTxInfo,
 	QuoteOptions,
 	RouteConfig,
 	TxNoInfo,
@@ -203,10 +202,7 @@ export class AuroraEngineBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(_args: {
-		tx: NearTxInfo;
-		index: number;
-	}): Promise<TxNoInfo> {
+	async waitForWithdrawalCompletion(): Promise<TxNoInfo> {
 		return { hash: null };
 	}
 }
