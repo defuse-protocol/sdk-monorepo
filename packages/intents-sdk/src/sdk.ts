@@ -78,6 +78,15 @@ export interface IntentsSDKConfig {
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
 	solverRelayApiKey?: string;
+	features?: {
+		/**
+		 * Bypass the destination token check for *.omft.near tokens when using Omni Bridge.
+		 * This is needed for migrated POA tokens that are now routed through Omni Bridge
+		 * but haven't been registered in the Omni Bridge contract yet.
+		 * When enabled, users must specify `routeConfig.chain` explicitly.
+		 */
+		omniBridgeBypassDestinationTokenCheckForOmftTokens?: boolean;
+	};
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -143,6 +152,8 @@ export class IntentsSDK implements IIntentsSDK {
 				env: this.env,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
+				bypassDestinationTokenCheckForOmftTokens:
+					args.features?.omniBridgeBypassDestinationTokenCheckForOmftTokens,
 			}),
 			new DirectBridge({
 				env: this.env,

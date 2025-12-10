@@ -83,6 +83,7 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
+	protected bypassDestinationTokenCheckForOmftTokens: boolean;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -99,15 +100,19 @@ export class OmniBridge implements Bridge {
 		env,
 		nearProvider,
 		solverRelayApiKey,
+		bypassDestinationTokenCheckForOmftTokens,
 	}: {
 		env: NearIntentsEnv;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		bypassDestinationTokenCheckForOmftTokens?: boolean;
 	}) {
 		this.env = env;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.bypassDestinationTokenCheckForOmftTokens =
+			bypassDestinationTokenCheckForOmftTokens ?? false;
 	}
 
 	is(routeConfig: RouteConfig): boolean {
@@ -182,16 +187,20 @@ export class OmniBridge implements Bridge {
 				);
 			}
 		}
-		const tokenOnDestinationNetwork =
-			await this.getCachedDestinationTokenAddress(
-				parsed.contractId,
-				omniChainKind,
-			);
-		if (tokenOnDestinationNetwork === null) {
-			throw new TokenNotFoundInDestinationChainError(
-				params.assetId,
-				caip2Chain,
-			);
+
+		if (!this.bypassDestinationTokenCheckForOmftTokens) {
+			const tokenOnDestinationNetwork =
+				await this.getCachedDestinationTokenAddress(
+					parsed.contractId,
+					omniChainKind,
+				);
+
+			if (tokenOnDestinationNetwork === null) {
+				throw new TokenNotFoundInDestinationChainError(
+					params.assetId,
+					caip2Chain,
+				);
+			}
 		}
 
 		return true;

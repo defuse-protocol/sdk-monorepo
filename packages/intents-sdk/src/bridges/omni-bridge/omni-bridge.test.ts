@@ -166,6 +166,46 @@ describe("OmniBridge", () => {
 				},
 			);
 		});
+
+		describe("feature: bypassDestinationTokenCheckForOmftTokens", () => {
+			it("bypasses destination token check when enabled", async () => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					env: "production",
+					nearProvider,
+					bypassDestinationTokenCheckForOmftTokens: true,
+				});
+
+				const assetId = "nep141:btc.omft.near";
+				const routeConfig = createOmniBridgeRoute(Chains.Solana);
+
+				await expect(bridge.supports({ assetId, routeConfig })).resolves.toBe(
+					true,
+				);
+			});
+
+			it("throws TokenNotFoundInDestinationChainError when disabled (default)", async () => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					env: "production",
+					nearProvider,
+					// bypassDestinationTokenCheckForOmftTokens: undefined
+				});
+
+				const assetId = "nep141:btc.omft.near";
+				const routeConfig = createOmniBridgeRoute(Chains.Solana);
+
+				await expect(bridge.supports({ assetId, routeConfig })).rejects.toThrow(
+					TokenNotFoundInDestinationChainError,
+				);
+			});
+		});
 	});
 
 	describe("validateWithdrawal()", () => {
