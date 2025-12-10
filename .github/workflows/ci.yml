@@ -46,7 +46,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: CI=false pnpm install --frozen-lockfile=false
+        run: pnpm install
 
       - name: Lint
         run: pnpm run lint
