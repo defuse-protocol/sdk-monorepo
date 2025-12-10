@@ -42,7 +42,7 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@defuse-protocol/internal-utils": "workspace:*",
-		"@hot-labs/omni-sdk": "2.24.2",
+		"@hot-labs/omni-sdk": "2.24.3",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
 		"@near-js/accounts": "^2.0.1",
