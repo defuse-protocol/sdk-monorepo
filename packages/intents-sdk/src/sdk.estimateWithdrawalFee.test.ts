@@ -4,14 +4,15 @@ import { RouteEnum } from "./constants/route-enum";
 import { noopIntentSigner } from "./intents/intent-signer-impl/intent-signer-noop";
 import type { IntentPrimitive } from "./intents/shared-types";
 import { wait } from "./lib/async";
+import { Chains } from "./lib/caip2";
 import { createInternalTransferRoute } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
 import type {
 	Bridge,
 	FeeEstimation,
 	ParsedAssetInfo,
-	TxInfo,
-	TxNoInfo,
+	WithdrawalDescriptor,
+	WithdrawalStatus,
 } from "./shared-types";
 
 describe("sdk.estimateWithdrawalFee()", () => {
@@ -201,16 +202,14 @@ describe("sdk.estimateWithdrawalFee()", () => {
 
 function setupMocks() {
 	class MockBridge implements Bridge {
+		readonly route = RouteEnum.InternalTransfer;
+
 		async createWithdrawalIntents(): Promise<IntentPrimitive[]> {
 			throw new Error("Not implemented.");
 		}
 
 		estimateWithdrawalFee(): Promise<FeeEstimation> {
 			throw new Error("Not implemented.");
-		}
-
-		is(): boolean {
-			return true;
 		}
 
 		parseAssetId(): ParsedAssetInfo | null {
@@ -225,13 +224,28 @@ function setupMocks() {
 			throw new Error("Not implemented.");
 		}
 
-		waitForWithdrawalCompletion(): Promise<TxInfo | TxNoInfo> {
+		createWithdrawalDescriptor(args: {
+			withdrawalParams: Parameters<
+				Bridge["createWithdrawalDescriptor"]
+			>[0]["withdrawalParams"];
+			index: number;
+			tx: Parameters<Bridge["createWithdrawalDescriptor"]>[0]["tx"];
+		}): WithdrawalDescriptor {
+			return {
+				landingChain: Chains.Near,
+				index: args.index,
+				withdrawalParams: args.withdrawalParams,
+				tx: args.tx,
+			};
+		}
+
+		describeWithdrawal(): Promise<WithdrawalStatus> {
 			throw new Error("Not implemented.");
 		}
 	}
 
 	const mockBridge = new MockBridge();
-	vi.spyOn(mockBridge, "waitForWithdrawalCompletion");
+	vi.spyOn(mockBridge, "describeWithdrawal");
 	vi.spyOn(mockBridge, "parseAssetId");
 	vi.spyOn(mockBridge, "estimateWithdrawalFee");
 	vi.spyOn(mockBridge, "supports");

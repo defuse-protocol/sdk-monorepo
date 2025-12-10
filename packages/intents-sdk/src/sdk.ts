@@ -41,6 +41,10 @@ import {
 	configureStellarRpcUrls,
 } from "./lib/configure-rpc-config";
 import { determineRouteConfig } from "./lib/route-config";
+import {
+	createWithdrawalDescriptors,
+	watchWithdrawal,
+} from "./lib/withdrawal-watcher";
 import type {
 	BatchWithdrawalResult,
 	Bridge,
@@ -53,7 +57,6 @@ import type {
 	PartialRPCEndpointMap,
 	ProcessWithdrawalArgs,
 	QuoteOptions,
-	RouteConfig,
 	SignAndSendArgs,
 	SignAndSendWithdrawalArgs,
 	TxInfo,
@@ -439,29 +442,22 @@ export class IntentsSDK implements IIntentsSDK {
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const wids = this.getWithdrawalsIdentifiers({
+		const descriptors = await createWithdrawalDescriptors({
+			bridges: this.bridges,
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 		});
 
 		const result = await Promise.all(
-			wids.map((wid) => {
-				for (const bridge of this.bridges) {
-					if (bridge.is(wid.routeConfig)) {
-						return bridge.waitForWithdrawalCompletion({
-							tx: args.intentTx,
-							index: wid.index,
-							withdrawalParams: wid.withdrawalParams,
-							routeConfig: wid.routeConfig,
-							signal: args.signal,
-							retryOptions: args.retryOptions,
-							logger: args.logger,
-						});
-					}
-				}
-
-				throw new Error(`Unsupported route = ${stringify(wid.routeConfig)}`);
-			}),
+			descriptors.map(({ bridge, descriptor }) =>
+				watchWithdrawal({
+					bridge,
+					descriptor,
+					signal: args.signal,
+					retryOptions: args.retryOptions,
+					logger: args.logger,
+				}),
+			),
 		);
 
 		if (Array.isArray(args.withdrawalParams)) {
