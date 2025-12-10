@@ -45,7 +45,6 @@ Write tests with these rules:
 - Use conventional commit messages.
 - Use imperative tense in commit messages.
 - Prefer short still descriptive commit messages without long tail description.
-- Do not add co-authors to the commit message and PRs descriptions.
 
 ## Remove AI code slop before commiting
 
