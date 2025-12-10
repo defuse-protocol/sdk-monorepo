@@ -678,6 +678,9 @@ export class OmniBridge implements Bridge {
 		} else if (destinationChain === ChainKind.Sol) {
 			txHash = transfer.finalised?.Solana?.signature;
 		} else if (destinationChain === ChainKind.Btc) {
+			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change
+			// if the BTC transfer fails to be submitted. We return fast hash for FE and wait
+			// for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE.
 			txHash =
 				typeof window !== "undefined"
 					? transfer.utxo_transfer?.btc_pending_id

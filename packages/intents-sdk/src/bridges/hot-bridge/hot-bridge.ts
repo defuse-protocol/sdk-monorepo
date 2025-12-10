@@ -337,6 +337,7 @@ export class HotBridge implements Bridge {
 			return { status: "completed", txHash: null };
 		}
 		if (typeof status === "string") {
+			// HOT returns hexified raw bytes without 0x prefix, any other value should be ignored.
 			if (!isHex(status)) {
 				args.logger?.warn("HOT Bridge incorrect destination tx hash detected", {
 					value: status,
