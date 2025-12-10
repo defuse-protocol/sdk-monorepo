@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.43.3
+
+### Patch Changes
+
+- dc996c9: Bump @hot-labs/omni-sdk to 2.24.3
+
 ## 0.43.2
 
 ### Patch Changes

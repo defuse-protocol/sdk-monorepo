@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.43.2",
+	"version": "0.43.3",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -42,7 +42,7 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@defuse-protocol/internal-utils": "workspace:*",
-		"@hot-labs/omni-sdk": "2.24.0",
+		"@hot-labs/omni-sdk": "2.24.3",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
 		"@near-js/accounts": "^2.0.1",
