@@ -201,87 +201,33 @@ describe("HotBridge", () => {
 		);
 	});
 
-	describe("waitForWithdrawalCompletion()", () => {
-		it("uses chain-aware retry options based on routeConfig.chain", async () => {
-			vi.useFakeTimers();
-
-			const hotSDK = new HotOmniSdk({
-				logger: console,
-				evmRpc: {},
-				nearRpc: [],
-				async executeNearTransaction() {
-					throw new Error("not implemented");
-				},
-			});
-
+	describe("createWithdrawalDescriptor()", () => {
+		it("derives landing chain from asset", () => {
 			const bridge = new HotBridge({
 				env: "production",
-				hotSdk: hotSDK,
+				hotSdk: {} as unknown as HotOmniSdk,
 			});
 
-			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
-			const getGaslessWithdrawStatus = vi
-				.spyOn(hotSDK, "getGaslessWithdrawStatus")
-				.mockRejectedValue(new Error("pending"));
-
-			// Ethereum has p99=43s, timeout=64.5s -> ~24 attempts with delay=2000, factor=1.3
-			const ethereumPromise = bridge
-				.waitForWithdrawalCompletion({
-					tx: { hash: "", accountId: "" },
-					index: 0,
-					routeConfig: createHotBridgeRoute(Chains.Ethereum),
-				})
-				.catch((err: unknown) => err);
-
-			await vi.runAllTimersAsync();
-			await ethereumPromise;
-
-			expect(getGaslessWithdrawStatus.mock.calls.length).toBe(24);
-
-			vi.useRealTimers();
-		});
-
-		it("respects custom retry options override", async () => {
-			vi.useFakeTimers();
-
-			const hotSDK = new HotOmniSdk({
-				logger: console,
-				evmRpc: {},
-				nearRpc: [],
-				async executeNearTransaction() {
-					throw new Error("not implemented");
+			const descriptor = bridge.createWithdrawalDescriptor({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
 				},
+				index: 0,
+				tx: { hash: "tx-hash", accountId: "test.near" },
 			});
 
-			const bridge = new HotBridge({
-				env: "production",
-				hotSdk: hotSDK,
-			});
-
-			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
-			const getGaslessWithdrawStatus = vi
-				.spyOn(hotSDK, "getGaslessWithdrawStatus")
-				.mockRejectedValue(new Error("pending"));
-
-			const promise = bridge
-				.waitForWithdrawalCompletion({
-					tx: { hash: "", accountId: "" },
-					index: 0,
-					routeConfig: createHotBridgeRoute(Chains.Ethereum),
-					retryOptions: { delay: 100, factor: 1, maxAttempts: 3 },
-				})
-				.catch((err: unknown) => err);
-
-			await vi.runAllTimersAsync();
-
-			const result = await promise;
-			expect(result).toBeInstanceOf(Error);
-			expect(getGaslessWithdrawStatus.mock.calls.length).toBe(3);
-
-			vi.useRealTimers();
+			expect(descriptor.landingChain).toBe(Chains.TON);
+			expect(descriptor.index).toBe(0);
 		});
+	});
 
-		it("returns destination tx hash", async () => {
+	describe("describeWithdrawal()", () => {
+		it("returns completed status with destination tx hash", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -301,16 +247,24 @@ describe("HotBridge", () => {
 				"DEADBEEF",
 			);
 
-			const result = bridge.waitForWithdrawalCompletion({
-				tx: { hash: "", accountId: "" },
+			const descriptor = bridge.createWithdrawalDescriptor({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
 				index: 0,
-				routeConfig: createHotBridgeRoute(Chains.TON),
+				tx: { hash: "", accountId: "" },
 			});
 
-			await expect(result).resolves.toEqual({ hash: "DEADBEEF" });
+			const result = await bridge.describeWithdrawal(descriptor);
+
+			expect(result).toEqual({ status: "completed", txHash: "DEADBEEF" });
 		});
 
-		it("returns no tx if destination tx hash is not valid", async () => {
+		it("returns completed status with null hash if destination tx hash is not valid", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -338,14 +292,25 @@ describe("HotBridge", () => {
 				trace() {},
 			};
 
-			const result = bridge.waitForWithdrawalCompletion({
-				tx: { hash: "", accountId: "" },
+			const descriptor = bridge.createWithdrawalDescriptor({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+					routeConfig: createHotBridgeRoute(Chains.TON),
+				},
 				index: 0,
-				routeConfig: createHotBridgeRoute(Chains.TON),
+				tx: { hash: "", accountId: "" },
+			});
+
+			const result = await bridge.describeWithdrawal({
+				...descriptor,
 				logger: mockLogger,
 			});
 
-			await expect(result).resolves.toEqual({ hash: null });
+			expect(result).toEqual({ status: "completed", txHash: null });
 			expect(mockLogger.warn).toHaveBeenCalledWith(
 				"HOT Bridge incorrect destination tx hash detected",
 				{ value: "invalid_tx_hash" },

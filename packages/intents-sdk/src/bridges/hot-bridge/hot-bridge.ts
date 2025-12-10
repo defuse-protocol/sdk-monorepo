@@ -2,12 +2,10 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	type RetryOptions,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
-import { retry } from "@lifeomic/attempt";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
@@ -25,16 +23,14 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
-	TxInfo,
-	TxNoInfo,
+	WithdrawalDescriptor,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	HotWithdrawalApiFeeRequestTimeoutError,
-	HotWithdrawalCancelledError,
 	HotWithdrawalNotFoundError,
-	HotWithdrawalPendingError,
 } from "./error";
 import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
@@ -48,7 +44,6 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
-import { getRetryOptionsForChain } from "../../lib/chain-retry";
 
 export class HotBridge implements Bridge {
 	readonly route = RouteEnum.HotBridge;
@@ -299,14 +294,27 @@ export class HotBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
+	createWithdrawalDescriptor(args: {
+		withdrawalParams: WithdrawalParams;
 		index: number;
-		routeConfig: RouteConfig;
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-		logger?: ILogger;
-	}): Promise<TxInfo | TxNoInfo> {
+		tx: NearTxInfo;
+	}): WithdrawalDescriptor {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
+		const landingChain = assetInfo.blockchain;
+
+		return {
+			landingChain,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(
+		args: WithdrawalDescriptor & { logger?: ILogger },
+	): Promise<WithdrawalStatus> {
 		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
 			args.tx.hash,
 			args.tx.accountId,
@@ -317,63 +325,30 @@ export class HotBridge implements Bridge {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
-		const chain = this.getDestinationChain(args.routeConfig);
-		const defaultRetryOptions = getRetryOptionsForChain(chain);
+		const status = await this.hotSdk.getGaslessWithdrawStatus(nonce.toString());
 
-		return retry(
-			async () => {
-				if (args.signal?.aborted) {
-					throw args.signal.reason;
-				}
-
-				const status = await this.hotSdk.getGaslessWithdrawStatus(
-					nonce.toString(),
-				);
-
-				if (status === HotWithdrawStatus.Canceled) {
-					throw new HotWithdrawalCancelledError(args.tx.hash, args.index);
-				}
-				if (status === HotWithdrawStatus.Completed) {
-					return { hash: null };
-				}
-				if (typeof status === "string") {
-					// HOT returns string hexified raw bytes without 0x prefix, any other value should be ignored.
-					if (!isHex(status)) {
-						args.logger?.warn(
-							"HOT Bridge incorrect destination tx hash detected",
-							{ value: status },
-						);
-						return { hash: null };
-					}
-					return {
-						hash:
-							"chain" in args.routeConfig &&
-							args.routeConfig.chain !== undefined
-								? formatTxHash(status, args.routeConfig.chain)
-								: status,
-					};
-				}
-
-				throw new HotWithdrawalPendingError(args.tx.hash, args.index);
-			},
-			{
-				...(args.retryOptions ?? defaultRetryOptions),
-				handleError: (err, ctx) => {
-					if (
-						err instanceof HotWithdrawalCancelledError ||
-						err === args.signal?.reason
-					) {
-						ctx.abort();
-					}
-				},
-			},
-		);
-	}
-
-	private getDestinationChain(routeConfig: RouteConfig): Chain {
-		if ("chain" in routeConfig && routeConfig.chain) {
-			return routeConfig.chain;
+		if (status === HotWithdrawStatus.Canceled) {
+			return {
+				status: "failed",
+				reason: "Withdrawal was cancelled",
+			};
 		}
-		throw new Error("HotBridge requires chain in routeConfig");
+		if (status === HotWithdrawStatus.Completed) {
+			return { status: "completed", txHash: null };
+		}
+		if (typeof status === "string") {
+			if (!isHex(status)) {
+				args.logger?.warn("HOT Bridge incorrect destination tx hash detected", {
+					value: status,
+				});
+				return { status: "completed", txHash: null };
+			}
+			return {
+				status: "completed",
+				txHash: formatTxHash(status, args.landingChain),
+			};
+		}
+
+		return { status: "pending" };
 	}
 }

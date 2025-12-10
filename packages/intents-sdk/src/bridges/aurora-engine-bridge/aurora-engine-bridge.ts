@@ -7,30 +7,31 @@ import {
 	utils,
 } from "@defuse-protocol/internal-utils";
 import type { providers } from "near-api-js";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
+import { getFeeQuote, getUnderlyingFee } from "../../lib/estimate-fee";
+import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
+import { validateAddress } from "../../lib/validateAddress";
 import type {
 	Bridge,
 	FeeEstimation,
+	NearTxInfo,
 	QuoteOptions,
 	RouteConfig,
-	TxNoInfo,
+	WithdrawalDescriptor,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
-import { getUnderlyingFee } from "../../lib/estimate-fee";
 import { NEAR_NATIVE_ASSET_ID } from "./aurora-engine-bridge-constants";
 import {
 	createWithdrawIntentPrimitive,
 	withdrawalParamsInvariant,
 } from "./aurora-engine-bridge-utils";
-import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
-import {
-	InvalidDestinationAddressForWithdrawalError,
-	UnsupportedAssetIdError,
-} from "../../classes/errors";
-import { getFeeQuote } from "../../lib/estimate-fee";
-import { validateAddress } from "../../lib/validateAddress";
 
 export class AuroraEngineBridge implements Bridge {
 	readonly route = RouteEnum.VirtualChain;
@@ -203,7 +204,20 @@ export class AuroraEngineBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(): Promise<TxNoInfo> {
-		return { hash: null };
+	createWithdrawalDescriptor(args: {
+		withdrawalParams: WithdrawalParams;
+		index: number;
+		tx: NearTxInfo;
+	}): WithdrawalDescriptor {
+		return {
+			landingChain: Chains.Near,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(): Promise<WithdrawalStatus> {
+		return { status: "completed", txHash: null };
 	}
 }

@@ -342,6 +342,7 @@ export interface FeeEstimation {
 
 export interface Bridge {
 	readonly route: RouteEnumValues;
+
 	supports(
 		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean>;

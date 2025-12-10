@@ -18,8 +18,9 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
-	TxInfo,
+	WithdrawalDescriptor,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
@@ -302,7 +303,22 @@ export class DirectBridge implements Bridge {
 		return exist;
 	}
 
-	async waitForWithdrawalCompletion(args: { tx: NearTxInfo }): Promise<TxInfo> {
-		return { hash: args.tx.hash };
+	createWithdrawalDescriptor(args: {
+		withdrawalParams: WithdrawalParams;
+		index: number;
+		tx: NearTxInfo;
+	}): WithdrawalDescriptor {
+		return {
+			landingChain: Chains.Near,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(
+		args: WithdrawalDescriptor,
+	): Promise<WithdrawalStatus> {
+		return { status: "completed", txHash: args.tx.hash };
 	}
 }
