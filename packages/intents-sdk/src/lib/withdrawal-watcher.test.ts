@@ -168,14 +168,22 @@ describe("createWithdrawalDescriptors", () => {
 		expect(result[0]?.descriptor.index).toBe(0);
 	});
 
-	it("maintains per-bridge indexes for multiple withdrawals", async () => {
+	it("maintains separate index counters per bridge route", async () => {
 		const internalBridge = createMockBridge(RouteEnum.InternalTransfer);
 		const omniBridge = createMockBridge(RouteEnum.OmniBridge);
 
-		vi.spyOn(internalBridge, "supports").mockResolvedValue(true);
-		vi.spyOn(omniBridge, "supports").mockResolvedValue(false);
+		vi.spyOn(internalBridge, "supports")
+			.mockResolvedValueOnce(true) // withdrawal 0 -> internal
+			.mockResolvedValueOnce(false) // withdrawal 1 -> skip
+			.mockResolvedValueOnce(true) // withdrawal 2 -> internal
+			.mockResolvedValueOnce(false); // withdrawal 3 -> skip
+
+		vi.spyOn(omniBridge, "supports")
+			.mockResolvedValueOnce(true) // withdrawal 1 -> omni
+			.mockResolvedValueOnce(true); // withdrawal 3 -> omni
 
 		const withdrawals = [
+			createWithdrawalParams(),
 			createWithdrawalParams(),
 			createWithdrawalParams(),
 			createWithdrawalParams(),
@@ -187,9 +195,17 @@ describe("createWithdrawalDescriptors", () => {
 			intentTx: { hash: "tx-hash", accountId: "test.near" },
 		});
 
+		expect(result[0]?.bridge).toBe(internalBridge);
 		expect(result[0]?.descriptor.index).toBe(0);
-		expect(result[1]?.descriptor.index).toBe(1);
-		expect(result[2]?.descriptor.index).toBe(2);
+
+		expect(result[1]?.bridge).toBe(omniBridge);
+		expect(result[1]?.descriptor.index).toBe(0); // separate counter for omni
+
+		expect(result[2]?.bridge).toBe(internalBridge);
+		expect(result[2]?.descriptor.index).toBe(1); // continues internal counter
+
+		expect(result[3]?.bridge).toBe(omniBridge);
+		expect(result[3]?.descriptor.index).toBe(1); // continues omni counter
 	});
 
 	it("throws BridgeNotFoundError when no bridge supports the withdrawal", async () => {
