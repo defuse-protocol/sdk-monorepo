@@ -341,7 +341,7 @@ export interface FeeEstimation {
 }
 
 export interface Bridge {
-	is(routeConfig: RouteConfig): boolean;
+	readonly route: RouteEnumValues;
 	supports(
 		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean>;
@@ -379,15 +379,24 @@ export interface Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]>;
-	waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
-		index: number;
+
+	/**
+	 * Creates a complete withdrawal descriptor with all required info.
+	 * Derives landingChain from withdrawalParams.routeConfig.chain if available, otherwise from assetId.
+	 */
+	createWithdrawalDescriptor(args: {
 		withdrawalParams: WithdrawalParams;
-		routeConfig: RouteConfig;
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-		logger?: ILogger;
-	}): Promise<TxInfo | TxNoInfo>;
+		index: number;
+		tx: NearTxInfo;
+	}): WithdrawalDescriptor;
+
+	/**
+	 * One-shot status check for a withdrawal.
+	 * Returns the current status without polling.
+	 */
+	describeWithdrawal(
+		args: WithdrawalDescriptor & { logger?: ILogger },
+	): Promise<WithdrawalStatus>;
 }
 
 export interface WithdrawalIdentifier {
@@ -396,6 +405,18 @@ export interface WithdrawalIdentifier {
 	withdrawalParams: WithdrawalParams;
 	tx: NearTxInfo;
 }
+
+export interface WithdrawalDescriptor {
+	landingChain: Chain;
+	index: number;
+	withdrawalParams: WithdrawalParams;
+	tx: NearTxInfo;
+}
+
+export type WithdrawalStatus =
+	| { status: "pending" }
+	| { status: "completed"; txHash: string | null }
+	| { status: "failed"; reason: string };
 
 export type ParsedAssetInfo = (
 	| {
