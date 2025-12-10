@@ -79,6 +79,7 @@ import { getRetryOptionsForChain } from "../../lib/chain-retry";
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class OmniBridge implements Bridge {
+	readonly route = RouteEnum.OmniBridge;
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
@@ -110,7 +111,7 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
-	is(routeConfig: RouteConfig): boolean {
+	private is(routeConfig: RouteConfig): boolean {
 		return routeConfig.route === RouteEnum.OmniBridge;
 	}
 

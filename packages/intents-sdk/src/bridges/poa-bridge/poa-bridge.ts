@@ -37,6 +37,7 @@ import { validateAddress } from "../../lib/validateAddress";
 import { getRetryOptionsForChain } from "../../lib/chain-retry";
 
 export class PoaBridge implements Bridge {
+	readonly route = RouteEnum.PoaBridge;
 	protected env: NearIntentsEnv;
 
 	// TTL cache for supported tokens with 30-second TTL
@@ -49,7 +50,7 @@ export class PoaBridge implements Bridge {
 		this.env = env;
 	}
 
-	is(routeConfig: RouteConfig) {
+	private is(routeConfig: RouteConfig) {
 		return routeConfig.route === RouteEnum.PoaBridge;
 	}
 

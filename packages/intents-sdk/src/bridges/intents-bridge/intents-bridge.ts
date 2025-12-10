@@ -14,8 +14,10 @@ import { Chains } from "../../lib/caip2";
 import { InvalidDestinationAddressForWithdrawalError } from "../../classes/errors";
 
 export class IntentsBridge implements Bridge {
-	is(routeConfig: RouteConfig) {
-		return routeConfig.route === RouteEnum.InternalTransfer;
+	readonly route = RouteEnum.InternalTransfer;
+
+	private is(routeConfig: RouteConfig) {
+		return routeConfig.route === this.route;
 	}
 
 	async supports(

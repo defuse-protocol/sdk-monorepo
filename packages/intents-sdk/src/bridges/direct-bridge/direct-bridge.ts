@@ -41,6 +41,7 @@ import { LRUCache } from "lru-cache";
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class DirectBridge implements Bridge {
+	readonly route = RouteEnum.NearWithdrawal;
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
@@ -66,7 +67,7 @@ export class DirectBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
-	is(routeConfig: RouteConfig) {
+	private is(routeConfig: RouteConfig) {
 		return routeConfig.route === RouteEnum.NearWithdrawal;
 	}
 

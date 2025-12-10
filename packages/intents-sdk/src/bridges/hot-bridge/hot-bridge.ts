@@ -51,6 +51,7 @@ import isHex from "../../lib/hex";
 import { getRetryOptionsForChain } from "../../lib/chain-retry";
 
 export class HotBridge implements Bridge {
+	readonly route = RouteEnum.HotBridge;
 	protected env: NearIntentsEnv;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
@@ -65,7 +66,7 @@ export class HotBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
-	is(routeConfig: RouteConfig): boolean {
+	private is(routeConfig: RouteConfig): boolean {
 		return routeConfig.route === RouteEnum.HotBridge;
 	}
 

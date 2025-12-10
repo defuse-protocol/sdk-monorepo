@@ -33,6 +33,7 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 
 export class AuroraEngineBridge implements Bridge {
+	readonly route = RouteEnum.VirtualChain;
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
@@ -51,8 +52,8 @@ export class AuroraEngineBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
-	is(routeConfig: RouteConfig): boolean {
-		return routeConfig.route === RouteEnum.VirtualChain;
+	private is(routeConfig: RouteConfig): boolean {
+		return routeConfig.route === this.route;
 	}
 
 	async supports(
