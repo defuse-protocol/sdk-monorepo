@@ -97,6 +97,8 @@ describe("watchWithdrawal", () => {
 		const controller = new AbortController();
 		controller.abort();
 
+		vi.spyOn(controller.signal, "throwIfAborted");
+
 		const descriptor = createDescriptor();
 		await expect(
 			watchWithdrawal({
@@ -106,6 +108,7 @@ describe("watchWithdrawal", () => {
 				retryOptions: { maxAttempts: 10, delay: 0 },
 			}),
 		).rejects.toThrow("aborted");
+		expect(controller.signal.throwIfAborted).toHaveBeenCalledTimes(1);
 	});
 
 	it("retries on transient errors and logs them", async () => {

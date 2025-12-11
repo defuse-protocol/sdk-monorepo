@@ -45,13 +45,21 @@ export async function watchWithdrawal(args: {
 		},
 		{
 			...retryOpts,
-			handleError: (err, ctx) => {
+			handleError: (err: unknown, ctx) => {
+				if (args.signal?.aborted && err === args.signal?.reason) {
+					ctx.abort();
+					return;
+				}
+
 				if (err instanceof WithdrawalFailedError) {
 					ctx.abort();
 					return;
 				}
+
 				if (!(err instanceof WithdrawalPendingError)) {
-					args.logger?.warn("Transient error while watching withdrawal", err);
+					args.logger?.warn(
+						`Transient error while watching withdrawal: ${err}`,
+					);
 				}
 			},
 		},
