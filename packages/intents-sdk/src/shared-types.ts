@@ -408,7 +408,9 @@ export interface WithdrawalIdentifier {
 }
 
 export interface WithdrawalDescriptor {
+	/** Actual chain where funds arrive; Near for virtual/internal routes */
 	landingChain: Chain;
+	/** Per-bridge withdrawal sequence number */
 	index: number;
 	withdrawalParams: WithdrawalParams;
 	tx: NearTxInfo;
