@@ -115,14 +115,20 @@ describe("watchWithdrawal", () => {
 			.mockRejectedValueOnce(new Error("Timeout"))
 			.mockResolvedValueOnce({ status: "completed", txHash: "0xsuccess" });
 
-		const logger = { warn: vi.fn() };
+		const logger = {
+			error: vi.fn(),
+			warn: vi.fn(),
+			info: vi.fn(),
+			debug: vi.fn(),
+			trace: vi.fn(),
+		};
 		const descriptor = createDescriptor();
 
 		const result = await watchWithdrawal({
 			bridge,
 			descriptor,
 			retryOptions: { maxAttempts: 5, delay: 0 },
-			logger: logger as never,
+			logger,
 		});
 
 		expect(result).toEqual({ hash: "0xsuccess" });
