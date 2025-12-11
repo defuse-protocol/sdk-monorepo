@@ -40,7 +40,6 @@ import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
 } from "./lib/configure-rpc-config";
-import { determineRouteConfig } from "./lib/route-config";
 import {
 	createWithdrawalIdentifiers,
 	watchWithdrawal,
