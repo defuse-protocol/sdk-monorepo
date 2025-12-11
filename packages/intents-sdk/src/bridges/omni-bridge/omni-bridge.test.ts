@@ -260,7 +260,7 @@ describe("OmniBridge", () => {
 		);
 	});
 
-	describe("createWithdrawalDescriptor()", () => {
+	describe("createWithdrawalIdentifier()", () => {
 		it("derives landing chain from asset when routeConfig not provided", () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
@@ -268,7 +268,7 @@ describe("OmniBridge", () => {
 
 			const bridge = new OmniBridge({ env: "production", nearProvider });
 
-			const descriptor = bridge.createWithdrawalDescriptor({
+			const descriptor = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep141:eth.bridge.near",
 					amount: 100000n,
@@ -290,7 +290,7 @@ describe("OmniBridge", () => {
 
 			const bridge = new OmniBridge({ env: "production", nearProvider });
 
-			const descriptor = bridge.createWithdrawalDescriptor({
+			const descriptor = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep141:eth.bridge.near",
 					amount: 100000n,

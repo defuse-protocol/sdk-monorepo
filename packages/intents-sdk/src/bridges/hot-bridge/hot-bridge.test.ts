@@ -201,14 +201,14 @@ describe("HotBridge", () => {
 		);
 	});
 
-	describe("createWithdrawalDescriptor()", () => {
+	describe("createWithdrawalIdentifier()", () => {
 		it("derives landing chain from asset", () => {
 			const bridge = new HotBridge({
 				env: "production",
 				hotSdk: {} as unknown as HotOmniSdk,
 			});
 
-			const descriptor = bridge.createWithdrawalDescriptor({
+			const descriptor = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR",
@@ -247,7 +247,7 @@ describe("HotBridge", () => {
 				"DEADBEEF",
 			);
 
-			const descriptor = bridge.createWithdrawalDescriptor({
+			const descriptor = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:1117_",
 					amount: 100n,
@@ -292,7 +292,7 @@ describe("HotBridge", () => {
 				trace() {},
 			};
 
-			const descriptor = bridge.createWithdrawalDescriptor({
+			const descriptor = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:1117_",
 					amount: 100n,

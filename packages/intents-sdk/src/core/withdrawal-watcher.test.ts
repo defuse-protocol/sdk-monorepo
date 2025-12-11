@@ -7,13 +7,13 @@ import type {
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 } from "../shared-types";
 import { Chains } from "../lib/caip2";
 import {
 	BridgeNotFoundError,
-	createWithdrawalDescriptors,
+	createWithdrawalIdentifiers,
 	watchWithdrawal,
 	WithdrawalFailedError,
 } from "./withdrawal-watcher";
@@ -156,7 +156,7 @@ describe("watchWithdrawal", () => {
 	});
 });
 
-describe("createWithdrawalDescriptors", () => {
+describe("createWithdrawalIdentifiers", () => {
 	it("creates descriptors for withdrawals with their bridges", async () => {
 		const bridge1 = createMockBridge(RouteEnum.InternalTransfer);
 		const bridge2 = createMockBridge(RouteEnum.OmniBridge);
@@ -164,7 +164,7 @@ describe("createWithdrawalDescriptors", () => {
 		vi.spyOn(bridge1, "supports").mockResolvedValue(true);
 		vi.spyOn(bridge2, "supports").mockResolvedValue(false);
 
-		const result = await createWithdrawalDescriptors({
+		const result = await createWithdrawalIdentifiers({
 			bridges: [bridge1, bridge2],
 			withdrawalParams: [createWithdrawalParams()],
 			intentTx: { hash: "tx-hash", accountId: "test.near" },
@@ -196,7 +196,7 @@ describe("createWithdrawalDescriptors", () => {
 			createWithdrawalParams(),
 		];
 
-		const result = await createWithdrawalDescriptors({
+		const result = await createWithdrawalIdentifiers({
 			bridges: [internalBridge, omniBridge],
 			withdrawalParams: withdrawals,
 			intentTx: { hash: "tx-hash", accountId: "test.near" },
@@ -220,7 +220,7 @@ describe("createWithdrawalDescriptors", () => {
 		vi.spyOn(bridge, "supports").mockResolvedValue(false);
 
 		await expect(
-			createWithdrawalDescriptors({
+			createWithdrawalIdentifiers({
 				bridges: [bridge],
 				withdrawalParams: [createWithdrawalParams()],
 				intentTx: { hash: "tx-hash", accountId: "test.near" },
@@ -229,7 +229,7 @@ describe("createWithdrawalDescriptors", () => {
 	});
 
 	it("returns empty array for empty withdrawal params", async () => {
-		const result = await createWithdrawalDescriptors({
+		const result = await createWithdrawalIdentifiers({
 			bridges: [createMockBridge()],
 			withdrawalParams: [],
 			intentTx: { hash: "tx-hash", accountId: "test.near" },
@@ -253,7 +253,7 @@ describe("createWithdrawalDescriptors", () => {
 			createWithdrawalParams(),
 		];
 
-		const result = await createWithdrawalDescriptors({
+		const result = await createWithdrawalIdentifiers({
 			bridges: [bridge],
 			withdrawalParams: withdrawals,
 			intentTx: { hash: "tx-hash", accountId: "test.near" },
@@ -284,11 +284,11 @@ function createMockBridge(
 		createWithdrawalIntents(): Promise<IntentPrimitive[]> {
 			throw new Error("Not implemented");
 		},
-		createWithdrawalDescriptor(args: {
+		createWithdrawalIdentifier(args: {
 			withdrawalParams: WithdrawalParams;
 			index: number;
 			tx: NearTxInfo;
-		}): WithdrawalDescriptor {
+		}): WithdrawalIdentifier {
 			return {
 				landingChain: Chains.Near,
 				index: args.index,
@@ -303,7 +303,7 @@ function createMockBridge(
 	};
 }
 
-function createDescriptor(): WithdrawalDescriptor {
+function createDescriptor(): WithdrawalIdentifier {
 	return {
 		landingChain: Chains.Near,
 		index: 0,

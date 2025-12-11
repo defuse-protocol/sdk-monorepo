@@ -11,7 +11,7 @@ import type {
 	Bridge,
 	FeeEstimation,
 	ParsedAssetInfo,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalStatus,
 } from "./shared-types";
 
@@ -204,13 +204,13 @@ function setupMocks() {
 			throw new Error("Not implemented.");
 		}
 
-		createWithdrawalDescriptor(args: {
+		createWithdrawalIdentifier(args: {
 			withdrawalParams: Parameters<
-				Bridge["createWithdrawalDescriptor"]
+				Bridge["createWithdrawalIdentifier"]
 			>[0]["withdrawalParams"];
 			index: number;
-			tx: Parameters<Bridge["createWithdrawalDescriptor"]>[0]["tx"];
-		}): WithdrawalDescriptor {
+			tx: Parameters<Bridge["createWithdrawalIdentifier"]>[0]["tx"];
+		}): WithdrawalIdentifier {
 			return {
 				landingChain: Chains.Near,
 				index: args.index,

@@ -42,7 +42,7 @@ import {
 } from "./lib/configure-rpc-config";
 import { determineRouteConfig } from "./lib/route-config";
 import {
-	createWithdrawalDescriptors,
+	createWithdrawalIdentifiers,
 	watchWithdrawal,
 } from "./core/withdrawal-watcher";
 import type {
@@ -390,31 +390,6 @@ export class IntentsSDK implements IIntentsSDK {
 		);
 	}
 
-	protected getWithdrawalsIdentifiers({
-		withdrawalParams,
-		intentTx,
-	}: {
-		withdrawalParams: WithdrawalParams[];
-		intentTx: NearTxInfo;
-	}): WithdrawalIdentifier[] {
-		const indexes = new Map<string, number>();
-
-		return withdrawalParams.map((w): WithdrawalIdentifier => {
-			const routeConfig = determineRouteConfig(this, w);
-			const route = routeConfig.route;
-
-			const currentIndex = indexes.get(route) ?? 0;
-			indexes.set(route, currentIndex + 1);
-
-			return {
-				routeConfig: routeConfig,
-				index: currentIndex,
-				withdrawalParams: w,
-				tx: intentTx,
-			};
-		});
-	}
-
 	public waitForWithdrawalCompletion(args: {
 		withdrawalParams: WithdrawalParams;
 		intentTx: NearTxInfo;
@@ -442,7 +417,7 @@ export class IntentsSDK implements IIntentsSDK {
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const descriptors = await createWithdrawalDescriptors({
+		const descriptors = await createWithdrawalIdentifiers({
 			bridges: this.bridges,
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,

@@ -23,7 +23,7 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalStatus,
 } from "../../shared-types";
@@ -294,11 +294,11 @@ export class HotBridge implements Bridge {
 		};
 	}
 
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor {
+	}): WithdrawalIdentifier {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
@@ -313,7 +313,7 @@ export class HotBridge implements Bridge {
 	}
 
 	async describeWithdrawal(
-		args: WithdrawalDescriptor & { logger?: ILogger },
+		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus> {
 		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
 			args.tx.hash,

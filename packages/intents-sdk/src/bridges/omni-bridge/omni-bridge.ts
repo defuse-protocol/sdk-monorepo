@@ -35,7 +35,7 @@ import type {
 	QuoteOptions,
 	RouteConfig,
 	RouteFeeStructures,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalStatus,
 } from "../../shared-types";
@@ -630,11 +630,11 @@ export class OmniBridge implements Bridge {
 		};
 	}
 
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor {
+	}): WithdrawalIdentifier {
 		const assetInfo = this.makeAssetInfo(
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
@@ -657,7 +657,7 @@ export class OmniBridge implements Bridge {
 	}
 
 	async describeWithdrawal(
-		args: WithdrawalDescriptor & { logger?: ILogger },
+		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus> {
 		const transfer = (
 			await this.omniBridgeAPI.getTransfer({

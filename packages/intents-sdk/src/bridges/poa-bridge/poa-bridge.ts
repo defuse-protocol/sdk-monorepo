@@ -21,7 +21,7 @@ import type {
 	NearTxInfo,
 	ParsedAssetInfo,
 	RouteConfig,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalStatus,
 } from "../../shared-types";
@@ -202,11 +202,11 @@ export class PoaBridge implements Bridge {
 		};
 	}
 
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor {
+	}): WithdrawalIdentifier {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
@@ -221,7 +221,7 @@ export class PoaBridge implements Bridge {
 	}
 
 	async describeWithdrawal(
-		args: WithdrawalDescriptor & { logger?: ILogger },
+		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus> {
 		const response = await poaBridge.httpClient.getWithdrawalStatus(
 			{

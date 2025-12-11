@@ -9,14 +9,14 @@ import type {
 	NearTxInfo,
 	TxInfo,
 	TxNoInfo,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 } from "../shared-types";
 import { getRetryOptionsForChain } from "./chain-retry";
 
 export async function watchWithdrawal(args: {
 	bridge: Bridge;
-	descriptor: WithdrawalDescriptor;
+	descriptor: WithdrawalIdentifier;
 	signal?: AbortSignal;
 	retryOptions?: RetryOptions;
 	logger?: ILogger;
@@ -58,13 +58,13 @@ export async function watchWithdrawal(args: {
 	);
 }
 
-export async function createWithdrawalDescriptors(args: {
+export async function createWithdrawalIdentifiers(args: {
 	bridges: Bridge[];
 	withdrawalParams: WithdrawalParams[];
 	intentTx: NearTxInfo;
-}): Promise<{ bridge: Bridge; descriptor: WithdrawalDescriptor }[]> {
+}): Promise<{ bridge: Bridge; descriptor: WithdrawalIdentifier }[]> {
 	const indexes = new Map<string, number>();
-	const results: { bridge: Bridge; descriptor: WithdrawalDescriptor }[] = [];
+	const results: { bridge: Bridge; descriptor: WithdrawalIdentifier }[] = [];
 
 	for (const w of args.withdrawalParams) {
 		const bridge = await findBridgeForWithdrawal(args.bridges, w);
@@ -75,7 +75,7 @@ export async function createWithdrawalDescriptors(args: {
 		const currentIndex = indexes.get(bridge.route) ?? 0;
 		indexes.set(bridge.route, currentIndex + 1);
 
-		const descriptor = bridge.createWithdrawalDescriptor({
+		const descriptor = bridge.createWithdrawalIdentifier({
 			withdrawalParams: w,
 			index: currentIndex,
 			tx: args.intentTx,

@@ -382,32 +382,25 @@ export interface Bridge {
 	}): Promise<IntentPrimitive[]>;
 
 	/**
-	 * Creates a complete withdrawal descriptor with all required info.
+	 * Creates a complete withdrawal identifier with all required info.
 	 * Derives landingChain from withdrawalParams.routeConfig.chain if available, otherwise from assetId.
 	 */
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor;
+	}): WithdrawalIdentifier;
 
 	/**
 	 * One-shot status check for a withdrawal.
 	 * Returns the current status without polling.
 	 */
 	describeWithdrawal(
-		args: WithdrawalDescriptor & { logger?: ILogger },
+		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus>;
 }
 
 export interface WithdrawalIdentifier {
-	routeConfig: RouteConfig;
-	index: number;
-	withdrawalParams: WithdrawalParams;
-	tx: NearTxInfo;
-}
-
-export interface WithdrawalDescriptor {
 	/** Actual chain where funds arrive; Near for virtual/internal routes */
 	landingChain: Chain;
 	/** Per-bridge withdrawal sequence number */

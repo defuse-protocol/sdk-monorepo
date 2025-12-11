@@ -18,7 +18,7 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalStatus,
 } from "../../shared-types";
@@ -303,11 +303,11 @@ export class DirectBridge implements Bridge {
 		return exist;
 	}
 
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor {
+	}): WithdrawalIdentifier {
 		return {
 			landingChain: Chains.Near,
 			index: args.index,
@@ -317,7 +317,7 @@ export class DirectBridge implements Bridge {
 	}
 
 	async describeWithdrawal(
-		args: WithdrawalDescriptor,
+		args: WithdrawalIdentifier,
 	): Promise<WithdrawalStatus> {
 		return { status: "completed", txHash: args.tx.hash };
 	}

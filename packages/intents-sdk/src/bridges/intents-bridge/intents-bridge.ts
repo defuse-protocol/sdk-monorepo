@@ -9,7 +9,7 @@ import type {
 	FeeEstimation,
 	NearTxInfo,
 	RouteConfig,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalStatus,
 } from "../../shared-types";
@@ -80,11 +80,11 @@ export class IntentsBridge implements Bridge {
 		};
 	}
 
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor {
+	}): WithdrawalIdentifier {
 		return {
 			landingChain: Chains.Near,
 			index: args.index,
@@ -94,7 +94,7 @@ export class IntentsBridge implements Bridge {
 	}
 
 	async describeWithdrawal(
-		args: WithdrawalDescriptor,
+		args: WithdrawalIdentifier,
 	): Promise<WithdrawalStatus> {
 		return { status: "completed", txHash: args.tx.hash };
 	}

@@ -23,7 +23,7 @@ import type {
 	NearTxInfo,
 	QuoteOptions,
 	RouteConfig,
-	WithdrawalDescriptor,
+	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalStatus,
 } from "../../shared-types";
@@ -204,11 +204,11 @@ export class AuroraEngineBridge implements Bridge {
 		};
 	}
 
-	createWithdrawalDescriptor(args: {
+	createWithdrawalIdentifier(args: {
 		withdrawalParams: WithdrawalParams;
 		index: number;
 		tx: NearTxInfo;
-	}): WithdrawalDescriptor {
+	}): WithdrawalIdentifier {
 		return {
 			landingChain: Chains.Near,
 			index: args.index,

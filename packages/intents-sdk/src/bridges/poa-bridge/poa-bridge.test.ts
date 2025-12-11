@@ -216,11 +216,11 @@ describe("PoaBridge", () => {
 		);
 	});
 
-	describe("createWithdrawalDescriptor()", () => {
+	describe("createWithdrawalIdentifier()", () => {
 		it("derives landing chain from asset", () => {
 			const bridge = new PoaBridge({ env: "production" });
 
-			const descriptor = bridge.createWithdrawalDescriptor({
+			const descriptor = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep141:btc.omft.near",
 					amount: 100000n,
