@@ -60,7 +60,6 @@ import type {
 	SignAndSendWithdrawalArgs,
 	TxInfo,
 	TxNoInfo,
-	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalResult,
 } from "./shared-types";
