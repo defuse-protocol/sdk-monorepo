@@ -201,8 +201,33 @@ describe("HotBridge", () => {
 		);
 	});
 
-	describe("waitForWithdrawalCompletion()", () => {
-		it("returns destination tx hash", async () => {
+	describe("createWithdrawalIdentifier()", () => {
+		it("derives landing chain from asset", () => {
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: {} as unknown as HotOmniSdk,
+			});
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "tx-hash", accountId: "test.near" },
+			});
+
+			expect(wid.landingChain).toBe(Chains.TON);
+			expect(wid.index).toBe(0);
+		});
+	});
+
+	describe("describeWithdrawal()", () => {
+		it("returns completed status with destination tx hash", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -222,16 +247,24 @@ describe("HotBridge", () => {
 				"DEADBEEF",
 			);
 
-			const result = bridge.waitForWithdrawalCompletion({
-				tx: { hash: "", accountId: "" },
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
 				index: 0,
-				routeConfig: createHotBridgeRoute(Chains.TON),
+				tx: { hash: "", accountId: "" },
 			});
 
-			await expect(result).resolves.toEqual({ hash: "DEADBEEF" });
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "completed", txHash: "DEADBEEF" });
 		});
 
-		it("returns no tx if destination tx hash is not valid", async () => {
+		it("returns completed status with null hash if destination tx hash is not valid", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -259,14 +292,25 @@ describe("HotBridge", () => {
 				trace() {},
 			};
 
-			const result = bridge.waitForWithdrawalCompletion({
-				tx: { hash: "", accountId: "" },
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+					routeConfig: createHotBridgeRoute(Chains.TON),
+				},
 				index: 0,
-				routeConfig: createHotBridgeRoute(Chains.TON),
+				tx: { hash: "", accountId: "" },
+			});
+
+			const result = await bridge.describeWithdrawal({
+				...wid,
 				logger: mockLogger,
 			});
 
-			await expect(result).resolves.toEqual({ hash: null });
+			expect(result).toEqual({ status: "completed", txHash: null });
 			expect(mockLogger.warn).toHaveBeenCalledWith(
 				"HOT Bridge incorrect destination tx hash detected",
 				{ value: "invalid_tx_hash" },

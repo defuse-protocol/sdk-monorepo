@@ -40,7 +40,10 @@ import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
 } from "./lib/configure-rpc-config";
-import { determineRouteConfig } from "./lib/route-config";
+import {
+	createWithdrawalIdentifiers,
+	watchWithdrawal,
+} from "./core/withdrawal-watcher";
 import type {
 	BatchWithdrawalResult,
 	Bridge,
@@ -57,7 +60,6 @@ import type {
 	SignAndSendWithdrawalArgs,
 	TxInfo,
 	TxNoInfo,
-	WithdrawalIdentifier,
 	WithdrawalParams,
 	WithdrawalResult,
 } from "./shared-types";
@@ -386,31 +388,6 @@ export class IntentsSDK implements IIntentsSDK {
 		);
 	}
 
-	protected getWithdrawalsIdentifiers({
-		withdrawalParams,
-		intentTx,
-	}: {
-		withdrawalParams: WithdrawalParams[];
-		intentTx: NearTxInfo;
-	}): WithdrawalIdentifier[] {
-		const indexes = new Map<string, number>();
-
-		return withdrawalParams.map((w): WithdrawalIdentifier => {
-			const routeConfig = determineRouteConfig(this, w);
-			const route = routeConfig.route;
-
-			const currentIndex = indexes.get(route) ?? 0;
-			indexes.set(route, currentIndex + 1);
-
-			return {
-				routeConfig: routeConfig,
-				index: currentIndex,
-				withdrawalParams: w,
-				tx: intentTx,
-			};
-		});
-	}
-
 	public waitForWithdrawalCompletion(args: {
 		withdrawalParams: WithdrawalParams;
 		intentTx: NearTxInfo;
@@ -434,31 +411,26 @@ export class IntentsSDK implements IIntentsSDK {
 		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<(TxInfo | TxNoInfo) | Array<TxInfo | TxNoInfo>> {
-		const wids = this.getWithdrawalsIdentifiers({
-			withdrawalParams: Array.isArray(args.withdrawalParams)
-				? args.withdrawalParams
-				: [args.withdrawalParams],
+		const withdrawalParamsArray = Array.isArray(args.withdrawalParams)
+			? args.withdrawalParams
+			: [args.withdrawalParams];
+
+		const wids = await createWithdrawalIdentifiers({
+			bridges: this.bridges,
+			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 		});
 
 		const result = await Promise.all(
-			wids.map((wid) => {
-				for (const bridge of this.bridges) {
-					if (bridge.is(wid.routeConfig)) {
-						return bridge.waitForWithdrawalCompletion({
-							tx: args.intentTx,
-							index: wid.index,
-							withdrawalParams: wid.withdrawalParams,
-							routeConfig: wid.routeConfig,
-							signal: args.signal,
-							retryOptions: args.retryOptions,
-							logger: args.logger,
-						});
-					}
-				}
-
-				throw new Error(`Unsupported route = ${stringify(wid.routeConfig)}`);
-			}),
+			wids.map(({ bridge, wid }) =>
+				watchWithdrawal({
+					bridge,
+					wid,
+					signal: args.signal,
+					retryOptions: args.retryOptions,
+					logger: args.logger,
+				}),
+			),
 		);
 
 		if (Array.isArray(args.withdrawalParams)) {

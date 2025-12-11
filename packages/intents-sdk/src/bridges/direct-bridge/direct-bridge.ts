@@ -18,8 +18,9 @@ import type {
 	ParsedAssetInfo,
 	QuoteOptions,
 	RouteConfig,
-	TxInfo,
+	WithdrawalIdentifier,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import { NEAR_NATIVE_ASSET_ID } from "./direct-bridge-constants";
@@ -41,6 +42,7 @@ import { LRUCache } from "lru-cache";
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class DirectBridge implements Bridge {
+	readonly route = RouteEnum.NearWithdrawal;
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
@@ -66,7 +68,7 @@ export class DirectBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
-	is(routeConfig: RouteConfig) {
+	private is(routeConfig: RouteConfig) {
 		return routeConfig.route === RouteEnum.NearWithdrawal;
 	}
 
@@ -301,7 +303,22 @@ export class DirectBridge implements Bridge {
 		return exist;
 	}
 
-	async waitForWithdrawalCompletion(args: { tx: NearTxInfo }): Promise<TxInfo> {
-		return { hash: args.tx.hash };
+	createWithdrawalIdentifier(args: {
+		withdrawalParams: WithdrawalParams;
+		index: number;
+		tx: NearTxInfo;
+	}): WithdrawalIdentifier {
+		return {
+			landingChain: Chains.Near,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(
+		args: WithdrawalIdentifier,
+	): Promise<WithdrawalStatus> {
+		return { status: "completed", txHash: args.tx.hash };
 	}
 }

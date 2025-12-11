@@ -15,7 +15,11 @@ export {
 	configsByEnvironment,
 	type NearIntentsEnv,
 } from "./config";
-export { type RetryOptions, RETRY_CONFIGS } from "./utils/retry";
+export {
+	type RetryOptions,
+	RETRY_CONFIGS,
+	calculateMaxAttempts,
+} from "./utils/retry";
 export type { ILogger } from "./logger";
 export { BlockchainEnum } from "./poaBridge/constants/blockchains";
 export { withTimeout } from "./utils/promise/withTimeout";

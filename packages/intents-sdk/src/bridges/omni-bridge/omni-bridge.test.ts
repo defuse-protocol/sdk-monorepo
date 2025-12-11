@@ -1,18 +1,19 @@
-import { describe, expect, it } from "vitest";
-import { OmniBridge } from "./omni-bridge";
-import { createOmniBridgeRoute } from "../../lib/route-config-factory";
-import { Chains } from "../../lib/caip2";
-import {
-	InvalidDestinationAddressForWithdrawalError,
-	UnsupportedAssetIdError,
-} from "../../classes/errors";
-import { TokenNotFoundInDestinationChainError } from "./error";
 import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
+import { OmniBridgeAPI } from "omni-bridge-sdk";
 import { zeroAddress } from "viem";
+import { describe, expect, it, vi } from "vitest";
+import {
+	InvalidDestinationAddressForWithdrawalError,
+	UnsupportedAssetIdError,
+} from "../../classes/errors";
 import { RouteEnum } from "../../constants/route-enum";
+import { Chains } from "../../lib/caip2";
+import { createOmniBridgeRoute } from "../../lib/route-config-factory";
+import { TokenNotFoundInDestinationChainError } from "./error";
+import { OmniBridge } from "./omni-bridge";
 
 describe("OmniBridge", () => {
 	describe("without routeConfig", () => {
@@ -257,5 +258,285 @@ describe("OmniBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+	});
+
+	describe("createWithdrawalIdentifier()", () => {
+		it("derives landing chain from asset when routeConfig not provided", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "tx-hash", accountId: "test.near" },
+			});
+
+			expect(wid.landingChain).toBe(Chains.Ethereum);
+			expect(wid.index).toBe(0);
+		});
+
+		it("uses chain from routeConfig when provided", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+					routeConfig: createOmniBridgeRoute(Chains.Base),
+				},
+				index: 2,
+				tx: { hash: "tx-hash", accountId: "test.near" },
+			});
+
+			expect(wid.landingChain).toBe(Chains.Base);
+			expect(wid.index).toBe(2);
+		});
+	});
+
+	describe("describeWithdrawal()", () => {
+		function createTransferMock(
+			overrides: Partial<Awaited<ReturnType<OmniBridgeAPI["getTransfer"]>>[0]>,
+		): Awaited<ReturnType<OmniBridgeAPI["getTransfer"]>>[0] {
+			return {
+				id: null,
+				initialized: null,
+				signed: null,
+				fast_finalised_on_near: null,
+				finalised_on_near: null,
+				fast_finalised: null,
+				finalised: null,
+				claimed: null,
+				transfer_message: null,
+				updated_fee: [],
+				utxo_transfer: null,
+				...overrides,
+			};
+		}
+
+		it("returns completed status with EVM tx hash", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:eth.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "eth:0x1234567890123456789012345678901234567890",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					finalised: {
+						EVMLog: {
+							block_height: 1,
+							block_timestamp_seconds: 1700000000,
+							transaction_hash: "0xevm-tx-hash",
+						},
+					},
+				}),
+			]);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Ethereum,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "0xevm-tx-hash",
+			});
+		});
+
+		it("returns completed status with Solana signature", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:sol.omdep.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "sol:9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					finalised: {
+						Solana: {
+							slot: 1,
+							block_timestamp_seconds: 1700000000,
+							signature: "solana-signature",
+						},
+					},
+				}),
+			]);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Solana,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:sol.omdep.near",
+					amount: 100000n,
+					destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "solana-signature",
+			});
+		});
+
+		it("returns pending status when transfer not found", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([]);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Ethereum,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("returns pending status when tx hash not yet available", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:eth.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "eth:0x1234567890123456789012345678901234567890",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					finalised: null,
+				}),
+			]);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Ethereum,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("returns correct transfer by index", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:eth.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "eth:0x1111111111111111111111111111111111111111",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					finalised: {
+						EVMLog: {
+							block_height: 1,
+							block_timestamp_seconds: 1700000000,
+							transaction_hash: "0xfirst-tx",
+						},
+					},
+				}),
+				createTransferMock({
+					transfer_message: {
+						token: "near:eth.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "eth:0x2222222222222222222222222222222222222222",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					finalised: {
+						EVMLog: {
+							block_height: 2,
+							block_timestamp_seconds: 1700000001,
+							transaction_hash: "0xsecond-tx",
+						},
+					},
+				}),
+			]);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Ethereum,
+				index: 1,
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "0xsecond-tx",
+			});
+		});
 	});
 });

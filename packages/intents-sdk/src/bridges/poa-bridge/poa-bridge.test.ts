@@ -1,12 +1,28 @@
-import { describe, expect, it } from "vitest";
-import { PoaBridge } from "./poa-bridge";
+import { poaBridge } from "@defuse-protocol/internal-utils";
+import { zeroAddress } from "viem";
+import { describe, expect, it, vi } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import { createPoaBridgeRoute } from "../../lib/route-config-factory";
 import { Chains } from "../../lib/caip2";
-import { zeroAddress } from "viem";
+import { createPoaBridgeRoute } from "../../lib/route-config-factory";
+import { PoaBridge } from "./poa-bridge";
+
+vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
+	const original =
+		await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+	return {
+		...original,
+		poaBridge: {
+			...original.poaBridge,
+			httpClient: {
+				...original.poaBridge.httpClient,
+				getWithdrawalStatus: vi.fn(),
+			},
+		},
+	};
+});
 
 describe("PoaBridge", () => {
 	describe("supports()", () => {
@@ -71,6 +87,7 @@ describe("PoaBridge", () => {
 			},
 		);
 	});
+
 	describe("validateWithdrawal()", () => {
 		it.each([
 			{
@@ -197,5 +214,184 @@ describe("PoaBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+	});
+
+	describe("createWithdrawalIdentifier()", () => {
+		it("derives landing chain from asset", () => {
+			const bridge = new PoaBridge({ env: "production" });
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "tx-hash", accountId: "test.near" },
+			});
+
+			expect(wid.landingChain).toBe(Chains.Bitcoin);
+			expect(wid.index).toBe(0);
+		});
+	});
+
+	describe("describeWithdrawal()", () => {
+		it("returns completed status with tx hash when withdrawal is complete", async () => {
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [
+					{
+						status: "COMPLETED",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: "dest-tx-hash",
+							chain: "btc",
+							defuse_asset_identifier: "nep141:btc.omft.near",
+							near_token_id: "btc.omft.near",
+							decimals: 8,
+							amount: 100000,
+							account_id: "test.near",
+							address: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "dest-tx-hash",
+			});
+		});
+
+		it("returns pending status when withdrawal not found", async () => {
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("returns pending status when withdrawal status is PENDING", async () => {
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [
+					{
+						status: "PENDING",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: null,
+							chain: "btc",
+							defuse_asset_identifier: "nep141:btc.omft.near",
+							near_token_id: "btc.omft.near",
+							decimals: 8,
+							amount: 100000,
+							account_id: "test.near",
+							address: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("matches withdrawal by assetId, not by index", async () => {
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [
+					{
+						status: "COMPLETED",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: "other-tx-hash",
+							chain: "eth",
+							defuse_asset_identifier: "nep141:eth.omft.near",
+							near_token_id: "eth.omft.near",
+							decimals: 18,
+							amount: 1000000,
+							account_id: "test.near",
+							address: zeroAddress,
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+					{
+						status: "COMPLETED",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: "btc-tx-hash",
+							chain: "btc",
+							defuse_asset_identifier: "nep141:btc.omft.near",
+							near_token_id: "btc.omft.near",
+							decimals: 8,
+							amount: 100000,
+							account_id: "test.near",
+							address: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "btc-tx-hash",
+			});
+		});
 	});
 });
