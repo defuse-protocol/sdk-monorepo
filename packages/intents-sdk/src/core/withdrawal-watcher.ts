@@ -16,20 +16,20 @@ import { getRetryOptionsForChain } from "./chain-retry";
 
 export async function watchWithdrawal(args: {
 	bridge: Bridge;
-	descriptor: WithdrawalIdentifier;
+	wid: WithdrawalIdentifier;
 	signal?: AbortSignal;
 	retryOptions?: RetryOptions;
 	logger?: ILogger;
 }): Promise<TxInfo | TxNoInfo> {
 	const retryOpts =
-		args.retryOptions ?? getRetryOptionsForChain(args.descriptor.landingChain);
+		args.retryOptions ?? getRetryOptionsForChain(args.wid.landingChain);
 
 	return retry(
 		async () => {
 			args.signal?.throwIfAborted();
 
 			const status = await args.bridge.describeWithdrawal({
-				...args.descriptor,
+				...args.wid,
 				logger: args.logger,
 			});
 
@@ -70,9 +70,9 @@ export async function createWithdrawalIdentifiers(args: {
 	bridges: Bridge[];
 	withdrawalParams: WithdrawalParams[];
 	intentTx: NearTxInfo;
-}): Promise<{ bridge: Bridge; descriptor: WithdrawalIdentifier }[]> {
+}): Promise<{ bridge: Bridge; wid: WithdrawalIdentifier }[]> {
 	const indexes = new Map<string, number>();
-	const results: { bridge: Bridge; descriptor: WithdrawalIdentifier }[] = [];
+	const results: { bridge: Bridge; wid: WithdrawalIdentifier }[] = [];
 
 	for (const w of args.withdrawalParams) {
 		const bridge = await findBridgeForWithdrawal(args.bridges, w);
@@ -83,13 +83,13 @@ export async function createWithdrawalIdentifiers(args: {
 		const currentIndex = indexes.get(bridge.route) ?? 0;
 		indexes.set(bridge.route, currentIndex + 1);
 
-		const descriptor = bridge.createWithdrawalIdentifier({
+		const wid = bridge.createWithdrawalIdentifier({
 			withdrawalParams: w,
 			index: currentIndex,
 			tx: args.intentTx,
 		});
 
-		results.push({ bridge, descriptor });
+		results.push({ bridge, wid });
 	}
 
 	return results;

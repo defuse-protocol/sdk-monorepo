@@ -268,7 +268,7 @@ describe("OmniBridge", () => {
 
 			const bridge = new OmniBridge({ env: "production", nearProvider });
 
-			const descriptor = bridge.createWithdrawalIdentifier({
+			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep141:eth.bridge.near",
 					amount: 100000n,
@@ -279,8 +279,8 @@ describe("OmniBridge", () => {
 				tx: { hash: "tx-hash", accountId: "test.near" },
 			});
 
-			expect(descriptor.landingChain).toBe(Chains.Ethereum);
-			expect(descriptor.index).toBe(0);
+			expect(wid.landingChain).toBe(Chains.Ethereum);
+			expect(wid.index).toBe(0);
 		});
 
 		it("uses chain from routeConfig when provided", () => {
@@ -290,7 +290,7 @@ describe("OmniBridge", () => {
 
 			const bridge = new OmniBridge({ env: "production", nearProvider });
 
-			const descriptor = bridge.createWithdrawalIdentifier({
+			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep141:eth.bridge.near",
 					amount: 100000n,
@@ -302,8 +302,8 @@ describe("OmniBridge", () => {
 				tx: { hash: "tx-hash", accountId: "test.near" },
 			});
 
-			expect(descriptor.landingChain).toBe(Chains.Base);
-			expect(descriptor.index).toBe(2);
+			expect(wid.landingChain).toBe(Chains.Base);
+			expect(wid.index).toBe(2);
 		});
 	});
 

@@ -26,10 +26,10 @@ describe("watchWithdrawal", () => {
 			txHash: "0xabc123",
 		});
 
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 		const result = await watchWithdrawal({
 			bridge,
-			descriptor,
+			wid,
 			retryOptions: { maxAttempts: 1, delay: 0 },
 		});
 
@@ -43,10 +43,10 @@ describe("watchWithdrawal", () => {
 			txHash: null,
 		});
 
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 		const result = await watchWithdrawal({
 			bridge,
-			descriptor,
+			wid,
 			retryOptions: { maxAttempts: 1, delay: 0 },
 		});
 
@@ -60,11 +60,11 @@ describe("watchWithdrawal", () => {
 			reason: "Insufficient funds",
 		});
 
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 		await expect(
 			watchWithdrawal({
 				bridge,
-				descriptor,
+				wid,
 				retryOptions: { maxAttempts: 1, delay: 0 },
 			}),
 		).rejects.toThrow(WithdrawalFailedError);
@@ -77,10 +77,10 @@ describe("watchWithdrawal", () => {
 			.mockResolvedValueOnce({ status: "pending" })
 			.mockResolvedValueOnce({ status: "completed", txHash: "0xfinal" });
 
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 		const result = await watchWithdrawal({
 			bridge,
-			descriptor,
+			wid,
 			retryOptions: { maxAttempts: 5, delay: 0 },
 		});
 
@@ -99,11 +99,11 @@ describe("watchWithdrawal", () => {
 
 		vi.spyOn(controller.signal, "throwIfAborted");
 
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 		await expect(
 			watchWithdrawal({
 				bridge,
-				descriptor,
+				wid,
 				signal: controller.signal,
 				retryOptions: { maxAttempts: 10, delay: 0 },
 			}),
@@ -125,11 +125,11 @@ describe("watchWithdrawal", () => {
 			debug: vi.fn(),
 			trace: vi.fn(),
 		};
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 
 		const result = await watchWithdrawal({
 			bridge,
-			descriptor,
+			wid,
 			retryOptions: { maxAttempts: 5, delay: 0 },
 			logger,
 		});
@@ -146,11 +146,11 @@ describe("watchWithdrawal", () => {
 			reason: "Insufficient funds",
 		});
 
-		const descriptor = createDescriptor();
+		const wid = createWithdrawalIdentifier();
 		await expect(
 			watchWithdrawal({
 				bridge,
-				descriptor,
+				wid,
 				retryOptions: { maxAttempts: 5, delay: 0 },
 			}),
 		).rejects.toThrow(WithdrawalFailedError);
@@ -160,7 +160,7 @@ describe("watchWithdrawal", () => {
 });
 
 describe("createWithdrawalIdentifiers", () => {
-	it("creates descriptors for withdrawals with their bridges", async () => {
+	it("creates wids for withdrawals with their bridges", async () => {
 		const bridge1 = createMockBridge(RouteEnum.InternalTransfer);
 		const bridge2 = createMockBridge(RouteEnum.OmniBridge);
 
@@ -175,7 +175,7 @@ describe("createWithdrawalIdentifiers", () => {
 
 		expect(result).toHaveLength(1);
 		expect(result[0]?.bridge).toBe(bridge1);
-		expect(result[0]?.descriptor.index).toBe(0);
+		expect(result[0]?.wid.index).toBe(0);
 	});
 
 	it("maintains separate index counters per bridge route", async () => {
@@ -206,16 +206,16 @@ describe("createWithdrawalIdentifiers", () => {
 		});
 
 		expect(result[0]?.bridge).toBe(internalBridge);
-		expect(result[0]?.descriptor.index).toBe(0);
+		expect(result[0]?.wid.index).toBe(0);
 
 		expect(result[1]?.bridge).toBe(omniBridge);
-		expect(result[1]?.descriptor.index).toBe(0); // separate counter for omni
+		expect(result[1]?.wid.index).toBe(0); // separate counter for omni
 
 		expect(result[2]?.bridge).toBe(internalBridge);
-		expect(result[2]?.descriptor.index).toBe(1); // continues internal counter
+		expect(result[2]?.wid.index).toBe(1); // continues internal counter
 
 		expect(result[3]?.bridge).toBe(omniBridge);
-		expect(result[3]?.descriptor.index).toBe(1); // continues omni counter
+		expect(result[3]?.wid.index).toBe(1); // continues omni counter
 	});
 
 	it("throws BridgeNotFoundError when no bridge supports the withdrawal", async () => {
@@ -263,9 +263,9 @@ describe("createWithdrawalIdentifiers", () => {
 		});
 
 		// Indexes must match array order, not completion order
-		expect(result[0]?.descriptor.index).toBe(0);
-		expect(result[1]?.descriptor.index).toBe(1);
-		expect(result[2]?.descriptor.index).toBe(2);
+		expect(result[0]?.wid.index).toBe(0);
+		expect(result[1]?.wid.index).toBe(1);
+		expect(result[2]?.wid.index).toBe(2);
 	});
 });
 
@@ -306,7 +306,7 @@ function createMockBridge(
 	};
 }
 
-function createDescriptor(): WithdrawalIdentifier {
+function createWithdrawalIdentifier(): WithdrawalIdentifier {
 	return {
 		landingChain: Chains.Near,
 		index: 0,

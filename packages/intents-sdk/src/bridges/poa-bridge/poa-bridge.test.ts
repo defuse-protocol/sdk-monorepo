@@ -220,7 +220,7 @@ describe("PoaBridge", () => {
 		it("derives landing chain from asset", () => {
 			const bridge = new PoaBridge({ env: "production" });
 
-			const descriptor = bridge.createWithdrawalIdentifier({
+			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep141:btc.omft.near",
 					amount: 100000n,
@@ -231,8 +231,8 @@ describe("PoaBridge", () => {
 				tx: { hash: "tx-hash", accountId: "test.near" },
 			});
 
-			expect(descriptor.landingChain).toBe(Chains.Bitcoin);
-			expect(descriptor.index).toBe(0);
+			expect(wid.landingChain).toBe(Chains.Bitcoin);
+			expect(wid.index).toBe(0);
 		});
 	});
 

@@ -415,17 +415,17 @@ export class IntentsSDK implements IIntentsSDK {
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const descriptors = await createWithdrawalIdentifiers({
+		const wids = await createWithdrawalIdentifiers({
 			bridges: this.bridges,
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 		});
 
 		const result = await Promise.all(
-			descriptors.map(({ bridge, descriptor }) =>
+			wids.map(({ bridge, wid }) =>
 				watchWithdrawal({
 					bridge,
-					descriptor,
+					wid,
 					signal: args.signal,
 					retryOptions: args.retryOptions,
 					logger: args.logger,

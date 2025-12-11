@@ -208,7 +208,7 @@ describe("HotBridge", () => {
 				hotSdk: {} as unknown as HotOmniSdk,
 			});
 
-			const descriptor = bridge.createWithdrawalIdentifier({
+			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId:
 						"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR",
@@ -221,8 +221,8 @@ describe("HotBridge", () => {
 				tx: { hash: "tx-hash", accountId: "test.near" },
 			});
 
-			expect(descriptor.landingChain).toBe(Chains.TON);
-			expect(descriptor.index).toBe(0);
+			expect(wid.landingChain).toBe(Chains.TON);
+			expect(wid.index).toBe(0);
 		});
 	});
 
@@ -247,7 +247,7 @@ describe("HotBridge", () => {
 				"DEADBEEF",
 			);
 
-			const descriptor = bridge.createWithdrawalIdentifier({
+			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:1117_",
 					amount: 100n,
@@ -259,7 +259,7 @@ describe("HotBridge", () => {
 				tx: { hash: "", accountId: "" },
 			});
 
-			const result = await bridge.describeWithdrawal(descriptor);
+			const result = await bridge.describeWithdrawal(wid);
 
 			expect(result).toEqual({ status: "completed", txHash: "DEADBEEF" });
 		});
@@ -292,7 +292,7 @@ describe("HotBridge", () => {
 				trace() {},
 			};
 
-			const descriptor = bridge.createWithdrawalIdentifier({
+			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:1117_",
 					amount: 100n,
@@ -306,7 +306,7 @@ describe("HotBridge", () => {
 			});
 
 			const result = await bridge.describeWithdrawal({
-				...descriptor,
+				...wid,
 				logger: mockLogger,
 			});
 
