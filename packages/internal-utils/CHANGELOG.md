@@ -1,5 +1,16 @@
 # @defuse-protocol/internal-utils
 
+## 0.21.2
+
+### Patch Changes
+
+- f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
+
+  BREAKING CHANGES:
+
+  - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
+  - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
+
 ## 0.21.1
 
 ### Patch Changes
