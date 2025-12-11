@@ -44,7 +44,7 @@ import { determineRouteConfig } from "./lib/route-config";
 import {
 	createWithdrawalDescriptors,
 	watchWithdrawal,
-} from "./lib/withdrawal-watcher";
+} from "./core/withdrawal-watcher";
 import type {
 	BatchWithdrawalResult,
 	Bridge,

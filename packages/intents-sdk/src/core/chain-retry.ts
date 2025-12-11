@@ -4,7 +4,7 @@ import {
 	RETRY_CONFIGS,
 } from "@defuse-protocol/internal-utils";
 import { WITHDRAWAL_P99_BY_CHAIN } from "../constants/withdrawal-timing";
-import type { Chain } from "./caip2";
+import type { Chain } from "../lib/caip2";
 
 const BASE_DELAY = 2000;
 const DELAY_FACTOR = 1.3;

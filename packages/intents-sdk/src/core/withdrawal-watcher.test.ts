@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { RouteEnum, type RouteEnumValues } from "../constants/route-enum";
-import { wait } from "./async";
+import { wait } from "../lib/async";
 import type { IntentPrimitive } from "../intents/shared-types";
 import type {
 	Bridge,
@@ -10,7 +10,7 @@ import type {
 	WithdrawalDescriptor,
 	WithdrawalParams,
 } from "../shared-types";
-import { Chains } from "./caip2";
+import { Chains } from "../lib/caip2";
 import {
 	BridgeNotFoundError,
 	createWithdrawalDescriptors,
