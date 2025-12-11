@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { RouteEnum, type RouteEnumValues } from "../constants/route-enum";
+import { wait } from "./async";
 import type { IntentPrimitive } from "../intents/shared-types";
 import type {
 	Bridge,
@@ -229,6 +230,33 @@ describe("createWithdrawalDescriptors", () => {
 		});
 
 		expect(result).toEqual([]);
+	});
+
+	it("preserves index order when async operations complete out of order", async () => {
+		const bridge = createMockBridge();
+
+		// Simulate varying network latency: second call completes fastest
+		vi.spyOn(bridge, "supports")
+			.mockImplementationOnce(() => wait(50).then(() => true)) // A: slow
+			.mockImplementationOnce(() => wait(10).then(() => true)) // B: fast
+			.mockImplementationOnce(() => wait(30).then(() => true)); // C: medium
+
+		const withdrawals = [
+			createWithdrawalParams(),
+			createWithdrawalParams(),
+			createWithdrawalParams(),
+		];
+
+		const result = await createWithdrawalDescriptors({
+			bridges: [bridge],
+			withdrawalParams: withdrawals,
+			intentTx: { hash: "tx-hash", accountId: "test.near" },
+		});
+
+		// Indexes must match array order, not completion order
+		expect(result[0]?.descriptor.index).toBe(0);
+		expect(result[1]?.descriptor.index).toBe(1);
+		expect(result[2]?.descriptor.index).toBe(2);
 	});
 });
 

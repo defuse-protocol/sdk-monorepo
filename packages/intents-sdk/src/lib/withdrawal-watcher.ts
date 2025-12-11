@@ -64,26 +64,27 @@ export async function createWithdrawalDescriptors(args: {
 	intentTx: NearTxInfo;
 }): Promise<{ bridge: Bridge; descriptor: WithdrawalDescriptor }[]> {
 	const indexes = new Map<string, number>();
+	const results: { bridge: Bridge; descriptor: WithdrawalDescriptor }[] = [];
 
-	return Promise.all(
-		args.withdrawalParams.map(async (w) => {
-			const bridge = await findBridgeForWithdrawal(args.bridges, w);
-			if (bridge == null) {
-				throw new BridgeNotFoundError();
-			}
+	for (const w of args.withdrawalParams) {
+		const bridge = await findBridgeForWithdrawal(args.bridges, w);
+		if (bridge == null) {
+			throw new BridgeNotFoundError();
+		}
 
-			const currentIndex = indexes.get(bridge.route) ?? 0;
-			indexes.set(bridge.route, currentIndex + 1);
+		const currentIndex = indexes.get(bridge.route) ?? 0;
+		indexes.set(bridge.route, currentIndex + 1);
 
-			const descriptor = bridge.createWithdrawalDescriptor({
-				withdrawalParams: w,
-				index: currentIndex,
-				tx: args.intentTx,
-			});
+		const descriptor = bridge.createWithdrawalDescriptor({
+			withdrawalParams: w,
+			index: currentIndex,
+			tx: args.intentTx,
+		});
 
-			return { bridge, descriptor };
-		}),
-	);
+		results.push({ bridge, descriptor });
+	}
+
+	return results;
 }
 
 async function findBridgeForWithdrawal(
