@@ -1,14 +1,16 @@
 import type { Address, Hex } from "viem";
 
-export enum Protocol = {
-    EVM: 1,
-    
-}
-
+// Keep this order
 export type EvmCommitmentParameters = {
     chainId: Number;
-    refundTo: Address;
     token: Address;
     value: bigint;
     calldata: Hex;
+    // TODO: refundTo: Address;
 };
+
+export type EvmForwardingParameters = {
+    nonce: BigInt,
+    gasLimit: BigInt,
+    gasPrice: BigInt,
+}

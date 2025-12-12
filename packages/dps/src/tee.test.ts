@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { encodeFunctionData, parseAbi } from "viem";
 import { Tee } from "./tee";
 import type { EvmCommitmentParameters } from "./types";
@@ -10,7 +10,6 @@ describe("TEE abstraction tests", () => {
             const chainCode = "0x1e3f0f00431911762a5e0dd43d928265c77fec6e4d49f18232d9e57ab13fd91a";
             const expectedAddress = "0x4dD16013943f8868233106A45e623018265c6cBD";
             const treasury = "0xCEf67989ae740cC9c92fa7385F003F84EAAFd915";
-            const refundTo = "0xCEf67989ae740cC9c92fa7385F003F84EAAFd915";
             const token = "0xdac17f958d2ee523a2206206994597c13d831ec7";
             const amount = 306002n;
             const chainId = 1;
@@ -22,7 +21,6 @@ describe("TEE abstraction tests", () => {
             });
             const commitmentParams: EvmCommitmentParameters = {
                 chainId,
-                refundTo,
                 token,
                 value,
                 calldata,
