@@ -9,9 +9,13 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
+import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import { Chains } from "../../lib/caip2";
-import { createOmniBridgeRoute } from "../../lib/route-config-factory";
+import {
+	createOmniBridgeRoute,
+	createPoaBridgeRoute,
+} from "../../lib/route-config-factory";
 import { TokenNotFoundInDestinationChainError } from "./error";
 import { OmniBridge } from "./omni-bridge";
 
@@ -537,6 +541,388 @@ describe("OmniBridge", () => {
 				status: "completed",
 				txHash: "0xsecond-tx",
 			});
+		});
+
+		it("returns completed status with BTC pending tx hash in browser environment", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:nbtc.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "btc:bc1qtest",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					utxo_transfer: {
+						chain: "",
+						amount: "",
+						recipient: "",
+						relayer_fee: "",
+						protocol_fee: "",
+						relayer_account_id: "",
+						sender: "",
+						btc_pending_id: "btc-pending-tx-hash",
+					},
+					finalised: {
+						UtxoLog: {
+							transaction_hash: "btc-final-tx-hash",
+							block_height: 0,
+							block_time: 0,
+						},
+					},
+				}),
+			]);
+
+			// Simulate browser environment
+			vi.stubGlobal("window", {});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:nbtc.bridge.near",
+					amount: 100000n,
+					destinationAddress: "bc1qtest",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "btc-pending-tx-hash",
+			});
+
+			vi.unstubAllGlobals();
+		});
+
+		it("returns completed status with BTC final tx hash in server environment", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:nbtc.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "btc:bc1qtest",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					utxo_transfer: {
+						chain: "",
+						amount: "",
+						recipient: "",
+						relayer_fee: "",
+						protocol_fee: "",
+						relayer_account_id: "",
+						sender: "",
+						btc_pending_id: "btc-pending-tx-hash",
+					},
+					finalised: {
+						UtxoLog: {
+							transaction_hash: "btc-final-tx-hash",
+							block_height: 0,
+							block_time: 0,
+						},
+					},
+				}),
+			]);
+
+			// Ensure no window (server environment)
+			vi.stubGlobal("window", undefined);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:nbtc.bridge.near",
+					amount: 100000n,
+					destinationAddress: "bc1qtest",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "btc-final-tx-hash",
+			});
+
+			vi.unstubAllGlobals();
+		});
+
+		it("returns pending when BTC utxo_transfer has no pending id", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: {
+						token: "near:nbtc.bridge.near",
+						amount: "100000",
+						sender: "near:test.near",
+						recipient: "btc:bc1qtest",
+						fee: { fee: "0", native_fee: "0" },
+						msg: null,
+					},
+					utxo_transfer: null,
+					finalised: null,
+				}),
+			]);
+
+			vi.stubGlobal("window", {});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:nbtc.bridge.near",
+					amount: 100000n,
+					destinationAddress: "bc1qtest",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({ status: "pending" });
+
+			vi.unstubAllGlobals();
+		});
+
+		it("returns pending when transfer_message is null", async () => {
+			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					transfer_message: null,
+				}),
+			]);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Ethereum,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:eth.bridge.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({ status: "pending" });
+		});
+	});
+
+	describe("parseAssetId()", () => {
+		it("returns parsed info for omni bridge token", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.parseAssetId("nep141:eth.bridge.near");
+
+			expect(result).toMatchObject({
+				standard: "nep141",
+				contractId: "eth.bridge.near",
+				blockchain: Chains.Ethereum,
+			});
+		});
+
+		it("returns null for non-nep141 standard", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.parseAssetId(
+				"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
+			);
+
+			expect(result).toBeNull();
+		});
+
+		it("returns null for token without omni origin chain", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.parseAssetId("nep141:wrap.near");
+
+			expect(result).toBeNull();
+		});
+	});
+
+	describe("supports() edge cases", () => {
+		it("returns false when routeConfig is for different bridge", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.supports({
+				assetId: "nep141:eth.bridge.near",
+				routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+			});
+
+			expect(result).toBe(false);
+		});
+
+		it("throws when target chain specified with non-nep141 asset", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			await expect(
+				bridge.supports({
+					assetId: "nep245:v3_1.omni.hot.tg:56_11111111111111111111",
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+	});
+
+	describe("makeAssetInfo()", () => {
+		it("returns info with routeConfig chain when specified", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.makeAssetInfo(
+				"nep141:wrap.near",
+				createOmniBridgeRoute(Chains.Base),
+			);
+
+			expect(result).toMatchObject({
+				standard: "nep141",
+				contractId: "wrap.near",
+				blockchain: Chains.Base,
+				bridgeName: BridgeNameEnum.Omni,
+			});
+		});
+
+		it("returns null for non-nep141 standard", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.makeAssetInfo(
+				"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
+			);
+
+			expect(result).toBeNull();
+		});
+
+		it("returns null when origin chain cannot be parsed", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.makeAssetInfo("nep141:wrap.near");
+
+			expect(result).toBeNull();
+		});
+
+		it("derives blockchain from token origin when no routeConfig", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.makeAssetInfo("nep141:eth.bridge.near");
+
+			expect(result).toMatchObject({
+				blockchain: Chains.Ethereum,
+				bridgeName: BridgeNameEnum.Omni,
+			});
+		});
+	});
+
+	describe("targetChainSpecified()", () => {
+		it("returns true when routeConfig has chain", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.targetChainSpecified(
+				createOmniBridgeRoute(Chains.Ethereum),
+			);
+
+			expect(result).toBe(true);
+		});
+
+		it("returns false when routeConfig has no chain", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.targetChainSpecified(createOmniBridgeRoute());
+
+			expect(result).toBe(false);
+		});
+
+		it("returns false when routeConfig is undefined", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.targetChainSpecified(undefined);
+
+			expect(result).toBe(false);
+		});
+
+		it("returns false when routeConfig is for different bridge", () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = bridge.targetChainSpecified(
+				createPoaBridgeRoute(Chains.Bitcoin),
+			);
+
+			expect(result).toBe(false);
 		});
 	});
 });

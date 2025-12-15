@@ -3,8 +3,281 @@ import {
 	validateAddress,
 	validateLitecoinAddress,
 	validateBchAddress,
+	validateCardanoAddress,
 } from "./validateAddress";
 import { Chains } from "./caip2";
+
+describe("validateBtcAddress", () => {
+	it("accepts valid addresses", () => {
+		const valid = [
+			// P2PKH (1...)
+			"18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+			// P2SH (3...)
+			"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
+			// Bech32 SegWit v0 (bc1q...)
+			"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+			"bc1q34aq5drpuwy3wgl9lhup9892qp6svr8ldzyy7c",
+			// Bech32m Taproot (bc1p...)
+			"bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297",
+		];
+
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.Bitcoin)).toBe(true);
+		}
+	});
+
+	it("rejects invalid addresses", () => {
+		const invalid = [
+			// Extra characters at start (not base58)
+			"018HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+			// Invalid characters (0, O, I, l are not in base58)
+			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNON2",
+			// Invalid first character
+			"28HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+			// Too short
+			"1BvBMSEYstWetqTFn5Au",
+			// Invalid bech32 prefix
+			"tc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+		];
+
+		for (const address of invalid) {
+			expect(validateAddress(address, Chains.Bitcoin)).toBe(false);
+		}
+	});
+});
+
+describe("validateEthAddress", () => {
+	it("accepts valid checksummed addresses", () => {
+		expect(
+			validateAddress(
+				"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+				Chains.Ethereum,
+			),
+		).toBe(true);
+	});
+
+	it("accepts lowercase addresses (valid format)", () => {
+		expect(
+			validateAddress(
+				"0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed",
+				Chains.Ethereum,
+			),
+		).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("0x123", Chains.Ethereum)).toBe(false);
+		expect(validateAddress("not-an-address", Chains.Ethereum)).toBe(false);
+		// Invalid checksum (mixed case but wrong)
+		expect(
+			validateAddress(
+				"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD",
+				Chains.Ethereum,
+			),
+		).toBe(false);
+	});
+});
+
+describe("validateSolAddress", () => {
+	it("accepts valid addresses", () => {
+		expect(
+			validateAddress(
+				"9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
+				Chains.Solana,
+			),
+		).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("invalid-solana-address", Chains.Solana)).toBe(
+			false,
+		);
+	});
+});
+
+describe("validateDogeAddress", () => {
+	it("accepts valid addresses", () => {
+		const valid = [
+			"D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
+			"A86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
+		];
+
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.Dogecoin)).toBe(true);
+		}
+	});
+
+	it("rejects addresses with extra characters", () => {
+		expect(
+			validateAddress("xD86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP", Chains.Dogecoin),
+		).toBe(false);
+		expect(
+			validateAddress("D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPPx", Chains.Dogecoin),
+		).toBe(false);
+	});
+});
+
+describe("validateXrpAddress", () => {
+	it("accepts valid classic addresses", () => {
+		expect(
+			validateAddress("rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv", Chains.XRPL),
+		).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("invalid-xrp-address", Chains.XRPL)).toBe(false);
+	});
+});
+
+describe("validateTronAddress", () => {
+	it("accepts valid base58 addresses", () => {
+		expect(
+			validateAddress("TGNZdiQV31H3JvTtC1yH6yuipnqs6LN2Jv", Chains.Tron),
+		).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("invalid-tron-address", Chains.Tron)).toBe(false);
+	});
+});
+
+describe("validateTonAddress", () => {
+	it("accepts valid addresses", () => {
+		expect(
+			validateAddress(
+				"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
+				Chains.TON,
+			),
+		).toBe(true);
+		expect(
+			validateAddress(
+				"UQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
+				Chains.TON,
+			),
+		).toBe(true);
+	});
+
+	it("rejects addresses with extra characters", () => {
+		expect(
+			validateAddress(
+				"xEQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
+				Chains.TON,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bLx",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+});
+
+describe("validateSuiAddress", () => {
+	it("accepts valid addresses", () => {
+		expect(
+			validateAddress(
+				"0x3a5e9d40e8bb62a7f6f8b6d934a1e42a7a2f5cc1cb122c1b9a8d2f6cb09a8712",
+				Chains.Sui,
+			),
+		).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("0x123", Chains.Sui)).toBe(false);
+	});
+});
+
+describe("validateStellarAddress", () => {
+	it("accepts valid addresses", () => {
+		expect(
+			validateAddress(
+				"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTV",
+				Chains.Stellar,
+			),
+		).toBe(true);
+	});
+
+	it("rejects addresses with extra characters", () => {
+		expect(
+			validateAddress(
+				"xGAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTV",
+				Chains.Stellar,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTVx",
+				Chains.Stellar,
+			),
+		).toBe(false);
+	});
+});
+
+describe("validateAptosAddress", () => {
+	it("accepts valid addresses", () => {
+		expect(
+			validateAddress(
+				"0xbc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd3",
+				Chains.Aptos,
+			),
+		).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("0x123", Chains.Aptos)).toBe(false);
+		expect(
+			validateAddress(
+				"bc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd3",
+				Chains.Aptos,
+			),
+		).toBe(false);
+	});
+});
+
+describe("validateCardanoAddress", () => {
+	it("accepts valid mainnet addresses", () => {
+		expect(
+			validateCardanoAddress(
+				"addr1qxg5fnc2dfssnhzygvkqzzy2fcqcph533ek58jngqksaqjwwk2uhs32lj8zh62fq5zdeawrshdfp23t5vcm538glyn6sqngmem",
+			),
+		).toBe(true);
+	});
+
+	it("rejects testnet addresses", () => {
+		// testnet prefix is addr_test, not addr
+		expect(
+			validateCardanoAddress(
+				"addr_test1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj83ws8lhrn648jjxtwq2ytjqp",
+			),
+		).toBe(false);
+	});
+});
+
+describe("validateStarknetAddress", () => {
+	it("accepts valid addresses", () => {
+		expect(
+			validateAddress(
+				"0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+				Chains.Starknet,
+			),
+		).toBe(true);
+		// Short addresses are valid (leading zeros omitted)
+		expect(validateAddress("0x1", Chains.Starknet)).toBe(true);
+	});
+
+	it("rejects invalid addresses", () => {
+		expect(validateAddress("not-an-address", Chains.Starknet)).toBe(false);
+		// Too long (65 hex chars after 0x)
+		expect(
+			validateAddress(
+				"0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7a",
+				Chains.Starknet,
+			),
+		).toBe(false);
+	});
+});
 
 describe("validateZcashAddress", () => {
 	const validTransparentAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";

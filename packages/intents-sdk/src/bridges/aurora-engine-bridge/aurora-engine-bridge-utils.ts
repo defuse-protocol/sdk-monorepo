@@ -1,12 +1,12 @@
 import { assert, utils } from "@defuse-protocol/internal-utils";
 import { getAddress } from "viem";
 import { RouteEnum } from "../../constants/route-enum";
-import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import {
 	MIN_GAS_AMOUNT,
 	MIN_GAS_AMOUNT_NON_STANDARD_DECIMALS,
 } from "./aurora-engine-bridge-constants";
+import type { IntentFtWithdraw } from "@defuse-protocol/contract-types";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -15,7 +15,7 @@ export function createWithdrawIntentPrimitive(params: {
 	destinationAddress: string;
 	amount: bigint;
 	storageDeposit: bigint;
-}): IntentPrimitive {
+}): IntentFtWithdraw {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
 	);

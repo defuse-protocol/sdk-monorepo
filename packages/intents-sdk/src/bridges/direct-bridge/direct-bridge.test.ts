@@ -3,11 +3,24 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import { createNearWithdrawalRoute } from "../../lib/route-config-factory";
+import {
+	createNearWithdrawalRoute,
+	createPoaBridgeRoute,
+} from "../../lib/route-config-factory";
+import { Chains } from "../../lib/caip2";
 import { DirectBridge } from "./direct-bridge";
+import {
+	MIN_GAS_AMOUNT,
+	NEAR_NATIVE_ASSET_ID,
+} from "./direct-bridge-constants";
+import {
+	createWithdrawIntentPrimitive,
+	withdrawalParamsInvariant,
+} from "./direct-bridge-utils";
 import { zeroAddress } from "viem";
 import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import {
+	assert,
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
@@ -125,6 +138,104 @@ describe("DirectBridge", () => {
 					}),
 				).rejects.toThrow(DestinationExplicitNearAccountDoesntExistError);
 			},
+		);
+	});
+});
+
+describe("createWithdrawIntentPrimitive", () => {
+	it("creates native_withdraw intent for NEAR native asset", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: NEAR_NATIVE_ASSET_ID,
+			destinationAddress: "alice.near",
+			amount: 1000n,
+			storageDeposit: 0n,
+			msg: undefined,
+		});
+
+		expect(result).toEqual({
+			intent: "native_withdraw",
+			receiver_id: "alice.near",
+			amount: "1000",
+		});
+	});
+
+	it("creates ft_withdraw intent for NEP-141 tokens", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: "nep141:usdt.tether-token.near",
+			destinationAddress: "alice.near",
+			amount: 1000n,
+			storageDeposit: 0n,
+			msg: undefined,
+		});
+
+		expect(result).toEqual({
+			intent: "ft_withdraw",
+			token: "usdt.tether-token.near",
+			receiver_id: "alice.near",
+			amount: "1000",
+			storage_deposit: undefined,
+			msg: undefined,
+			min_gas: MIN_GAS_AMOUNT,
+		});
+	});
+
+	it("includes storage_deposit when positive", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: "nep141:usdt.tether-token.near",
+			destinationAddress: "alice.near",
+			amount: 1000n,
+			storageDeposit: 12500000000000000000000n,
+			msg: undefined,
+		});
+
+		assert(result.intent === "ft_withdraw"); // typeguard
+		expect(result.storage_deposit).toBe("12500000000000000000000");
+	});
+
+	it("does not set min_gas when msg is provided", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: "nep141:usdt.tether-token.near",
+			destinationAddress: "alice.near",
+			amount: 1000n,
+			storageDeposit: 0n,
+			msg: "some message",
+		});
+
+		assert(result.intent === "ft_withdraw"); // typeguard
+		expect(result.min_gas).toBeUndefined();
+		expect(result.msg).toBe("some message");
+	});
+
+	it("throws for non NEP-141 assets", () => {
+		expect(() =>
+			createWithdrawIntentPrimitive({
+				assetId: "nep245:token.near:1",
+				destinationAddress: "alice.near",
+				amount: 1000n,
+				storageDeposit: 0n,
+				msg: undefined,
+			}),
+		).toThrow("Only NEP-141 is supported");
+	});
+});
+
+describe("withdrawalParamsInvariant", () => {
+	it("passes when routeConfig is undefined", () => {
+		const params = { routeConfig: undefined };
+		expect(() => withdrawalParamsInvariant(params)).not.toThrow();
+	});
+
+	it("passes when routeConfig is NearWithdrawal", () => {
+		const params = { routeConfig: createNearWithdrawalRoute() };
+		expect(() => withdrawalParamsInvariant(params)).not.toThrow();
+	});
+
+	it("throws when routeConfig is not NearWithdrawal", () => {
+		const params = {
+			routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+		};
+		expect(() => withdrawalParamsInvariant(params)).toThrow(
+			"Bridge is not direct",
 		);
 	});
 });

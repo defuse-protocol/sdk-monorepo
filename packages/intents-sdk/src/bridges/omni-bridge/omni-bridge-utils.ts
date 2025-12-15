@@ -8,12 +8,15 @@ import {
 	type TokenDecimals,
 	getChain,
 } from "omni-bridge-sdk";
-import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT, OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 import type { providers } from "near-api-js";
 import * as v from "valibot";
+import type {
+	IntentFtWithdraw,
+	IntentStorageDeposit,
+} from "@defuse-protocol/contract-types";
 
 export function createWithdrawIntentsPrimitive(params: {
 	assetId: string;
@@ -24,7 +27,7 @@ export function createWithdrawIntentsPrimitive(params: {
 	omniChainKind: ChainKind;
 	intentsContract: string;
 	utxoMaxGasFee: bigint | null;
-}): IntentPrimitive[] {
+}): (IntentStorageDeposit | IntentFtWithdraw)[] {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
 	);
@@ -60,7 +63,7 @@ export function createWithdrawIntentsPrimitive(params: {
 		ftWithdrawPayload.msg = msg;
 	}
 
-	const intents: IntentPrimitive[] = [];
+	const intents: (IntentStorageDeposit | IntentFtWithdraw)[] = [];
 	if (params.nativeFee > 0n) {
 		intents.push({
 			deposit_for_account_id: calculateStorageAccountId({

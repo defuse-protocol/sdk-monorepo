@@ -1,12 +1,16 @@
 import { poaBridge } from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
+	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { Chains } from "../../lib/caip2";
-import { createPoaBridgeRoute } from "../../lib/route-config-factory";
+import {
+	createHotBridgeRoute,
+	createPoaBridgeRoute,
+} from "../../lib/route-config-factory";
 import { PoaBridge } from "./poa-bridge";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
@@ -19,12 +23,21 @@ vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 			httpClient: {
 				...original.poaBridge.httpClient,
 				getWithdrawalStatus: vi.fn(),
+				getSupportedTokens: vi.fn(),
 			},
 		},
 	};
 });
 
 describe("PoaBridge", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		// Default mock for getSupportedTokens
+		vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+			tokens: [],
+		});
+	});
+
 	describe("supports()", () => {
 		it.each([
 			"nep141:btc.omft.near",
@@ -86,6 +99,17 @@ describe("PoaBridge", () => {
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
 		);
+
+		it("returns false when routeConfig is for different bridge", async () => {
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.supports({
+				assetId: "nep141:btc.omft.near",
+				routeConfig: createHotBridgeRoute(Chains.TON),
+			});
+
+			expect(result).toBe(false);
+		});
 	});
 
 	describe("validateWithdrawal()", () => {
@@ -154,6 +178,99 @@ describe("PoaBridge", () => {
 				}),
 			).resolves.toBeUndefined();
 		});
+
+		it("caches getSupportedTokens responses", async () => {
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+				tokens: [
+					{
+						intents_token_id: "nep141:btc.omft.near",
+						min_withdrawal_amount: "1000",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			// Call validateWithdrawal twice with the same asset
+			await bridge.validateWithdrawal({
+				assetId: "nep141:btc.omft.near",
+				amount: 5000n,
+				destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+			});
+
+			await bridge.validateWithdrawal({
+				assetId: "nep141:btc.omft.near",
+				amount: 5000n,
+				destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+			});
+
+			// getSupportedTokens should only be called once due to caching
+			expect(poaBridge.httpClient.getSupportedTokens).toHaveBeenCalledTimes(1);
+		});
+
+		it("throws MinWithdrawalAmountError when amount is below minimum", async () => {
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+				tokens: [
+					{
+						intents_token_id: "nep141:btc.omft.near",
+						min_withdrawal_amount: "10000",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:btc.omft.near",
+					amount: 5000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+				}),
+			).rejects.toThrow(MinWithdrawalAmountError);
+		});
+
+		it("passes validation when amount meets minimum", async () => {
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+				tokens: [
+					{
+						intents_token_id: "nep141:btc.omft.near",
+						min_withdrawal_amount: "10000",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:btc.omft.near",
+					amount: 10000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+				}),
+			).resolves.toBeUndefined();
+		});
+
 		it.each([
 			{
 				assetId:
@@ -336,6 +453,48 @@ describe("PoaBridge", () => {
 			});
 
 			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("returns failed status when withdrawal status is not PENDING or COMPLETED", async () => {
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [
+					{
+						// @ts-expect-error - Even though this is not a valid status, it should still be handled correctly
+						status: "REFUNDED",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: null,
+							chain: "btc",
+							defuse_asset_identifier: "nep141:btc.omft.near",
+							near_token_id: "btc.omft.near",
+							decimals: 8,
+							amount: 100000,
+							account_id: "test.near",
+							address: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "failed",
+				reason: "REFUNDED",
+			});
 		});
 
 		it("matches withdrawal by assetId, not by index", async () => {
