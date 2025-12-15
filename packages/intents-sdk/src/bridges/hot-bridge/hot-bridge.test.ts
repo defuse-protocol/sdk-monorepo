@@ -431,9 +431,7 @@ describe("HotBridge", () => {
 			});
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
-			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
-				"MOCK_PENDING",
-			);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
