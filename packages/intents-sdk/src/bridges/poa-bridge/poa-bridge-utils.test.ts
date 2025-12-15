@@ -94,7 +94,10 @@ describe("toPoaNetwork", () => {
 describe("contractIdToCaip2", () => {
 	it.each([
 		["eth.omft.near", Chains.Ethereum],
-		["eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near", Chains.Ethereum],
+		[
+			"eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+			Chains.Ethereum,
+		],
 		["base.omft.near", Chains.Base],
 		["arb.omft.near", Chains.Arbitrum],
 		["btc.omft.near", Chains.Bitcoin],
