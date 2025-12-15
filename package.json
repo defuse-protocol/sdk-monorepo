@@ -12,7 +12,8 @@
 	},
 	"homepage": "https://github.com/defuse-protocol/sdk-monorepo#readme",
 	"scripts": {
-		"test": "turbo run test",
+		"test": "vitest",
+		"test:coverage": "vitest --coverage",
 		"build": "turbo run build",
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",
@@ -26,7 +27,9 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.2.0",
 		"@changesets/cli": "^2.29.5",
-		"turbo": "^2.5.5"
+		"@vitest/coverage-v8": "^3.2.0",
+		"turbo": "^2.5.5",
+		"vitest": "^3.2.0"
 	},
 	"packageManager": "pnpm@10.17.0+sha512.fce8a3dd29a4ed2ec566fb53efbb04d8c44a0f05bc6f24a73046910fb9c3ce7afa35a0980500668fa3573345bd644644fa98338fa168235c80f4aa17aa17fbef"
 }

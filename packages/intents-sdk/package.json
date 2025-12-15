@@ -28,7 +28,6 @@
 		"dist"
 	],
 	"scripts": {
-		"test": "vitest --passWithNoTests",
 		"build": "tsdown",
 		"dev": "tsdown --watch",
 		"lint": "biome check .",
@@ -60,7 +59,6 @@
 		"viem": "^2.0.0"
 	},
 	"devDependencies": {
-		"tsdown": "0.15.5",
-		"vitest": "2.1.2"
+		"tsdown": "0.15.5"
 	}
 }
