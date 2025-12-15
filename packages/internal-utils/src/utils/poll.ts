@@ -62,7 +62,7 @@ export interface PollOptions {
  * for outliers. Optimized for latency-sensitive operations like swaps.
  *
  * Interval strategy:
- * - 0 → p50: HOT (1s) - most completions happen here (~50%)
+ * - 0 → p50: HOT (300ms) - most completions happen here (~50%)
  * - p50 → p90: COOLING (3s) - moderate polling (~40%)
  * - p90 → p99: COLD (10s) - back off for outliers (~9%)
  *
@@ -120,13 +120,16 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 			return;
 		}
 
-		const timeoutId = setTimeout(resolve, ms);
-
 		const abortHandler = () => {
 			clearTimeout(timeoutId);
 			reject(signal?.reason);
 		};
 
-		signal?.addEventListener("abort", abortHandler, { once: true });
+		const timeoutId = setTimeout(() => {
+			signal?.removeEventListener("abort", abortHandler);
+			resolve();
+		}, ms);
+
+		signal?.addEventListener("abort", abortHandler);
 	});
 }

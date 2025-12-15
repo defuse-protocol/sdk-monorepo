@@ -84,7 +84,7 @@ export async function waitForIntentSettlement({
 
 				// Not settled yet - continue polling
 				return POLL_PENDING;
-			} catch (err) {
+			} catch (err: unknown) {
 				if (isTransientError(err)) {
 					return POLL_PENDING;
 				}
