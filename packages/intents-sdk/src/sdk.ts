@@ -557,6 +557,8 @@ export class IntentsSDK implements IIntentsSDK {
 
 	public async waitForIntentSettlement(args: {
 		intentHash: IntentHash;
+		/** AbortSignal for cancellation/timeout. Use AbortSignal.timeout(ms) for timeout. */
+		signal?: AbortSignal;
 		logger?: ILogger;
 	}): Promise<NearTxInfo> {
 		const intentExecuter = new IntentExecuter({
@@ -566,7 +568,9 @@ export class IntentsSDK implements IIntentsSDK {
 			intentRelayer: this.intentRelayer,
 		});
 
-		const { tx } = await intentExecuter.waitForSettlement(args.intentHash);
+		const { tx } = await intentExecuter.waitForSettlement(args.intentHash, {
+			signal: args.signal,
+		});
 		return tx;
 	}
 

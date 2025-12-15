@@ -140,6 +140,8 @@ export interface IIntentsSDK {
 
 	waitForIntentSettlement(args: {
 		intentHash: IntentHash;
+		/** AbortSignal for cancellation/timeout. Use AbortSignal.timeout(ms) for timeout. */
+		signal?: AbortSignal;
 		logger?: ILogger;
 	}): Promise<NearTxInfo>;
 

@@ -14,5 +14,8 @@ export interface IIntentExecuter<Ticket, RelayParams = RelayParamsDefault> {
 		},
 	): Promise<{ ticket: Ticket }>;
 
-	waitForSettlement(ticket: Ticket): Promise<{ tx: NearTxInfo }>;
+	waitForSettlement(
+		ticket: Ticket,
+		ctx?: { signal?: AbortSignal },
+	): Promise<{ tx: NearTxInfo }>;
 }
