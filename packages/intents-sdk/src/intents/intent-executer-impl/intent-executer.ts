@@ -139,9 +139,13 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 		return { ticket };
 	}
 
-	async waitForSettlement(ticket: Ticket): Promise<{ tx: NearTxInfo }> {
+	async waitForSettlement(
+		ticket: Ticket,
+		ctx?: { signal?: AbortSignal },
+	): Promise<{ tx: NearTxInfo }> {
 		return this.intentRelayer.waitForSettlement(ticket, {
 			logger: this.logger,
+			signal: ctx?.signal,
 		});
 	}
 }
