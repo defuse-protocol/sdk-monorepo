@@ -15,10 +15,22 @@ export {
 	configsByEnvironment,
 	type NearIntentsEnv,
 } from "./config";
-export { type RetryOptions, RETRY_CONFIGS } from "./utils/retry";
+export {
+	type RetryOptions,
+	RETRY_CONFIGS,
+	calculateMaxAttempts,
+} from "./utils/retry";
 export type { ILogger } from "./logger";
 export { BlockchainEnum } from "./poaBridge/constants/blockchains";
 export { withTimeout } from "./utils/promise/withTimeout";
+export {
+	poll,
+	POLL_PENDING,
+	PollTimeoutError,
+	type PollTimeoutErrorType,
+	type CompletionStats,
+	type PollOptions,
+} from "./utils/poll";
 export { request, type RequestErrorType } from "./utils/request";
 export { serialize } from "./utils/serialize";
 export {

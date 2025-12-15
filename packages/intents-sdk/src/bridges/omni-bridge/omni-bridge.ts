@@ -2,8 +2,6 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	RETRY_CONFIGS,
-	type RetryOptions,
 	configsByEnvironment,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
@@ -11,7 +9,6 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
-import { retry } from "@lifeomic/attempt";
 import type { providers } from "near-api-js";
 import {
 	ChainKind,
@@ -38,14 +35,12 @@ import type {
 	QuoteOptions,
 	RouteConfig,
 	RouteFeeStructures,
-	TxInfo,
-	TxNoInfo,
+	WithdrawalIdentifier,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
-	OmniTransferDestinationChainHashNotFoundError,
-	OmniTransferNotFoundError,
 	TokenNotFoundInDestinationChainError,
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
@@ -79,6 +74,7 @@ import { validateAddress } from "../../lib/validateAddress";
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class OmniBridge implements Bridge {
+	readonly route = RouteEnum.OmniBridge;
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
@@ -110,7 +106,7 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
 
-	is(routeConfig: RouteConfig): boolean {
+	private is(routeConfig: RouteConfig): boolean {
 		return routeConfig.route === RouteEnum.OmniBridge;
 	}
 
@@ -634,62 +630,70 @@ export class OmniBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
+	createWithdrawalIdentifier(args: {
+		withdrawalParams: WithdrawalParams;
 		index: number;
-		routeConfig: RouteConfig;
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-	}): Promise<TxInfo | TxNoInfo> {
-		return retry(
-			async () => {
-				if (args.signal?.aborted) {
-					throw args.signal.reason;
-				}
-
-				const transfer = (
-					await this.omniBridgeAPI.getTransfer({
-						transactionHash: args.tx.hash,
-					})
-				)[args.index];
-				if (transfer == null || transfer.transfer_message == null)
-					throw new OmniTransferNotFoundError(args.tx.hash);
-				const destinationChain = getChain(
-					transfer.transfer_message.recipient as OmniAddress,
-				);
-				let txHash = null;
-				if (isEvmChain(destinationChain)) {
-					txHash = transfer.finalised?.EVMLog?.transaction_hash;
-				} else if (destinationChain === ChainKind.Sol) {
-					txHash = transfer.finalised?.Solana?.signature;
-				} else if (destinationChain === ChainKind.Btc) {
-					// transfer.utxo_transfer?.btc_pending_id is not the finalised transaction hash. In rare cases, the hash may change
-					// if the BTC transfer fails to be submitted. Waiting for the finalised hash may
-					// take up to 10 minutes or longer.
-					// We return fast hash for FE and wait for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE
-					txHash =
-						typeof window !== "undefined"
-							? transfer.utxo_transfer?.btc_pending_id
-							: transfer.finalised?.UtxoLog?.transaction_hash;
-				} else {
-					return { hash: null };
-				}
-				if (!txHash)
-					throw new OmniTransferDestinationChainHashNotFoundError(
-						args.tx.hash,
-						ChainKind[destinationChain].toLowerCase(),
-					);
-				return { hash: txHash };
-			},
-			{
-				...(args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY),
-				handleError: (err, ctx) => {
-					if (err === args.signal?.reason) {
-						ctx.abort();
-					}
-				},
-			},
+		tx: NearTxInfo;
+	}): WithdrawalIdentifier {
+		const assetInfo = this.makeAssetInfo(
+			args.withdrawalParams.assetId,
+			args.withdrawalParams.routeConfig,
 		);
+		assert(assetInfo != null, "Asset is not supported");
+
+		const landingChain =
+			args.withdrawalParams.routeConfig != null &&
+			"chain" in args.withdrawalParams.routeConfig &&
+			args.withdrawalParams.routeConfig.chain !== undefined
+				? args.withdrawalParams.routeConfig.chain
+				: assetInfo.blockchain;
+
+		return {
+			landingChain,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(
+		args: WithdrawalIdentifier & { logger?: ILogger },
+	): Promise<WithdrawalStatus> {
+		const transfer = (
+			await this.omniBridgeAPI.getTransfer({
+				transactionHash: args.tx.hash,
+			})
+		)[args.index];
+
+		if (transfer == null || transfer.transfer_message == null) {
+			return { status: "pending" };
+		}
+
+		const destinationChain = getChain(
+			transfer.transfer_message.recipient as OmniAddress,
+		);
+		let txHash = null;
+		if (isEvmChain(destinationChain)) {
+			txHash = transfer.finalised?.EVMLog?.transaction_hash;
+		} else if (destinationChain === ChainKind.Sol) {
+			txHash = transfer.finalised?.Solana?.signature;
+		} else if (destinationChain === ChainKind.Btc) {
+			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change
+			// if the BTC transfer fails to be submitted. We return fast hash for FE and wait
+			// for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE.
+			txHash =
+				typeof window !== "undefined"
+					? transfer.utxo_transfer?.btc_pending_id
+					: transfer.finalised?.UtxoLog?.transaction_hash;
+		} else {
+			return { status: "completed", txHash: null };
+		}
+
+		if (!txHash) {
+			return { status: "pending" };
+		}
+
+		return { status: "completed", txHash };
 	}
 
 	/**

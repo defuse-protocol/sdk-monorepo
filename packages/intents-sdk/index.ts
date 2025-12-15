@@ -102,22 +102,14 @@ export {
 
 // Hot Bridge Errors
 export {
-	HotWithdrawalPendingError,
-	type HotWithdrawalPendingErrorType,
 	HotWithdrawalNotFoundError,
 	type HotWithdrawalNotFoundErrorType,
-	HotWithdrawalCancelledError,
-	type HotWithdrawalCancelledErrorType,
 	HotWithdrawalApiFeeRequestTimeoutError,
 	type HotWithdrawalApiFeeRequestTimeoutErrorType,
 } from "./src/bridges/hot-bridge/error";
 
 // Omni Bridge Errors
 export {
-	OmniTransferNotFoundError,
-	type OmniTransferNotFoundErrorType,
-	OmniTransferDestinationChainHashNotFoundError,
-	type OmniTransferDestinationChainHashNotFoundErrorType,
 	InvalidFeeValueError,
 	type InvalidFeeValueErrorType,
 	TokenNotFoundInDestinationChainError,

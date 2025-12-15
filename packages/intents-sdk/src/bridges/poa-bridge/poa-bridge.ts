@@ -2,7 +2,6 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
-	type RetryOptions,
 	configsByEnvironment,
 	poaBridge,
 	utils,
@@ -22,8 +21,9 @@ import type {
 	NearTxInfo,
 	ParsedAssetInfo,
 	RouteConfig,
-	TxInfo,
+	WithdrawalIdentifier,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
@@ -36,6 +36,7 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 
 export class PoaBridge implements Bridge {
+	readonly route = RouteEnum.PoaBridge;
 	protected env: NearIntentsEnv;
 
 	// TTL cache for supported tokens with 30-second TTL
@@ -48,7 +49,7 @@ export class PoaBridge implements Bridge {
 		this.env = env;
 	}
 
-	is(routeConfig: RouteConfig) {
+	private is(routeConfig: RouteConfig) {
 		return routeConfig.route === RouteEnum.PoaBridge;
 	}
 
@@ -201,23 +202,62 @@ export class PoaBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
+	createWithdrawalIdentifier(args: {
+		withdrawalParams: WithdrawalParams;
 		index: number;
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-		logger?: ILogger;
-	}): Promise<TxInfo> {
-		const withdrawalStatus = await poaBridge.waitForWithdrawalCompletion({
-			txHash: args.tx.hash,
-			index: args.index,
-			signal: args.signal ?? new AbortController().signal,
-			retryOptions: args.retryOptions,
-			baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
-			logger: args.logger,
-		});
+		tx: NearTxInfo;
+	}): WithdrawalIdentifier {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
 
-		return { hash: withdrawalStatus.destinationTxHash };
+		const landingChain = assetInfo.blockchain;
+
+		return {
+			landingChain,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(
+		args: WithdrawalIdentifier & { logger?: ILogger },
+	): Promise<WithdrawalStatus> {
+		const response = await poaBridge.httpClient.getWithdrawalStatus(
+			{
+				withdrawal_hash: args.tx.hash,
+			},
+			{
+				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				logger: args.logger,
+			},
+		);
+
+		// Response list is unsorted, so we match by assetId instead of index
+		const withdrawal = findMatchingWithdrawal(
+			response.withdrawals,
+			args.withdrawalParams.assetId,
+		);
+
+		if (withdrawal == null) {
+			return { status: "pending" };
+		}
+
+		if (withdrawal.status === "PENDING") {
+			return { status: "pending" };
+		}
+
+		if (withdrawal.status === "COMPLETED") {
+			return {
+				status: "completed",
+				txHash: withdrawal.data.transfer_tx_hash,
+			};
+		}
+
+		return {
+			status: "failed",
+			reason: withdrawal.status,
+		};
 	}
 
 	/**
@@ -249,4 +289,24 @@ export class PoaBridge implements Bridge {
 
 		return data;
 	}
+}
+
+type WithdrawalStatusResponse = Awaited<
+	ReturnType<typeof poaBridge.httpClient.getWithdrawalStatus>
+>;
+
+/**
+ * Finds a withdrawal matching the given assetId.
+ *
+ * NOTE: Currently only matches by assetId. This means multiple withdrawals
+ * of the same token in a single transaction are not supported.
+ * POA API doesn't currently support this case either. When support is added,
+ * matching could be done by sorting both API results and withdrawal params by
+ * amount (fees are equal for same token, so relative ordering is preserved).
+ */
+function findMatchingWithdrawal(
+	withdrawals: WithdrawalStatusResponse["withdrawals"],
+	assetId: string,
+): WithdrawalStatusResponse["withdrawals"][number] | undefined {
+	return withdrawals.find((w) => w.data.defuse_asset_identifier === assetId);
 }

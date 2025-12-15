@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.43.1",
+	"version": "0.43.3",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -28,7 +28,6 @@
 		"dist"
 	],
 	"scripts": {
-		"test": "vitest --passWithNoTests",
 		"build": "tsdown",
 		"dev": "tsdown --watch",
 		"lint": "biome check .",
@@ -42,7 +41,7 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@defuse-protocol/internal-utils": "workspace:*",
-		"@hot-labs/omni-sdk": "2.24.0",
+		"@hot-labs/omni-sdk": "2.24.3",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
 		"@near-js/accounts": "^2.0.1",
@@ -60,7 +59,6 @@
 		"viem": "^2.0.0"
 	},
 	"devDependencies": {
-		"tsdown": "0.15.5",
-		"vitest": "2.1.2"
+		"tsdown": "0.15.5"
 	}
 }

@@ -140,6 +140,8 @@ export interface IIntentsSDK {
 
 	waitForIntentSettlement(args: {
 		intentHash: IntentHash;
+		/** AbortSignal for cancellation/timeout. Use AbortSignal.timeout(ms) for timeout. */
+		signal?: AbortSignal;
 		logger?: ILogger;
 	}): Promise<NearTxInfo>;
 
@@ -341,7 +343,8 @@ export interface FeeEstimation {
 }
 
 export interface Bridge {
-	is(routeConfig: RouteConfig): boolean;
+	readonly route: RouteEnumValues;
+
 	supports(
 		params: Pick<WithdrawalParams, "assetId" | "routeConfig">,
 	): Promise<boolean>;
@@ -379,21 +382,39 @@ export interface Bridge {
 		feeEstimation: FeeEstimation;
 		referral?: string;
 	}): Promise<IntentPrimitive[]>;
-	waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
+
+	/**
+	 * Creates a complete withdrawal identifier with all required info.
+	 * Derives landingChain from withdrawalParams.routeConfig.chain if available, otherwise from assetId.
+	 */
+	createWithdrawalIdentifier(args: {
+		withdrawalParams: WithdrawalParams;
 		index: number;
-		routeConfig: RouteConfig;
-		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
-		logger?: ILogger;
-	}): Promise<TxInfo | TxNoInfo>;
+		tx: NearTxInfo;
+	}): WithdrawalIdentifier;
+
+	/**
+	 * One-shot status check for a withdrawal.
+	 * Returns the current status without polling.
+	 */
+	describeWithdrawal(
+		args: WithdrawalIdentifier & { logger?: ILogger },
+	): Promise<WithdrawalStatus>;
 }
 
 export interface WithdrawalIdentifier {
-	routeConfig: RouteConfig;
+	/** Actual chain where funds arrive; Near for virtual/internal routes */
+	landingChain: Chain;
+	/** Per-bridge withdrawal sequence number */
 	index: number;
+	withdrawalParams: WithdrawalParams;
 	tx: NearTxInfo;
 }
+
+export type WithdrawalStatus =
+	| { status: "pending" }
+	| { status: "completed"; txHash: string | null }
+	| { status: "failed"; reason: string };
 
 export type ParsedAssetInfo = (
 	| {

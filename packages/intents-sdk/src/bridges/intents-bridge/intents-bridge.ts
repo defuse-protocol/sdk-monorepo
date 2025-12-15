@@ -1,21 +1,24 @@
 import type { ILogger } from "@defuse-protocol/internal-utils";
+import { InvalidDestinationAddressForWithdrawalError } from "../../classes/errors";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
+import { Chains } from "../../lib/caip2";
+import { validateAddress } from "../../lib/validateAddress";
 import type {
 	Bridge,
 	FeeEstimation,
 	NearTxInfo,
 	RouteConfig,
-	TxInfo,
+	WithdrawalIdentifier,
 	WithdrawalParams,
+	WithdrawalStatus,
 } from "../../shared-types";
-import { validateAddress } from "../../lib/validateAddress";
-import { Chains } from "../../lib/caip2";
-import { InvalidDestinationAddressForWithdrawalError } from "../../classes/errors";
 
 export class IntentsBridge implements Bridge {
-	is(routeConfig: RouteConfig) {
-		return routeConfig.route === RouteEnum.InternalTransfer;
+	readonly route = RouteEnum.InternalTransfer;
+
+	private is(routeConfig: RouteConfig) {
+		return routeConfig.route === this.route;
 	}
 
 	async supports(
@@ -77,10 +80,22 @@ export class IntentsBridge implements Bridge {
 		};
 	}
 
-	async waitForWithdrawalCompletion(args: {
-		tx: NearTxInfo;
+	createWithdrawalIdentifier(args: {
+		withdrawalParams: WithdrawalParams;
 		index: number;
-	}): Promise<TxInfo> {
-		return { hash: args.tx.hash };
+		tx: NearTxInfo;
+	}): WithdrawalIdentifier {
+		return {
+			landingChain: Chains.Near,
+			index: args.index,
+			withdrawalParams: args.withdrawalParams,
+			tx: args.tx,
+		};
+	}
+
+	async describeWithdrawal(
+		args: WithdrawalIdentifier,
+	): Promise<WithdrawalStatus> {
+		return { status: "completed", txHash: args.tx.hash };
 	}
 }

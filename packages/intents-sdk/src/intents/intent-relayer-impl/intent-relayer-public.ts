@@ -73,11 +73,11 @@ export class IntentRelayerPublic implements IIntentRelayer<IntentHash> {
 
 	async waitForSettlement(
 		ticket: IntentHash,
-		ctx: { logger?: ILogger } = {},
+		ctx: { logger?: ILogger; signal?: AbortSignal } = {},
 	): Promise<{ tx: NearTxInfo }> {
 		const result = await solverRelay.waitForIntentSettlement({
 			intentHash: ticket,
-			signal: new AbortController().signal,
+			signal: ctx.signal,
 			baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
 			logger: ctx.logger,
 			solverRelayApiKey: this.solverRelayApiKey,

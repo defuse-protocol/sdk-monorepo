@@ -32,11 +32,11 @@ export interface IIntentRelayer<Ticket, RelayParams = RelayParamsDefault> {
 	/**
 	 * Waits for an intent to be settled on-chain.
 	 * @param ticket - The ticket returned from publishIntent
-	 * @param ctx - Optional context with logger
+	 * @param ctx - Optional context with logger and signal
 	 * @returns Transaction information once settled
 	 */
 	waitForSettlement(
 		ticket: Ticket,
-		ctx?: { logger?: ILogger },
+		ctx?: { logger?: ILogger; signal?: AbortSignal },
 	): Promise<{ tx: NearTxInfo }>;
 }
