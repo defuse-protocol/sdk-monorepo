@@ -28,18 +28,18 @@ describe("getUnderlyingFee", () => {
 	it("returns undefined for optional fee when route exists", () => {
 		const feeEstimation: FeeEstimation = {
 			amount: 100n,
+			quote: null,
 			underlyingFees: {
-				[RouteEnum.OmniBridge]: {
-					bridgeFee: 10n,
-					storageDepositFee: undefined,
-					nativeFee: undefined,
+				[RouteEnum.PoaBridge]: {
+					relayerFee: 100n,
 				},
 			},
 		};
 
 		const result = getUnderlyingFee(
 			feeEstimation,
-			RouteEnum.OmniBridge,
+			RouteEnum.PoaBridge,
+			// @ts-expect-error - We consciously read the incorrect key
 			"storageDepositFee",
 		);
 
@@ -49,6 +49,7 @@ describe("getUnderlyingFee", () => {
 	it("throws when route fees are missing", () => {
 		const feeEstimation: FeeEstimation = {
 			amount: 100n,
+			quote: null,
 			underlyingFees: {},
 		};
 
@@ -60,9 +61,13 @@ describe("getUnderlyingFee", () => {
 	it("throws when underlyingFees is undefined", () => {
 		const feeEstimation: FeeEstimation = {
 			amount: 100n,
+			quote: null,
+			// @ts-expect-error - We consciously build an invalid object
+			underlyingFees: undefined,
 		};
 
 		expect(() =>
+			// @ts-expect-error - We consciously read the incorrect key
 			getUnderlyingFee(feeEstimation, RouteEnum.PoaBridge, "bridgeFee"),
 		).toThrow('Missing underlying fees for route "poa_bridge"');
 	});
