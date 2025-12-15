@@ -21,15 +21,19 @@ describe("waitForIntentSettlement()", () => {
 		);
 
 		const fn = vi.fn();
+		const controller = new AbortController();
 
-		void waitForIntentSettlement({
+		const promise = waitForIntentSettlement({
 			intentHash: "foo",
-			signal: AbortSignal.timeout(2000),
+			signal: controller.signal,
 			onTxHashKnown: fn,
 		});
 
 		await vi.waitFor(() => expect(fn).toHaveBeenCalledOnce());
 		expect(fn).toHaveBeenCalledWith("bar");
+
+		controller.abort();
+		await expect(promise).rejects.toThrow();
 	});
 
 	it("calls onTxHashKnown callback once", async () => {
@@ -65,7 +69,62 @@ describe("waitForIntentSettlement()", () => {
 			onTxHashKnown: fn,
 		});
 
-		await vi.waitFor(() => expect(fn).toHaveBeenCalledOnce());
 		expect(fn).toHaveBeenCalledOnce();
+	});
+
+	it("returns txHash and intentHash when settled", async () => {
+		server.use(
+			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
+				return HttpResponse.json({
+					id: "dontcare",
+					jsonrpc: "2.0",
+					result: {
+						status: "SETTLED",
+						intent_hash: "intent123",
+						data: { hash: "tx456" },
+					},
+				} satisfies GetStatusResponse);
+			}),
+		);
+
+		const result = await waitForIntentSettlement({
+			intentHash: "intent123",
+		});
+
+		expect(result).toEqual({
+			txHash: "tx456",
+			intentHash: "intent123",
+		});
+	});
+
+	it("continues polling on transient HTTP errors", async () => {
+		let requestCount = 0;
+		server.use(
+			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
+				requestCount++;
+				if (requestCount === 1) {
+					return HttpResponse.error();
+				}
+				return HttpResponse.json({
+					id: "dontcare",
+					jsonrpc: "2.0",
+					result: {
+						status: "SETTLED",
+						intent_hash: "foo",
+						data: { hash: "bar" },
+					},
+				} satisfies GetStatusResponse);
+			}),
+		);
+
+		const result = await waitForIntentSettlement({
+			intentHash: "foo",
+		});
+
+		expect(requestCount).toBe(2);
+		expect(result).toEqual({
+			txHash: "bar",
+			intentHash: "foo",
+		});
 	});
 });

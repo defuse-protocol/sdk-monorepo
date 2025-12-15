@@ -1,4 +1,3 @@
-import { retry } from "@lifeomic/attempt";
 import { BaseError } from "../errors/base";
 import {
 	HttpRequestError,
@@ -6,7 +5,7 @@ import {
 	TimeoutError,
 } from "../errors/request";
 import type { ILogger } from "../logger";
-import type { RetryOptions } from "../utils/retry";
+import { poll, POLL_PENDING, type CompletionStats } from "../utils/poll";
 import {
 	IntentSettlementError,
 	type IntentSettlementErrorType,
@@ -29,89 +28,89 @@ export type IntentSettlementCallbacks = {
 };
 
 /**
- * Aggressive retry for status polling (expects 3 changes in ~1.5s, ~500ms each)
- *
- * - initialDelay (250ms): Skip period where status never changes
- * - delay (300ms) + factor (1.15): Fast polling first 2.5s (<500ms intervals),
- *   then exponential backoff for edge cases
- * - maxAttempts (21): ~30s total coverage
- * - jitter: Prevents simultaneous requests from multiple clients
+ * Default timing stats for intent settlement (~45s budget).
+ * Polls aggressively early, backs off for outliers.
  */
-const aggressiveRetryOptions = {
-	initialDelay: 250,
-	delay: 300,
-	minDelay: 300,
-	factor: 1.15,
-	maxAttempts: 21,
-	jitter: true,
-} satisfies RetryOptions;
+const DEFAULT_SETTLEMENT_STATS: CompletionStats = {
+	p50: 5_000,
+	p90: 20_000,
+	p99: 45_000,
+};
 
 export async function waitForIntentSettlement({
 	intentHash,
 	signal,
 	baseURL,
-	retryOptions = aggressiveRetryOptions,
 	logger,
 	solverRelayApiKey,
 	...events
 }: {
 	intentHash: string;
-	signal: AbortSignal;
+	signal?: AbortSignal;
 	baseURL?: string;
-	retryOptions?: RetryOptions;
 	logger?: ILogger;
 	solverRelayApiKey?: string;
 } & IntentSettlementCallbacks): Promise<WaitForIntentSettlementReturnType> {
 	let txHashEmitted = false;
 
-	return retry(
+	return poll(
 		async () => {
-			const res = await solverRelayClient.getStatus(
-				{ intent_hash: intentHash },
-				{ baseURL, fetchOptions: { signal }, logger, solverRelayApiKey },
-			);
+			try {
+				const res = await solverRelayClient.getStatus(
+					{ intent_hash: intentHash },
+					{
+						baseURL,
+						fetchOptions: { signal },
+						logger,
+						solverRelayApiKey,
+					},
+				);
 
-			// Emit tx hash once when first known
-			if (
-				!txHashEmitted &&
-				(res.status === "TX_BROADCASTED" || res.status === "SETTLED")
-			) {
-				txHashEmitted = true;
-				events.onTxHashKnown?.(res.data.hash);
-			}
-
-			if (res.status === "SETTLED") {
-				return {
-					txHash: res.data.hash,
-					intentHash: res.intent_hash,
-				};
-			}
-
-			throw new IntentSettlementError(res);
-		},
-		{
-			...retryOptions,
-			handleError: (err, context) => {
-				// We keep retrying since we haven't received the necessary status
-				if (err instanceof IntentSettlementError) {
-					return;
-				}
-
-				// We keep retrying if it is a network error or requested timed out
+				// Emit tx hash once when first known
 				if (
-					err instanceof BaseError &&
-					err.walk(
-						(err) =>
-							err instanceof HttpRequestError ||
-							err instanceof TimeoutError ||
-							err instanceof RpcRequestError,
-					)
+					!txHashEmitted &&
+					(res.status === "TX_BROADCASTED" || res.status === "SETTLED")
 				) {
-					return;
+					txHashEmitted = true;
+					events.onTxHashKnown?.(res.data.hash);
 				}
 
-				context.abort();
-			},
+				if (res.status === "SETTLED") {
+					return {
+						txHash: res.data.hash,
+						intentHash: res.intent_hash,
+					};
+				}
+
+				// Not settled yet - continue polling
+				return POLL_PENDING;
+			} catch (err) {
+				if (isTransientError(err)) {
+					return POLL_PENDING;
+				}
+				throw err;
+			}
 		},
+		{ stats: DEFAULT_SETTLEMENT_STATS, signal },
 	);
+}
+
+function isTransientError(err: unknown): boolean {
+	if (err instanceof IntentSettlementError) {
+		return true;
+	}
+
+	if (
+		err instanceof BaseError &&
+		err.walk(
+			(err) =>
+				err instanceof HttpRequestError ||
+				err instanceof TimeoutError ||
+				err instanceof RpcRequestError,
+		)
+	) {
+		return true;
+	}
+
+	return false;
 }
