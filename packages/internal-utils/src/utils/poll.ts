@@ -9,7 +9,7 @@ const PHASE = {
 type Phase = (typeof PHASE)[keyof typeof PHASE];
 
 const DEFAULT_INTERVALS: Record<Phase, number> = {
-	[PHASE.HOT]: 1_000,
+	[PHASE.HOT]: 300,
 	[PHASE.COOLING]: 3_000,
 	[PHASE.COLD]: 10_000,
 };
@@ -49,7 +49,7 @@ export interface CompletionStats {
 export interface PollOptions {
 	stats: CompletionStats;
 	signal?: AbortSignal;
-	/** Minimum interval floor (default: 1000ms) */
+	/** Minimum interval floor (default: 300ms) */
 	minInterval?: number;
 	/** Maximum interval ceiling (default: 30000ms) */
 	maxInterval?: number;
@@ -76,7 +76,7 @@ export async function poll<T>(
 	fn: () => Promise<T | typeof POLL_PENDING>,
 	options: PollOptions,
 ): Promise<T> {
-	const { stats, signal, minInterval = 1000, maxInterval = 30_000 } = options;
+	const { stats, signal, minInterval = 300, maxInterval = 30_000 } = options;
 	const { p50, p90, p99 } = stats;
 
 	const startTime = performance.now();

@@ -39,10 +39,10 @@ describe("poll()", () => {
 
 		const promise = poll(fn, { stats });
 
-		// First call returns POLL_PENDING, wait HOT interval (1s) since elapsed < p50
-		await vi.advanceTimersByTimeAsync(1_000);
+		// First call returns POLL_PENDING, wait HOT interval (300ms) since elapsed < p50
+		await vi.advanceTimersByTimeAsync(300);
 		// Second call returns POLL_PENDING, wait HOT interval again
-		await vi.advanceTimersByTimeAsync(1_000);
+		await vi.advanceTimersByTimeAsync(300);
 
 		await expect(promise).resolves.toBe("done");
 		expect(fn).toHaveBeenCalledTimes(3);
@@ -101,8 +101,8 @@ describe("poll()", () => {
 
 		const promise = poll(fn, { stats });
 
-		// In HOT phase (elapsed < p50), interval is 1s
-		await vi.advanceTimersByTimeAsync(1_000);
+		// In HOT phase (elapsed < p50), interval is 300ms
+		await vi.advanceTimersByTimeAsync(300);
 
 		await expect(promise).resolves.toBe("done");
 		expect(fn).toHaveBeenCalledTimes(2);
@@ -122,22 +122,22 @@ describe("poll()", () => {
 
 		// Set up stats so we go through phases
 		const customStats: CompletionStats = {
-			p50: 2_000, // HOT: 0-2s (1s intervals)
-			p90: 5_000, // COOLING: 2-5s (3s intervals)
+			p50: 600, // HOT: 0-600ms (300ms intervals)
+			p90: 3_600, // COOLING: 600ms-3.6s (3s intervals)
 			p99: 30_000,
 		};
 
 		const promise = poll(fn, { stats: customStats });
 
 		// Advance through phases:
-		// Call 1 at t=0, HOT interval=1s
-		// Call 2 at t=1s, HOT interval=1s
-		// Call 3 at t=2s, COOLING interval=3s (now past p50)
-		// Call 4 at t=5s, COLD interval=10s (now past p90)
-		// Call 5 at t=15s, COLD interval=10s
-		// Call 6 at t=25s -> done
-		await vi.advanceTimersByTimeAsync(1_000); // to call 2
-		await vi.advanceTimersByTimeAsync(1_000); // to call 3
+		// Call 1 at t=0, HOT interval=300ms
+		// Call 2 at t=300ms, HOT interval=300ms
+		// Call 3 at t=600ms, COOLING interval=3s (now past p50)
+		// Call 4 at t=3.6s, COLD interval=10s (now past p90)
+		// Call 5 at t=13.6s, COLD interval=10s
+		// Call 6 at t=23.6s -> done
+		await vi.advanceTimersByTimeAsync(300); // to call 2
+		await vi.advanceTimersByTimeAsync(300); // to call 3
 		await vi.advanceTimersByTimeAsync(3_000); // to call 4
 		await vi.advanceTimersByTimeAsync(10_000); // to call 5
 		await vi.advanceTimersByTimeAsync(10_000); // to call 6
@@ -152,8 +152,8 @@ describe("poll()", () => {
 		});
 
 		// Verify phase transitions
-		expect(intervals[0]).toBe(1_000); // HOT
-		expect(intervals[1]).toBe(1_000); // HOT
+		expect(intervals[0]).toBe(300); // HOT
+		expect(intervals[1]).toBe(300); // HOT
 		expect(intervals[2]).toBe(3_000); // COOLING
 		expect(intervals[3]).toBe(10_000); // COLD
 	});
@@ -166,13 +166,12 @@ describe("poll()", () => {
 
 		const promise = poll(fn, {
 			stats,
-			minInterval: 100,
-			maxInterval: 500,
+			minInterval: 50,
+			maxInterval: 100,
 		});
 
-		// HOT default is 1s, but maxInterval clamps to 500ms
-		// (minInterval must be <= maxInterval for clamping to work)
-		await vi.advanceTimersByTimeAsync(500);
+		// HOT default is 300ms, but maxInterval clamps to 100ms
+		await vi.advanceTimersByTimeAsync(100);
 
 		await expect(promise).resolves.toBe("done");
 		expect(fn).toHaveBeenCalledTimes(2);

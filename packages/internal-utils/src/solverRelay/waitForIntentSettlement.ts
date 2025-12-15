@@ -28,13 +28,13 @@ export type IntentSettlementCallbacks = {
 };
 
 /**
- * Default timing stats for intent settlement (~45s budget).
+ * Default timing stats for intent settlement based on production data.
  * Polls aggressively early, backs off for outliers.
  */
 const DEFAULT_SETTLEMENT_STATS: CompletionStats = {
-	p50: 5_000,
-	p90: 20_000,
-	p99: 45_000,
+	p50: 2_000,
+	p90: 10_000,
+	p99: 356_000,
 };
 
 export async function waitForIntentSettlement({
