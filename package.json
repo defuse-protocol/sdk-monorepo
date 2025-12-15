@@ -13,6 +13,7 @@
 	"homepage": "https://github.com/defuse-protocol/sdk-monorepo#readme",
 	"scripts": {
 		"test": "turbo run test",
+		"test:coverage": "turbo run test:coverage",
 		"build": "turbo run build",
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",

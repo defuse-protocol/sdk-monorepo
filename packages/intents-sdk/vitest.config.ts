@@ -5,6 +5,9 @@ export default defineConfig({
 		includeSource: ["src/**/*.{js,ts}"],
 		coverage: {
 			provider: "v8",
+			include: ["src/**/*.ts"],
+			exclude: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+			reporter: ["text", "json", "html"],
 		},
 		testTimeout: 20_000,
 		watch: false,

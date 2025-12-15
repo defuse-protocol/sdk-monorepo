@@ -7,6 +7,9 @@
 			"outputs": ["dist/**"]
 		},
 		"test": {},
+		"test:coverage": {
+			"outputs": ["coverage/**"]
+		},
 		"lint": {},
 		"lint:fix": {},
 		"dev": {
