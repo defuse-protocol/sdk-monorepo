@@ -29,6 +29,7 @@
 	],
 	"scripts": {
 		"test": "vitest --passWithNoTests",
+		"test:coverage": "vitest --coverage",
 		"build": "tsdown",
 		"dev": "tsdown --watch",
 		"lint": "biome check .",
@@ -60,6 +61,7 @@
 		"viem": "^2.0.0"
 	},
 	"devDependencies": {
+		"@vitest/coverage-v8": "2.1.2",
 		"tsdown": "0.15.5",
 		"vitest": "2.1.2"
 	}
