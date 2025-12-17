@@ -12,7 +12,6 @@ import {
 	EvmForwardingParameters,
 	type EvmPermittedOps,
 } from "./data/evm-params";
-import { mitosisTestnet } from "viem/chains";
 
 function getForwardingParams(
 	commitmentParams: EvmCommitmentParameters,
