@@ -10,7 +10,9 @@ import { ProtocolCode } from "./data/tee-message";
 import {
 	EvmCommitmentParameters,
 	EvmForwardingParameters,
+	type EvmPermittedOps,
 } from "./data/evm-params";
+import { mitosisTestnet } from "viem/chains";
 
 function getForwardingParams(
 	commitmentParams: EvmCommitmentParameters,
@@ -50,7 +52,7 @@ describe("TEE abstraction tests", () => {
 	const permittedOps = [
 		{
 			calldataRegex:
-				"0xa9059cbb000000000000000000000000[0-9a-fA-F]{40}[0-9a-fA-F]{64}",
+				"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[0-9a-fA-F]{64}",
 			contract: "0xdac17f958d2ee523a2206206994597c13d831ec7" as Hex,
 		},
 	];
@@ -81,7 +83,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(publickey, chainCode);
 			const result = tee.getAddress(commitmentParams);
 
-			const expectedAddress = "0x35dAcD6Fb2051D668aDE29071667493D7188DB06";
+			const expectedAddress = "0xaBC22Ae492a5E238d53e2eC1ec26A8013698808f";
 			expect(result).toEqual(expectedAddress);
 		});
 	});
@@ -113,6 +115,69 @@ describe("TEE abstraction tests", () => {
 			expect(signedTx.nonce).toEqual(Number(forwardingParams.nonce));
 		});
 
-		it("Should fail when calldata does not match", async () => {});
+		it("Should not fail when the transfer amount is different", async () => {
+			const tee = new Tee(publickey, chainCode);
+			const ops: EvmPermittedOps[] = [
+				{
+					contract: permittedOps[0]!.contract,
+					calldataRegex:
+						"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[a-fA-F0-9]{64}",
+				},
+			];
+			const commitmentParams: EvmCommitmentParameters =
+				new EvmCommitmentParameters(extraData, refundTo, ops);
+
+			const fp = getForwardingParams(commitmentParams, {
+				calldata:
+					"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680000000000000000000000000000000000000000000000000000000000001ab52",
+			});
+
+			await expect(tee.getSignedTx(ProtocolCode.EVM, fp)).resolves;
+		});
+
+		it("Should fail when calldata does not match the committed regex", async () => {
+			const tee = new Tee(publickey, chainCode);
+			const commitmentParams: EvmCommitmentParameters =
+				new EvmCommitmentParameters(extraData, refundTo, permittedOps);
+
+			// Case 1: first byte is change
+			const forwardingParamsArray: Array<EvmForwardingParameters> = [];
+
+			forwardingParamsArray.push(
+				getForwardingParams(commitmentParams, {
+					calldata:
+						"0xb9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680000000000000000000000000000000000000000000000000000000000004ab52",
+				}),
+			);
+
+			// Case 2: recipient change
+			forwardingParamsArray.push(
+				getForwardingParams(commitmentParams, {
+					calldata:
+						"0xa9059cbb000000000000000000000000CEf67989ae740cC9c92fa7385F003F84EAAFd9150000000000000000000000000000000000000000000000000000000000004ab52",
+				}),
+			);
+
+			for (const fp of forwardingParamsArray) {
+				await expect(
+					tee.getSignedTx(ProtocolCode.EVM, fp),
+				).rejects.toThrowError("calldata not allowed");
+			}
+		});
+
+		it("Should fail when called contract does not match the committed one", async () => {
+			const commitmentParams: EvmCommitmentParameters =
+				new EvmCommitmentParameters(extraData, refundTo, permittedOps);
+
+			const forwardingParams = getForwardingParams(commitmentParams, {
+				contract: "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+			});
+
+			const tee = new Tee(publickey, chainCode);
+
+			await expect(
+				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
+			).rejects.toThrowError("input contract not allowed");
+		});
 	});
 });

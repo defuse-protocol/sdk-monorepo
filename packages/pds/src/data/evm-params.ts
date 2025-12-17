@@ -1,5 +1,6 @@
 import * as secp from "@noble/secp256k1";
 import {
+	bytesToHex,
 	concat,
 	hexToBytes,
 	sha256,
@@ -50,18 +51,6 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	}
 
 	bytes(): Uint8Array {
-		// return cbor.encode({
-		// 	extraData: this.extraData,
-		// 	refundTo: this.refundTo,
-		// 	permittedOps: this.permittedOps,
-		// });
-		// const permittedOpsBytes = stringToBytes(
-		// 	this.permittedOps.reduce((acc, elem) => {
-		// 		acc += elem.calldataRegex + elem.contract;
-		// 		return acc;
-		// 	}, ""),
-		// );
-
 		const permittedOpsBytes = this.permittedOps.reduce((acc, elem) => {
 			return concat([
 				acc,
@@ -102,8 +91,9 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 
 		const child = hd.derive(`m/${deterministicPath}`);
 		const point = secp.Point.fromBytes(child.publicKey as secp.Bytes);
-		const uncompressed = concat(["0x04", toHex(point.x), toHex(point.y)]);
-		const address = publicKeyToAddress(uncompressed);
+
+		const uncompressed = false;
+		const address = publicKeyToAddress(`0x${point.toHex(uncompressed)}`);
 
 		return address;
 	}

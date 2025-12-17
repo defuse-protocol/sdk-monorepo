@@ -29,7 +29,10 @@ export class Outlayer {
 
 		const cmd = `echo '${json}' | PROTECTED_SEED=${this.PROTECTED_SEED} ${binary}`;
 		const output = execSync(cmd).toString();
-		const { result } = JSON.parse(output) as TeeResult;
+		const { result, error } = JSON.parse(output) as TeeResult;
+		if (error) {
+			throw new Error(error);
+		}
 
 		return result;
 	}

@@ -8,6 +8,7 @@ import { CommandCode, type ProtocolCode, TeeMessage } from "./data/tee-message";
 
 export type TeeResult = {
 	result: Hex;
+	error: string;
 };
 
 export type TeeInitParameters = {
