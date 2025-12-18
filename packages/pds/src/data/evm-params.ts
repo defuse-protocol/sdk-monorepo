@@ -1,6 +1,5 @@
 import * as secp from "@noble/secp256k1";
 import {
-	bytesToHex,
 	concat,
 	hexToBytes,
 	sha256,
@@ -11,7 +10,7 @@ import {
 	type Hex,
 } from "viem";
 import { HDKey, publicKeyToAddress } from "viem/accounts";
-import * as cbor from "cbor";
+import { encode, decode } from "cbor2";
 import { hexToBip32Path } from "../bip32-ext";
 
 export type EvmPermittedOps = {
@@ -43,10 +42,10 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 		permittedOps: EvmPermittedOps[],
 	) {
 		this.extraData = extraData;
-		this.refundTo = refundTo;
-		this.permittedOps = permittedOps.map((elem) => ({
-			...elem,
-			calldataRegex: elem.calldataRegex.replace("0x", ""),
+		this.refundTo = refundTo.toLowerCase() as Hex;
+		this.permittedOps = permittedOps.map(({ contract, calldataRegex }) => ({
+			contract: contract.toLowerCase() as Hex,
+			calldataRegex: calldataRegex.replace("0x", "").toLowerCase(),
 		}));
 	}
 
@@ -67,6 +66,7 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	}
 
 	hex(): Hex {
+		console.log('hex:')
 		return toHex(this.bytes());
 	}
 
@@ -75,7 +75,7 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	}
 
 	parse(serialized: Hex): EvmCommitmentParameters {
-		const { extraData, refundTo, permittedOps } = cbor.decode(serialized);
+		const { extraData, refundTo, permittedOps } = decode<EvmCommitmentParameters>(serialized);
 
 		return new EvmCommitmentParameters(extraData, refundTo, permittedOps);
 	}
@@ -131,15 +131,15 @@ export class EvmForwardingParameters implements ForwardingParameters {
 
 	payload(): Hex {
 		return toHex(
-			cbor.encode({
+			encode({
 				extraData: this.commitmentParams.extraData,
 				refundTo: this.commitmentParams.refundTo,
 				permittedOps: this.commitmentParams.permittedOps,
 				nonce: this.nonce.toString(),
 				value: this.value.toString(),
-				calldata: this.calldata,
-				contract: this.contract,
-				gasPrice: this.gasPrice.toString(),
+				calldata: this.calldata.toLowerCase(),
+				contract: this.contract.toLowerCase(),
+				gasPrice: this.gasPrice ? this.gasPrice.toString() : null,
 				gasLimit: this.gasLimit.toString(),
 				chainId: this.chainId.toString(),
 			}),

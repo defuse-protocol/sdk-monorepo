@@ -82,7 +82,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(publickey, chainCode);
 			const result = tee.getAddress(commitmentParams);
 
-			const expectedAddress = "0xaBC22Ae492a5E238d53e2eC1ec26A8013698808f";
+			const expectedAddress = "0x9C616D0d0aF5D807FfB7B5d5e37e9a91f2AFD657";
 			expect(result).toEqual(expectedAddress);
 		});
 	});
@@ -113,6 +113,18 @@ describe("TEE abstraction tests", () => {
 			expect(signedTx.gasPrice).toEqual(forwardingParams.gasPrice);
 			expect(signedTx.nonce).toEqual(Number(forwardingParams.nonce));
 		});
+
+		it("Should fail", async () => {
+			const commitmentParams = new EvmCommitmentParameters(extraData, refundTo, permittedOps);
+			const calldata = "0xa9059cbb000000000000000000000000fcdefbfc00f19427862160947486f33fcb519f6f000000000000000000000000000000000000000000000000000000000000014d";
+			const fp = getForwardingParams(commitmentParams, { calldata });
+			const tee = new Tee(publickey, chainCode);
+
+			await expect(tee.getSignedTx(
+				ProtocolCode.EVM,
+				fp,
+			)).rejects.toThrowError("calldata not allowed");
+		})
 
 		it("Should not fail when the transfer amount is different", async () => {
 			const tee = new Tee(publickey, chainCode);

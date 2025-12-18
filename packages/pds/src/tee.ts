@@ -42,7 +42,7 @@ export class Tee {
 			payload: params.payload || "0x",
 		});
 
-		const result = await outlayer.send({ message: message.encode() });
+		const result = await outlayer.send(message.encode());
 
 		if (!result) {
 			throw new Error("Failed to retrieve signed transaction");
@@ -69,7 +69,7 @@ export class Tee {
 		});
 
 		const outlayer = new Outlayer();
-		const result = await outlayer.send({ message: message.encode() });
+		const result = await outlayer.send(message.encode());
 
 		if (!result) {
 			throw new Error("Failed to retrieve signed transaction");
