@@ -41,6 +41,7 @@ function getForwardingParams(
 }
 
 describe("TEE abstraction tests", () => {
+	const treasury = "0x2cff890f0378a11913b6129b2e97417a2c302680";
 	const chainCode =
 		"0x9c90dcfd2d58e76ea7cbb29ee5345f7adbd264c6f5f741c285dd98c43f62358e";
 	const publickey =
@@ -190,5 +191,75 @@ describe("TEE abstraction tests", () => {
 				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
 			).rejects.toThrowError("input contract not allowed");
 		});
+
+		it("Should not allow transfers for the native currency if not explicitly stated in the regex", async () => {
+			{
+				const tee = new Tee(publickey, chainCode);
+				let commitmentParams = new EvmCommitmentParameters(extraData, refundTo, permittedOps);
+
+				const value = 100000n;
+				let forwardingParams = getForwardingParams(commitmentParams, {
+					contract: treasury,
+					value
+				});
+
+				await expect(
+					tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
+				).rejects.toThrowError("input contract not allowed");
+			}
+		})
+
+		it("Should allow transfers for native transfers", async () => {
+			const tee = new Tee(publickey, chainCode);
+			const ops: EvmPermittedOps[] = [{
+				calldataRegex: "^$", // we expect empty calldata
+				contract: treasury,
+			}]
+
+			const value = 100000n;
+			const commitmentParams = new EvmCommitmentParameters(extraData, refundTo, ops);
+			const forwardingParams = getForwardingParams(commitmentParams, {
+				calldata: "0x",
+				contract: treasury,
+				value
+			})
+
+			const result = (await tee.getSignedTx(
+				ProtocolCode.EVM,
+				forwardingParams,
+			)) as TransactionSerialized;
+
+			const signedTx = parseTransaction(result);
+
+			const expectedAddress = tee.getAddress(commitmentParams);
+			const signer = await recoverTransactionAddress({
+				serializedTransaction: result,
+			});
+
+			expect(signer).toEqual(expectedAddress);
+			expect(signedTx.data).toBe(undefined);
+			expect(signedTx.value).toEqual(value);
+		})
+
+		it("Should not allow native transfers to other contracts", async () => {
+			const tee = new Tee(publickey, chainCode);
+
+			const value = 100000n;
+			const ops: EvmPermittedOps[] = [{
+				calldataRegex: "^$", // we expect empty calldata
+				contract: treasury,
+			}]
+			const otherContract = "0xfcdefbfc00f19427862160947486f33fcb519f6f";
+			const commitmentParams = new EvmCommitmentParameters(extraData, refundTo, ops);
+			const forwardingParams = getForwardingParams(commitmentParams, {
+				calldata: "0x",
+				contract: otherContract,
+				value
+			})
+
+			await expect(
+				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
+			).rejects.toThrowError("input contract not allowed");
+		})
 	});
 });
