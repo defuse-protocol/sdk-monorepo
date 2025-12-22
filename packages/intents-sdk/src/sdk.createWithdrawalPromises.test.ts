@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { RouteEnum } from "./constants/route-enum";
+import { WithdrawalFailedError } from "./core/withdrawal-watcher";
 import { noopIntentSigner } from "./intents/intent-signer-impl/intent-signer-noop";
 import type { IntentPrimitive } from "./intents/shared-types";
 import { wait } from "./lib/async";
@@ -113,6 +114,22 @@ describe("sdk.createWithdrawalPromises()", () => {
 		setTimeout(() => controller.abort(), 50);
 
 		await expect(promises[0]).rejects.toThrow();
+	});
+
+	it("rejects individual promise when withdrawal fails", async () => {
+		const { sdk, mockBridge } = setupMocks();
+
+		vi.mocked(mockBridge.describeWithdrawal)
+			.mockResolvedValueOnce({ status: "completed", txHash: "success-hash" })
+			.mockResolvedValueOnce({ status: "failed", reason: "Insufficient funds" });
+
+		const promises = await sdk.createWithdrawalPromises({
+			intentTx: { accountId: "foo.near", hash: "fake-hash" },
+			withdrawalParams: [withdrawalParams, withdrawalParams],
+		});
+
+		await expect(promises[0]).resolves.toEqual({ hash: "success-hash" });
+		await expect(promises[1]).rejects.toThrow(WithdrawalFailedError);
 	});
 
 	it("returns empty array for empty withdrawalParams", async () => {
