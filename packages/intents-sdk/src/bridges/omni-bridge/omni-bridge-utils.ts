@@ -144,10 +144,6 @@ export function poaContractIdToChainKind(contractId: string): ChainKind {
 	throw new Error(`Unsupported Migrated POA token contractId = ${contractId}`);
 }
 
-export function isMigratedPoaToken(nearAddress: string) {
-	return nearAddress === "sol.omft.near";
-}
-
 export function validateOmniToken(nearAddress: string): boolean {
 	// omni bridge function allows testnet tokens, we should not let them pass since we work only with mainnet ones
 	if (nearAddress.endsWith(".testnet")) return false;
