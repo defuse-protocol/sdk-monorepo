@@ -14,6 +14,8 @@ import type {
 } from "../shared-types";
 import { getWithdrawalStatsForChain } from "../constants/withdrawal-timing";
 
+const MAX_CONSECUTIVE_ERRORS = 3;
+
 export async function watchWithdrawal(args: {
 	bridge: Bridge;
 	wid: WithdrawalIdentifier;
@@ -21,6 +23,7 @@ export async function watchWithdrawal(args: {
 	logger?: ILogger;
 }): Promise<TxInfo | TxNoInfo> {
 	const stats = getWithdrawalStatsForChain(args.wid.landingChain);
+	let consecutiveErrors = 0;
 
 	return poll(
 		async () => {
@@ -29,6 +32,8 @@ export async function watchWithdrawal(args: {
 					...args.wid,
 					logger: args.logger,
 				});
+
+				consecutiveErrors = 0;
 
 				if (status.status === "completed") {
 					return status.txHash != null
@@ -46,7 +51,14 @@ export async function watchWithdrawal(args: {
 					throw err;
 				}
 
-				args.logger?.warn(`Transient error while watching withdrawal: ${err}`);
+				consecutiveErrors++;
+				if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+					throw new WithdrawalWatchError(err);
+				}
+
+				args.logger?.warn(
+					`Transient error (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
+				);
 				return POLL_PENDING;
 			}
 		},
@@ -108,5 +120,17 @@ export class WithdrawalFailedError extends BaseError {
 		super(`Withdrawal failed: ${reason}`, {
 			name: "WithdrawalFailedError",
 		});
+	}
+}
+
+export class WithdrawalWatchError extends BaseError {
+	constructor(cause: unknown) {
+		super(
+			`Withdrawal watch failed after ${MAX_CONSECUTIVE_ERRORS} consecutive errors`,
+			{
+				name: "WithdrawalWatchError",
+				cause,
+			},
+		);
 	}
 }
