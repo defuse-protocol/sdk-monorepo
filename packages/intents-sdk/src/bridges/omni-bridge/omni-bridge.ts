@@ -142,7 +142,7 @@ export class OmniBridge implements Bridge {
 		// chain for withdrawal is set.
 		const migratedPoaToken = isMigratedPoaToken(parsed.contractId);
 		const nonValidToken =
-			!migratedPoaToken || validateOmniToken(parsed.contractId) === false;
+			!migratedPoaToken && validateOmniToken(parsed.contractId) === false;
 		if (nonValidToken && omniBridgeSetWithNoChain) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
