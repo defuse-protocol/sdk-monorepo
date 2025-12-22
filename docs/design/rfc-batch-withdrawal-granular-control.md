@@ -43,28 +43,39 @@ Problems:
 - Exit control requires `AbortSignal` only, can't `break`
 - Error handling unclear - throw in callback?
 
-### Waiter objects
+### Array of Promises (chosen approach)
 
 ```typescript
 // After intent submission
-const withdrawals = sdk.createWithdrawalWaiters({ withdrawalParams, intentTx });
-withdrawals[0].result.then(tx => saveUsdc(tx));
-withdrawals[1].result.then(tx => saveBtc(tx));
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+promises[0].then(tx => saveUsdc(tx));
+promises[1].then(tx => saveBtc(tx));
 
 // Or wait for specific one
-const usdcTx = await withdrawals[0].result;
+const usdcTx = await promises[0];
+
+// Or process sequentially with backpressure (AsyncIterator-like)
+const pending = new Map(promises.map((p, i) => [i, p]));
+while (pending.size > 0) {
+  const { index, tx } = await Promise.race(
+    [...pending.entries()].map(async ([i, p]) => ({ index: i, tx: await p }))
+  );
+  pending.delete(index);
+  await processUpdate(index, tx);  // Backpressure maintained!
+}
 ```
 
 Pros:
 - Natural for "fire and forget" patterns
-- Easy to wait for specific withdrawal
+- Easy to wait for specific withdrawal by index
 - Simple mental model - just promises
-- Recovery works: recreate waiters from saved `{ withdrawalParams, intentTx }`
+- Recovery works: recreate promises from saved `{ withdrawalParams, intentTx }`
+- Backpressure achievable via `Promise.race` loop (see example above)
+- Most generic: supports all patterns (parallel, sequential, specific)
 
 Cons:
-- No backpressure - `.then()` handler doesn't block SDK
-- Separate `.catch()` per waiter for error handling
-- Multiple handlers vs single loop
+- Separate `.catch()` per promise for error handling
+- Sequential processing requires more code than AsyncIterator
 
 ### Promise.allSettled wrapper
 
@@ -80,7 +91,7 @@ Problems:
 - Still waits for slowest withdrawal
 - No real-time progress
 
-### AsyncIterator (chosen approach)
+### AsyncIterator
 
 ```typescript
 for await (const update of sdk.watchWithdrawals({ withdrawalParams, intentTx })) {
@@ -94,38 +105,38 @@ Pros:
 - **Backpressure** - SDK waits for your async work
 - **Exit control** - `break` to exit early
 - **Natural error handling** - throw breaks loop
-- **User-driven flow** - not SDK-driven
 - Single loop handles all withdrawals uniformly
 
 Cons:
 - More verbose for simple "fire and forget" cases
-- Must iterate to get specific withdrawal result
+- Cannot easily wait for specific withdrawal by index
+- More complex SDK implementation
+- Less composable - cannot build other patterns on top of it
 
 ### Decision
 
-AsyncIterator chosen because:
-1. Backpressure is critical for reliable distributed systems (see example below)
-2. Unified loop is easier to reason about for recovery logic
-3. Waiter objects can be built on top of AsyncIterator if needed, but not vice versa
+Array of Promises chosen because:
+1. **Most generic** - supports fire-and-forget, specific await, AND sequential processing with backpressure
+2. **Composable** - AsyncIterator CAN be built on top of promises via `Promise.race`, but not vice versa
+3. **Simpler primitive** - easier to understand and implement in SDK
+4. **Flexible** - users choose their own concurrency pattern
 
-**Backpressure example:**
+**Backpressure with Promise.race:**
 
 ```typescript
-// Waiter objects - race condition
-withdrawals[0].result.then(async (tx) => {
-  quoteEntity.destinationTx = tx.hash;
-  await db.save(quoteEntity);  // Save starts
-});
-withdrawals[1].result.then(async (tx) => {
-  quoteEntity.refundTx = tx.hash;
-  await db.save(quoteEntity);  // Concurrent save - may overwrite first
-});
+// Sequential processing with backpressure (same safety as AsyncIterator)
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const pending = new Map(promises.map((p, i) => [i, p]));
 
-// AsyncIterator - safe sequential updates
-for await (const update of sdk.watchWithdrawals({...})) {
-  if (update.index === 0) quoteEntity.destinationTx = update.tx.hash;
-  if (update.index === 1) quoteEntity.refundTx = update.tx.hash;
-  await db.save(quoteEntity);  // SDK waits before yielding next
+while (pending.size > 0) {
+  const { index, tx } = await Promise.race(
+    [...pending.entries()].map(async ([i, p]) => ({ index: i, tx: await p }))
+  );
+  pending.delete(index);
+
+  if (index === 0) quoteEntity.destinationTx = tx.hash;
+  if (index === 1) quoteEntity.refundTx = tx.hash;
+  await db.save(quoteEntity);  // Backpressure: next promise only resolves after this
 }
 ```
 
@@ -139,15 +150,7 @@ type WithdrawalStatus =
   | { status: 'completed'; tx: TxInfo | TxNoInfo }
   | { status: 'failed'; error: Error }
 
-interface WithdrawalUpdate {
-  index: number;
-  params: WithdrawalParams;
-  status: 'pending' | 'completed' | 'failed';
-  tx?: TxInfo | TxNoInfo;   // if completed
-  error?: Error;             // if failed
-}
-
-interface WatchWithdrawalsParams {
+interface CreateWithdrawalPromisesParams {
   withdrawalParams: WithdrawalParams[];
   intentTx: NearTxInfo;
   signal?: AbortSignal;
@@ -163,74 +166,83 @@ interface DescribeWithdrawalsParams {
 ### Methods
 
 ```typescript
-// Low-level: single poll, returns current state
+// Primary: returns array of promises, one per withdrawal
+sdk.createWithdrawalPromises(params: CreateWithdrawalPromisesParams): Array<Promise<TxInfo | TxNoInfo>>
+
+// Low-level: single poll, returns current state (for cron-style usage)
 sdk.describeWithdrawals(params: DescribeWithdrawalsParams): Promise<WithdrawalStatus[]>
 
-// High-level: optimized streaming, yields updates as they happen
-sdk.watchWithdrawals(params: WatchWithdrawalsParams): AsyncIterable<WithdrawalUpdate>
-
-// Legacy: waits for all (unchanged, uses watchWithdrawals internally)
+// Convenience: waits for all (uses createWithdrawalPromises internally)
 sdk.waitForWithdrawalCompletion(params): Promise<(TxInfo | TxNoInfo)[]>
 ```
 
 ## Usage Examples
 
-### Basic usage
+### Fire and forget
 
 ```typescript
-for await (const update of sdk.watchWithdrawals({ withdrawalParams, intentTx })) {
-  if (update.status === 'completed') {
-    await saveSuccess(update.index, update.tx);
-  }
-
-  if (update.status === 'failed') {
-    await saveFailure(update.index, update.error);
-  }
-}
-// Loop exits when all withdrawals are completed or failed
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+promises[0].then(tx => saveUsdc(tx)).catch(err => logError(0, err));
+promises[1].then(tx => saveBtc(tx)).catch(err => logError(1, err));
 ```
 
-### With index tracking
+### Await specific withdrawal
 
 ```typescript
-const destinationIndex = withdrawalParams.length;
-withdrawalParams.push(destinationWithdrawal);
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
 
-const refundIndex = withdrawalParams.length;
-withdrawalParams.push(refundWithdrawal);
+// Wait for USDC (fast chain) immediately
+const usdcTx = await promises[0];
+await notifyUser('USDC received', usdcTx.hash);
 
-for await (const update of sdk.watchWithdrawals({ withdrawalParams, intentTx })) {
-  if (update.status === 'completed') {
-    if (update.index === destinationIndex) {
-      quoteEntity.destinationChainTxHashes.push(update.tx.hash);
-    }
-    if (update.index === refundIndex) {
-      quoteEntity.originChainTxHashes.push(update.tx.hash);
-    }
+// BTC will resolve later, handle separately
+promises[1].then(tx => notifyUser('BTC received', tx.hash));
+```
+
+### Sequential processing with backpressure
+
+```typescript
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const pending = new Map(promises.map((p, i) => [i, p]));
+
+while (pending.size > 0) {
+  const { index, tx } = await Promise.race(
+    [...pending.entries()].map(async ([i, p]) => ({ index: i, tx: await p }))
+  );
+  pending.delete(index);
+  await saveSuccess(index, tx);  // Backpressure: waits before processing next
+}
+```
+
+### Wait for all (parallel)
+
+```typescript
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const results = await Promise.allSettled(promises);
+
+for (const [i, result] of results.entries()) {
+  if (result.status === 'fulfilled') {
+    await saveSuccess(i, result.value);
+  } else {
+    await saveFailure(i, result.reason);
   }
 }
 ```
 
-### With timeout (graceful exit)
+### With timeout
 
 ```typescript
 const controller = new AbortController();
 setTimeout(() => controller.abort(), 25_000);
 
-for await (const update of sdk.watchWithdrawals({
+const promises = sdk.createWithdrawalPromises({
   withdrawalParams,
   intentTx,
   signal: controller.signal
-})) {
-  processUpdate(update);
-}
+});
 
-// Check exit reason
-if (controller.signal.aborted) {
-  // Exited early, save progress for retry
-} else {
-  // All withdrawals done
-}
+// Promises reject with AbortError when signal fires
+const results = await Promise.allSettled(promises);
 ```
 
 ### Recovery after restart
@@ -241,11 +253,18 @@ const { intentTx, withdrawalParams, handledIndexes } = await db.load(quoteId);
 const handled = new Set(handledIndexes);
 
 // Resume - same API, SDK re-checks all withdrawals
-for await (const update of sdk.watchWithdrawals({ withdrawalParams, intentTx })) {
-  if (update.status === 'completed' && !handled.has(update.index)) {
-    await saveSuccess(update.index, update.tx);
-    handled.add(update.index);
+const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+
+for (const [i, promise] of promises.entries()) {
+  if (handled.has(i)) continue;  // Already processed
+
+  try {
+    const tx = await promise;
+    await saveSuccess(i, tx);
+    handled.add(i);
     await db.update(quoteId, { handledIndexes: [...handled] });
+  } catch (err) {
+    await saveFailure(i, err);
   }
 }
 ```
@@ -266,27 +285,27 @@ for (const [i, status] of statuses.entries()) {
 
 ## Behavioral Details
 
-### Yielding
+### Promise resolution
 
-- Yields once per status change (not per poll)
-- First yield is immediate after initial poll
-- Only yields for the withdrawal that changed
+- Each promise resolves independently when its withdrawal completes
+- Promises poll internally with optimized timing per chain
+- A promise only resolves/rejects once (settled state)
 
 ### Error handling
 
 - Network errors: SDK retries internally per withdrawal
-- Exhausted retries: yields `{ status: 'failed', error }` for that withdrawal
+- Exhausted retries: promise rejects with error
 - One withdrawal's failure doesn't affect others
 
 ### Abort signal
 
-- Abort = graceful exit, not throw
-- Loop stops yielding, exits normally
-- User checks `signal.aborted` to distinguish from completion
+- When signal fires, pending promises reject with `AbortError`
+- Already-resolved promises are unaffected
+- Use `Promise.allSettled` to handle partial completion gracefully
 
-### Index calculation
+### Index correspondence
 
-Indexes are per-route internally (for bridge correlation), but exposed as array index to user. SDK handles the mapping transparently.
+Array index of returned promise matches array index of input `withdrawalParams`. SDK handles internal per-route indexing transparently.
 
 ## State Persistence
 
