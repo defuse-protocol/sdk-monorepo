@@ -130,14 +130,14 @@ const MIGRATED_POA_TOKEN_CHAIN_KIND_MAPPING = {
 };
 
 export function poaContractIdToChainKind(contractId: string): ChainKind {
-	for (const [prefix, caip2] of Object.entries(
+	for (const [prefix, chainKind] of Object.entries(
 		MIGRATED_POA_TOKEN_CHAIN_KIND_MAPPING,
 	)) {
 		if (
 			contractId.startsWith(`${prefix}.`) ||
 			contractId.startsWith(`${prefix}-`)
 		) {
-			return caip2;
+			return chainKind;
 		}
 	}
 
