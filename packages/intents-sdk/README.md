@@ -22,7 +22,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Intent Payload Builder](#intent-payload-builder)
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
-        - [Granular Batch Withdrawal Control](#granular-batch-withdrawal-control)
+        - [Waiting for Batch Completion](#waiting-for-batch-completion)
     - [Intent Management](#intent-management)
     - [Nonce Invalidation](#nonce-invalidation)
     - [Configure Withdrawal Routes](#configure-withdrawal-routes)
@@ -551,6 +551,18 @@ const {intentHash} = await sdk.signAndSendWithdrawalIntent({
 
 const intentTx = await sdk.waitForIntentSettlement({intentHash});
 
+// See "Waiting for Batch Completion" below for completion options
+```
+
+#### Waiting for Batch Completion
+
+After the intent settles on NEAR, you need to wait for withdrawals to complete on destination chains. Two approaches are available:
+
+**Option A: Wait for All (`waitForWithdrawalCompletion`)**
+
+Waits for all withdrawals to complete before returning. Simple, but blocks on the slowest withdrawal:
+
+```typescript
 const destinationTxs = await sdk.waitForWithdrawalCompletion({
     withdrawalParams,
     intentTx
@@ -559,9 +571,9 @@ const destinationTxs = await sdk.waitForWithdrawalCompletion({
 console.log('All destination transactions:', destinationTxs);
 ```
 
-#### Granular Batch Withdrawal Control
+**Option B: Independent Promises (`createWithdrawalPromises`)**
 
-For scenarios where you need independent control over each withdrawal in a batch (e.g., USDC to Solana + BTC refund to Bitcoin), use `createWithdrawalPromises` to get an array of promises that resolve independently:
+For scenarios where fast withdrawals (Solana ~2s) shouldn't wait for slow ones (Bitcoin ~1hr), use `createWithdrawalPromises` to get promises that resolve independently:
 
 ```typescript
 // Get array of promises - one per withdrawal
