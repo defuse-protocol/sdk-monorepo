@@ -61,6 +61,8 @@ import {
 	validateOmniToken,
 	getTokenDecimals,
 	isUtxoChain,
+	isMigratedPoaToken,
+	poaContractIdToChainKind,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
@@ -138,7 +140,9 @@ export class OmniBridge implements Bridge {
 		if (nonValidStandard) return false;
 		// Should only allow tokens bridged from other networks unless a specific
 		// chain for withdrawal is set.
-		const nonValidToken = validateOmniToken(parsed.contractId) === false;
+		const migratedPoaToken = isMigratedPoaToken(parsed.contractId);
+		const nonValidToken =
+			!migratedPoaToken || validateOmniToken(parsed.contractId) === false;
 		if (nonValidToken && omniBridgeSetWithNoChain) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
@@ -160,8 +164,10 @@ export class OmniBridge implements Bridge {
 			}
 			caip2Chain = params.routeConfig.chain;
 		} else {
-			// Transfer of an omni token to it's origin chain
-			omniChainKind = parseOriginChain(parsed.contractId);
+			// Transfer of an omni token to it's origin chain or transfer of a poa token
+			omniChainKind = migratedPoaToken
+				? poaContractIdToChainKind(parsed.contractId)
+				: parseOriginChain(parsed.contractId);
 
 			if (omniChainKind === null) {
 				throw new UnsupportedAssetIdError(
@@ -169,6 +175,7 @@ export class OmniBridge implements Bridge {
 					`Withdrawal of ${parsed.contractId} to its origin chain is not supported in Omni Bridge.`,
 				);
 			}
+
 			caip2Chain = chainKindToCaip2(omniChainKind);
 
 			if (caip2Chain === null) {
@@ -206,7 +213,10 @@ export class OmniBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		const omniChainKind = parseOriginChain(parsed.contractId);
+		const migratedPoaToken = isMigratedPoaToken(parsed.contractId);
+		const omniChainKind = migratedPoaToken
+			? poaContractIdToChainKind(parsed.contractId)
+			: parseOriginChain(parsed.contractId);
 		if (omniChainKind === null) return null;
 		const blockchain = chainKindToCaip2(omniChainKind);
 		if (blockchain === null) return null;
@@ -226,7 +236,10 @@ export class OmniBridge implements Bridge {
 			omniChainKind = caip2ToChainKind(routeConfig.chain);
 			blockchain = routeConfig.chain;
 		} else {
-			omniChainKind = parseOriginChain(parsed.contractId);
+			const migratedPoaToken = isMigratedPoaToken(parsed.contractId);
+			omniChainKind = migratedPoaToken
+				? poaContractIdToChainKind(parsed.contractId)
+				: parseOriginChain(parsed.contractId);
 			if (omniChainKind === null) return null;
 			blockchain = chainKindToCaip2(omniChainKind);
 		}

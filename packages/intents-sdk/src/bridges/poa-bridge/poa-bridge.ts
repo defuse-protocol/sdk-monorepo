@@ -29,6 +29,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
+	isIgnoredPoaToken,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import type { Chain } from "../../lib/caip2";
@@ -62,12 +63,14 @@ export class PoaBridge implements Bridge {
 
 		const assetInfo = this.parseAssetId(params.assetId);
 		const isValid = assetInfo != null;
-
 		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
+		}
+		if (assetInfo !== null && isIgnoredPoaToken(assetInfo?.contractId)) {
+			return false;
 		}
 		return isValid;
 	}
