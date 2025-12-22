@@ -8,6 +8,8 @@
  * @param nearAddress - The NEAR token contract ID to check (e.g., "sol.omft.near")
  * @returns True if the token contract ID is eligible for Omni Bridge routing
  */
-export function isMigratedToOmniPoaToken(nearAddress: string): boolean {
+export default function isPoaTokenRoutableThroughOmniBridge(
+	nearAddress: string,
+): boolean {
 	return nearAddress === "sol.omft.near";
 }

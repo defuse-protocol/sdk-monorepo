@@ -23,7 +23,7 @@ import {
 	verifyTransferAmount,
 } from "omni-bridge-sdk";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
-import { isMigratedToOmniPoaToken } from "../../lib/token-matcher";
+import isPoaTokenRoutableThroughOmniBridge from "../../lib/is-poa-token-routable-trough-omni-bridge";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { Chain } from "../../lib/caip2";
@@ -795,7 +795,7 @@ export class OmniBridge implements Bridge {
 	 */
 	private isMigratedToOmniPoaToken(nearAddress: string): boolean {
 		return this.routeMigratedPoaTokensThroughOmniBridge
-			? isMigratedToOmniPoaToken(nearAddress)
+			? isPoaTokenRoutableThroughOmniBridge(nearAddress)
 			: false;
 	}
 }
