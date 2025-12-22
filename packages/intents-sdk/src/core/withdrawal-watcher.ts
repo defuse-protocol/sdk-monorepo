@@ -103,14 +103,6 @@ export class BridgeNotFoundError extends BaseError {
 	}
 }
 
-export class WithdrawalPendingError extends BaseError {
-	constructor() {
-		super("Withdrawal is still pending", {
-			name: "WithdrawalPendingError",
-		});
-	}
-}
-
 export class WithdrawalFailedError extends BaseError {
 	constructor(reason: string) {
 		super(`Withdrawal failed: ${reason}`, {
