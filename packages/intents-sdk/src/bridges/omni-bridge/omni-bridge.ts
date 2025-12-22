@@ -175,7 +175,6 @@ export class OmniBridge implements Bridge {
 					`Withdrawal of ${parsed.contractId} to its origin chain is not supported in Omni Bridge.`,
 				);
 			}
-
 			caip2Chain = chainKindToCaip2(omniChainKind);
 
 			if (caip2Chain === null) {
