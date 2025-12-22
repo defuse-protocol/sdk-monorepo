@@ -72,6 +72,7 @@ export class PoaBridge implements Bridge {
 
 		const assetInfo = this.parseAssetId(params.assetId);
 		const isValid = assetInfo != null;
+
 		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
@@ -79,7 +80,8 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
-		// Dont support tokens migrated to omni bridge unless explicitly configured to use PoA bridge
+		// When the feature flag is enabled, delegate eligible tokens to Omni Bridge
+		// unless the user explicitly specified PoA Bridge via routeConfig
 		if (
 			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
