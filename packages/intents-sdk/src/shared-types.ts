@@ -190,6 +190,10 @@ export interface IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<Array<TxInfo | TxNoInfo>>;
 
+	createWithdrawalPromises(
+		params: CreateWithdrawalPromisesParams,
+	): Promise<Array<Promise<TxInfo | TxNoInfo>>>;
+
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
@@ -227,6 +231,20 @@ export interface TxInfo {
 
 export interface TxNoInfo {
 	hash: null;
+}
+
+export interface CreateWithdrawalPromisesParams {
+	withdrawalParams: WithdrawalParams[];
+	intentTx: NearTxInfo;
+	signal?: AbortSignal;
+	/**
+	 * Retry options for polling withdrawal completion.
+	 * - undefined: uses chain-specific defaults (recommended)
+	 * - single RetryOptions: applies to all withdrawals
+	 * - RetryOptions[]: per-withdrawal options (must match withdrawalParams length)
+	 */
+	retryOptions?: RetryOptions | RetryOptions[];
+	logger?: ILogger;
 }
 
 export interface WithdrawalParams {

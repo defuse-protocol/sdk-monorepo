@@ -47,6 +47,7 @@ import {
 import type {
 	BatchWithdrawalResult,
 	Bridge,
+	CreateWithdrawalPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
 	IntentPublishResult,
@@ -415,23 +416,15 @@ export class IntentsSDK implements IIntentsSDK {
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const wids = await createWithdrawalIdentifiers({
-			bridges: this.bridges,
+		const promises = await this.createWithdrawalPromises({
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
+			signal: args.signal,
+			retryOptions: args.retryOptions,
+			logger: args.logger,
 		});
 
-		const result = await Promise.all(
-			wids.map(({ bridge, wid }) =>
-				watchWithdrawal({
-					bridge,
-					wid,
-					signal: args.signal,
-					retryOptions: args.retryOptions,
-					logger: args.logger,
-				}),
-			),
-		);
+		const result = await Promise.all(promises);
 
 		if (Array.isArray(args.withdrawalParams)) {
 			return result;
@@ -440,6 +433,41 @@ export class IntentsSDK implements IIntentsSDK {
 		assert(result.length === 1, "Unexpected result length");
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		return result[0]!;
+	}
+
+	public async createWithdrawalPromises(
+		params: CreateWithdrawalPromisesParams,
+	): Promise<Array<Promise<TxInfo | TxNoInfo>>> {
+		const { withdrawalParams, intentTx, signal, retryOptions, logger } = params;
+
+		if (
+			Array.isArray(retryOptions) &&
+			retryOptions.length !== withdrawalParams.length
+		) {
+			throw new Error(
+				`retryOptions array length (${retryOptions.length}) must match withdrawalParams length (${withdrawalParams.length})`,
+			);
+		}
+
+		const wids = await createWithdrawalIdentifiers({
+			bridges: this.bridges,
+			withdrawalParams,
+			intentTx,
+		});
+
+		return wids.map(({ bridge, wid }, index) => {
+			const withdrawalRetryOptions = Array.isArray(retryOptions)
+				? retryOptions[index]
+				: retryOptions;
+
+			return watchWithdrawal({
+				bridge,
+				wid,
+				signal,
+				retryOptions: withdrawalRetryOptions,
+				logger,
+			});
+		});
 	}
 
 	public parseAssetId(assetId: string): ParsedAssetInfo {
