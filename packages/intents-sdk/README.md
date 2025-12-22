@@ -22,7 +22,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Intent Payload Builder](#intent-payload-builder)
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
-        - [Waiting for Batch Completion](#waiting-for-batch-completion)
+    - [Waiting for Batch Completion](#waiting-for-batch-completion)
     - [Intent Management](#intent-management)
     - [Nonce Invalidation](#nonce-invalidation)
     - [Configure Withdrawal Routes](#configure-withdrawal-routes)
