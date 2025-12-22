@@ -39,6 +39,7 @@ import { validateAddress } from "../../lib/validateAddress";
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected env: NearIntentsEnv;
+	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -46,8 +47,16 @@ export class PoaBridge implements Bridge {
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
 
-	constructor({ env }: { env: NearIntentsEnv }) {
+	constructor({
+		env,
+		routeMigratedPoaTokensThroughOmniBridge,
+	}: {
+		env: NearIntentsEnv;
+		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+	}) {
 		this.env = env;
+		this.routeMigratedPoaTokensThroughOmniBridge =
+			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
 
 	private is(routeConfig: RouteConfig) {
@@ -70,8 +79,9 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
-		// Skip tokens migrated to omni bridge unless explicitly configured to use POA bridge
+		// Dont support tokens migrated to omni bridge unless explicitly configured to use PoA bridge
 		if (
+			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
 			isMigratedToOmniPoaToken(assetInfo.contractId) &&
 			params.routeConfig === undefined
