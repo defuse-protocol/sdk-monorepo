@@ -411,6 +411,17 @@ export interface WithdrawalIdentifier {
 	tx: NearTxInfo;
 }
 
+/**
+ * Represents the current state of a withdrawal as returned by bridge adapters.
+ *
+ * Error handling follows AWS SDK "describe" API patterns:
+ * - **Thrown errors**: Infrastructure failures (network, auth, service unavailable).
+ *   Meaning: "I couldn't check the status."
+ * - **`failed` status**: Job-level failure reported by the bridge.
+ *   Meaning: "I checked, and the withdrawal failed."
+ *
+ * @see https://docs.aws.amazon.com/AmazonS3/latest/userguide/batch-ops-job-status.html
+ */
 export type WithdrawalStatus =
 	| { status: "pending" }
 	| { status: "completed"; txHash: string | null }

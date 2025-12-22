@@ -217,6 +217,11 @@ export class AuroraEngineBridge implements Bridge {
 		};
 	}
 
+	/**
+	 * Polls the bridge for current withdrawal status.
+	 *
+	 * @see {@link WithdrawalStatus} for error handling semantics (AWS-style).
+	 */
 	async describeWithdrawal(): Promise<WithdrawalStatus> {
 		return { status: "completed", txHash: null };
 	}

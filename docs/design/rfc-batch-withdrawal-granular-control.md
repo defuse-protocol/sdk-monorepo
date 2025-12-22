@@ -145,21 +145,11 @@ while (pending.size > 0) {
 ### Types
 
 ```typescript
-type WithdrawalStatus =
-  | { status: 'pending' }
-  | { status: 'completed'; tx: TxInfo | TxNoInfo }
-  | { status: 'failed'; error: Error }
-
 interface CreateWithdrawalPromisesParams {
   withdrawalParams: WithdrawalParams[];
   intentTx: NearTxInfo;
   signal?: AbortSignal;
   retryOptions?: RetryOptions[];  // per-withdrawal
-}
-
-interface DescribeWithdrawalsParams {
-  withdrawalParams: WithdrawalParams[];
-  intentTx: NearTxInfo;
 }
 ```
 
@@ -168,9 +158,6 @@ interface DescribeWithdrawalsParams {
 ```typescript
 // Primary: returns array of promises, one per withdrawal
 sdk.createWithdrawalPromises(params: CreateWithdrawalPromisesParams): Array<Promise<TxInfo | TxNoInfo>>
-
-// Low-level: single poll, returns current state (for cron-style usage)
-sdk.describeWithdrawals(params: DescribeWithdrawalsParams): Promise<WithdrawalStatus[]>
 
 // Convenience: waits for all (uses createWithdrawalPromises internally)
 sdk.waitForWithdrawalCompletion(params): Promise<(TxInfo | TxNoInfo)[]>
@@ -267,20 +254,6 @@ for (const [i, promise] of promises.entries()) {
     await saveFailure(i, err);
   }
 }
-```
-
-### Single poll (cron job style)
-
-```typescript
-const statuses = await sdk.describeWithdrawals({ withdrawalParams, intentTx });
-
-for (const [i, status] of statuses.entries()) {
-  if (status.status === 'completed' && !handled.has(i)) {
-    await processComplete(i, status.tx);
-    handled.add(i);
-  }
-}
-// Exit immediately, run again next cron tick
 ```
 
 ## Behavioral Details
