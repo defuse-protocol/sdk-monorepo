@@ -62,16 +62,15 @@ export class PoaBridge implements Bridge {
 		}
 
 		const assetInfo = this.parseAssetId(params.assetId);
-		const isValid = assetInfo != null;
+		const isValid =
+			assetInfo != null && !isIgnoredPoaToken(assetInfo?.contractId);
 		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
-		if (assetInfo !== null && isIgnoredPoaToken(assetInfo?.contractId)) {
-			return false;
-		}
+
 		return isValid;
 	}
 
