@@ -69,6 +69,7 @@ export class PoaBridge implements Bridge {
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
+
 		// Skip tokens migrated to omni bridge unless explicitly configured to use POA bridge
 		if (
 			assetInfo != null &&
