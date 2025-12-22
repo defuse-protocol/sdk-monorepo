@@ -23,6 +23,7 @@ import {
 	verifyTransferAmount,
 } from "omni-bridge-sdk";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
+import { isMigratedToOmniPoaToken } from "../../lib/token-matcher";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { Chain } from "../../lib/caip2";
@@ -61,7 +62,6 @@ import {
 	validateOmniToken,
 	getTokenDecimals,
 	isUtxoChain,
-	isMigratedPoaToken,
 	poaContractIdToChainKind,
 } from "./omni-bridge-utils";
 import { LRUCache } from "lru-cache";
@@ -145,7 +145,7 @@ export class OmniBridge implements Bridge {
 		if (nonValidStandard) return false;
 		// Should only allow tokens bridged from other networks unless a specific
 		// chain for withdrawal is set or token is PoA bridge token that must be routed via Omni Bridge.
-		const migratedPoaToken = this.isMigratedPoaToken(parsed.contractId);
+		const migratedPoaToken = this.isMigratedToOmniPoaToken(parsed.contractId);
 		const nonValidToken =
 			!migratedPoaToken && validateOmniToken(parsed.contractId) === false;
 		if (nonValidToken && omniBridgeSetWithNoChain) {
@@ -217,7 +217,7 @@ export class OmniBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		const omniChainKind = this.isMigratedPoaToken(parsed.contractId)
+		const omniChainKind = this.isMigratedToOmniPoaToken(parsed.contractId)
 			? poaContractIdToChainKind(parsed.contractId)
 			: parseOriginChain(parsed.contractId);
 		if (omniChainKind === null) return null;
@@ -239,7 +239,7 @@ export class OmniBridge implements Bridge {
 			omniChainKind = caip2ToChainKind(routeConfig.chain);
 			blockchain = routeConfig.chain;
 		} else {
-			omniChainKind = this.isMigratedPoaToken(parsed.contractId)
+			omniChainKind = this.isMigratedToOmniPoaToken(parsed.contractId)
 				? poaContractIdToChainKind(parsed.contractId)
 				: parseOriginChain(parsed.contractId);
 			if (omniChainKind === null) return null;
@@ -793,9 +793,9 @@ export class OmniBridge implements Bridge {
 	/**
 	 * Checks if token is a PoA token that need to be routed via Omni
 	 */
-	private isMigratedPoaToken(nearAddress: string): boolean {
+	private isMigratedToOmniPoaToken(nearAddress: string): boolean {
 		return this.routeMigratedPoaTokensThroughOmniBridge
-			? isMigratedPoaToken(nearAddress)
+			? isMigratedToOmniPoaToken(nearAddress)
 			: false;
 	}
 }

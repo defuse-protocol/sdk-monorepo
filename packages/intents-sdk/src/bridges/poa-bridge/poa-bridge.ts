@@ -29,12 +29,12 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
-	isMigratedToOmniPoaToken,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
+import { isMigratedToOmniPoaToken } from "../../lib/token-matcher";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
