@@ -3,9 +3,19 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
+import { RouteEnum } from "../../constants/route-enum";
 import { createVirtualChainRoute } from "../../lib/route-config-factory";
 import { AuroraEngineBridge } from "./aurora-engine-bridge";
+import {
+	MIN_GAS_AMOUNT,
+	MIN_GAS_AMOUNT_NON_STANDARD_DECIMALS,
+} from "./aurora-engine-bridge-constants";
+import {
+	createWithdrawIntentPrimitive,
+	withdrawalParamsInvariant,
+} from "./aurora-engine-bridge-utils";
 import { zeroAddress } from "viem";
+import { Chains } from "../../lib/caip2";
 
 describe("AuroraEngineBridge", () => {
 	describe("supports()", () => {
@@ -109,5 +119,105 @@ describe("AuroraEngineBridge", () => {
 				}),
 			).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 		});
+	});
+});
+
+describe("createWithdrawIntentPrimitive", () => {
+	it("creates intent without proxy token (standard case)", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: "nep141:wrap.near",
+			auroraEngineContractId: "aurora",
+			proxyTokenContractId: null,
+			destinationAddress: zeroAddress,
+			amount: 1000n,
+			storageDeposit: 0n,
+		});
+
+		expect(result).toEqual({
+			intent: "ft_withdraw",
+			token: "wrap.near",
+			receiver_id: "aurora",
+			amount: "1000",
+			msg: zeroAddress.slice(2).toLowerCase(),
+			storage_deposit: undefined,
+			min_gas: MIN_GAS_AMOUNT,
+		});
+	});
+
+	it("creates intent with proxy token (non-standard decimals)", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: "nep141:wrap.near",
+			auroraEngineContractId: "aurora",
+			proxyTokenContractId: "proxy.near",
+			destinationAddress: zeroAddress,
+			amount: 1000n,
+			storageDeposit: 0n,
+		});
+
+		expect(result).toEqual({
+			intent: "ft_withdraw",
+			token: "wrap.near",
+			receiver_id: "proxy.near",
+			amount: "1000",
+			msg: `aurora:${zeroAddress.slice(2).toLowerCase()}`,
+			storage_deposit: undefined,
+			min_gas: MIN_GAS_AMOUNT_NON_STANDARD_DECIMALS,
+		});
+	});
+
+	it("includes storage_deposit when positive", () => {
+		const result = createWithdrawIntentPrimitive({
+			assetId: "nep141:wrap.near",
+			auroraEngineContractId: "aurora",
+			proxyTokenContractId: null,
+			destinationAddress: zeroAddress,
+			amount: 1000n,
+			storageDeposit: 12500000000000000000000n,
+		});
+
+		expect(result.storage_deposit).toBe("12500000000000000000000");
+	});
+
+	it("throws for non NEP-141 assets", () => {
+		expect(() =>
+			createWithdrawIntentPrimitive({
+				assetId: "nep245:token.near:1",
+				auroraEngineContractId: "aurora",
+				proxyTokenContractId: null,
+				destinationAddress: zeroAddress,
+				amount: 1000n,
+				storageDeposit: 0n,
+			}),
+		).toThrow("Only NEP-141 is supported");
+	});
+});
+
+describe("withdrawalParamsInvariant", () => {
+	it("passes with valid VirtualChain routeConfig", () => {
+		const params = {
+			routeConfig: createVirtualChainRoute("aurora", null),
+		};
+
+		expect(() => withdrawalParamsInvariant(params)).not.toThrow();
+	});
+
+	it("throws when routeConfig is null", () => {
+		const params = { routeConfig: null } as unknown as Parameters<
+			typeof withdrawalParamsInvariant
+		>[0];
+
+		expect(() => withdrawalParamsInvariant(params)).toThrow(
+			"Bridge config is required",
+		);
+	});
+
+	it("throws when routeConfig is not VirtualChain", () => {
+		const params = {
+			routeConfig: { route: RouteEnum.PoaBridge, chain: Chains.TON },
+		};
+
+		expect(() => withdrawalParamsInvariant(params)).toThrow(
+			"Bridge is not aurora_engine",
+		);
 	});
 });

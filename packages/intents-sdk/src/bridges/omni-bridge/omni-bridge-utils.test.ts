@@ -1,15 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+	caip2ToChainKind,
+	chainKindToCaip2,
+	createWithdrawIntentsPrimitive,
 	getBridgedToken,
 	getAccountOmniStorageBalance,
 	getTokenDecimals,
+	isUtxoChain,
 	validateOmniToken,
 } from "./omni-bridge-utils";
 import {
+	assert,
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
 import { ChainKind, omniAddress } from "omni-bridge-sdk";
+import { Chains } from "../../lib/caip2";
+import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 
 describe("validateOmniToken()", () => {
 	it("valid omni bridge token ids", () => {
@@ -162,5 +169,163 @@ describe("getTokenDecimals()", () => {
 				),
 			),
 		).resolves.toBeNull();
+	});
+
+	it("throws for NEAR addresses", async () => {
+		const nearProvider = nearFailoverRpcProvider({
+			urls: PUBLIC_NEAR_RPC_URLS,
+		});
+
+		await expect(
+			getTokenDecimals(nearProvider, "near:token.near"),
+		).rejects.toThrow("Token decimals cannot be queried using NEAR addresses");
+	});
+});
+
+describe("caip2ToChainKind()", () => {
+	it("maps Ethereum to Eth", () => {
+		expect(caip2ToChainKind(Chains.Ethereum)).toBe(ChainKind.Eth);
+	});
+
+	it("maps Solana to Sol", () => {
+		expect(caip2ToChainKind(Chains.Solana)).toBe(ChainKind.Sol);
+	});
+
+	it("maps Bitcoin to Btc", () => {
+		expect(caip2ToChainKind(Chains.Bitcoin)).toBe(ChainKind.Btc);
+	});
+
+	it("returns null for unsupported chain", () => {
+		expect(caip2ToChainKind(Chains.TON)).toBeNull();
+	});
+});
+
+describe("chainKindToCaip2()", () => {
+	it("maps Eth to Ethereum", () => {
+		expect(chainKindToCaip2(ChainKind.Eth)).toBe(Chains.Ethereum);
+	});
+
+	it("maps Sol to Solana", () => {
+		expect(chainKindToCaip2(ChainKind.Sol)).toBe(Chains.Solana);
+	});
+
+	it("returns null for unsupported ChainKind", () => {
+		expect(chainKindToCaip2(ChainKind.Near)).toBeNull();
+	});
+});
+
+describe("isUtxoChain()", () => {
+	it("returns true for Bitcoin", () => {
+		expect(isUtxoChain(ChainKind.Btc)).toBe(true);
+	});
+
+	it("returns false for Ethereum", () => {
+		expect(isUtxoChain(ChainKind.Eth)).toBe(false);
+	});
+
+	it("returns false for Solana", () => {
+		expect(isUtxoChain(ChainKind.Sol)).toBe(false);
+	});
+});
+
+describe("createWithdrawIntentsPrimitive()", () => {
+	it("creates intent for EVM chain without native fee", () => {
+		const result = createWithdrawIntentsPrimitive({
+			assetId: "nep141:eth.bridge.near",
+			destinationAddress: "0x1234567890123456789012345678901234567890",
+			amount: 1000n,
+			nativeFee: 0n,
+			storageDepositAmount: 0n,
+			omniChainKind: ChainKind.Eth,
+			intentsContract: "intents.near",
+			utxoMaxGasFee: null,
+		});
+
+		expect(result).toHaveLength(1);
+		expect(result[0]).toMatchObject({
+			intent: "ft_withdraw",
+			token: "eth.bridge.near",
+			receiver_id: OMNI_BRIDGE_CONTRACT,
+			amount: "1000",
+		});
+	});
+
+	it("includes storage_deposit intent when nativeFee > 0", () => {
+		const result = createWithdrawIntentsPrimitive({
+			assetId: "nep141:eth.bridge.near",
+			destinationAddress: "0x1234567890123456789012345678901234567890",
+			amount: 1000n,
+			nativeFee: 500n,
+			storageDepositAmount: 0n,
+			omniChainKind: ChainKind.Eth,
+			intentsContract: "intents.near",
+			utxoMaxGasFee: null,
+		});
+
+		expect(result).toHaveLength(2);
+		expect(result[0]).toMatchObject({
+			intent: "storage_deposit",
+			amount: "500",
+			contract_id: OMNI_BRIDGE_CONTRACT,
+		});
+		expect(result[1]).toMatchObject({
+			intent: "ft_withdraw",
+		});
+	});
+
+	it("includes maxGasFee for Bitcoin withdrawals", () => {
+		const result = createWithdrawIntentsPrimitive({
+			assetId: "nep141:btc.bridge.near",
+			destinationAddress: "bc1qtest",
+			amount: 1000n,
+			nativeFee: 0n,
+			storageDepositAmount: 0n,
+			omniChainKind: ChainKind.Btc,
+			intentsContract: "intents.near",
+			utxoMaxGasFee: 100n,
+		});
+
+		expect(result).toHaveLength(1);
+
+		const ftWithdraw = result[0];
+		expect(ftWithdraw).toHaveProperty("intent", "ft_withdraw");
+
+		assert(ftWithdraw != null && ftWithdraw.intent === "ft_withdraw"); // typeguard
+		assert(typeof ftWithdraw.msg === "string"); // typeguard
+
+		expect(JSON.parse(ftWithdraw.msg)).toHaveProperty(
+			"msg",
+			'{"MaxGasFee":"100"}',
+		);
+	});
+
+	it("throws for Bitcoin without utxoMaxGasFee", () => {
+		expect(() =>
+			createWithdrawIntentsPrimitive({
+				assetId: "nep141:btc.bridge.near",
+				destinationAddress: "bc1qtest",
+				amount: 1000n,
+				nativeFee: 0n,
+				storageDepositAmount: 0n,
+				omniChainKind: ChainKind.Btc,
+				intentsContract: "intents.near",
+				utxoMaxGasFee: null,
+			}),
+		).toThrow("Invalid utxo max gas fee");
+	});
+
+	it("throws for non NEP-141 assets", () => {
+		expect(() =>
+			createWithdrawIntentsPrimitive({
+				assetId: "nep245:token.near:1",
+				destinationAddress: "0x1234567890123456789012345678901234567890",
+				amount: 1000n,
+				nativeFee: 0n,
+				storageDepositAmount: 0n,
+				omniChainKind: ChainKind.Eth,
+				intentsContract: "intents.near",
+				utxoMaxGasFee: null,
+			}),
+		).toThrow("Only NEP-141 is supported");
 	});
 });

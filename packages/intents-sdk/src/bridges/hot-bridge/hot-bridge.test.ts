@@ -5,7 +5,11 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { HotBridge as HotOmniSdk } from "@hot-labs/omni-sdk";
-import { createHotBridgeRoute } from "../../lib/route-config-factory";
+import {
+	createHotBridgeRoute,
+	createPoaBridgeRoute,
+} from "../../lib/route-config-factory";
+import { HotWithdrawStatus } from "./hot-bridge-constants";
 import { Chains } from "../../lib/caip2";
 import { zeroAddress } from "viem";
 import { PUBLIC_NEAR_RPC_URLS } from "@defuse-protocol/internal-utils";
@@ -21,7 +25,6 @@ import { HotBridgeEVMChains } from "./hot-bridge-chains";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { RouteEnum } from "../../constants/route-enum";
 import type { FeeEstimation } from "../../shared-types";
-
 describe("HotBridge", () => {
 	describe("supports()", () => {
 		it.each([
@@ -111,6 +114,24 @@ describe("HotBridge", () => {
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
 		);
+
+		it("returns false when routeConfig is for different bridge", async () => {
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: new HotOmniSdk({
+					async executeNearTransaction() {
+						throw new Error("not implemented");
+					},
+				}),
+			});
+
+			const result = await bridge.supports({
+				assetId: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",
+				routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+			});
+
+			expect(result).toBe(false);
+		});
 	});
 
 	describe("validateWithdrawal()", () => {
@@ -315,6 +336,118 @@ describe("HotBridge", () => {
 				"HOT Bridge incorrect destination tx hash detected",
 				{ value: "invalid_tx_hash" },
 			);
+		});
+
+		it("returns failed status when withdrawal is canceled", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				HotWithdrawStatus.Canceled,
+			);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "", accountId: "" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({
+				status: "failed",
+				reason: "Withdrawal was cancelled",
+			});
+		});
+
+		it("returns completed status with null txHash when status is Completed", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				HotWithdrawStatus.Completed,
+			);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "", accountId: "" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "completed", txHash: null });
+		});
+
+		it("returns pending status when status is Pending", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				env: "production",
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "", accountId: "" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "pending" });
 		});
 	});
 

@@ -5,13 +5,16 @@ import {
 	utils,
 } from "@defuse-protocol/internal-utils";
 import { RouteEnum } from "../../constants/route-enum";
-import type { IntentPrimitive } from "../../intents/shared-types";
 import type { WithdrawalParams } from "../../shared-types";
 import {
 	MIN_GAS_AMOUNT,
 	NEAR_NATIVE_ASSET_ID,
 } from "./direct-bridge-constants";
 import { providers } from "near-api-js";
+import type {
+	IntentFtWithdraw,
+	IntentNativeWithdraw,
+} from "@defuse-protocol/contract-types";
 
 export function createWithdrawIntentPrimitive(params: {
 	assetId: string;
@@ -20,7 +23,7 @@ export function createWithdrawIntentPrimitive(params: {
 	storageDeposit: bigint;
 	msg: string | undefined;
 	logger?: ILogger;
-}): IntentPrimitive {
+}): IntentFtWithdraw | IntentNativeWithdraw {
 	if (
 		params.assetId === NEAR_NATIVE_ASSET_ID &&
 		// Ensure `msg` is not passed, because `native_withdraw` intent doesn't support `msg`
