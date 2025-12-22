@@ -29,7 +29,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
-	isIgnoredPoaToken,
+	isMigratedToOmniPoaToken,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import type { Chain } from "../../lib/caip2";
@@ -62,13 +62,20 @@ export class PoaBridge implements Bridge {
 		}
 
 		const assetInfo = this.parseAssetId(params.assetId);
-		const isValid =
-			assetInfo != null && !isIgnoredPoaToken(assetInfo?.contractId);
+		const isValid = assetInfo != null;
 		if (!isValid && params.routeConfig != null) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				"`assetId` does not match `routeConfig`.",
 			);
+		}
+		// Skip tokens migrated to omni bridge unless explicitly configured to use POA bridge
+		if (
+			assetInfo != null &&
+			isMigratedToOmniPoaToken(assetInfo.contractId) &&
+			params.routeConfig === undefined
+		) {
+			return false;
 		}
 
 		return isValid;

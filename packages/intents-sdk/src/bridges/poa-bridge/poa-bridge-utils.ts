@@ -114,6 +114,6 @@ export function contractIdToCaip2(contractId: string): Chain {
 	throw new Error(`Unsupported POA Bridge contractId = ${contractId}`);
 }
 
-export function isIgnoredPoaToken(nearAddress: string) {
+export function isMigratedToOmniPoaToken(nearAddress: string) {
 	return nearAddress === "sol.omft.near";
 }
