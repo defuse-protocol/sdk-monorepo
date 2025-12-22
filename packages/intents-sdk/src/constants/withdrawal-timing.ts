@@ -1,10 +1,11 @@
+import type { CompletionStats } from "@defuse-protocol/internal-utils";
 import type { Chain } from "../lib/caip2";
 
 /**
  * Withdrawal timing p99 values (in seconds) by CAIP-2 chain identifier.
- * Used to calculate chain-aware retry timeouts.
+ * Used to derive CompletionStats for chain-aware polling.
  */
-export const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
+const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
 	"eip155:1": 1852, // eth
 	"eip155:56": 36, // bsc
 	"solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp": 1387, // solana
@@ -29,3 +30,35 @@ export const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
 	"aptos:mainnet": 394, // aptos
 	"cip34:1-764824073": 807, // cardano
 };
+
+/**
+ * Default stats for chains without timing data.
+ * Conservative 2-hour timeout with gradual phase transitions.
+ */
+const DEFAULT_WITHDRAWAL_STATS: CompletionStats = {
+	p50: 60_000, // 1 minute
+	p90: 600_000, // 10 minutes
+	p99: 7_200_000, // 2 hours
+};
+
+/**
+ * Returns CompletionStats for the given chain.
+ * Derives p50/p90 from p99 using reasonable ratios with minimum floors.
+ */
+export function getWithdrawalStatsForChain(caip2: Chain): CompletionStats {
+	const p99Seconds = WITHDRAWAL_P99_BY_CHAIN[caip2];
+
+	if (p99Seconds == null) {
+		return DEFAULT_WITHDRAWAL_STATS;
+	}
+
+	const p99 = p99Seconds * 1000;
+
+	// Derive p50/p90 from p99 with minimum floors
+	// p50: 15% of p99, minimum 5s - aggressive polling phase
+	// p90: 50% of p99, minimum 30s - moderate polling phase
+	const p50 = Math.max(5_000, p99 * 0.15);
+	const p90 = Math.max(30_000, p99 * 0.5);
+
+	return { p50, p90, p99 };
+}

@@ -93,11 +93,6 @@ export class IntentsBridge implements Bridge {
 		};
 	}
 
-	/**
-	 * Polls the bridge for current withdrawal status.
-	 *
-	 * @see {@link WithdrawalStatus} for error handling semantics (AWS-style).
-	 */
 	async describeWithdrawal(
 		args: WithdrawalIdentifier,
 	): Promise<WithdrawalStatus> {

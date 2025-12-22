@@ -3,8 +3,6 @@ import {
 	type ILogger,
 	type NearIntentsEnv,
 	PUBLIC_NEAR_RPC_URLS,
-	RETRY_CONFIGS,
-	type RetryOptions,
 	configsByEnvironment,
 	nearFailoverRpcProvider,
 	solverRelay,
@@ -393,7 +391,6 @@ export class IntentsSDK implements IIntentsSDK {
 		withdrawalParams: WithdrawalParams;
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo>;
 
@@ -401,7 +398,6 @@ export class IntentsSDK implements IIntentsSDK {
 		withdrawalParams: WithdrawalParams[];
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<Array<TxInfo | TxNoInfo>>;
 
@@ -409,7 +405,6 @@ export class IntentsSDK implements IIntentsSDK {
 		withdrawalParams: WithdrawalParams | WithdrawalParams[];
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<(TxInfo | TxNoInfo) | Array<TxInfo | TxNoInfo>> {
 		const withdrawalParamsArray = Array.isArray(args.withdrawalParams)
@@ -420,7 +415,6 @@ export class IntentsSDK implements IIntentsSDK {
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 			signal: args.signal,
-			retryOptions: args.retryOptions,
 			logger: args.logger,
 		});
 
@@ -438,16 +432,7 @@ export class IntentsSDK implements IIntentsSDK {
 	public async createWithdrawalPromises(
 		params: CreateWithdrawalPromisesParams,
 	): Promise<Array<Promise<TxInfo | TxNoInfo>>> {
-		const { withdrawalParams, intentTx, signal, retryOptions, logger } = params;
-
-		if (
-			Array.isArray(retryOptions) &&
-			retryOptions.length !== withdrawalParams.length
-		) {
-			throw new Error(
-				`retryOptions array length (${retryOptions.length}) must match withdrawalParams length (${withdrawalParams.length})`,
-			);
-		}
+		const { withdrawalParams, intentTx, signal, logger } = params;
 
 		const wids = await createWithdrawalIdentifiers({
 			bridges: this.bridges,
@@ -455,19 +440,14 @@ export class IntentsSDK implements IIntentsSDK {
 			intentTx,
 		});
 
-		return wids.map(({ bridge, wid }, index) => {
-			const withdrawalRetryOptions = Array.isArray(retryOptions)
-				? retryOptions[index]
-				: retryOptions;
-
-			return watchWithdrawal({
+		return wids.map(({ bridge, wid }) =>
+			watchWithdrawal({
 				bridge,
 				wid,
 				signal,
-				retryOptions: withdrawalRetryOptions,
 				logger,
-			});
-		});
+			}),
+		);
 	}
 
 	public parseAssetId(assetId: string): ParsedAssetInfo {
@@ -671,7 +651,6 @@ export class IntentsSDK implements IIntentsSDK {
 		const destinationTx = await this.waitForWithdrawalCompletion({
 			withdrawalParams,
 			intentTx,
-			retryOptions: args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY,
 			logger: args.logger,
 		});
 

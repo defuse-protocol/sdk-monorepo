@@ -1,8 +1,8 @@
-import { retry } from "@lifeomic/attempt";
 import {
 	BaseError,
 	type ILogger,
-	type RetryOptions,
+	poll,
+	POLL_PENDING,
 } from "@defuse-protocol/internal-utils";
 import type {
 	Bridge,
@@ -12,57 +12,45 @@ import type {
 	WithdrawalIdentifier,
 	WithdrawalParams,
 } from "../shared-types";
-import { getRetryOptionsForChain } from "./chain-retry";
+import { getWithdrawalStatsForChain } from "../constants/withdrawal-timing";
 
 export async function watchWithdrawal(args: {
 	bridge: Bridge;
 	wid: WithdrawalIdentifier;
 	signal?: AbortSignal;
-	retryOptions?: RetryOptions;
 	logger?: ILogger;
 }): Promise<TxInfo | TxNoInfo> {
-	const retryOpts =
-		args.retryOptions ?? getRetryOptionsForChain(args.wid.landingChain);
+	const stats = getWithdrawalStatsForChain(args.wid.landingChain);
 
-	return retry(
+	return poll(
 		async () => {
-			args.signal?.throwIfAborted();
+			try {
+				const status = await args.bridge.describeWithdrawal({
+					...args.wid,
+					logger: args.logger,
+				});
 
-			const status = await args.bridge.describeWithdrawal({
-				...args.wid,
-				logger: args.logger,
-			});
-
-			if (status.status === "completed") {
-				return status.txHash != null ? { hash: status.txHash } : { hash: null };
-			}
-
-			if (status.status === "failed") {
-				throw new WithdrawalFailedError(status.reason);
-			}
-
-			throw new WithdrawalPendingError();
-		},
-		{
-			...retryOpts,
-			handleError: (err: unknown, ctx) => {
-				if (args.signal?.aborted && err === args.signal?.reason) {
-					ctx.abort();
-					return;
+				if (status.status === "completed") {
+					return status.txHash != null
+						? { hash: status.txHash }
+						: { hash: null };
 				}
 
+				if (status.status === "failed") {
+					throw new WithdrawalFailedError(status.reason);
+				}
+
+				return POLL_PENDING;
+			} catch (err: unknown) {
 				if (err instanceof WithdrawalFailedError) {
-					ctx.abort();
-					return;
+					throw err;
 				}
 
-				if (!(err instanceof WithdrawalPendingError)) {
-					args.logger?.warn(
-						`Transient error while watching withdrawal: ${err}`,
-					);
-				}
-			},
+				args.logger?.warn(`Transient error while watching withdrawal: ${err}`);
+				return POLL_PENDING;
+			}
 		},
+		{ stats, signal: args.signal },
 	);
 }
 

@@ -1,8 +1,4 @@
-import type {
-	ILogger,
-	RetryOptions,
-	solverRelay,
-} from "@defuse-protocol/internal-utils";
+import type { ILogger, solverRelay } from "@defuse-protocol/internal-utils";
 import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
 import { RouteEnum, type RouteEnumValues } from "./constants/route-enum";
@@ -129,7 +125,6 @@ export type ProcessWithdrawalArgs<
 		signedIntents?: SignedIntentsComposition;
 	};
 	referral?: string;
-	retryOptions?: RetryOptions;
 	logger?: ILogger;
 };
 
@@ -178,7 +173,6 @@ export interface IIntentsSDK {
 		withdrawalParams: WithdrawalParams;
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo>;
 
@@ -186,7 +180,6 @@ export interface IIntentsSDK {
 		withdrawalParams: WithdrawalParams[];
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<Array<TxInfo | TxNoInfo>>;
 
@@ -237,13 +230,6 @@ export interface CreateWithdrawalPromisesParams {
 	withdrawalParams: WithdrawalParams[];
 	intentTx: NearTxInfo;
 	signal?: AbortSignal;
-	/**
-	 * Retry options for polling withdrawal completion.
-	 * - undefined: uses chain-specific defaults (recommended)
-	 * - single RetryOptions: applies to all withdrawals
-	 * - RetryOptions[]: per-withdrawal options (must match withdrawalParams length)
-	 */
-	retryOptions?: RetryOptions | RetryOptions[];
 	logger?: ILogger;
 }
 

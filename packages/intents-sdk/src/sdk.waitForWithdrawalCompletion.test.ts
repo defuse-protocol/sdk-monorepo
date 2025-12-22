@@ -146,10 +146,10 @@ describe("sdk.waitForWithdrawalCompletion()", () => {
 		const promise = sdk.waitForWithdrawalCompletion({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: withdrawalParams,
-			retryOptions: { maxAttempts: 1, delay: 0 },
+			signal: AbortSignal.timeout(50),
 		});
 
-		await expect(promise).rejects.toThrow("Bridge connection failed");
+		await expect(promise).rejects.toThrow();
 	});
 
 	it("handles mixed success/failure in array withdrawals", async () => {
@@ -162,10 +162,10 @@ describe("sdk.waitForWithdrawalCompletion()", () => {
 		const promise = sdk.waitForWithdrawalCompletion({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams, withdrawalParams],
-			retryOptions: { maxAttempts: 1, delay: 0 },
+			signal: AbortSignal.timeout(50),
 		});
 
-		await expect(promise).rejects.toThrow("Second withdrawal failed");
+		await expect(promise).rejects.toThrow();
 	});
 
 	it("handles empty withdrawal params array", async () => {

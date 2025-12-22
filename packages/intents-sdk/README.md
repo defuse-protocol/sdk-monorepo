@@ -22,6 +22,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Intent Payload Builder](#intent-payload-builder)
     - [Intent Publishing Hooks](#intent-publishing-hooks)
     - [Batch Withdrawals](#batch-withdrawals)
+        - [Granular Batch Withdrawal Control](#granular-batch-withdrawal-control)
     - [Intent Management](#intent-management)
     - [Nonce Invalidation](#nonce-invalidation)
     - [Configure Withdrawal Routes](#configure-withdrawal-routes)
@@ -557,6 +558,62 @@ const destinationTxs = await sdk.waitForWithdrawalCompletion({
 
 console.log('All destination transactions:', destinationTxs);
 ```
+
+#### Granular Batch Withdrawal Control
+
+For scenarios where you need independent control over each withdrawal in a batch (e.g., USDC to Solana + BTC refund to Bitcoin), use `createWithdrawalPromises` to get an array of promises that resolve independently:
+
+```typescript
+// Get array of promises - one per withdrawal
+const promises = await sdk.createWithdrawalPromises({
+    withdrawalParams,
+    intentTx
+});
+
+// Fire and forget - handle each independently
+promises[0].then(tx => saveUsdc(tx)).catch(err => logError(0, err));
+promises[1].then(tx => saveBtc(tx)).catch(err => logError(1, err));
+
+// Or await a specific withdrawal (fast chain first)
+const usdcTx = await promises[0];
+await notifyUser('USDC received', usdcTx.hash);
+
+// Or process as they complete with backpressure
+const pending = new Map(promises.map((p, i) => [i, p]));
+while (pending.size > 0) {
+    const { index, tx } = await Promise.race(
+        [...pending.entries()].map(async ([i, p]) => ({ index: i, tx: await p }))
+    );
+    pending.delete(index);
+    await saveSuccess(index, tx);  // Backpressure maintained
+}
+
+// Or wait for all with independent error handling
+const results = await Promise.allSettled(promises);
+for (const [i, result] of results.entries()) {
+    if (result.status === 'fulfilled') {
+        await saveSuccess(i, result.value);
+    } else {
+        await saveFailure(i, result.reason);
+    }
+}
+```
+
+**With timeout control:**
+
+```typescript
+const promises = await sdk.createWithdrawalPromises({
+    withdrawalParams,
+    intentTx,
+    signal: AbortSignal.timeout(30_000)  // 30 second timeout
+});
+```
+
+**Key benefits:**
+- Fast withdrawals (Solana ~2s) aren't blocked by slow ones (Bitcoin ~1hr)
+- One failure doesn't affect other withdrawals
+- Recovery-friendly: recreate promises from saved `{ withdrawalParams, intentTx }`
+- Index correspondence: `promises[i]` corresponds to `withdrawalParams[i]`
 
 ### Intent Management
 

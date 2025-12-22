@@ -95,59 +95,6 @@ describe("sdk.createWithdrawalPromises()", () => {
 		expect(results[1]).toEqual({ hash: "second-hash" });
 	});
 
-	it("applies single retryOptions to all withdrawals", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal).mockResolvedValue({
-			status: "completed",
-			txHash: "hash",
-		});
-
-		const promises = await sdk.createWithdrawalPromises({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: [withdrawalParams, withdrawalParams],
-			retryOptions: { maxAttempts: 5, delay: 100 },
-		});
-
-		await Promise.all(promises);
-		expect(mockBridge.describeWithdrawal).toHaveBeenCalledTimes(2);
-	});
-
-	it("applies per-withdrawal retryOptions from array", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal).mockResolvedValue({
-			status: "completed",
-			txHash: "hash",
-		});
-
-		const promises = await sdk.createWithdrawalPromises({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: [withdrawalParams, withdrawalParams],
-			retryOptions: [
-				{ maxAttempts: 3, delay: 50 },
-				{ maxAttempts: 5, delay: 100 },
-			],
-		});
-
-		await Promise.all(promises);
-		expect(mockBridge.describeWithdrawal).toHaveBeenCalledTimes(2);
-	});
-
-	it("throws when retryOptions array length mismatches withdrawalParams", async () => {
-		const { sdk } = setupMocks();
-
-		await expect(
-			sdk.createWithdrawalPromises({
-				intentTx: { accountId: "foo.near", hash: "fake-hash" },
-				withdrawalParams: [withdrawalParams, withdrawalParams],
-				retryOptions: [{ maxAttempts: 1 }],
-			}),
-		).rejects.toThrow(
-			"retryOptions array length (1) must match withdrawalParams length (2)",
-		);
-	});
-
 	it("aborts pending promises when signal fires", async () => {
 		const { sdk, mockBridge } = setupMocks();
 
@@ -161,7 +108,6 @@ describe("sdk.createWithdrawalPromises()", () => {
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams],
 			signal: controller.signal,
-			retryOptions: { maxAttempts: 100, delay: 10 },
 		});
 
 		setTimeout(() => controller.abort(), 50);

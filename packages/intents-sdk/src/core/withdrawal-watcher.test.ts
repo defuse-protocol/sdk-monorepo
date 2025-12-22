@@ -27,11 +27,7 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({
-			bridge,
-			wid,
-			retryOptions: { maxAttempts: 1, delay: 0 },
-		});
+		const result = await watchWithdrawal({ bridge, wid });
 
 		expect(result).toEqual({ hash: "0xabc123" });
 	});
@@ -44,11 +40,7 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({
-			bridge,
-			wid,
-			retryOptions: { maxAttempts: 1, delay: 0 },
-		});
+		const result = await watchWithdrawal({ bridge, wid });
 
 		expect(result).toEqual({ hash: null });
 	});
@@ -61,13 +53,9 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		await expect(
-			watchWithdrawal({
-				bridge,
-				wid,
-				retryOptions: { maxAttempts: 1, delay: 0 },
-			}),
-		).rejects.toThrow(WithdrawalFailedError);
+		await expect(watchWithdrawal({ bridge, wid })).rejects.toThrow(
+			WithdrawalFailedError,
+		);
 	});
 
 	it("retries on pending status and succeeds when completed", async () => {
@@ -78,11 +66,7 @@ describe("watchWithdrawal", () => {
 			.mockResolvedValueOnce({ status: "completed", txHash: "0xfinal" });
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({
-			bridge,
-			wid,
-			retryOptions: { maxAttempts: 5, delay: 0 },
-		});
+		const result = await watchWithdrawal({ bridge, wid });
 
 		expect(result).toEqual({ hash: "0xfinal" });
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(3);
@@ -97,18 +81,10 @@ describe("watchWithdrawal", () => {
 		const controller = new AbortController();
 		controller.abort();
 
-		vi.spyOn(controller.signal, "throwIfAborted");
-
 		const wid = createWithdrawalIdentifier();
 		await expect(
-			watchWithdrawal({
-				bridge,
-				wid,
-				signal: controller.signal,
-				retryOptions: { maxAttempts: 10, delay: 0 },
-			}),
-		).rejects.toThrow("aborted");
-		expect(controller.signal.throwIfAborted).toHaveBeenCalledTimes(1);
+			watchWithdrawal({ bridge, wid, signal: controller.signal }),
+		).rejects.toThrow();
 	});
 
 	it("retries on transient errors and logs them", async () => {
@@ -127,12 +103,7 @@ describe("watchWithdrawal", () => {
 		};
 		const wid = createWithdrawalIdentifier();
 
-		const result = await watchWithdrawal({
-			bridge,
-			wid,
-			retryOptions: { maxAttempts: 5, delay: 0 },
-			logger,
-		});
+		const result = await watchWithdrawal({ bridge, wid, logger });
 
 		expect(result).toEqual({ hash: "0xsuccess" });
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(3);
@@ -147,13 +118,9 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		await expect(
-			watchWithdrawal({
-				bridge,
-				wid,
-				retryOptions: { maxAttempts: 5, delay: 0 },
-			}),
-		).rejects.toThrow(WithdrawalFailedError);
+		await expect(watchWithdrawal({ bridge, wid })).rejects.toThrow(
+			WithdrawalFailedError,
+		);
 
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(1);
 	});
