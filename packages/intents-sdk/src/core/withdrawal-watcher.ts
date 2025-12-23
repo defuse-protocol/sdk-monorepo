@@ -1,8 +1,9 @@
-import { retry } from "@lifeomic/attempt";
 import {
 	BaseError,
 	type ILogger,
-	type RetryOptions,
+	poll,
+	POLL_PENDING,
+	PollTimeoutError,
 } from "@defuse-protocol/internal-utils";
 import type {
 	Bridge,
@@ -12,58 +13,65 @@ import type {
 	WithdrawalIdentifier,
 	WithdrawalParams,
 } from "../shared-types";
-import { getRetryOptionsForChain } from "./chain-retry";
+import { getWithdrawalStatsForChain } from "../constants/withdrawal-timing";
+
+const MAX_CONSECUTIVE_ERRORS = 3;
 
 export async function watchWithdrawal(args: {
 	bridge: Bridge;
 	wid: WithdrawalIdentifier;
 	signal?: AbortSignal;
-	retryOptions?: RetryOptions;
 	logger?: ILogger;
 }): Promise<TxInfo | TxNoInfo> {
-	const retryOpts =
-		args.retryOptions ?? getRetryOptionsForChain(args.wid.landingChain);
+	const stats = getWithdrawalStatsForChain(args.wid.landingChain);
+	let consecutiveErrors = 0;
 
-	return retry(
-		async () => {
-			args.signal?.throwIfAborted();
+	try {
+		return await poll(
+			async () => {
+				try {
+					const status = await args.bridge.describeWithdrawal({
+						...args.wid,
+						logger: args.logger,
+					});
 
-			const status = await args.bridge.describeWithdrawal({
-				...args.wid,
-				logger: args.logger,
-			});
+					consecutiveErrors = 0;
 
-			if (status.status === "completed") {
-				return status.txHash != null ? { hash: status.txHash } : { hash: null };
-			}
+					if (status.status === "completed") {
+						return status.txHash != null
+							? { hash: status.txHash }
+							: { hash: null };
+					}
 
-			if (status.status === "failed") {
-				throw new WithdrawalFailedError(status.reason);
-			}
+					if (status.status === "failed") {
+						throw new WithdrawalFailedError(status.reason);
+					}
 
-			throw new WithdrawalPendingError();
-		},
-		{
-			...retryOpts,
-			handleError: (err: unknown, ctx) => {
-				if (args.signal?.aborted && err === args.signal?.reason) {
-					ctx.abort();
-					return;
-				}
+					return POLL_PENDING;
+				} catch (err: unknown) {
+					if (err instanceof WithdrawalFailedError) {
+						throw err;
+					}
 
-				if (err instanceof WithdrawalFailedError) {
-					ctx.abort();
-					return;
-				}
+					consecutiveErrors++;
+					if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+						throw new WithdrawalWatchError(err);
+					}
 
-				if (!(err instanceof WithdrawalPendingError)) {
 					args.logger?.warn(
-						`Transient error while watching withdrawal: ${err}`,
+						`Transient error (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
 					);
+					return POLL_PENDING;
 				}
 			},
-		},
-	);
+			{ stats, signal: args.signal },
+		);
+	} catch (err: unknown) {
+		if (err instanceof PollTimeoutError) {
+			throw new WithdrawalWatchError(err);
+		}
+		throw err;
+	}
 }
 
 export async function createWithdrawalIdentifiers(args: {
@@ -115,18 +123,27 @@ export class BridgeNotFoundError extends BaseError {
 	}
 }
 
-export class WithdrawalPendingError extends BaseError {
-	constructor() {
-		super("Withdrawal is still pending", {
-			name: "WithdrawalPendingError",
-		});
-	}
-}
+export type WithdrawalFailedErrorType = WithdrawalFailedError & {
+	name: "WithdrawalFailedError";
+};
 
 export class WithdrawalFailedError extends BaseError {
 	constructor(reason: string) {
 		super(`Withdrawal failed: ${reason}`, {
 			name: "WithdrawalFailedError",
+		});
+	}
+}
+
+export type WithdrawalWatchErrorType = WithdrawalWatchError & {
+	name: "WithdrawalWatchError";
+};
+
+export class WithdrawalWatchError extends BaseError {
+	constructor(cause: unknown) {
+		super("Withdrawal watch failed", {
+			name: "WithdrawalWatchError",
+			cause,
 		});
 	}
 }

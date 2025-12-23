@@ -9,26 +9,27 @@ interacting with various bridge implementations across multiple blockchains.
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [Core Functionalities](#core-functionalities)
-    - [Core Concepts](#core-concepts)
-    - [Intent Execution](#intent-execution)
-    - [Deposits](#deposits)
-    - [Withdrawals](#withdrawals)
-        - [Routes and Bridges](#routes-and-bridges)
-        - [Route Types](#route-types)
-        - [Fee Estimation](#fee-estimation)
+  - [Core Concepts](#core-concepts)
+  - [Intent Execution](#intent-execution)
+  - [Deposits](#deposits)
+  - [Withdrawals](#withdrawals)
+    - [Routes and Bridges](#routes-and-bridges)
+    - [Route Types](#route-types)
+    - [Fee Estimation](#fee-estimation)
 - [Advanced Usage](#advanced-usage)
-    - [Custom RPC URLs](#custom-rpc-urls)
-    - [Other Intent Signers](#other-intent-signers)
-    - [Intent Payload Builder](#intent-payload-builder)
-    - [Intent Publishing Hooks](#intent-publishing-hooks)
-    - [Batch Withdrawals](#batch-withdrawals)
-    - [Intent Management](#intent-management)
-    - [Nonce Invalidation](#nonce-invalidation)
-    - [Configure Withdrawal Routes](#configure-withdrawal-routes)
-    - [Asset Information Parsing](#asset-information-parsing)
-    - [Waiting for Completion](#waiting-for-completion)
-    - [Error Handling](#error-handling)
-    - [Atomic Multi-Intent Publishing](#atomic-multi-intent-publishing)
+  - [Custom RPC URLs](#custom-rpc-urls)
+  - [Other Intent Signers](#other-intent-signers)
+  - [Intent Payload Builder](#intent-payload-builder)
+  - [Intent Publishing Hooks](#intent-publishing-hooks)
+  - [Batch Withdrawals](#batch-withdrawals)
+  - [Waiting for Batch Completion](#waiting-for-batch-completion)
+  - [Intent Management](#intent-management)
+  - [Nonce Invalidation](#nonce-invalidation)
+  - [Configure Withdrawal Routes](#configure-withdrawal-routes)
+  - [Asset Information Parsing](#asset-information-parsing)
+  - [Waiting for Completion](#waiting-for-completion)
+  - [Error Handling](#error-handling)
+  - [Atomic Multi-Intent Publishing](#atomic-multi-intent-publishing)
 - [Supported Networks](#supported-networks)
 - [Development](#development)
 
@@ -550,13 +551,86 @@ const {intentHash} = await sdk.signAndSendWithdrawalIntent({
 
 const intentTx = await sdk.waitForIntentSettlement({intentHash});
 
+// See "Waiting for Batch Completion" below for completion options
+```
+
+#### Waiting for Batch Completion
+
+After the intent settles on NEAR, you need to wait for withdrawals to complete on destination chains. Two approaches are available:
+
+**Option A: Wait for All (`waitForWithdrawalCompletion`)**
+
+Waits for all withdrawals to complete before returning. Simple, but blocks on the slowest withdrawal.
+
+> **Note:** Waits until completion or chain-specific p99 timeout (throws `PollTimeoutError`). Use `AbortSignal.timeout()` to set a shorter timeout.
+
+```typescript
 const destinationTxs = await sdk.waitForWithdrawalCompletion({
     withdrawalParams,
-    intentTx
+    intentTx,
+    signal: AbortSignal.timeout(10 * 60 * 1000), // 10 minute timeout
 });
 
 console.log('All destination transactions:', destinationTxs);
 ```
+
+**Option B: Independent Promises (`createWithdrawalCompletionPromises`)**
+
+For scenarios where fast withdrawals (Solana ~2s) shouldn't wait for slow ones (Bitcoin ~1hr), use `createWithdrawalCompletionPromises` to get promises that resolve independently:
+
+```typescript
+// Get array of promises - one per withdrawal
+const promises = sdk.createWithdrawalCompletionPromises({
+    withdrawalParams,
+    intentTx
+});
+
+// Fire and forget - handle each independently
+promises[0].then(tx => saveUsdc(tx)).catch(err => logError(0, err));
+promises[1].then(tx => saveBtc(tx)).catch(err => logError(1, err));
+
+// Or await a specific withdrawal (fast chain first)
+const usdcTx = await promises[0];
+await notifyUser('USDC received', usdcTx.hash);
+
+// Or process as they complete with backpressure
+const pending = new Map(promises.map((p, i) => [i, p]));
+while (pending.size > 0) {
+    const { index, tx } = await Promise.race(
+        [...pending.entries()].map(async ([i, p]) => ({ index: i, tx: await p }))
+    );
+    pending.delete(index);
+    await saveSuccess(index, tx);  // Backpressure maintained
+}
+
+// Or wait for all with independent error handling
+const results = await Promise.allSettled(promises);
+for (const [i, result] of results.entries()) {
+    if (result.status === 'fulfilled') {
+        await saveSuccess(i, result.value);
+    } else {
+        await saveFailure(i, result.reason);
+    }
+}
+```
+
+**With timeout control:**
+
+```typescript
+const promises = sdk.createWithdrawalCompletionPromises({
+    withdrawalParams,
+    intentTx,
+    signal: AbortSignal.timeout(30_000)  // 30 second timeout
+});
+```
+
+**Key benefits:**
+- Fast withdrawals (Solana ~2s) aren't blocked by slow ones (Bitcoin ~1hr)
+- One failure doesn't affect other withdrawals
+- Recovery-friendly: recreate promises from saved `{ withdrawalParams, intentTx }`
+- Index correspondence: `promises[i]` corresponds to `withdrawalParams[i]`
+
+> **Note:** Both methods wait until completion or chain-specific p99 timeout (throws `PollTimeoutError`). Use `AbortSignal.timeout()` for a shorter timeout.
 
 ### Intent Management
 
@@ -707,6 +781,7 @@ const intentTx = await sdk.waitForIntentSettlement({intentHash});
 console.log('Intent settled:', intentTx.hash);
 
 // Wait for withdrawal completion on destination chain
+// Note: Has chain-specific p99 timeout - use signal for a shorter timeout
 const completionResult = await sdk.waitForWithdrawalCompletion({
     withdrawalParams: {
         assetId: 'nep141:usdt.tether-token.near',
@@ -714,7 +789,8 @@ const completionResult = await sdk.waitForWithdrawalCompletion({
         destinationAddress: '0x742d35Cc...',
         feeInclusive: false
     },
-    intentTx
+    intentTx,
+    signal: AbortSignal.timeout(10 * 60 * 1000), // 10 minute timeout
 });
 
 if ('hash' in completionResult) {

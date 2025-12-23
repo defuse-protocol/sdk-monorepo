@@ -3,8 +3,6 @@ import {
 	type ILogger,
 	type NearIntentsEnv,
 	PUBLIC_NEAR_RPC_URLS,
-	RETRY_CONFIGS,
-	type RetryOptions,
 	configsByEnvironment,
 	nearFailoverRpcProvider,
 	solverRelay,
@@ -47,6 +45,7 @@ import {
 import type {
 	BatchWithdrawalResult,
 	Bridge,
+	CreateWithdrawalCompletionPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
 	IntentPublishResult,
@@ -388,11 +387,36 @@ export class IntentsSDK implements IIntentsSDK {
 		);
 	}
 
+	/**
+	 * Wait for withdrawal(s) to complete on the destination chain.
+	 *
+	 * **Important:** Waits until the withdrawal completes, fails, or the chain-specific
+	 * p99 timeout is exceeded. Use `AbortSignal.timeout()` to set a shorter timeout budget.
+	 *
+	 * @throws {WithdrawalWatchError} When status polling fails (timeout or consecutive errors).
+	 *   Inspect `error.cause` to determine the reason.
+	 * @throws {WithdrawalFailedError} When the withdrawal fails on the destination chain.
+	 * @throws {DOMException} When the provided AbortSignal is aborted (name: "AbortError").
+	 *
+	 * @param args.withdrawalParams - Single withdrawal or array of withdrawals
+	 * @param args.intentTx - The NEAR transaction info from the published intent
+	 * @param args.signal - Optional AbortSignal for cancellation/timeout
+	 * @param args.logger - Optional logger for debugging
+	 *
+	 * @example
+	 * ```typescript
+	 * // With timeout
+	 * const result = await sdk.waitForWithdrawalCompletion({
+	 *   withdrawalParams,
+	 *   intentTx,
+	 *   signal: AbortSignal.timeout(5 * 60 * 1000), // 5 minute timeout
+	 * });
+	 * ```
+	 */
 	public waitForWithdrawalCompletion(args: {
 		withdrawalParams: WithdrawalParams;
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<TxInfo | TxNoInfo>;
 
@@ -400,7 +424,6 @@ export class IntentsSDK implements IIntentsSDK {
 		withdrawalParams: WithdrawalParams[];
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<Array<TxInfo | TxNoInfo>>;
 
@@ -408,30 +431,20 @@ export class IntentsSDK implements IIntentsSDK {
 		withdrawalParams: WithdrawalParams | WithdrawalParams[];
 		intentTx: NearTxInfo;
 		signal?: AbortSignal;
-		retryOptions?: RetryOptions;
 		logger?: ILogger;
 	}): Promise<(TxInfo | TxNoInfo) | Array<TxInfo | TxNoInfo>> {
 		const withdrawalParamsArray = Array.isArray(args.withdrawalParams)
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const wids = await createWithdrawalIdentifiers({
-			bridges: this.bridges,
+		const promises = this.createWithdrawalCompletionPromises({
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
+			signal: args.signal,
+			logger: args.logger,
 		});
 
-		const result = await Promise.all(
-			wids.map(({ bridge, wid }) =>
-				watchWithdrawal({
-					bridge,
-					wid,
-					signal: args.signal,
-					retryOptions: args.retryOptions,
-					logger: args.logger,
-				}),
-			),
-		);
+		const result = await Promise.all(promises);
 
 		if (Array.isArray(args.withdrawalParams)) {
 			return result;
@@ -440,6 +453,64 @@ export class IntentsSDK implements IIntentsSDK {
 		assert(result.length === 1, "Unexpected result length");
 		// biome-ignore lint/style/noNonNullAssertion: <explanation>
 		return result[0]!;
+	}
+
+	/**
+	 * Create promises that resolve when each withdrawal completes on the destination chain.
+	 * Use this for granular control over handling individual withdrawals as they complete,
+	 * rather than waiting for all to finish.
+	 *
+	 * **Important:** Each promise waits until the withdrawal completes, fails, or the
+	 * chain-specific p99 timeout is exceeded. Use `AbortSignal.timeout()` to set a
+	 * shorter timeout budget.
+	 *
+	 * @throws {WithdrawalWatchError} When status polling fails (timeout or consecutive errors).
+	 *   Inspect `error.cause` to determine the reason.
+	 * @throws {WithdrawalFailedError} When the withdrawal fails on the destination chain.
+	 * @throws {DOMException} When the provided AbortSignal is aborted (name: "AbortError").
+	 *
+	 * @param params.withdrawalParams - Array of withdrawal parameters
+	 * @param params.intentTx - The NEAR transaction info from the published intent
+	 * @param params.signal - Optional AbortSignal for cancellation/timeout
+	 * @param params.logger - Optional logger for debugging
+	 * @returns Array of promises, one per withdrawal, that resolve with transaction info
+	 *
+	 * @example
+	 * ```typescript
+	 * const promises = sdk.createWithdrawalCompletionPromises({
+	 *   withdrawalParams: [withdrawal1, withdrawal2],
+	 *   intentTx,
+	 *   signal: AbortSignal.timeout(5 * 60 * 1000), // 5 minute timeout
+	 * });
+	 *
+	 * // Handle each withdrawal as it completes
+	 * for (const promise of promises) {
+	 *   promise.then((result) => console.log('Withdrawal completed:', result));
+	 * }
+	 * ```
+	 */
+	public createWithdrawalCompletionPromises(
+		params: CreateWithdrawalCompletionPromisesParams,
+	): Array<Promise<TxInfo | TxNoInfo>> {
+		const { withdrawalParams, intentTx, signal, logger } = params;
+
+		const widsPromise = createWithdrawalIdentifiers({
+			bridges: this.bridges,
+			withdrawalParams,
+			intentTx,
+		});
+
+		return withdrawalParams.map(async (_, index) => {
+			const wids = await widsPromise;
+			const entry = wids[index];
+			assert(entry != null, `Missing wid for index ${index}`);
+			return watchWithdrawal({
+				bridge: entry.bridge,
+				wid: entry.wid,
+				signal,
+				logger,
+			});
+		});
 	}
 
 	public parseAssetId(assetId: string): ParsedAssetInfo {
@@ -643,7 +714,6 @@ export class IntentsSDK implements IIntentsSDK {
 		const destinationTx = await this.waitForWithdrawalCompletion({
 			withdrawalParams,
 			intentTx,
-			retryOptions: args.retryOptions ?? RETRY_CONFIGS.FIVE_MINS_STEADY,
 			logger: args.logger,
 		});
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { BridgeNameEnum } from "./constants/bridge-name-enum";
 import { RouteEnum } from "./constants/route-enum";
+import { WithdrawalFailedError } from "./core/withdrawal-watcher";
 import { noopIntentSigner } from "./intents/intent-signer-impl/intent-signer-noop";
 import type { IntentPrimitive } from "./intents/shared-types";
 import { wait } from "./lib/async";
@@ -15,7 +15,7 @@ import type {
 	WithdrawalStatus,
 } from "./shared-types";
 
-describe("sdk.waitForWithdrawalCompletion()", () => {
+describe("sdk.createWithdrawalCompletionPromises()", () => {
 	const withdrawalParams = {
 		assetId: "nep141:wrap.near",
 		amount: 5n,
@@ -24,127 +24,126 @@ describe("sdk.waitForWithdrawalCompletion()", () => {
 		routeConfig: createInternalTransferRoute(),
 	};
 
-	it("supports single withdrawal", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal).mockResolvedValueOnce({
-			status: "completed",
-			txHash: "fake-dest-hash",
-		});
-
-		const result = sdk.waitForWithdrawalCompletion({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: withdrawalParams,
-		});
-
-		await expect(result).resolves.toEqual({ hash: "fake-dest-hash" });
-	});
-
-	it("supports multiple withdrawals (preserving tx info order)", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal)
-			.mockImplementationOnce(() =>
-				wait(300).then(() => ({
-					status: "completed" as const,
-					txHash: "fake-dest-hash-1",
-				})),
-			)
-			.mockResolvedValueOnce({
-				status: "completed",
-				txHash: "fake-dest-hash-2",
-			});
-
-		const result = sdk.waitForWithdrawalCompletion({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: [withdrawalParams, withdrawalParams],
-		});
-
-		await expect(result).resolves.toEqual([
-			{ hash: "fake-dest-hash-1" },
-			{ hash: "fake-dest-hash-2" },
-		]);
-		expect(mockBridge.describeWithdrawal).toHaveBeenCalledTimes(2);
-	});
-
-	it("determines withdrawal routes if not passed", async () => {
+	it("returns array of promises matching input length", async () => {
 		const { sdk, mockBridge } = setupMocks();
 
 		vi.mocked(mockBridge.describeWithdrawal).mockResolvedValue({
 			status: "completed",
-			txHash: "fake-dest-hash",
-		});
-		vi.mocked(mockBridge.parseAssetId).mockReturnValue({
-			blockchain: Chains.Near,
-			bridgeName: BridgeNameEnum.None,
-			standard: "nep141",
-			contractId: "",
-			address: "",
+			txHash: "fake-hash",
 		});
 
-		await sdk.waitForWithdrawalCompletion({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: [
-				withdrawalParams,
-				{
-					...withdrawalParams,
-					routeConfig: undefined,
-				},
-			],
-		});
-
-		expect(mockBridge.describeWithdrawal).toHaveBeenCalledTimes(2);
-	});
-
-	it("maintains indexes specific to bridge route", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal).mockResolvedValue({
-			status: "completed",
-			txHash: "fake-dest-hash",
-		});
-
-		await sdk.waitForWithdrawalCompletion({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams, withdrawalParams, withdrawalParams],
 		});
 
-		expect(mockBridge.describeWithdrawal).toHaveBeenNthCalledWith(
-			1,
-			expect.objectContaining({ index: 0 }),
-		);
-		expect(mockBridge.describeWithdrawal).toHaveBeenNthCalledWith(
-			2,
-			expect.objectContaining({ index: 1 }),
-		);
-		expect(mockBridge.describeWithdrawal).toHaveBeenNthCalledWith(
-			3,
-			expect.objectContaining({ index: 2 }),
-		);
+		expect(promises).toHaveLength(3);
+		expect(promises[0]).toBeInstanceOf(Promise);
+		expect(promises[1]).toBeInstanceOf(Promise);
+		expect(promises[2]).toBeInstanceOf(Promise);
 	});
 
-	it("throws error when no bridge supports the route", async () => {
+	it("each promise resolves independently", async () => {
 		const { sdk, mockBridge } = setupMocks();
 
-		vi.spyOn(mockBridge, "supports").mockResolvedValue(false);
+		vi.mocked(mockBridge.describeWithdrawal)
+			.mockImplementationOnce(() =>
+				wait(100).then(() => ({
+					status: "completed" as const,
+					txHash: "slow-hash",
+				})),
+			)
+			.mockResolvedValueOnce({
+				status: "completed",
+				txHash: "fast-hash",
+			});
 
-		const promise = sdk.waitForWithdrawalCompletion({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: withdrawalParams,
+			withdrawalParams: [withdrawalParams, withdrawalParams],
 		});
 
-		await expect(promise).rejects.toThrow("Bridge adapter not found");
+		const second = await promises[1];
+		expect(second).toEqual({ hash: "fast-hash" });
+
+		const first = await promises[0];
+		expect(first).toEqual({ hash: "slow-hash" });
 	});
 
-	it("handles empty withdrawal params array", async () => {
+	it("maintains index correspondence when completions are out of order", async () => {
+		const { sdk, mockBridge } = setupMocks();
+
+		vi.mocked(mockBridge.describeWithdrawal)
+			.mockImplementationOnce(() =>
+				wait(50).then(() => ({
+					status: "completed" as const,
+					txHash: "first-hash",
+				})),
+			)
+			.mockResolvedValueOnce({
+				status: "completed",
+				txHash: "second-hash",
+			});
+
+		const promises = sdk.createWithdrawalCompletionPromises({
+			intentTx: { accountId: "foo.near", hash: "fake-hash" },
+			withdrawalParams: [withdrawalParams, withdrawalParams],
+		});
+
+		const results = await Promise.all(promises);
+
+		expect(results[0]).toEqual({ hash: "first-hash" });
+		expect(results[1]).toEqual({ hash: "second-hash" });
+	});
+
+	it("aborts pending promises when signal fires", async () => {
+		const { sdk, mockBridge } = setupMocks();
+
+		vi.mocked(mockBridge.describeWithdrawal).mockResolvedValue({
+			status: "pending",
+		});
+
+		const controller = new AbortController();
+
+		const promises = sdk.createWithdrawalCompletionPromises({
+			intentTx: { accountId: "foo.near", hash: "fake-hash" },
+			withdrawalParams: [withdrawalParams],
+			signal: controller.signal,
+		});
+
+		setTimeout(() => controller.abort(), 50);
+
+		await expect(promises[0]).rejects.toThrow();
+	});
+
+	it("rejects individual promise when withdrawal fails", async () => {
+		const { sdk, mockBridge } = setupMocks();
+
+		vi.mocked(mockBridge.describeWithdrawal)
+			.mockResolvedValueOnce({ status: "completed", txHash: "success-hash" })
+			.mockResolvedValueOnce({
+				status: "failed",
+				reason: "Insufficient funds",
+			});
+
+		const promises = sdk.createWithdrawalCompletionPromises({
+			intentTx: { accountId: "foo.near", hash: "fake-hash" },
+			withdrawalParams: [withdrawalParams, withdrawalParams],
+		});
+
+		await expect(promises[0]).resolves.toEqual({ hash: "success-hash" });
+		await expect(promises[1]).rejects.toThrow(WithdrawalFailedError);
+	});
+
+	it("returns empty array for empty withdrawalParams", async () => {
 		const { sdk } = setupMocks();
 
-		const result = await sdk.waitForWithdrawalCompletion({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [],
 		});
 
-		expect(result).toEqual([]);
+		expect(promises).toEqual([]);
 	});
 });
 
@@ -194,7 +193,6 @@ function setupMocks() {
 
 	const mockBridge = new MockBridge();
 	vi.spyOn(mockBridge, "describeWithdrawal");
-	vi.spyOn(mockBridge, "parseAssetId");
 
 	class MockSDK extends IntentsSDK {
 		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
