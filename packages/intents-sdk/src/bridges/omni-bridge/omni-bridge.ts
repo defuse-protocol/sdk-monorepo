@@ -149,7 +149,7 @@ export class OmniBridge implements Bridge {
 			!poaTokenRoutedThroughOmniBridge &&
 			validateOmniToken(parsed.contractId) === false;
 		// Should only allow omni tokens bridged from other networks unless a specific
-		// chain for withdrawal is set or token is a PoA bridge token allowed to be routed via Omni Bridge.
+		// chain for withdrawal is set or  PoA bridged tokens allowed to be routed via Omni Bridge.
 		if (nonValidToken && omniBridgeSetWithNoChain) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
