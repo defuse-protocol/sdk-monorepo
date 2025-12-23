@@ -23,7 +23,6 @@ import {
 	verifyTransferAmount,
 } from "omni-bridge-sdk";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
-import isPoaTokenRoutableThroughOmniBridge from "../../lib/is-poa-token-routable-trough-omni-bridge";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type { Chain } from "../../lib/caip2";
@@ -72,6 +71,7 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -802,7 +802,7 @@ export class OmniBridge implements Bridge {
 	 */
 	private isPoaTokenRoutedThroughOmniBridge(nearAddress: string): boolean {
 		return this.routeMigratedPoaTokensThroughOmniBridge
-			? isPoaTokenRoutableThroughOmniBridge(nearAddress)
+			? POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE.includes(nearAddress)
 			: false;
 	}
 }

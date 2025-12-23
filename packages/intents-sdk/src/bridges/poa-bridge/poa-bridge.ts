@@ -34,7 +34,7 @@ import {
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
-import isPoaTokenRoutableThroughOmniBridge from "../../lib/is-poa-token-routable-trough-omni-bridge";
+import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
@@ -85,7 +85,7 @@ export class PoaBridge implements Bridge {
 		if (
 			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
-			isPoaTokenRoutableThroughOmniBridge(assetInfo.contractId) &&
+			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE.includes(assetInfo.contractId) &&
 			params.routeConfig === undefined
 		) {
 			return false;
