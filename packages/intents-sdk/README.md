@@ -364,7 +364,7 @@ Configure optional SDK features through the `features` configuration:
 
 #### Migrated PoA Token Routing
 
-Route migrated PoA tokens (ending with `*.omft.near`) through Omni Bridge instead of the legacy PoA Bridge. Enable this when working with POA tokens that have been migrated to the Omni infrastructure:
+Will route migrated PoA tokens (ending with `*.omft.near`) through Omni Bridge instead of the legacy PoA Bridge, unless explicitly set to route them through PoA bridge with routeConfig. Enable this when working with POA tokens that have been migrated to the Omni infrastructure:
 
 ```typescript
 const sdk = new IntentsSDK({
