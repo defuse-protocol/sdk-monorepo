@@ -390,8 +390,9 @@ export class IntentsSDK implements IIntentsSDK {
 	/**
 	 * Wait for withdrawal(s) to complete on the destination chain.
 	 *
-	 * **Important:** Waits indefinitely until the withdrawal completes or fails.
-	 * Use `AbortSignal.timeout()` to set a timeout budget.
+	 * **Important:** Waits until the withdrawal completes, fails, or the chain-specific
+	 * p99 timeout is exceeded (throws `PollTimeoutError`). Use `AbortSignal.timeout()`
+	 * to set a shorter timeout budget.
 	 *
 	 * @param args.withdrawalParams - Single withdrawal or array of withdrawals
 	 * @param args.intentTx - The NEAR transaction info from the published intent
@@ -455,8 +456,9 @@ export class IntentsSDK implements IIntentsSDK {
 	 * Use this for granular control over handling individual withdrawals as they complete,
 	 * rather than waiting for all to finish.
 	 *
-	 * **Important:** Each promise waits indefinitely until the withdrawal completes or fails.
-	 * Use `AbortSignal.timeout()` to set a timeout budget.
+	 * **Important:** Each promise waits until the withdrawal completes, fails, or the
+	 * chain-specific p99 timeout is exceeded (throws `PollTimeoutError`).
+	 * Use `AbortSignal.timeout()` to set a shorter timeout budget.
 	 *
 	 * @param params.withdrawalParams - Array of withdrawal parameters
 	 * @param params.intentTx - The NEAR transaction info from the published intent

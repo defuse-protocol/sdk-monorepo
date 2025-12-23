@@ -6,4 +6,4 @@ Add `createWithdrawalCompletionPromises()` for granular control over batch withd
 
 **Breaking changes:**
 
-- Remove `retryOptions` parameter from `waitForWithdrawalCompletion()` and `processWithdrawal()`. Waiting now continues indefinitely until completion or signal abort. Use `AbortSignal.timeout()` to set a timeout budget.
+- Remove `retryOptions` parameter from `waitForWithdrawalCompletion()` and `processWithdrawal()`. Waiting continues until completion, failure, or chain-specific p99 timeout (`PollTimeoutError`). Use `AbortSignal.timeout()` to set a shorter timeout.
