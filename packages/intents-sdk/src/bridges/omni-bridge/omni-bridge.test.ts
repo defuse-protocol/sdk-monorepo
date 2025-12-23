@@ -807,6 +807,48 @@ describe("OmniBridge", () => {
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
+
+		it("allows PoA token when routeConfig and target Chain set", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.supports({
+				assetId: "nep141:zec.omft.near",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("blocks PoA token without routeConfig and target Chain set", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.supports({
+				assetId: "nep141:zec.omft.near",
+			});
+			expect(result).toBe(false);
+		});
+
+		it("throws when PoA token with routeConfig set to Omni Bridge but no target Chain set", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			await expect(
+				bridge.supports({
+					assetId: "nep141:zec.omft.near",
+					routeConfig: createOmniBridgeRoute(),
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
 	});
 
 	describe("makeAssetInfo()", () => {

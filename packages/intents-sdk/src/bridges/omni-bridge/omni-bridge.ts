@@ -143,19 +143,21 @@ export class OmniBridge implements Bridge {
 			);
 		}
 		if (nonValidStandard) return false;
-		// Should only allow tokens bridged from other networks unless a specific
-		// chain for withdrawal is set or token is PoA bridge token that must be routed via Omni Bridge.
 		const poaTokenRoutedThroughOmniBridge =
 			this.isPoaTokenRoutedThroughOmniBridge(parsed.contractId);
 		const nonValidToken =
 			!poaTokenRoutedThroughOmniBridge &&
 			validateOmniToken(parsed.contractId) === false;
+		// Should only allow omni tokens bridged from other networks unless a specific
+		// chain for withdrawal is set or token is a PoA bridge token allowed to be routed via Omni Bridge.
 		if (nonValidToken && omniBridgeSetWithNoChain) {
 			throw new UnsupportedAssetIdError(
 				params.assetId,
 				`Non valid omni contract id ${parsed.contractId}`,
 			);
 		}
+		// Dont support withdrawal if no chain is specified in route config and token is not an Omni Token bridged from other network
+		// nor a PoA token allowed to be routed through Omni Bridge
 		if (!targetChainSpecified && nonValidToken) return false;
 
 		let omniChainKind: ChainKind | null = null;
@@ -171,7 +173,7 @@ export class OmniBridge implements Bridge {
 			}
 			caip2Chain = params.routeConfig.chain;
 		} else {
-			// Transfer of an omni token to it's origin chain or transfer of a poa token
+			// Transfer of an omni token to it's origin chain or transfer of an allowlisted PoA token to its origin chain
 			omniChainKind = poaTokenRoutedThroughOmniBridge
 				? poaContractIdToChainKind(parsed.contractId)
 				: parseOriginChain(parsed.contractId);
@@ -191,6 +193,7 @@ export class OmniBridge implements Bridge {
 				);
 			}
 		}
+		// Checks if there is a token deployed on the destination chain
 		const tokenOnDestinationNetwork =
 			await this.getCachedDestinationTokenAddress(
 				parsed.contractId,
