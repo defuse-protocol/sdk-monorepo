@@ -661,7 +661,10 @@ export class OmniBridge implements Bridge {
 			args.withdrawalParams.assetId,
 			args.withdrawalParams.routeConfig,
 		);
-		assert(assetInfo != null, "Asset is not supported");
+		assert(
+			assetInfo !== null,
+			`Asset ${args.withdrawalParams.assetId} is not supported by Omni Bridge`,
+		);
 
 		const landingChain =
 			args.withdrawalParams.routeConfig != null &&

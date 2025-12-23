@@ -129,7 +129,7 @@ const MIGRATED_POA_TOKEN_CHAIN_KIND_MAPPING = {
 	sol: ChainKind.Sol,
 };
 
-export function poaContractIdToChainKind(contractId: string): ChainKind {
+export function poaContractIdToChainKind(contractId: string): ChainKind | null {
 	for (const [prefix, chainKind] of Object.entries(
 		MIGRATED_POA_TOKEN_CHAIN_KIND_MAPPING,
 	)) {
@@ -140,8 +140,7 @@ export function poaContractIdToChainKind(contractId: string): ChainKind {
 			return chainKind;
 		}
 	}
-
-	throw new Error(`Unsupported Migrated POA token contractId = ${contractId}`);
+	return null;
 }
 
 export function validateOmniToken(nearAddress: string): boolean {
