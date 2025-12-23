@@ -308,5 +308,9 @@ function findMatchingWithdrawal(
 	withdrawals: WithdrawalStatusResponse["withdrawals"],
 	assetId: string,
 ): WithdrawalStatusResponse["withdrawals"][number] | undefined {
-	return withdrawals.find((w) => w.data.defuse_asset_identifier === assetId);
+	// POA bridge only supports NEP-141 tokens. The API returns `near_token_id`
+	// (e.g., "zec.omft.near") which we prefix with "nep141:" to match assetId format.
+	// Note: `defuse_asset_identifier` cannot be used as it contains chain-native
+	// format (e.g., "zec:mainnet:native") which differs from the assetId format.
+	return withdrawals.find((w) => `nep141:${w.data.near_token_id}` === assetId);
 }
