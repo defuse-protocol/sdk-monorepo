@@ -571,13 +571,13 @@ const destinationTxs = await sdk.waitForWithdrawalCompletion({
 console.log('All destination transactions:', destinationTxs);
 ```
 
-**Option B: Independent Promises (`createWithdrawalPromises`)**
+**Option B: Independent Promises (`createWithdrawalCompletionPromises`)**
 
-For scenarios where fast withdrawals (Solana ~2s) shouldn't wait for slow ones (Bitcoin ~1hr), use `createWithdrawalPromises` to get promises that resolve independently:
+For scenarios where fast withdrawals (Solana ~2s) shouldn't wait for slow ones (Bitcoin ~1hr), use `createWithdrawalCompletionPromises` to get promises that resolve independently:
 
 ```typescript
 // Get array of promises - one per withdrawal
-const promises = await sdk.createWithdrawalPromises({
+const promises = await sdk.createWithdrawalCompletionPromises({
     withdrawalParams,
     intentTx
 });
@@ -614,7 +614,7 @@ for (const [i, result] of results.entries()) {
 **With timeout control:**
 
 ```typescript
-const promises = await sdk.createWithdrawalPromises({
+const promises = await sdk.createWithdrawalCompletionPromises({
     withdrawalParams,
     intentTx,
     signal: AbortSignal.timeout(30_000)  // 30 second timeout

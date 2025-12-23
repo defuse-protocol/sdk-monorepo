@@ -183,8 +183,8 @@ export interface IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<Array<TxInfo | TxNoInfo>>;
 
-	createWithdrawalPromises(
-		params: CreateWithdrawalPromisesParams,
+	createWithdrawalCompletionPromises(
+		params: CreateWithdrawalCompletionPromisesParams,
 	): Promise<Array<Promise<TxInfo | TxNoInfo>>>;
 
 	createWithdrawalIntents(args: {
@@ -226,7 +226,7 @@ export interface TxNoInfo {
 	hash: null;
 }
 
-export interface CreateWithdrawalPromisesParams {
+export interface CreateWithdrawalCompletionPromisesParams {
 	withdrawalParams: WithdrawalParams[];
 	intentTx: NearTxInfo;
 	signal?: AbortSignal;

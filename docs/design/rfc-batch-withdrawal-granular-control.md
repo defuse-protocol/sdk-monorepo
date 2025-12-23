@@ -47,7 +47,7 @@ Problems:
 
 ```typescript
 // After intent submission
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 promises[0].then(tx => saveUsdc(tx));
 promises[1].then(tx => saveBtc(tx));
 
@@ -125,7 +125,7 @@ Array of Promises chosen because:
 
 ```typescript
 // Sequential processing with backpressure (same safety as AsyncIterator)
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 const pending = new Map(promises.map((p, i) => [i, p]));
 
 while (pending.size > 0) {
@@ -145,7 +145,7 @@ while (pending.size > 0) {
 ### Types
 
 ```typescript
-interface CreateWithdrawalPromisesParams {
+interface CreateWithdrawalCompletionPromisesParams {
   withdrawalParams: WithdrawalParams[];
   intentTx: NearTxInfo;
   signal?: AbortSignal;
@@ -157,9 +157,9 @@ interface CreateWithdrawalPromisesParams {
 
 ```typescript
 // Primary: returns array of promises, one per withdrawal
-sdk.createWithdrawalPromises(params: CreateWithdrawalPromisesParams): Array<Promise<TxInfo | TxNoInfo>>
+sdk.createWithdrawalCompletionPromises(params: CreateWithdrawalCompletionPromisesParams): Array<Promise<TxInfo | TxNoInfo>>
 
-// Convenience: waits for all (uses createWithdrawalPromises internally)
+// Convenience: waits for all (uses createWithdrawalCompletionPromises internally)
 sdk.waitForWithdrawalCompletion(params): Promise<(TxInfo | TxNoInfo)[]>
 ```
 
@@ -168,7 +168,7 @@ sdk.waitForWithdrawalCompletion(params): Promise<(TxInfo | TxNoInfo)[]>
 ### Fire and forget
 
 ```typescript
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 promises[0].then(tx => saveUsdc(tx)).catch(err => logError(0, err));
 promises[1].then(tx => saveBtc(tx)).catch(err => logError(1, err));
 ```
@@ -176,7 +176,7 @@ promises[1].then(tx => saveBtc(tx)).catch(err => logError(1, err));
 ### Await specific withdrawal
 
 ```typescript
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 
 // Wait for USDC (fast chain) immediately
 const usdcTx = await promises[0];
@@ -189,7 +189,7 @@ promises[1].then(tx => notifyUser('BTC received', tx.hash));
 ### Sequential processing with backpressure
 
 ```typescript
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 const pending = new Map(promises.map((p, i) => [i, p]));
 
 while (pending.size > 0) {
@@ -204,7 +204,7 @@ while (pending.size > 0) {
 ### Wait for all (parallel)
 
 ```typescript
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 const results = await Promise.allSettled(promises);
 
 for (const [i, result] of results.entries()) {
@@ -222,7 +222,7 @@ for (const [i, result] of results.entries()) {
 const controller = new AbortController();
 setTimeout(() => controller.abort(), 25_000);
 
-const promises = sdk.createWithdrawalPromises({
+const promises = sdk.createWithdrawalCompletionPromises({
   withdrawalParams,
   intentTx,
   signal: controller.signal
@@ -240,7 +240,7 @@ const { intentTx, withdrawalParams, handledIndexes } = await db.load(quoteId);
 const handled = new Set(handledIndexes);
 
 // Resume - same API, SDK re-checks all withdrawals
-const promises = sdk.createWithdrawalPromises({ withdrawalParams, intentTx });
+const promises = sdk.createWithdrawalCompletionPromises({ withdrawalParams, intentTx });
 
 for (const [i, promise] of promises.entries()) {
   if (handled.has(i)) continue;  // Already processed

@@ -45,7 +45,7 @@ import {
 import type {
 	BatchWithdrawalResult,
 	Bridge,
-	CreateWithdrawalPromisesParams,
+	CreateWithdrawalCompletionPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
 	IntentPublishResult,
@@ -411,7 +411,7 @@ export class IntentsSDK implements IIntentsSDK {
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const promises = await this.createWithdrawalPromises({
+		const promises = await this.createWithdrawalCompletionPromises({
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 			signal: args.signal,
@@ -429,8 +429,8 @@ export class IntentsSDK implements IIntentsSDK {
 		return result[0]!;
 	}
 
-	public async createWithdrawalPromises(
-		params: CreateWithdrawalPromisesParams,
+	public async createWithdrawalCompletionPromises(
+		params: CreateWithdrawalCompletionPromisesParams,
 	): Promise<Array<Promise<TxInfo | TxNoInfo>>> {
 		const { withdrawalParams, intentTx, signal, logger } = params;
 
