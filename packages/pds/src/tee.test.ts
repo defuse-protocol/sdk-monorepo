@@ -12,6 +12,7 @@ import {
 	EvmForwardingParameters,
 	type EvmPermittedOps,
 } from "./data/evm-params";
+import { Outlayer } from "./outlayer";
 
 function getForwardingParams(
 	commitmentParams: EvmCommitmentParameters,
@@ -41,6 +42,8 @@ function getForwardingParams(
 }
 
 describe("TEE abstraction tests", () => {
+	const url = "http://localhost:3110/rpc";
+	const teeProvider = new Outlayer(url);
 	const treasury = "0x2cff890f0378a11913b6129b2e97417a2c302680";
 	const chainCode =
 		"0x9c90dcfd2d58e76ea7cbb29ee5345f7adbd264c6f5f741c285dd98c43f62358e";
@@ -59,7 +62,9 @@ describe("TEE abstraction tests", () => {
 
 	describe("initialize()", () => {
 		it("Should initialize the TEE successfully", async () => {
-			const tee = new Tee();
+			const url = "http://localhost:3110/rpc";
+			const outlayer = new Outlayer(url);
+			const tee = new Tee(outlayer);
 			const initData = await tee.initialize({ protocol: ProtocolCode.EVM });
 
 			const expectedChainCode =
@@ -80,7 +85,7 @@ describe("TEE abstraction tests", () => {
 				permittedOps,
 			);
 
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 			const result = tee.getAddress(commitmentParams);
 
 			const expectedAddress = "0x9C616D0d0aF5D807FfB7B5d5e37e9a91f2AFD657";
@@ -95,7 +100,7 @@ describe("TEE abstraction tests", () => {
 
 			const forwardingParams = getForwardingParams(commitmentParams, {});
 
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 			const result = (await tee.getSignedTx(
 				ProtocolCode.EVM,
 				forwardingParams,
@@ -116,21 +121,26 @@ describe("TEE abstraction tests", () => {
 		});
 
 		it("Should fail", async () => {
-			const commitmentParams = new EvmCommitmentParameters(extraData, refundTo, permittedOps);
-			const calldata = "0xa9059cbb000000000000000000000000fcdefbfc00f19427862160947486f33fcb519f6f000000000000000000000000000000000000000000000000000000000000014d";
+			const commitmentParams = new EvmCommitmentParameters(
+				extraData,
+				refundTo,
+				permittedOps,
+			);
+			const calldata =
+				"0xa9059cbb000000000000000000000000fcdefbfc00f19427862160947486f33fcb519f6f000000000000000000000000000000000000000000000000000000000000014d";
 			const fp = getForwardingParams(commitmentParams, { calldata });
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 
-			await expect(tee.getSignedTx(
-				ProtocolCode.EVM,
-				fp,
-			)).rejects.toThrowError("calldata not allowed");
-		})
+			await expect(tee.getSignedTx(ProtocolCode.EVM, fp)).rejects.toThrowError(
+				"calldata not allowed",
+			);
+		});
 
 		it("Should not fail when the transfer amount is different", async () => {
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 			const ops: EvmPermittedOps[] = [
 				{
+					// biome-ignore lint/style/noNonNullAssertion: allow in tests
 					contract: permittedOps[0]!.contract,
 					calldataRegex:
 						"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[a-fA-F0-9]{64}",
@@ -148,7 +158,7 @@ describe("TEE abstraction tests", () => {
 		});
 
 		it("Should fail when calldata does not match the committed regex", async () => {
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 			const commitmentParams: EvmCommitmentParameters =
 				new EvmCommitmentParameters(extraData, refundTo, permittedOps);
 
@@ -185,7 +195,7 @@ describe("TEE abstraction tests", () => {
 				contract: "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
 			});
 
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 
 			await expect(
 				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
@@ -194,35 +204,45 @@ describe("TEE abstraction tests", () => {
 
 		it("Should not allow transfers for the native currency if not explicitly stated in the regex", async () => {
 			{
-				const tee = new Tee(publickey, chainCode);
-				let commitmentParams = new EvmCommitmentParameters(extraData, refundTo, permittedOps);
+				const tee = new Tee(teeProvider, publickey, chainCode);
+				const commitmentParams = new EvmCommitmentParameters(
+					extraData,
+					refundTo,
+					permittedOps,
+				);
 
 				const value = 100000n;
-				let forwardingParams = getForwardingParams(commitmentParams, {
+				const forwardingParams = getForwardingParams(commitmentParams, {
 					contract: treasury,
-					value
+					value,
 				});
 
 				await expect(
 					tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
 				).rejects.toThrowError("input contract not allowed");
 			}
-		})
+		});
 
 		it("Should allow transfers for native transfers", async () => {
-			const tee = new Tee(publickey, chainCode);
-			const ops: EvmPermittedOps[] = [{
-				calldataRegex: "^$", // we expect empty calldata
-				contract: treasury,
-			}]
+			const tee = new Tee(teeProvider, publickey, chainCode);
+			const ops: EvmPermittedOps[] = [
+				{
+					calldataRegex: "^$", // we expect empty calldata
+					contract: treasury,
+				},
+			];
 
 			const value = 100000n;
-			const commitmentParams = new EvmCommitmentParameters(extraData, refundTo, ops);
+			const commitmentParams = new EvmCommitmentParameters(
+				extraData,
+				refundTo,
+				ops,
+			);
 			const forwardingParams = getForwardingParams(commitmentParams, {
 				calldata: "0x",
 				contract: treasury,
-				value
-			})
+				value,
+			});
 
 			const result = (await tee.getSignedTx(
 				ProtocolCode.EVM,
@@ -239,27 +259,33 @@ describe("TEE abstraction tests", () => {
 			expect(signer).toEqual(expectedAddress);
 			expect(signedTx.data).toBe(undefined);
 			expect(signedTx.value).toEqual(value);
-		})
+		});
 
 		it("Should not allow native transfers to other contracts", async () => {
-			const tee = new Tee(publickey, chainCode);
+			const tee = new Tee(teeProvider, publickey, chainCode);
 
 			const value = 100000n;
-			const ops: EvmPermittedOps[] = [{
-				calldataRegex: "^$", // we expect empty calldata
-				contract: treasury,
-			}]
+			const ops: EvmPermittedOps[] = [
+				{
+					calldataRegex: "^$", // we expect empty calldata
+					contract: treasury,
+				},
+			];
 			const otherContract = "0xfcdefbfc00f19427862160947486f33fcb519f6f";
-			const commitmentParams = new EvmCommitmentParameters(extraData, refundTo, ops);
+			const commitmentParams = new EvmCommitmentParameters(
+				extraData,
+				refundTo,
+				ops,
+			);
 			const forwardingParams = getForwardingParams(commitmentParams, {
 				calldata: "0x",
 				contract: otherContract,
-				value
-			})
+				value,
+			});
 
 			await expect(
 				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
 			).rejects.toThrowError("input contract not allowed");
-		})
+		});
 	});
 });

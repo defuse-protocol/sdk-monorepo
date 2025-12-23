@@ -5,7 +5,8 @@ import { Outlayer } from "./outlayer";
 describe("Outlayer", () => {
 	describe("send()", () => {
 		it("Should get the initialization response", async () => {
-			const outlayer = new Outlayer();
+			const url = "http://localhost:3110/rpc";
+			const outlayer = new Outlayer(url);
 			const message = "0x000000000100000000";
 
 			const result = await outlayer.send(message);

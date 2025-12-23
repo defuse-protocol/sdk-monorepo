@@ -66,7 +66,6 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	}
 
 	hex(): Hex {
-		console.log('hex:')
 		return toHex(this.bytes());
 	}
 
@@ -75,7 +74,8 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	}
 
 	parse(serialized: Hex): EvmCommitmentParameters {
-		const { extraData, refundTo, permittedOps } = decode<EvmCommitmentParameters>(serialized);
+		const { extraData, refundTo, permittedOps } =
+			decode<EvmCommitmentParameters>(serialized);
 
 		return new EvmCommitmentParameters(extraData, refundTo, permittedOps);
 	}

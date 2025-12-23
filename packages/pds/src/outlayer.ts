@@ -1,8 +1,11 @@
-import { execSync } from "node:child_process";
-import type { TeeResult } from "./tee";
 import type { Hex } from "viem";
+import type { TeeProvider } from "./tee-provider";
 
-export class Outlayer {
+export class Outlayer implements TeeProvider {
+	readonly url;
+	constructor(url: string) {
+		this.url = url;
+	}
 	async send(message: string): Promise<Hex> {
 		const body = JSON.stringify({
 			jsonrpc: "2.0",
@@ -10,9 +13,10 @@ export class Outlayer {
 			params: [message],
 			id: 1,
 		});
-		const url = "http://localhost:3110/rpc";
-		// console.log(`curl -X POST -H 'Content-type:application/json' -d '${body}' ${url}`)
-		const response = await fetch(url, {
+		// console.log(
+		// 	`curl -X POST -H 'Content-type:application/json' -d '${body}' ${this.url}`,
+		// );
+		const response = await fetch(this.url, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body,

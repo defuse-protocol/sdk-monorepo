@@ -3,8 +3,8 @@ import type {
 	CommitmentParameters,
 	ForwardingParameters,
 } from "./data/evm-params";
-import { Outlayer } from "./outlayer";
 import { CommandCode, type ProtocolCode, TeeMessage } from "./data/tee-message";
+import type { TeeProvider } from "./tee-provider";
 
 export type TeeResult = {
 	result: Hex;
@@ -24,17 +24,22 @@ export type TeeInitData = {
 export class Tee {
 	readonly VERSION: Hex = "0x01";
 
+	readonly provider: TeeProvider;
 	readonly publicKey: Hex | null;
 	readonly chainCode: Hex | null;
 
 	// Null values are allowed when TEE is not initialized
-	constructor(publicKey: Hex | null = null, chainCode: Hex | null = null) {
+	constructor(
+		teeProvider: TeeProvider,
+		publicKey: Hex | null = null,
+		chainCode: Hex | null = null,
+	) {
+		this.provider = teeProvider;
 		this.publicKey = publicKey;
 		this.chainCode = chainCode;
 	}
 
 	async initialize(params: TeeInitParameters): Promise<TeeInitData> {
-		const outlayer = new Outlayer();
 		const message = new TeeMessage({
 			version: this.VERSION,
 			protocol: params.protocol,
@@ -42,7 +47,7 @@ export class Tee {
 			payload: params.payload || "0x",
 		});
 
-		const result = await outlayer.send(message.encode());
+		const result = await this.provider.send(message.encode());
 
 		if (!result) {
 			throw new Error("Failed to retrieve signed transaction");
@@ -68,8 +73,7 @@ export class Tee {
 			payload: forwardingParams.payload(),
 		});
 
-		const outlayer = new Outlayer();
-		const result = await outlayer.send(message.encode());
+		const result = await this.provider.send(message.encode());
 
 		if (!result) {
 			throw new Error("Failed to retrieve signed transaction");
