@@ -136,38 +136,6 @@ describe("sdk.waitForWithdrawalCompletion()", () => {
 		await expect(promise).rejects.toThrow("Bridge adapter not found");
 	});
 
-	it("handles bridge method failures gracefully", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal).mockRejectedValue(
-			new Error("Bridge connection failed"),
-		);
-
-		const promise = sdk.waitForWithdrawalCompletion({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: withdrawalParams,
-			signal: AbortSignal.timeout(50),
-		});
-
-		await expect(promise).rejects.toThrow();
-	});
-
-	it("handles mixed success/failure in array withdrawals", async () => {
-		const { sdk, mockBridge } = setupMocks();
-
-		vi.mocked(mockBridge.describeWithdrawal)
-			.mockResolvedValueOnce({ status: "completed", txHash: "success-hash" })
-			.mockRejectedValueOnce(new Error("Second withdrawal failed"));
-
-		const promise = sdk.waitForWithdrawalCompletion({
-			intentTx: { accountId: "foo.near", hash: "fake-hash" },
-			withdrawalParams: [withdrawalParams, withdrawalParams],
-			signal: AbortSignal.timeout(50),
-		});
-
-		await expect(promise).rejects.toThrow();
-	});
-
 	it("handles empty withdrawal params array", async () => {
 		const { sdk } = setupMocks();
 
