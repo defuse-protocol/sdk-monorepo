@@ -32,7 +32,7 @@ describe("sdk.createWithdrawalCompletionPromises()", () => {
 			txHash: "fake-hash",
 		});
 
-		const promises = await sdk.createWithdrawalCompletionPromises({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams, withdrawalParams, withdrawalParams],
 		});
@@ -58,7 +58,7 @@ describe("sdk.createWithdrawalCompletionPromises()", () => {
 				txHash: "fast-hash",
 			});
 
-		const promises = await sdk.createWithdrawalCompletionPromises({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams, withdrawalParams],
 		});
@@ -85,7 +85,7 @@ describe("sdk.createWithdrawalCompletionPromises()", () => {
 				txHash: "second-hash",
 			});
 
-		const promises = await sdk.createWithdrawalCompletionPromises({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams, withdrawalParams],
 		});
@@ -105,7 +105,7 @@ describe("sdk.createWithdrawalCompletionPromises()", () => {
 
 		const controller = new AbortController();
 
-		const promises = await sdk.createWithdrawalCompletionPromises({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams],
 			signal: controller.signal,
@@ -126,7 +126,7 @@ describe("sdk.createWithdrawalCompletionPromises()", () => {
 				reason: "Insufficient funds",
 			});
 
-		const promises = await sdk.createWithdrawalCompletionPromises({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [withdrawalParams, withdrawalParams],
 		});
@@ -138,7 +138,7 @@ describe("sdk.createWithdrawalCompletionPromises()", () => {
 	it("returns empty array for empty withdrawalParams", async () => {
 		const { sdk } = setupMocks();
 
-		const promises = await sdk.createWithdrawalCompletionPromises({
+		const promises = sdk.createWithdrawalCompletionPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
 			withdrawalParams: [],
 		});

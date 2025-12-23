@@ -577,7 +577,7 @@ For scenarios where fast withdrawals (Solana ~2s) shouldn't wait for slow ones (
 
 ```typescript
 // Get array of promises - one per withdrawal
-const promises = await sdk.createWithdrawalCompletionPromises({
+const promises = sdk.createWithdrawalCompletionPromises({
     withdrawalParams,
     intentTx
 });
@@ -614,7 +614,7 @@ for (const [i, result] of results.entries()) {
 **With timeout control:**
 
 ```typescript
-const promises = await sdk.createWithdrawalCompletionPromises({
+const promises = sdk.createWithdrawalCompletionPromises({
     withdrawalParams,
     intentTx,
     signal: AbortSignal.timeout(30_000)  // 30 second timeout

@@ -185,7 +185,7 @@ export interface IIntentsSDK {
 
 	createWithdrawalCompletionPromises(
 		params: CreateWithdrawalCompletionPromisesParams,
-	): Promise<Array<Promise<TxInfo | TxNoInfo>>>;
+	): Array<Promise<TxInfo | TxNoInfo>>;
 
 	createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;

@@ -411,7 +411,7 @@ export class IntentsSDK implements IIntentsSDK {
 			? args.withdrawalParams
 			: [args.withdrawalParams];
 
-		const promises = await this.createWithdrawalCompletionPromises({
+		const promises = this.createWithdrawalCompletionPromises({
 			withdrawalParams: withdrawalParamsArray,
 			intentTx: args.intentTx,
 			signal: args.signal,
@@ -442,7 +442,7 @@ export class IntentsSDK implements IIntentsSDK {
 	 *
 	 * @example
 	 * ```typescript
-	 * const promises = await sdk.createWithdrawalCompletionPromises({
+	 * const promises = sdk.createWithdrawalCompletionPromises({
 	 *   withdrawalParams: [withdrawal1, withdrawal2],
 	 *   intentTx,
 	 *   signal: AbortSignal.timeout(5 * 60 * 1000),
@@ -454,25 +454,28 @@ export class IntentsSDK implements IIntentsSDK {
 	 * }
 	 * ```
 	 */
-	public async createWithdrawalCompletionPromises(
+	public createWithdrawalCompletionPromises(
 		params: CreateWithdrawalCompletionPromisesParams,
-	): Promise<Array<Promise<TxInfo | TxNoInfo>>> {
+	): Array<Promise<TxInfo | TxNoInfo>> {
 		const { withdrawalParams, intentTx, signal, logger } = params;
 
-		const wids = await createWithdrawalIdentifiers({
+		const widsPromise = createWithdrawalIdentifiers({
 			bridges: this.bridges,
 			withdrawalParams,
 			intentTx,
 		});
 
-		return wids.map(({ bridge, wid }) =>
-			watchWithdrawal({
-				bridge,
-				wid,
+		return withdrawalParams.map(async (_, index) => {
+			const wids = await widsPromise;
+			const entry = wids[index];
+			assert(entry != null, `Missing wid for index ${index}`);
+			return watchWithdrawal({
+				bridge: entry.bridge,
+				wid: entry.wid,
 				signal,
 				logger,
-			}),
-		);
+			});
+		});
 	}
 
 	public parseAssetId(assetId: string): ParsedAssetInfo {
