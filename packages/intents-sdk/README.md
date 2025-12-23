@@ -390,6 +390,19 @@ const result = await sdk.processWithdrawal({
 - Explicitly want to route `*.omft.near` tokens through the Omni Bridge
 - Default behavior (when disabled) routes these tokens through the PoA Bridge
 
+**Allowlisted Tokens:**
+
+Not all PoA tokens can be routed through Omni Bridge. The SDK exports `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` constant containing the list of token contract IDs that support this routing:
+
+```typescript
+import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from '@defuse-protocol/intents-sdk';
+
+console.log(POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE);
+// ['sol.omft.near', ...]
+```
+
+Only tokens in this list will be routed through Omni Bridge when the feature flag is enabled. Other `*.omft.near` tokens will continue using the PoA Bridge.
+
 ### Other Intent Signers
 
 The SDK supports multiple intent signing methods using factory functions:

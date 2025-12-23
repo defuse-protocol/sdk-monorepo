@@ -73,6 +73,7 @@ export {
 	type BridgeNameEnumValues,
 } from "./src/constants/bridge-name-enum";
 
+export { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "./src/constants/poa-tokens-routable-through-omni-bridge";
 // ============================================================================
 // Errors
 // ============================================================================
