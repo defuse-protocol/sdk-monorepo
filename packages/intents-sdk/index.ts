@@ -81,6 +81,14 @@ export { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "./src/constants/poa-tok
 // Base Error Classes
 export { BaseError, type BaseErrorType } from "@defuse-protocol/internal-utils";
 
+// Withdrawal Watcher Errors
+export {
+	WithdrawalWatchError,
+	type WithdrawalWatchErrorType,
+	WithdrawalFailedError,
+	type WithdrawalFailedErrorType,
+} from "./src/core/withdrawal-watcher";
+
 // Bridge SDK Core Errors
 export {
 	FeeExceedsAmountError,

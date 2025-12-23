@@ -584,5 +584,49 @@ describe("PoaBridge", () => {
 				txHash: "btc-tx-hash",
 			});
 		});
+
+		it("matches withdrawal by near_token_id when defuse_asset_identifier differs from assetId format", async () => {
+			// Regression test: POA API returns defuse_asset_identifier in chain-native format
+			// (e.g., "zec:mainnet:native") which differs from assetId format ("nep141:zec.omft.near").
+			// Matching must use near_token_id, not defuse_asset_identifier.
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [
+					{
+						status: "COMPLETED",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: "zec-tx-hash",
+							chain: "zec:mainnet",
+							defuse_asset_identifier: "zec:mainnet:native",
+							near_token_id: "zec.omft.near",
+							decimals: 8,
+							amount: 474270,
+							account_id: "test.near",
+							address: "native",
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Zcash,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:zec.omft.near",
+					amount: 474270n,
+					destinationAddress: "t1abc123",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "zec-tx-hash",
+			});
+		});
 	});
 });
