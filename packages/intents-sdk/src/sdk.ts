@@ -391,8 +391,12 @@ export class IntentsSDK implements IIntentsSDK {
 	 * Wait for withdrawal(s) to complete on the destination chain.
 	 *
 	 * **Important:** Waits until the withdrawal completes, fails, or the chain-specific
-	 * p99 timeout is exceeded (throws `PollTimeoutError`). Use `AbortSignal.timeout()`
-	 * to set a shorter timeout budget.
+	 * p99 timeout is exceeded. Use `AbortSignal.timeout()` to set a shorter timeout budget.
+	 *
+	 * @throws {WithdrawalWatchError} When status polling fails (timeout or consecutive errors).
+	 *   Inspect `error.cause` to determine the reason.
+	 * @throws {WithdrawalFailedError} When the withdrawal fails on the destination chain.
+	 * @throws {DOMException} When the provided AbortSignal is aborted (name: "AbortError").
 	 *
 	 * @param args.withdrawalParams - Single withdrawal or array of withdrawals
 	 * @param args.intentTx - The NEAR transaction info from the published intent
@@ -457,8 +461,13 @@ export class IntentsSDK implements IIntentsSDK {
 	 * rather than waiting for all to finish.
 	 *
 	 * **Important:** Each promise waits until the withdrawal completes, fails, or the
-	 * chain-specific p99 timeout is exceeded (throws `PollTimeoutError`).
-	 * Use `AbortSignal.timeout()` to set a shorter timeout budget.
+	 * chain-specific p99 timeout is exceeded. Use `AbortSignal.timeout()` to set a
+	 * shorter timeout budget.
+	 *
+	 * @throws {WithdrawalWatchError} When status polling fails (timeout or consecutive errors).
+	 *   Inspect `error.cause` to determine the reason.
+	 * @throws {WithdrawalFailedError} When the withdrawal fails on the destination chain.
+	 * @throws {DOMException} When the provided AbortSignal is aborted (name: "AbortError").
 	 *
 	 * @param params.withdrawalParams - Array of withdrawal parameters
 	 * @param params.intentTx - The NEAR transaction info from the published intent

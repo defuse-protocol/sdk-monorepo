@@ -84,6 +84,8 @@ export { BaseError, type BaseErrorType } from "@defuse-protocol/internal-utils";
 export {
 	WithdrawalWatchError,
 	type WithdrawalWatchErrorType,
+	WithdrawalFailedError,
+	type WithdrawalFailedErrorType,
 } from "./src/core/withdrawal-watcher";
 
 // Bridge SDK Core Errors
