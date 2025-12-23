@@ -1,21 +1,12 @@
 import * as secp from "@noble/secp256k1";
-import {
-	concat,
-	hexToBytes,
-	sha256,
-	stringToBytes,
-	toHex,
-	type Address,
-	type ByteArray,
-	type Hex,
-} from "viem";
+import { hexToBytes, sha256, toHex, type Address, type Hex } from "viem";
 import { HDKey, publicKeyToAddress } from "viem/accounts";
 import { encode, decode } from "cbor2";
 import { hexToBip32Path } from "../bip32-ext";
 
 export type EvmPermittedOps = {
 	calldataRegex: string;
-	contract: Address;
+	contracts: Address[];
 };
 
 export interface ForwardingParameters {
@@ -43,26 +34,24 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	) {
 		this.extraData = extraData;
 		this.refundTo = refundTo.toLowerCase() as Hex;
-		this.permittedOps = permittedOps.map(({ contract, calldataRegex }) => ({
-			contract: contract.toLowerCase() as Hex,
-			calldataRegex: calldataRegex.replace("0x", "").toLowerCase(),
-		}));
+		const alphabeticOrder = (a: EvmPermittedOps, b: EvmPermittedOps) =>
+			a.calldataRegex < b.calldataRegex ? -1 : 1;
+
+		// Order to strengthen the deterministic result
+		this.permittedOps = permittedOps
+			.map(({ contracts, calldataRegex }) => ({
+				contracts: contracts.map((c) => c.toLowerCase() as Hex).sort(),
+				calldataRegex: calldataRegex.replace("0x", "").toLowerCase(),
+			}))
+			.sort(alphabeticOrder);
 	}
 
 	bytes(): Uint8Array {
-		const permittedOpsBytes = this.permittedOps.reduce((acc, elem) => {
-			return concat([
-				acc,
-				stringToBytes(elem.calldataRegex),
-				hexToBytes(elem.contract),
-			]);
-		}, new Uint8Array([]) as ByteArray);
-
-		return concat([
-			stringToBytes(this.extraData),
-			hexToBytes(this.refundTo),
-			permittedOpsBytes,
-		]);
+		return encode({
+			extraData: this.extraData,
+			refundTo: this.refundTo,
+			permittedOps: this.permittedOps,
+		});
 	}
 
 	hex(): Hex {
@@ -132,9 +121,7 @@ export class EvmForwardingParameters implements ForwardingParameters {
 	payload(): Hex {
 		return toHex(
 			encode({
-				extraData: this.commitmentParams.extraData,
-				refundTo: this.commitmentParams.refundTo,
-				permittedOps: this.commitmentParams.permittedOps,
+				commitment: this.commitmentParams.hex(),
 				nonce: this.nonce.toString(),
 				value: this.value.toString(),
 				calldata: this.calldata.toLowerCase(),

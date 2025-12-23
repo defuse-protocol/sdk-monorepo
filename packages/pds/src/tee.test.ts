@@ -56,7 +56,7 @@ describe("TEE abstraction tests", () => {
 		{
 			calldataRegex:
 				"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[0-9a-fA-F]{64}",
-			contract: "0xdac17f958d2ee523a2206206994597c13d831ec7" as Hex,
+			contracts: ["0xdac17f958d2ee523a2206206994597c13d831ec7" as Hex],
 		},
 	];
 
@@ -88,7 +88,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 			const result = tee.getAddress(commitmentParams);
 
-			const expectedAddress = "0x9C616D0d0aF5D807FfB7B5d5e37e9a91f2AFD657";
+			const expectedAddress = "0xE6663054A8cec7392b257e81c478200923f9002d";
 			expect(result).toEqual(expectedAddress);
 		});
 	});
@@ -120,7 +120,7 @@ describe("TEE abstraction tests", () => {
 			expect(signedTx.nonce).toEqual(Number(forwardingParams.nonce));
 		});
 
-		it("Should fail", async () => {
+		it("Should fail as the transfer recipient is different", async () => {
 			const commitmentParams = new EvmCommitmentParameters(
 				extraData,
 				refundTo,
@@ -132,7 +132,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 
 			await expect(tee.getSignedTx(ProtocolCode.EVM, fp)).rejects.toThrowError(
-				"calldata not allowed",
+				"call not allowed",
 			);
 		});
 
@@ -141,7 +141,7 @@ describe("TEE abstraction tests", () => {
 			const ops: EvmPermittedOps[] = [
 				{
 					// biome-ignore lint/style/noNonNullAssertion: allow in tests
-					contract: permittedOps[0]!.contract,
+					contracts: [permittedOps[0]!.contracts[0]!],
 					calldataRegex:
 						"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[a-fA-F0-9]{64}",
 				},
@@ -183,7 +183,7 @@ describe("TEE abstraction tests", () => {
 			for (const fp of forwardingParamsArray) {
 				await expect(
 					tee.getSignedTx(ProtocolCode.EVM, fp),
-				).rejects.toThrowError("calldata not allowed");
+				).rejects.toThrowError("call not allowed");
 			}
 		});
 
@@ -199,7 +199,7 @@ describe("TEE abstraction tests", () => {
 
 			await expect(
 				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
-			).rejects.toThrowError("input contract not allowed");
+			).rejects.toThrowError("call not allowed");
 		});
 
 		it("Should not allow transfers for the native currency if not explicitly stated in the regex", async () => {
@@ -219,7 +219,7 @@ describe("TEE abstraction tests", () => {
 
 				await expect(
 					tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
-				).rejects.toThrowError("input contract not allowed");
+				).rejects.toThrowError("call not allowed");
 			}
 		});
 
@@ -228,7 +228,7 @@ describe("TEE abstraction tests", () => {
 			const ops: EvmPermittedOps[] = [
 				{
 					calldataRegex: "^$", // we expect empty calldata
-					contract: treasury,
+					contracts: [treasury],
 				},
 			];
 
@@ -268,7 +268,7 @@ describe("TEE abstraction tests", () => {
 			const ops: EvmPermittedOps[] = [
 				{
 					calldataRegex: "^$", // we expect empty calldata
-					contract: treasury,
+					contracts: [treasury],
 				},
 			];
 			const otherContract = "0xfcdefbfc00f19427862160947486f33fcb519f6f";
@@ -285,7 +285,7 @@ describe("TEE abstraction tests", () => {
 
 			await expect(
 				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
-			).rejects.toThrowError("input contract not allowed");
+			).rejects.toThrowError("call not allowed");
 		});
 	});
 });
