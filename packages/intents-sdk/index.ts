@@ -80,6 +80,12 @@ export {
 // Base Error Classes
 export { BaseError, type BaseErrorType } from "@defuse-protocol/internal-utils";
 
+// Withdrawal Watcher Errors
+export {
+	WithdrawalWatchError,
+	type WithdrawalWatchErrorType,
+} from "./src/core/withdrawal-watcher";
+
 // Bridge SDK Core Errors
 export {
 	FeeExceedsAmountError,

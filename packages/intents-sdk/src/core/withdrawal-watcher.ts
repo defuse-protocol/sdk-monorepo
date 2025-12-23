@@ -3,6 +3,7 @@ import {
 	type ILogger,
 	poll,
 	POLL_PENDING,
+	PollTimeoutError,
 } from "@defuse-protocol/internal-utils";
 import type {
 	Bridge,
@@ -25,45 +26,52 @@ export async function watchWithdrawal(args: {
 	const stats = getWithdrawalStatsForChain(args.wid.landingChain);
 	let consecutiveErrors = 0;
 
-	return poll(
-		async () => {
-			try {
-				const status = await args.bridge.describeWithdrawal({
-					...args.wid,
-					logger: args.logger,
-				});
+	try {
+		return await poll(
+			async () => {
+				try {
+					const status = await args.bridge.describeWithdrawal({
+						...args.wid,
+						logger: args.logger,
+					});
 
-				consecutiveErrors = 0;
+					consecutiveErrors = 0;
 
-				if (status.status === "completed") {
-					return status.txHash != null
-						? { hash: status.txHash }
-						: { hash: null };
+					if (status.status === "completed") {
+						return status.txHash != null
+							? { hash: status.txHash }
+							: { hash: null };
+					}
+
+					if (status.status === "failed") {
+						throw new WithdrawalFailedError(status.reason);
+					}
+
+					return POLL_PENDING;
+				} catch (err: unknown) {
+					if (err instanceof WithdrawalFailedError) {
+						throw err;
+					}
+
+					consecutiveErrors++;
+					if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+						throw new WithdrawalWatchError(err);
+					}
+
+					args.logger?.warn(
+						`Transient error (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
+					);
+					return POLL_PENDING;
 				}
-
-				if (status.status === "failed") {
-					throw new WithdrawalFailedError(status.reason);
-				}
-
-				return POLL_PENDING;
-			} catch (err: unknown) {
-				if (err instanceof WithdrawalFailedError) {
-					throw err;
-				}
-
-				consecutiveErrors++;
-				if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-					throw new WithdrawalWatchError(err);
-				}
-
-				args.logger?.warn(
-					`Transient error (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
-				);
-				return POLL_PENDING;
-			}
-		},
-		{ stats, signal: args.signal },
-	);
+			},
+			{ stats, signal: args.signal },
+		);
+	} catch (err: unknown) {
+		if (err instanceof PollTimeoutError) {
+			throw new WithdrawalWatchError(err);
+		}
+		throw err;
+	}
 }
 
 export async function createWithdrawalIdentifiers(args: {
@@ -123,14 +131,15 @@ export class WithdrawalFailedError extends BaseError {
 	}
 }
 
+export type WithdrawalWatchErrorType = WithdrawalWatchError & {
+	name: "WithdrawalWatchError";
+};
+
 export class WithdrawalWatchError extends BaseError {
 	constructor(cause: unknown) {
-		super(
-			`Withdrawal watch failed after ${MAX_CONSECUTIVE_ERRORS} consecutive errors`,
-			{
-				name: "WithdrawalWatchError",
-				cause,
-			},
-		);
+		super("Withdrawal watch failed", {
+			name: "WithdrawalWatchError",
+			cause,
+		});
 	}
 }
