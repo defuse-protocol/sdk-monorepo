@@ -1109,7 +1109,7 @@ describe("omni_bridge", () => {
 		]);
 	});
 
-	it("createWithdrawalIntents(): create a btc utxo withdrawal without token_diff and storage_deposit intents with fee inclusive = true", async () => {
+	it("createWithdrawalIntents(): create withdrawal intents with an allowlisted PoA token with routeMigratedPoaTokensThroughOmniBridge = true", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({
 			referral,
