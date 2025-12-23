@@ -18,6 +18,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Fee Estimation](#fee-estimation)
 - [Advanced Usage](#advanced-usage)
   - [Custom RPC URLs](#custom-rpc-urls)
+  - [Feature Flags](#feature-flags)
   - [Other Intent Signers](#other-intent-signers)
   - [Intent Payload Builder](#intent-payload-builder)
   - [Intent Publishing Hooks](#intent-publishing-hooks)
@@ -357,6 +358,51 @@ const sdk = new IntentsSDK({
     }
 });
 ```
+
+### Feature Flags
+
+Configure optional SDK features through the `features` configuration:
+
+#### Migrated PoA Token Routing
+
+Will route migrated PoA tokens (ending with `*.omft.near`) through Omni Bridge instead of the legacy PoA Bridge, unless explicitly set to route them through PoA bridge with routeConfig. Enable this when working with POA tokens that have been migrated to the Omni infrastructure:
+
+```typescript
+const sdk = new IntentsSDK({
+    referral: 'your-referral-code',
+    features: {
+        routeMigratedPoaTokensThroughOmniBridge: true
+    }
+});
+
+// With this flag enabled, tokens like 'nep141:sol.omft.near' will route through Omni Bridge
+const result = await sdk.processWithdrawal({
+    withdrawalParams: {
+        assetId: 'nep141:sol.omft.near', // Migrated PoA token
+        amount: 1000000n,
+        destinationAddress: '39hqXivfCPUSqmXAaX3eo4JcA5bGFXhhs26dmg585DGb',
+        feeInclusive: false
+    }
+});
+```
+
+**When to enable:**
+- Working with PoA tokens that have been migrated to Omni Bridge
+- Explicitly want to route `*.omft.near` tokens through the Omni Bridge
+- Default behavior (when disabled) routes these tokens through the PoA Bridge
+
+**Allowlisted Tokens:**
+
+Not all PoA tokens can be routed through Omni Bridge. The SDK exports `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` constant containing the list of token contract IDs that support this routing:
+
+```typescript
+import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from '@defuse-protocol/intents-sdk';
+
+console.log(POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE);
+// ['sol.omft.near', ...]
+```
+
+Only tokens in this list will be routed through Omni Bridge when the feature flag is enabled. Other `*.omft.near` tokens will continue using the PoA Bridge.
 
 ### Other Intent Signers
 

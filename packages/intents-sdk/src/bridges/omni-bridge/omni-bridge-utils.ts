@@ -125,6 +125,24 @@ export function isUtxoChain(network: ChainKind): boolean {
 	return UTXO_CHAINS.includes(network);
 }
 
+const MIGRATED_POA_TOKEN_CHAIN_KIND_MAPPING = {
+	sol: ChainKind.Sol,
+};
+
+export function poaContractIdToChainKind(contractId: string): ChainKind | null {
+	for (const [prefix, chainKind] of Object.entries(
+		MIGRATED_POA_TOKEN_CHAIN_KIND_MAPPING,
+	)) {
+		if (
+			contractId.startsWith(`${prefix}.`) ||
+			contractId.startsWith(`${prefix}-`)
+		) {
+			return chainKind;
+		}
+	}
+	return null;
+}
+
 export function validateOmniToken(nearAddress: string): boolean {
 	// omni bridge function allows testnet tokens, we should not let them pass since we work only with mainnet ones
 	if (nearAddress.endsWith(".testnet")) return false;
