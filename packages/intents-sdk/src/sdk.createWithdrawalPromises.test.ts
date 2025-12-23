@@ -121,7 +121,10 @@ describe("sdk.createWithdrawalPromises()", () => {
 
 		vi.mocked(mockBridge.describeWithdrawal)
 			.mockResolvedValueOnce({ status: "completed", txHash: "success-hash" })
-			.mockResolvedValueOnce({ status: "failed", reason: "Insufficient funds" });
+			.mockResolvedValueOnce({
+				status: "failed",
+				reason: "Insufficient funds",
+			});
 
 		const promises = await sdk.createWithdrawalPromises({
 			intentTx: { accountId: "foo.near", hash: "fake-hash" },
