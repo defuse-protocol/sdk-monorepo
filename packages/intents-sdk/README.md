@@ -560,12 +560,15 @@ After the intent settles on NEAR, you need to wait for withdrawals to complete o
 
 **Option A: Wait for All (`waitForWithdrawalCompletion`)**
 
-Waits for all withdrawals to complete before returning. Simple, but blocks on the slowest withdrawal:
+Waits for all withdrawals to complete before returning. Simple, but blocks on the slowest withdrawal.
+
+> **Note:** Waits indefinitely until completion. Use `AbortSignal.timeout()` to set a timeout budget.
 
 ```typescript
 const destinationTxs = await sdk.waitForWithdrawalCompletion({
     withdrawalParams,
-    intentTx
+    intentTx,
+    signal: AbortSignal.timeout(10 * 60 * 1000), // 10 minute timeout
 });
 
 console.log('All destination transactions:', destinationTxs);
@@ -626,6 +629,8 @@ const promises = sdk.createWithdrawalCompletionPromises({
 - One failure doesn't affect other withdrawals
 - Recovery-friendly: recreate promises from saved `{ withdrawalParams, intentTx }`
 - Index correspondence: `promises[i]` corresponds to `withdrawalParams[i]`
+
+> **Note:** Both methods wait indefinitely until completion. Always use `AbortSignal.timeout()` for timeout control.
 
 ### Intent Management
 
@@ -776,6 +781,7 @@ const intentTx = await sdk.waitForIntentSettlement({intentHash});
 console.log('Intent settled:', intentTx.hash);
 
 // Wait for withdrawal completion on destination chain
+// Note: Waits indefinitely - use signal for timeout
 const completionResult = await sdk.waitForWithdrawalCompletion({
     withdrawalParams: {
         assetId: 'nep141:usdt.tether-token.near',
@@ -783,7 +789,8 @@ const completionResult = await sdk.waitForWithdrawalCompletion({
         destinationAddress: '0x742d35Cc...',
         feeInclusive: false
     },
-    intentTx
+    intentTx,
+    signal: AbortSignal.timeout(10 * 60 * 1000), // 10 minute timeout
 });
 
 if ('hash' in completionResult) {

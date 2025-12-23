@@ -387,6 +387,27 @@ export class IntentsSDK implements IIntentsSDK {
 		);
 	}
 
+	/**
+	 * Wait for withdrawal(s) to complete on the destination chain.
+	 *
+	 * **Important:** Waits indefinitely until the withdrawal completes or fails.
+	 * Use `AbortSignal.timeout()` to set a timeout budget.
+	 *
+	 * @param args.withdrawalParams - Single withdrawal or array of withdrawals
+	 * @param args.intentTx - The NEAR transaction info from the published intent
+	 * @param args.signal - Optional AbortSignal for cancellation/timeout
+	 * @param args.logger - Optional logger for debugging
+	 *
+	 * @example
+	 * ```typescript
+	 * // With timeout
+	 * const result = await sdk.waitForWithdrawalCompletion({
+	 *   withdrawalParams,
+	 *   intentTx,
+	 *   signal: AbortSignal.timeout(5 * 60 * 1000), // 5 minute timeout
+	 * });
+	 * ```
+	 */
 	public waitForWithdrawalCompletion(args: {
 		withdrawalParams: WithdrawalParams;
 		intentTx: NearTxInfo;
@@ -434,6 +455,9 @@ export class IntentsSDK implements IIntentsSDK {
 	 * Use this for granular control over handling individual withdrawals as they complete,
 	 * rather than waiting for all to finish.
 	 *
+	 * **Important:** Each promise waits indefinitely until the withdrawal completes or fails.
+	 * Use `AbortSignal.timeout()` to set a timeout budget.
+	 *
 	 * @param params.withdrawalParams - Array of withdrawal parameters
 	 * @param params.intentTx - The NEAR transaction info from the published intent
 	 * @param params.signal - Optional AbortSignal for cancellation/timeout
@@ -445,7 +469,7 @@ export class IntentsSDK implements IIntentsSDK {
 	 * const promises = sdk.createWithdrawalCompletionPromises({
 	 *   withdrawalParams: [withdrawal1, withdrawal2],
 	 *   intentTx,
-	 *   signal: AbortSignal.timeout(5 * 60 * 1000),
+	 *   signal: AbortSignal.timeout(5 * 60 * 1000), // 5 minute timeout
 	 * });
 	 *
 	 * // Handle each withdrawal as it completes
