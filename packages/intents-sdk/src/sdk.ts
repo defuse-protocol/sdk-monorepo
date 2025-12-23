@@ -429,6 +429,31 @@ export class IntentsSDK implements IIntentsSDK {
 		return result[0]!;
 	}
 
+	/**
+	 * Create promises that resolve when each withdrawal completes on the destination chain.
+	 * Use this for granular control over handling individual withdrawals as they complete,
+	 * rather than waiting for all to finish.
+	 *
+	 * @param params.withdrawalParams - Array of withdrawal parameters
+	 * @param params.intentTx - The NEAR transaction info from the published intent
+	 * @param params.signal - Optional AbortSignal for cancellation/timeout
+	 * @param params.logger - Optional logger for debugging
+	 * @returns Array of promises, one per withdrawal, that resolve with transaction info
+	 *
+	 * @example
+	 * ```typescript
+	 * const promises = await sdk.createWithdrawalCompletionPromises({
+	 *   withdrawalParams: [withdrawal1, withdrawal2],
+	 *   intentTx,
+	 *   signal: AbortSignal.timeout(5 * 60 * 1000),
+	 * });
+	 *
+	 * // Handle each withdrawal as it completes
+	 * for (const promise of promises) {
+	 *   promise.then((result) => console.log('Withdrawal completed:', result));
+	 * }
+	 * ```
+	 */
 	public async createWithdrawalCompletionPromises(
 		params: CreateWithdrawalCompletionPromisesParams,
 	): Promise<Array<Promise<TxInfo | TxNoInfo>>> {
