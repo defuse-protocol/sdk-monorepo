@@ -4,7 +4,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { OmniBridgeAPI } from "omni-bridge-sdk";
 import { zeroAddress } from "viem";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
@@ -18,8 +18,12 @@ import {
 } from "../../lib/route-config-factory";
 import { TokenNotFoundInDestinationChainError } from "./error";
 import { OmniBridge } from "./omni-bridge";
-
+import * as omniBridgeUtils from "./omni-bridge-utils";
 describe("OmniBridge", () => {
+	// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+	beforeEach(() => {
+		vi.restoreAllMocks();
+	});
 	describe("without routeConfig", () => {
 		it("supports if assetId matches omni pattern (token created by specific factories)", async () => {
 			const nearProvider = nearFailoverRpcProvider({
@@ -848,6 +852,174 @@ describe("OmniBridge", () => {
 					routeConfig: createOmniBridgeRoute(),
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+
+		it("Do no support a PoA token  that can be routed through Omni with no routeConfig set with routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"sol:11111111111111111111111111111111",
+			);
+
+			const result = await bridge.supports({
+				assetId: "nep141:sol.omft.near",
+			});
+
+			expect(result).toBe(false);
+		});
+		it("Throws when given a PoA token that can be routed through Omni with route config without a target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"sol:11111111111111111111111111111111",
+			);
+
+			await expect(
+				bridge.supports({
+					assetId: "nep141:sol.omft.near",
+					routeConfig: createOmniBridgeRoute(),
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+
+		it("Supports a PoA token that can be routed through Omni with route config and a valid target chain when routeMigratedPoaTokensThroughOmniBridge = false (should be sent to specified chain)", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"sol:11111111111111111111111111111111",
+			);
+
+			const result = await bridge.supports({
+				assetId: "nep141:sol.omft.near",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("Throws when given a PoA token with routeConfig and invalid target chain with routeMigratedPoaTokensThroughOmniBridge = false, because token doesnt exist there", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			await expect(
+				bridge.supports({
+					assetId: "nep141:sol.omft.near",
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).rejects.toThrow(TokenNotFoundInDestinationChainError);
+		});
+
+		it("Allows PoA token with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = true (token should be sent to its origin)", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"sol:11111111111111111111111111111111",
+			);
+
+			const result = await bridge.supports({
+				assetId: "nep141:sol.omft.near",
+			});
+			expect(result).toBe(true);
+		});
+
+		it("Allows PoA token with routeConfig but no target chain when routeMigratedPoaTokensThroughOmniBridge = true (token should be sent to its origin)", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"sol:11111111111111111111111111111111",
+			);
+
+			const result = await bridge.supports({
+				assetId: "nep141:sol.omft.near",
+				routeConfig: createOmniBridgeRoute(),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("Allows PoA token with routeConfig and target chain when routeMigratedPoaTokensThroughOmniBridge = true (token should be sent to specified chain if possible)", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"sol:11111111111111111111111111111111",
+			);
+
+			const result = await bridge.supports({
+				assetId: "nep141:sol.omft.near",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("Throws when given a PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = true, because token doesnt exist there", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+
+			await expect(
+				bridge.supports({
+					assetId: "nep141:sol.omft.near",
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).rejects.toThrow(TokenNotFoundInDestinationChainError);
 		});
 	});
 
