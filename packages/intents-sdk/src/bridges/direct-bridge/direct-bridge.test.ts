@@ -7,7 +7,6 @@ import {
 	createNearWithdrawalRoute,
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
-import { Chains } from "../../lib/caip2";
 import { DirectBridge } from "./direct-bridge";
 import {
 	MIN_GAS_AMOUNT,
