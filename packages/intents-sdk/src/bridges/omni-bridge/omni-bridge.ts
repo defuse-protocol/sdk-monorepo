@@ -51,6 +51,7 @@ import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
+	OMNI_STORAGE_MS_BALANCE_CACHE,
 } from "./omni-bridge-constants";
 import {
 	caip2ToChainKind,
@@ -79,6 +80,10 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
+	protected cachedOmniStorageBalance: {
+		lastRequest: number;
+		value: Awaited<ReturnType<typeof getAccountOmniStorageBalance>>;
+	};
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -104,6 +109,10 @@ export class OmniBridge implements Bridge {
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.cachedOmniStorageBalance = {
+			lastRequest: 0,
+			value: null,
+		};
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -409,10 +418,7 @@ export class OmniBridge implements Bridge {
 			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
 		}
 
-		const storageBalance = await getAccountOmniStorageBalance(
-			this.nearProvider,
-			configsByEnvironment[this.env].contractID,
-		);
+		const storageBalance = await this.getCachedAccountOmniStorageBalance();
 
 		const intentsNearStorageBalance =
 			storageBalance === null ? 0n : BigInt(storageBalance.available);
@@ -773,5 +779,25 @@ export class OmniBridge implements Bridge {
 		}
 
 		return tokenDecimals;
+	}
+
+	/**
+	 * Gets cached omni storage balance for near intents
+	 */
+	private async getCachedAccountOmniStorageBalance(): Promise<
+		ReturnType<typeof getAccountOmniStorageBalance>
+	> {
+		const now = Date.now();
+		if (
+			this.cachedOmniStorageBalance.lastRequest <
+			Date.now() - OMNI_STORAGE_MS_BALANCE_CACHE
+		) {
+			this.cachedOmniStorageBalance.value = await getAccountOmniStorageBalance(
+				this.nearProvider,
+				configsByEnvironment[this.env].contractID,
+			);
+			this.cachedOmniStorageBalance.lastRequest = now;
+		}
+		return this.cachedOmniStorageBalance.value;
 	}
 }
