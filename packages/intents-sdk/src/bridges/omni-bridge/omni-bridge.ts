@@ -82,7 +82,7 @@ export class OmniBridge implements Bridge {
 	protected solverRelayApiKey: string | undefined;
 	protected cachedOmniStorageBalance: {
 		lastRequest: number;
-		value: Awaited<ReturnType<typeof getAccountOmniStorageBalance>>;
+		value: Awaited<ReturnType<typeof getAccountOmniStorageBalance>> | null;
 	};
 	private storageDepositCache = new LRUCache<
 		string,
