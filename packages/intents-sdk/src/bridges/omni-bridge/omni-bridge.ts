@@ -790,7 +790,7 @@ export class OmniBridge implements Bridge {
 		const now = Date.now();
 		if (
 			this.cachedOmniStorageBalance.lastRequest <
-			Date.now() - OMNI_STORAGE_MS_BALANCE_CACHE
+			now - OMNI_STORAGE_MS_BALANCE_CACHE
 		) {
 			this.cachedOmniStorageBalance.value = await getAccountOmniStorageBalance(
 				this.nearProvider,
