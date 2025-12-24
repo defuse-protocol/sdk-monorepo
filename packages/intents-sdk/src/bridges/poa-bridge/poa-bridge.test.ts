@@ -49,7 +49,7 @@ describe("PoaBridge", () => {
 			await expect(
 				bridge.supports({
 					assetId: tokenId,
-					routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+					routeConfig: createPoaBridgeRoute(),
 				}),
 			).resolves.toBe(true);
 		});
@@ -76,7 +76,7 @@ describe("PoaBridge", () => {
 				await expect(
 					bridge.supports({
 						assetId,
-						routeConfig: createPoaBridgeRoute(Chains.Arbitrum),
+						routeConfig: createPoaBridgeRoute(),
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
@@ -94,7 +94,7 @@ describe("PoaBridge", () => {
 				await expect(
 					bridge.supports({
 						assetId,
-						routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+						routeConfig: createPoaBridgeRoute(),
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},

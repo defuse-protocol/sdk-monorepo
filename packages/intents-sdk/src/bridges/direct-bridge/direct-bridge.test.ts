@@ -232,7 +232,7 @@ describe("withdrawalParamsInvariant", () => {
 
 	it("throws when routeConfig is not NearWithdrawal", () => {
 		const params = {
-			routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+			routeConfig: createPoaBridgeRoute(),
 		};
 		expect(() => withdrawalParamsInvariant(params)).toThrow(
 			"Bridge is not direct",
