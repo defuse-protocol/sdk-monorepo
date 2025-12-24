@@ -85,7 +85,7 @@ export class Tee {
 
 	getAddress(params: CommitmentParameters): Address {
 		if (!this.publicKey || !this.chainCode) {
-			throw new Error("Please provide valid public key and chaincode");
+			throw new Error("Invalid public key and chain code");
 		}
 
 		return params.address(this.publicKey, this.chainCode);

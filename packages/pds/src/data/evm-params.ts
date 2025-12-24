@@ -1,5 +1,12 @@
 import * as secp from "@noble/secp256k1";
-import { hexToBytes, sha256, toHex, type Address, type Hex } from "viem";
+import {
+	hexToBytes,
+	sha256,
+	toBytes,
+	toHex,
+	type Address,
+	type Hex,
+} from "viem";
 import { HDKey, publicKeyToAddress } from "viem/accounts";
 import { encode, decode } from "cbor2";
 import { hexToBip32Path } from "../bip32-ext";
@@ -18,7 +25,6 @@ export interface CommitmentParameters {
 	bytes(): Uint8Array;
 	hex(): Hex;
 	hash(): Hex;
-	parse(serialized: Hex): CommitmentParameters;
 	address(publicKey: Hex, chainCode: Hex): Address;
 }
 
@@ -34,16 +40,16 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 	) {
 		this.extraData = extraData;
 		this.refundTo = refundTo.toLowerCase() as Hex;
-		const alphabeticOrder = (a: EvmPermittedOps, b: EvmPermittedOps) =>
+		const byAlphaNumericOrder = (a: EvmPermittedOps, b: EvmPermittedOps) =>
 			a.calldataRegex < b.calldataRegex ? -1 : 1;
 
-		// Order to strengthen the deterministic result
+		// Sorting to strengthen the deterministic result
 		this.permittedOps = permittedOps
 			.map(({ contracts, calldataRegex }) => ({
 				contracts: contracts.map((c) => c.toLowerCase() as Hex).sort(),
 				calldataRegex: calldataRegex.replace("0x", "").toLowerCase(),
 			}))
-			.sort(alphabeticOrder);
+			.sort(byAlphaNumericOrder);
 	}
 
 	bytes(): Uint8Array {
@@ -62,9 +68,9 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 		return sha256(this.bytes(), "hex");
 	}
 
-	parse(serialized: Hex): EvmCommitmentParameters {
+	static parse(serialized: Hex): EvmCommitmentParameters {
 		const { extraData, refundTo, permittedOps } =
-			decode<EvmCommitmentParameters>(serialized);
+			decode<EvmCommitmentParameters>(toBytes(serialized));
 
 		return new EvmCommitmentParameters(extraData, refundTo, permittedOps);
 	}
@@ -99,7 +105,7 @@ export class EvmForwardingParameters implements ForwardingParameters {
 	readonly chainId: bigint;
 
 	constructor(
-		commitmentParams: EvmCommitmentParameters,
+		commitmentParams: Hex,
 		calldata: Hex,
 		contract: Address,
 		value: bigint,
@@ -111,7 +117,7 @@ export class EvmForwardingParameters implements ForwardingParameters {
 		this.calldata = calldata;
 		this.contract = contract;
 		this.value = value;
-		this.commitmentParams = commitmentParams;
+		this.commitmentParams = EvmCommitmentParameters.parse(commitmentParams);
 		this.nonce = nonce;
 		this.gasPrice = gasPrice;
 		this.gasLimit = gasLimit;

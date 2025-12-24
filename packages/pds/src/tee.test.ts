@@ -30,7 +30,7 @@ function getForwardingParams(
 	const chainId = params.chainId ?? 1n;
 
 	return new EvmForwardingParameters(
-		commitmentParams,
+		commitmentParams.hex(),
 		calldata,
 		contract,
 		value,
