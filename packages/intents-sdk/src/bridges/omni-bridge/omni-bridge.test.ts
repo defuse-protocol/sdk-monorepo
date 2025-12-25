@@ -787,7 +787,7 @@ describe("OmniBridge", () => {
 
 			const result = await bridge.supports({
 				assetId: "nep141:eth.bridge.near",
-				routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+				routeConfig: createPoaBridgeRoute(),
 			});
 
 			expect(result).toBe(false);
@@ -918,9 +918,7 @@ describe("OmniBridge", () => {
 
 			const bridge = new OmniBridge({ env: "production", nearProvider });
 
-			const result = bridge.targetChainSpecified(
-				createPoaBridgeRoute(Chains.Bitcoin),
-			);
+			const result = bridge.targetChainSpecified(createPoaBridgeRoute());
 
 			expect(result).toBe(false);
 		});

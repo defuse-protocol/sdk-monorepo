@@ -262,7 +262,6 @@ export type VirtualChainRouteConfig = {
 
 export type PoaBridgeRouteConfig = {
 	route: RouteEnum["PoaBridge"];
-	chain: Chain;
 };
 
 export type HotBridgeRouteConfig = {
