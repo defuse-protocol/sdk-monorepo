@@ -117,7 +117,7 @@ export class OmniBridge implements Bridge {
 			},
 			conditionalCaching: (intentsNearStorageBalance) => {
 				return (
-					intentsNearStorageBalance <=
+					intentsNearStorageBalance >
 					MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
 				);
 			},
