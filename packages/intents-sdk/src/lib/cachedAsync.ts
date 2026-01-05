@@ -1,17 +1,17 @@
-export default function cachedAsync<T>({
+export default function cachedAsync<T, Args extends unknown[]>({
 	func,
 	ttl,
 	conditionalCaching,
 }: {
-	func: () => Promise<T>;
+	func: (...args: Args) => Promise<T>;
 	ttl: number;
 	conditionalCaching?: (result: T) => boolean;
-}): () => Promise<T> {
+}): (...args: Args) => Promise<T> {
 	let lastRequest = 0;
 	let value: T;
 	let pending: Promise<T> | null = null;
 
-	return async (): Promise<T> => {
+	return async (...args: Args): Promise<T> => {
 		const now = Date.now();
 
 		if (lastRequest >= now - ttl) {
@@ -22,7 +22,7 @@ export default function cachedAsync<T>({
 			return pending;
 		}
 
-		pending = func();
+		pending = func(...args);
 		try {
 			const result = await pending;
 			pending = null;
