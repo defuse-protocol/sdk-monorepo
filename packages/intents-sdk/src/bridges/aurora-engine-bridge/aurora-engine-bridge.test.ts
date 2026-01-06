@@ -3,8 +3,11 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import { RouteEnum } from "../../constants/route-enum";
-import { createVirtualChainRoute } from "../../lib/route-config-factory";
+
+import {
+	createPoaBridgeRoute,
+	createVirtualChainRoute,
+} from "../../lib/route-config-factory";
 import { AuroraEngineBridge } from "./aurora-engine-bridge";
 import {
 	MIN_GAS_AMOUNT,
@@ -15,7 +18,6 @@ import {
 	withdrawalParamsInvariant,
 } from "./aurora-engine-bridge-utils";
 import { zeroAddress } from "viem";
-import { Chains } from "../../lib/caip2";
 
 describe("AuroraEngineBridge", () => {
 	describe("supports()", () => {
@@ -213,7 +215,7 @@ describe("withdrawalParamsInvariant", () => {
 
 	it("throws when routeConfig is not VirtualChain", () => {
 		const params = {
-			routeConfig: { route: RouteEnum.PoaBridge, chain: Chains.TON },
+			routeConfig: createPoaBridgeRoute(),
 		};
 
 		expect(() => withdrawalParamsInvariant(params)).toThrow(
