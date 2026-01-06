@@ -854,7 +854,7 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
 
-		it("Do no support a PoA token  that can be routed through Omni with no routeConfig set with routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+		it("does not support PoA token routable through Omni with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -898,7 +898,7 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
 
-		it("Supports a PoA token that can be routed through Omni with route config and a valid target chain when routeMigratedPoaTokensThroughOmniBridge = false (should be sent to specified chain)", async () => {
+		it("supports PoA token with routeConfig and valid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -920,7 +920,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("Throws when given a PoA token with routeConfig and invalid target chain with routeMigratedPoaTokensThroughOmniBridge = false, because token doesnt exist there", async () => {
+		it("throws for PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -938,7 +938,7 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(TokenNotFoundInDestinationChainError);
 		});
 
-		it("Allows PoA token with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = true (token should be sent to its origin)", async () => {
+		it("allows PoA token with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -959,7 +959,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("Allows PoA token with routeConfig but no target chain when routeMigratedPoaTokensThroughOmniBridge = true (token should be sent to its origin)", async () => {
+		it("allows PoA token with routeConfig but no target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -981,7 +981,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("Allows PoA token with routeConfig and target chain when routeMigratedPoaTokensThroughOmniBridge = true (token should be sent to specified chain if possible)", async () => {
+		it("allows PoA token with routeConfig and target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1003,7 +1003,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("Throws when given a PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = true, because token doesnt exist there", async () => {
+		it("throws for PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
