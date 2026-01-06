@@ -33,7 +33,8 @@ import type {
 	IntentRelayParamsFactory,
 } from "./intents/shared-types";
 import { zip } from "./lib/array";
-import { Chains } from "./lib/caip2";
+import { type Chain, Chains } from "./lib/caip2";
+import { RouteEnum } from "./constants/route-enum";
 import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
@@ -500,10 +501,40 @@ export class IntentsSDK implements IIntentsSDK {
 			intentTx,
 		});
 
+		// Track the last promise per HOT bridge landing chain for sequential waiting.
+		// HOT bridge processes withdrawals sequentially per chain with ~30s gaps,
+		// so polling in parallel would cause later withdrawals to timeout.
+		const hotChainLastPromise = new Map<Chain, Promise<TxInfo | TxNoInfo>>();
+
 		return withdrawalParams.map(async (_, index) => {
 			const wids = await widsPromise;
 			const entry = wids[index];
 			assert(entry != null, `Missing wid for index ${index}`);
+
+			// Only apply sequential waiting for HOT bridge
+			if (entry.bridge.route === RouteEnum.HotBridge) {
+				const landingChain = entry.wid.landingChain;
+				const previousPromise = hotChainLastPromise.get(landingChain);
+
+				const sequentialPromise = (async () => {
+					if (previousPromise) {
+						// Wait for previous withdrawal to same chain to complete.
+						// Use allSettled to continue even if previous fails.
+						await Promise.allSettled([previousPromise]);
+					}
+					return watchWithdrawal({
+						bridge: entry.bridge,
+						wid: entry.wid,
+						signal,
+						logger,
+					});
+				})();
+
+				hotChainLastPromise.set(landingChain, sequentialPromise);
+				return sequentialPromise;
+			}
+
+			// Non-HOT bridges: parallel polling (existing behavior)
 			return watchWithdrawal({
 				bridge: entry.bridge,
 				wid: entry.wid,
