@@ -82,6 +82,14 @@ export async function waitForIntentSettlement({
 					};
 				}
 
+				// Settlement failed on-chain (e.g., out of gas)
+				if (
+					res.status === "NOT_FOUND_OR_NOT_VALID" &&
+					res.status_details === "FAILED"
+				) {
+					throw new IntentSettlementError(res);
+				}
+
 				// Not settled yet - continue polling
 				return POLL_PENDING;
 			} catch (err: unknown) {
@@ -96,21 +104,18 @@ export async function waitForIntentSettlement({
 }
 
 function isTransientError(err: unknown): boolean {
+	// IntentSettlementError is only thrown for permanent on-chain failures
 	if (err instanceof IntentSettlementError) {
-		return true;
+		return false;
 	}
 
-	if (
+	return (
 		err instanceof BaseError &&
 		err.walk(
 			(err) =>
 				err instanceof HttpRequestError ||
 				err instanceof TimeoutError ||
 				err instanceof RpcRequestError,
-		)
-	) {
-		return true;
-	}
-
-	return false;
+		) !== null
+	);
 }

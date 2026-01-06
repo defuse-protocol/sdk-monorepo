@@ -11,6 +11,9 @@ export class IntentSettlementError extends BaseError {
 			metaMessages: [
 				`Status: ${result.status}`,
 				`Intent hash: ${result.intent_hash}`,
+				...("data" in result && result.data
+					? [`Tx hash: ${result.data.hash}`]
+					: []),
 			],
 			name: "IntentSettlementError",
 		});
