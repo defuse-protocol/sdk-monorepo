@@ -3,6 +3,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "../../test/setup";
 import { waitForIntentSettlement } from "./waitForIntentSettlement";
 import type { GetStatusResponse } from "./solverRelayHttpClient";
+import { IntentSettlementError } from "./errors/intentSettlement";
 
 describe("waitForIntentSettlement()", () => {
 	it("calls onTxHashKnown callback when tx hash seen", async () => {
@@ -126,5 +127,26 @@ describe("waitForIntentSettlement()", () => {
 			txHash: "bar",
 			intentHash: "foo",
 		});
+	});
+
+	it("throws IntentSettlementError when settlement fails on-chain", async () => {
+		server.use(
+			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
+				return HttpResponse.json({
+					id: "dontcare",
+					jsonrpc: "2.0",
+					result: {
+						status: "NOT_FOUND_OR_NOT_VALID",
+						intent_hash: "intent123",
+						status_details: "FAILED",
+						data: { hash: "failedTx456" },
+					},
+				} satisfies GetStatusResponse);
+			}),
+		);
+
+		await expect(
+			waitForIntentSettlement({ intentHash: "intent123" }),
+		).rejects.toThrow(IntentSettlementError);
 	});
 });

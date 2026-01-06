@@ -129,5 +129,7 @@ export type GetStatusResponse = JSONRPCResponse<
 	| {
 			status: "NOT_FOUND_OR_NOT_VALID";
 			intent_hash: string;
+			status_details?: "FAILED";
+			data?: { hash: string };
 	  }
 >;
