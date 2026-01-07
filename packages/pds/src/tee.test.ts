@@ -10,7 +10,8 @@ import { ProtocolCode } from "./data/tee-message";
 import {
 	EvmCommitmentParameters,
 	EvmForwardingParameters,
-	type EvmPermittedOps,
+	OpType,
+	type EvmPermittedOp,
 } from "./data/evm-params";
 import { Outlayer } from "./outlayer";
 
@@ -54,6 +55,7 @@ describe("TEE abstraction tests", () => {
 	const refundTo = "0xCEf67989ae740cC9c92fa7385F003F84EAAFd915";
 	const permittedOps = [
 		{
+			opType: OpType.REGEX_CALLDATA,
 			calldataRegex:
 				"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[0-9a-fA-F]{64}",
 			contracts: ["0xdac17f958d2ee523a2206206994597c13d831ec7" as Hex],
@@ -88,7 +90,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 			const result = tee.getAddress(commitmentParams);
 
-			const expectedAddress = "0xE6663054A8cec7392b257e81c478200923f9002d";
+			const expectedAddress = "0x38F6050DE371D38bb6F9399b73C6D4B980cc26b2";
 			expect(result).toEqual(expectedAddress);
 		});
 	});
@@ -138,8 +140,9 @@ describe("TEE abstraction tests", () => {
 
 		it("Should not fail when the transfer amount is different", async () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
-			const ops: EvmPermittedOps[] = [
+			const ops: EvmPermittedOp[] = [
 				{
+					opType: OpType.REGEX_CALLDATA,
 					// biome-ignore lint/style/noNonNullAssertion: allow in tests
 					contracts: [permittedOps[0]!.contracts[0]!],
 					calldataRegex:
@@ -225,8 +228,9 @@ describe("TEE abstraction tests", () => {
 
 		it("Should allow transfers for native transfers", async () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
-			const ops: EvmPermittedOps[] = [
+			const ops: EvmPermittedOp[] = [
 				{
+					opType: OpType.REGEX_CALLDATA,
 					calldataRegex: "^$", // we expect empty calldata
 					contracts: [treasury],
 				},
@@ -265,8 +269,9 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 
 			const value = 100000n;
-			const ops: EvmPermittedOps[] = [
+			const ops: EvmPermittedOp[] = [
 				{
+					opType: OpType.REGEX_CALLDATA,
 					calldataRegex: "^$", // we expect empty calldata
 					contracts: [treasury],
 				},

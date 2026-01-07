@@ -11,10 +11,20 @@ import { HDKey, publicKeyToAddress } from "viem/accounts";
 import { encode, decode } from "cbor2";
 import { hexToBip32Path } from "../bip32-ext";
 
-export type EvmPermittedOps = {
+export enum OpType {
+	REGEX_CALLDATA = "REGEX_CALLDATA",
+}
+
+export type Op = {
+	opType: OpType;
+};
+
+export type RegexCalldataType = Op & {
 	calldataRegex: string;
 	contracts: Address[];
 };
+
+export type EvmPermittedOp = RegexCalldataType; // | ...
 
 export interface ForwardingParameters {
 	commitmentParams: CommitmentParameters;
@@ -31,24 +41,36 @@ export interface CommitmentParameters {
 export class EvmCommitmentParameters implements CommitmentParameters {
 	readonly extraData: string;
 	readonly refundTo: Address;
-	readonly permittedOps: EvmPermittedOps[];
+	readonly permittedOps: EvmPermittedOp[];
 
 	constructor(
 		extraData: string,
 		refundTo: Address,
-		permittedOps: EvmPermittedOps[],
+		permittedOps: EvmPermittedOp[],
 	) {
 		this.extraData = extraData;
 		this.refundTo = refundTo.toLowerCase() as Hex;
-		const byAlphaNumericOrder = (a: EvmPermittedOps, b: EvmPermittedOps) =>
+
+		const byAlphaNumericOrder = (a: EvmPermittedOp, b: EvmPermittedOp) =>
 			a.calldataRegex < b.calldataRegex ? -1 : 1;
 
+		const byIncreasingOpType = (a: Op, b: Op) => (a.opType < b.opType ? -1 : 1);
+
+		const normalizeOperations = (op: EvmPermittedOp) => {
+			if (op.opType === OpType.REGEX_CALLDATA) {
+				return {
+					opType: op.opType,
+					contracts: op.contracts.map((c) => c.toLowerCase() as Hex).sort(),
+					calldataRegex: op.calldataRegex.replace("0x", "").toLowerCase(),
+				};
+			} else {
+				throw new Error(`Unsupported type: ${op.opType}`);
+			}
+		};
 		// Sorting to strengthen the deterministic result
 		this.permittedOps = permittedOps
-			.map(({ contracts, calldataRegex }) => ({
-				contracts: contracts.map((c) => c.toLowerCase() as Hex).sort(),
-				calldataRegex: calldataRegex.replace("0x", "").toLowerCase(),
-			}))
+			.map(normalizeOperations)
+			.sort(byIncreasingOpType)
 			.sort(byAlphaNumericOrder);
 	}
 
