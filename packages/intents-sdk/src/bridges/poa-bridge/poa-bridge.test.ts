@@ -80,7 +80,7 @@ describe("PoaBridge", () => {
 				await expect(
 					bridge.supports({
 						assetId: tokenId,
-						routeConfig: createPoaBridgeRoute(Chains.Solana),
+						routeConfig: createPoaBridgeRoute(),
 					}),
 				).resolves.toBe(true);
 			},
