@@ -127,7 +127,7 @@ describe("HotBridge", () => {
 
 			const result = await bridge.supports({
 				assetId: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",
-				routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+				routeConfig: createPoaBridgeRoute(),
 			});
 
 			expect(result).toBe(false);

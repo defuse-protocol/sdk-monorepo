@@ -58,8 +58,8 @@ describe("sdk.invalidateNonces()", () => {
 			setupMocks();
 		noPublish(intentRelayer);
 
-		// Create a nonce with a deadline far in the future (should use 1 minute instead)
-		const farFutureDeadline = new Date("2025-12-31T23:59:59.999Z");
+		// Create a nonce with a deadline in one month (should use 1 minute instead)
+		const farFutureDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 		const salt = await saltManager.getCachedSalt();
 		const nonce = VersionedNonceBuilder.encodeNonce(salt, farFutureDeadline);
 
@@ -200,7 +200,7 @@ describe("sdk.invalidateNonces()", () => {
 			setupMocks();
 		noPublish(intentRelayer);
 
-		const farFutureDeadline = new Date("2025-12-31T23:59:59.999Z");
+		const farFutureDeadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 		const salt = await saltManager.getCachedSalt();
 		const validNonce = VersionedNonceBuilder.encodeNonce(
 			salt,

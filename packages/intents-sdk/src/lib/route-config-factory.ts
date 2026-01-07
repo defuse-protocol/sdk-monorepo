@@ -40,10 +40,9 @@ export function createVirtualChainRoute(
 	};
 }
 
-export function createPoaBridgeRoute(chain: Chain): PoaBridgeRouteConfig {
+export function createPoaBridgeRoute(): PoaBridgeRouteConfig {
 	return {
 		route: RouteEnum.PoaBridge,
-		chain,
 	};
 }
 

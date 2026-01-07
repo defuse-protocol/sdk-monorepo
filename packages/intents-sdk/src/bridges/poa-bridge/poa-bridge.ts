@@ -4,6 +4,7 @@ import {
 	type NearIntentsEnv,
 	configsByEnvironment,
 	poaBridge,
+	RpcRequestError,
 	utils,
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
@@ -245,15 +246,7 @@ export class PoaBridge implements Bridge {
 	async describeWithdrawal(
 		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus> {
-		const response = await poaBridge.httpClient.getWithdrawalStatus(
-			{
-				withdrawal_hash: args.tx.hash,
-			},
-			{
-				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
-				logger: args.logger,
-			},
-		);
+		const response = await this.getWithdrawalStatusWithRetry(args);
 
 		// Response list is unsorted, so we match by assetId instead of index
 		const withdrawal = findMatchingWithdrawal(
@@ -280,6 +273,35 @@ export class PoaBridge implements Bridge {
 			status: "failed",
 			reason: withdrawal.status,
 		};
+	}
+
+	private async getWithdrawalStatusWithRetry(
+		args: WithdrawalIdentifier & { logger?: ILogger },
+	): Promise<WithdrawalStatusResponse> {
+		const startTime = Date.now();
+
+		while (true) {
+			try {
+				return await poaBridge.httpClient.getWithdrawalStatus(
+					{ withdrawal_hash: args.tx.hash },
+					{
+						baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+						logger: args.logger,
+					},
+				);
+			} catch (err: unknown) {
+				if (!isWithdrawalNotFoundError(err)) {
+					throw err;
+				}
+
+				if (Date.now() - startTime >= NOT_FOUND_RETRY_TIMEOUT_MS) {
+					return { withdrawals: [] };
+				}
+
+				args.logger?.warn("Withdrawal not indexed yet, retrying...");
+				await sleep(NOT_FOUND_RETRY_INTERVAL_MS);
+			}
+		}
 	}
 
 	/**
@@ -335,4 +357,19 @@ function findMatchingWithdrawal(
 	// Note: `defuse_asset_identifier` cannot be used as it contains chain-native
 	// format (e.g., "zec:mainnet:native") which differs from the assetId format.
 	return withdrawals.find((w) => `nep141:${w.data.near_token_id}` === assetId);
+}
+
+const NOT_FOUND_RETRY_TIMEOUT_MS = 3 * 1000; // 3 seconds
+const NOT_FOUND_RETRY_INTERVAL_MS = 1000; // 1 second
+const RPC_ERR_MSG_WITHDRAWALS_NOT_FOUND = "Withdrawals not found";
+
+function isWithdrawalNotFoundError(err: unknown): boolean {
+	return (
+		err instanceof RpcRequestError &&
+		err.details === RPC_ERR_MSG_WITHDRAWALS_NOT_FOUND
+	);
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }

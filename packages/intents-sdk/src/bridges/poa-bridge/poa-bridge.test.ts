@@ -1,4 +1,4 @@
-import { poaBridge } from "@defuse-protocol/internal-utils";
+import { poaBridge, RpcRequestError } from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -50,7 +50,7 @@ describe("PoaBridge", () => {
 			await expect(
 				bridge.supports({
 					assetId: tokenId,
-					routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+					routeConfig: createPoaBridgeRoute(),
 				}),
 			).resolves.toBe(true);
 		});
@@ -108,7 +108,7 @@ describe("PoaBridge", () => {
 				await expect(
 					bridge.supports({
 						assetId,
-						routeConfig: createPoaBridgeRoute(Chains.Arbitrum),
+						routeConfig: createPoaBridgeRoute(),
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
@@ -126,7 +126,7 @@ describe("PoaBridge", () => {
 				await expect(
 					bridge.supports({
 						assetId,
-						routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+						routeConfig: createPoaBridgeRoute(),
 					}),
 				).rejects.toThrow(UnsupportedAssetIdError);
 			},
@@ -627,6 +627,125 @@ describe("PoaBridge", () => {
 				status: "completed",
 				txHash: "zec-tx-hash",
 			});
+		});
+
+		it("retries on 'Withdrawals not found' error and succeeds when indexed", async () => {
+			const notFoundError = new RpcRequestError({
+				body: {},
+				error: { code: -1, message: "Withdrawals not found" },
+				url: "https://example.com",
+			});
+
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus)
+				.mockRejectedValueOnce(notFoundError)
+				.mockRejectedValueOnce(notFoundError)
+				.mockResolvedValueOnce({
+					withdrawals: [
+						{
+							status: "COMPLETED",
+							data: {
+								tx_hash: "near-tx-hash",
+								transfer_tx_hash: "btc-tx-hash",
+								chain: "btc:mainnet",
+								defuse_asset_identifier: "btc:mainnet:native",
+								near_token_id: "btc.omft.near",
+								decimals: 8,
+								amount: 100000,
+								account_id: "test.near",
+								address: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+								created: "2024-01-01T00:00:00Z",
+							},
+						},
+					],
+				});
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "btc-tx-hash",
+			});
+			expect(poaBridge.httpClient.getWithdrawalStatus).toHaveBeenCalledTimes(3);
+		});
+
+		it("returns pending after 'Withdrawals not found' retry timeout", async () => {
+			vi.useFakeTimers();
+
+			const notFoundError = new RpcRequestError({
+				body: {},
+				error: { code: -1, message: "Withdrawals not found" },
+				url: "https://example.com",
+			});
+
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockRejectedValue(
+				notFoundError,
+			);
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			const resultPromise = bridge.describeWithdrawal({
+				landingChain: Chains.Bitcoin,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:btc.omft.near",
+					amount: 100000n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			// Advance time past the 3s timeout
+			await vi.advanceTimersByTimeAsync(5_000);
+
+			const result = await resultPromise;
+
+			// Returns pending (empty withdrawals list) after timeout
+			expect(result).toEqual({ status: "pending" });
+
+			vi.useRealTimers();
+		});
+
+		it("propagates other RPC errors without retry", async () => {
+			const serverError = new RpcRequestError({
+				body: {},
+				error: { code: 500, message: "Internal server error" },
+				url: "https://example.com",
+			});
+
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockRejectedValue(
+				serverError,
+			);
+
+			const bridge = new PoaBridge({ env: "production" });
+
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.Bitcoin,
+					index: 0,
+					withdrawalParams: {
+						assetId: "nep141:btc.omft.near",
+						amount: 100000n,
+						destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+						feeInclusive: false,
+					},
+					tx: { hash: "near-tx-hash", accountId: "test.near" },
+				}),
+			).rejects.toBe(serverError);
+
+			expect(poaBridge.httpClient.getWithdrawalStatus).toHaveBeenCalledTimes(1);
 		});
 	});
 });
