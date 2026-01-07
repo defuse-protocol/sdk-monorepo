@@ -806,9 +806,7 @@ export class OmniBridge implements Bridge {
 	 */
 	private isPoaTokenRoutedThroughOmniBridge(nearAddress: string): boolean {
 		return this.routeMigratedPoaTokensThroughOmniBridge
-			? POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE.some(
-					({ contractId }) => contractId === nearAddress,
-				)
+			? POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[nearAddress] !== undefined
 			: false;
 	}
 }

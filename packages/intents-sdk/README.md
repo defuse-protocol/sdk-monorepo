@@ -393,16 +393,16 @@ const result = await sdk.processWithdrawal({
 
 **Allowlisted Tokens:**
 
-Not all PoA tokens can be routed through Omni Bridge. The SDK exports `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` constant containing the list of tokens that support this routing:
+Not all PoA tokens can be routed through Omni Bridge. The SDK exports `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` constant containing the tokens that support this routing:
 
 ```typescript
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from '@defuse-protocol/intents-sdk';
 
 console.log(POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE);
-// [{ contractId: 'sol-...omft.near', chainKind: ChainKind.Sol }, ...]
+// { 'sol-...omft.near': ChainKind.Sol, ... }
 ```
 
-Each entry contains the token's `contractId` and `chainKind`. Only tokens in this list will be routed through Omni Bridge when the feature flag is enabled. Other `*.omft.near` tokens will continue using the PoA Bridge.
+The keys are token contract IDs and values are their `ChainKind`. Only tokens in this map will be routed through Omni Bridge when the feature flag is enabled. Other `*.omft.near` tokens will continue using the PoA Bridge.
 
 ### Other Intent Signers
 

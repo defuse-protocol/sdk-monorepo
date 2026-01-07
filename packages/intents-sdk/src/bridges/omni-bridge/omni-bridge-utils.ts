@@ -127,10 +127,7 @@ export function isUtxoChain(network: ChainKind): boolean {
 }
 
 export function poaContractIdToChainKind(contractId: string): ChainKind | null {
-	for (const token of POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE) {
-		if (token.contractId === contractId) return token.chainKind;
-	}
-	return null;
+	return POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[contractId] ?? null;
 }
 
 export function validateOmniToken(nearAddress: string): boolean {
