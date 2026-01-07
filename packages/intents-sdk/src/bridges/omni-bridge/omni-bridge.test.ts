@@ -4,7 +4,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { OmniBridgeAPI } from "omni-bridge-sdk";
 import { zeroAddress } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
@@ -18,12 +18,8 @@ import {
 } from "../../lib/route-config-factory";
 import { TokenNotFoundInDestinationChainError } from "./error";
 import { OmniBridge } from "./omni-bridge";
-import * as omniBridgeUtils from "./omni-bridge-utils";
+
 describe("OmniBridge", () => {
-	// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-	beforeEach(() => {
-		vi.restoreAllMocks();
-	});
 	describe("without routeConfig", () => {
 		it("supports if assetId matches omni pattern (token created by specific factories)", async () => {
 			const nearProvider = nearFailoverRpcProvider({
@@ -864,13 +860,9 @@ describe("OmniBridge", () => {
 				nearProvider,
 			});
 
-			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"sol:11111111111111111111111111111111",
-			);
-
 			const result = await bridge.supports({
-				assetId: "nep141:sol.omft.near",
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			});
 
 			expect(result).toBe(false);
@@ -885,14 +877,10 @@ describe("OmniBridge", () => {
 				nearProvider,
 			});
 
-			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"sol:11111111111111111111111111111111",
-			);
-
 			await expect(
 				bridge.supports({
-					assetId: "nep141:sol.omft.near",
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 					routeConfig: createOmniBridgeRoute(),
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);
@@ -908,13 +896,9 @@ describe("OmniBridge", () => {
 				nearProvider,
 			});
 
-			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"sol:11111111111111111111111111111111",
-			);
-
 			const result = await bridge.supports({
-				assetId: "nep141:sol.omft.near",
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			});
 			expect(result).toBe(true);
@@ -932,7 +916,8 @@ describe("OmniBridge", () => {
 
 			await expect(
 				bridge.supports({
-					assetId: "nep141:sol.omft.near",
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 				}),
 			).rejects.toThrow(TokenNotFoundInDestinationChainError);
@@ -948,13 +933,10 @@ describe("OmniBridge", () => {
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
-			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"sol:11111111111111111111111111111111",
-			);
 
 			const result = await bridge.supports({
-				assetId: "nep141:sol.omft.near",
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			});
 			expect(result).toBe(true);
 		});
@@ -969,13 +951,10 @@ describe("OmniBridge", () => {
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
-			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"sol:11111111111111111111111111111111",
-			);
 
 			const result = await bridge.supports({
-				assetId: "nep141:sol.omft.near",
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 				routeConfig: createOmniBridgeRoute(),
 			});
 			expect(result).toBe(true);
@@ -991,13 +970,10 @@ describe("OmniBridge", () => {
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
-			// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"sol:11111111111111111111111111111111",
-			);
 
 			const result = await bridge.supports({
-				assetId: "nep141:sol.omft.near",
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			});
 			expect(result).toBe(true);
@@ -1016,7 +992,8 @@ describe("OmniBridge", () => {
 
 			await expect(
 				bridge.supports({
-					assetId: "nep141:sol.omft.near",
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 				}),
 			).rejects.toThrow(TokenNotFoundInDestinationChainError);

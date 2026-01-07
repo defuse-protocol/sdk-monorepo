@@ -375,10 +375,10 @@ const sdk = new IntentsSDK({
     }
 });
 
-// With this flag enabled, tokens like 'nep141:sol.omft.near' will route through Omni Bridge
+// With this flag enabled, tokens like 'nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near' will route through Omni Bridge
 const result = await sdk.processWithdrawal({
     withdrawalParams: {
-        assetId: 'nep141:sol.omft.near', // Migrated PoA token
+        assetId: 'nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near', // Migrated PoA token
         amount: 1000000n,
         destinationAddress: '39hqXivfCPUSqmXAaX3eo4JcA5bGFXhhs26dmg585DGb',
         feeInclusive: false

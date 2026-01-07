@@ -86,7 +86,9 @@ export class PoaBridge implements Bridge {
 		if (
 			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
-			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE.some(({ contractId }) => contractId === assetInfo.contractId) &&
+			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE.some(
+				({ contractId }) => contractId === assetInfo.contractId,
+			) &&
 			params.routeConfig === undefined
 		) {
 			return false;

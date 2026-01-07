@@ -26,7 +26,7 @@ import {
 } from "omni-bridge-sdk";
 import type { FeeEstimation } from "./shared-types";
 import { RouteEnum } from "./constants/route-enum";
-import * as omniBridgeUtils from "./bridges/omni-bridge/omni-bridge-utils";
+
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
 });
@@ -1123,7 +1123,8 @@ describe("omni_bridge", () => {
 		const feeEstimation = {
 			amount: 1n,
 			quote: {
-				defuse_asset_identifier_in: "nep141:sol.omft.near",
+				defuse_asset_identifier_in:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 				defuse_asset_identifier_out: "nep141:wrap.near",
 				amount_in: "1",
 				amount_out: relayerFee.toString(),
@@ -1150,15 +1151,11 @@ describe("omni_bridge", () => {
 
 		const destinationAddress = "39hqXivfCPUSqmXAaX3eo4JcA5bGFXhhs26dmg585DGb";
 		const withdrawalParams = {
-			assetId: "nep141:sol.omft.near",
+			assetId: "nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			amount: 6500n,
 			destinationAddress,
 			feeInclusive: false,
 		};
-		// TODO: remove after sol.omdep.near -> migrated to sol.omft.near
-		vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-			"sol:11111111111111111111111111111111",
-		);
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,
@@ -1168,7 +1165,7 @@ describe("omni_bridge", () => {
 		const actualAmount = withdrawalParams.amount;
 		const recipient = omniAddress(ChainKind.Sol, destinationAddress);
 		const implicitAccount = calculateStorageAccountId({
-			token: "near:sol.omft.near",
+			token: "near:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			amount: actualAmount,
 			recipient,
 			fee: {
@@ -1199,7 +1196,7 @@ describe("omni_bridge", () => {
 			{
 				intent: "ft_withdraw",
 				min_gas: "37400000000000",
-				token: "sol.omft.near",
+				token: "sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 				receiver_id: OMNI_BRIDGE_CONTRACT,
 				amount: actualAmount.toString(),
 				storage_deposit: undefined,
