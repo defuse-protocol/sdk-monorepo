@@ -14,7 +14,7 @@ export const HotBridgeChains = [
 	Chains.LayerX,
 	Chains.Adi,
 	Chains.Scroll,
-	Chains.Plasma
+	Chains.Plasma,
 ];
 
 export const HotBridgeEVMChains = HotBridgeChains.filter<

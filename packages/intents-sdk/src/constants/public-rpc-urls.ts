@@ -13,6 +13,8 @@ export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChain, string[]> = {
 	[Chains.Avalanche]: ["https://avalanche-c-chain-rpc.publicnode.com"],
 	[Chains.LayerX]: ["https://rpc.xlayer.tech"],
 	[Chains.Adi]: ["https://rpc.adifoundation.ai"],
+	[Chains.Plasma]: ["https://rpc.plasma.to"],
+	[Chains.Scroll]: ["https://rpc.scroll.io"],
 };
 
 export const PUBLIC_STELLAR_RPC_URLS: RPCEndpointMap[typeof Chains.Stellar] = {
