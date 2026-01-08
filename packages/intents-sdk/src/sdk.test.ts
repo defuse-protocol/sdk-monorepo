@@ -1109,6 +1109,105 @@ describe("omni_bridge", () => {
 		]);
 	});
 
+	it("createWithdrawalIntents(): create withdrawal intents with an allowlisted PoA token with routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		const referral = "";
+		const sdk = new IntentsSDK({
+			referral,
+			intentSigner,
+			features: {
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			},
+		});
+
+		const relayerFee = 1500n;
+		const feeEstimation = {
+			amount: 1n,
+			quote: {
+				defuse_asset_identifier_in:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "1",
+				amount_out: relayerFee.toString(),
+				expiration_time: "2025-12-26T06:41:05.827Z",
+				quote_hash: "BjYZy7HU41U2a1juMxGG7LLZsqHjadhRnT9pzadC8YZn",
+			},
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee,
+					storageDepositFee: 0n,
+				},
+			},
+		};
+
+		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: relayerFee,
+			transferred_token_fee: "0",
+			gas_fee: 0n,
+			protocol_fee: 0n,
+			min_amount: "0",
+			usd_fee: 0.58,
+			insufficient_utxo: false,
+		});
+
+		const destinationAddress = "39hqXivfCPUSqmXAaX3eo4JcA5bGFXhhs26dmg585DGb";
+		const withdrawalParams = {
+			assetId: "nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+			amount: 6500n,
+			destinationAddress,
+			feeInclusive: false,
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		const actualAmount = withdrawalParams.amount;
+		const recipient = omniAddress(ChainKind.Sol, destinationAddress);
+		const implicitAccount = calculateStorageAccountId({
+			token: "near:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+			amount: actualAmount,
+			recipient,
+			fee: {
+				fee: 0n,
+				native_fee: BigInt(feeEstimation.quote.amount_out),
+			},
+			sender: "near:intents.near",
+			msg: "",
+		});
+
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "token_diff",
+				diff: {
+					[feeEstimation.quote.defuse_asset_identifier_in]:
+						`-${feeEstimation.quote.amount_in}`,
+					[feeEstimation.quote.defuse_asset_identifier_out]:
+						feeEstimation.quote.amount_out,
+				},
+				referral,
+			},
+			{
+				deposit_for_account_id: implicitAccount,
+				amount: feeEstimation.quote.amount_out,
+				contract_id: OMNI_BRIDGE_CONTRACT,
+				intent: "storage_deposit",
+			},
+			{
+				intent: "ft_withdraw",
+				min_gas: "37400000000000",
+				token: "sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: actualAmount.toString(),
+				storage_deposit: undefined,
+				msg: JSON.stringify({
+					recipient,
+					fee: "0",
+					native_token_fee: relayerFee.toString(),
+				}),
+			},
+		]);
+	});
 	it("createWithdrawalIntents(): create a btc utxo withdrawal without token_diff and storage_deposit intents with fee inclusive = true", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 

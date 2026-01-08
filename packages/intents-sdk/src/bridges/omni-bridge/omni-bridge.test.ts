@@ -807,6 +807,197 @@ describe("OmniBridge", () => {
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
+
+		it("allows PoA token when routeConfig and target Chain set", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.supports({
+				assetId: "nep141:zec.omft.near",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("blocks PoA token without routeConfig and target Chain set", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			const result = await bridge.supports({
+				assetId: "nep141:zec.omft.near",
+			});
+			expect(result).toBe(false);
+		});
+
+		it("throws when PoA token with routeConfig set to Omni Bridge but no target Chain set", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({ env: "production", nearProvider });
+
+			await expect(
+				bridge.supports({
+					assetId: "nep141:zec.omft.near",
+					routeConfig: createOmniBridgeRoute(),
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+
+		it("does not support PoA token routable through Omni with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			const result = await bridge.supports({
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+			});
+
+			expect(result).toBe(false);
+		});
+		it("Throws when given a PoA token that can be routed through Omni with route config without a target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			await expect(
+				bridge.supports({
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+					routeConfig: createOmniBridgeRoute(),
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+
+		it("supports PoA token with routeConfig and valid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			const result = await bridge.supports({
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("throws for PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+			});
+
+			await expect(
+				bridge.supports({
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).rejects.toThrow(TokenNotFoundInDestinationChainError);
+		});
+
+		it("allows routable PoA token with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+
+			const result = await bridge.supports({
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+			});
+			expect(result).toBe(true);
+		});
+
+		it("allows routable PoA token with routeConfig but no target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+
+			const result = await bridge.supports({
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				routeConfig: createOmniBridgeRoute(),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("allows routable PoA token with routeConfig and target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+
+			const result = await bridge.supports({
+				assetId:
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				routeConfig: createOmniBridgeRoute(Chains.Solana),
+			});
+			expect(result).toBe(true);
+		});
+
+		it("throws for routable PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				env: "production",
+				nearProvider,
+				routeMigratedPoaTokensThroughOmniBridge: true,
+			});
+
+			await expect(
+				bridge.supports({
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).rejects.toThrow(TokenNotFoundInDestinationChainError);
+		});
 	});
 
 	describe("makeAssetInfo()", () => {

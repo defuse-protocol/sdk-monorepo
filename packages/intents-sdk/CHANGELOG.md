@@ -1,5 +1,38 @@
 # @defuse-protocol/intents-sdk
 
+## 0.44.0
+
+### Minor Changes
+
+- f6d10ea: Add `createWithdrawalCompletionPromises()` for granular control over batch withdrawals
+
+  **New exports:**
+
+  - `WithdrawalWatchError` - thrown when status polling fails (timeout or consecutive errors)
+  - `WithdrawalFailedError` - thrown when the withdrawal fails on the destination chain
+
+  **Breaking changes:**
+
+  - Remove `retryOptions` parameter from `waitForWithdrawalCompletion()` and `processWithdrawal()`. Waiting continues until completion, failure, or chain-specific p99 timeout. Use `AbortSignal.timeout()` to set a shorter timeout.
+
+- f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
+
+  BREAKING CHANGES:
+
+  - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
+  - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
+
+- 5b1e80a: Expose optional `signal` parameter in `waitForIntentSettlement()` for timeout/cancellation control
+- bba0493: Adds feature routeMigratedPoaTokensThroughOmniBridge. Allowlisted PoA token can be routed through Omni Bridge instead of PoA bridge when this feature is enabled.
+- c2519fb: Remove chain argument from createPoaBridgeRoute as it has no effect on behaviour
+
+### Patch Changes
+
+- Updated dependencies [f1befc2]
+- Updated dependencies [0af920c]
+- Updated dependencies [5b1e80a]
+  - @defuse-protocol/internal-utils@0.22.0
+
 ## 0.43.3
 
 ### Patch Changes
