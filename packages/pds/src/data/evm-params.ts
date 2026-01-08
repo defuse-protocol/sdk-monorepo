@@ -22,6 +22,7 @@ export type Op = {
 export type RegexCalldataType = Op & {
 	calldataRegex: string;
 	contracts: Address[];
+	zeroValue: boolean;
 };
 
 export type EvmPermittedOp = RegexCalldataType; // | ...
@@ -60,6 +61,7 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 			if (op.opType === OpType.REGEX_CALLDATA) {
 				return {
 					opType: op.opType,
+					zeroValue: op.zeroValue,
 					contracts: op.contracts.map((c) => c.toLowerCase() as Hex).sort(),
 					calldataRegex: op.calldataRegex.replace("0x", "").toLowerCase(),
 				};
@@ -67,9 +69,21 @@ export class EvmCommitmentParameters implements CommitmentParameters {
 				throw new Error(`Unsupported type: ${op.opType}`);
 			}
 		};
+
+		const maybeApplyzeroValueOrdering = (
+			a: EvmPermittedOp,
+			b: EvmPermittedOp,
+		) => {
+			if (a.opType === b.opType && a.opType === OpType.REGEX_CALLDATA) {
+				return a.zeroValue < b.zeroValue ? -1 : 1;
+			}
+			return 0;
+		};
+
 		// Sorting to strengthen the deterministic result
 		this.permittedOps = permittedOps
 			.map(normalizeOperations)
+			.sort(maybeApplyzeroValueOrdering)
 			.sort(byIncreasingOpType)
 			.sort(byAlphaNumericOrder);
 	}

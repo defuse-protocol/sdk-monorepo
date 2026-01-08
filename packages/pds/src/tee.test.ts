@@ -55,6 +55,7 @@ describe("TEE abstraction tests", () => {
 	const refundTo = "0xCEf67989ae740cC9c92fa7385F003F84EAAFd915";
 	const permittedOps = [
 		{
+			zeroValue: true,
 			opType: OpType.REGEX_CALLDATA,
 			calldataRegex:
 				"0xa9059cbb0000000000000000000000002cff890f0378a11913b6129b2e97417a2c302680[0-9a-fA-F]{64}",
@@ -90,7 +91,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 			const result = tee.getAddress(commitmentParams);
 
-			const expectedAddress = "0x38F6050DE371D38bb6F9399b73C6D4B980cc26b2";
+			const expectedAddress = "0x8C91c8024C23CB6afB836767ee1Ff6A7dF673874";
 			expect(result).toEqual(expectedAddress);
 		});
 	});
@@ -120,6 +121,7 @@ describe("TEE abstraction tests", () => {
 			expect(signedTx.gas).toEqual(forwardingParams.gasLimit);
 			expect(signedTx.gasPrice).toEqual(forwardingParams.gasPrice);
 			expect(signedTx.nonce).toEqual(Number(forwardingParams.nonce));
+			expect(signedTx.value).toEqual(undefined);
 		});
 
 		it("Should fail as the transfer recipient is different", async () => {
@@ -142,6 +144,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 			const ops: EvmPermittedOp[] = [
 				{
+					zeroValue: true,
 					opType: OpType.REGEX_CALLDATA,
 					// biome-ignore lint/style/noNonNullAssertion: allow in tests
 					contracts: [permittedOps[0]!.contracts[0]!],
@@ -230,6 +233,7 @@ describe("TEE abstraction tests", () => {
 			const tee = new Tee(teeProvider, publickey, chainCode);
 			const ops: EvmPermittedOp[] = [
 				{
+					zeroValue: false,
 					opType: OpType.REGEX_CALLDATA,
 					calldataRegex: "^$", // we expect empty calldata
 					contracts: [treasury],
@@ -271,6 +275,7 @@ describe("TEE abstraction tests", () => {
 			const value = 100000n;
 			const ops: EvmPermittedOp[] = [
 				{
+					zeroValue: true,
 					opType: OpType.REGEX_CALLDATA,
 					calldataRegex: "^$", // we expect empty calldata
 					contracts: [treasury],
@@ -287,6 +292,19 @@ describe("TEE abstraction tests", () => {
 				contract: otherContract,
 				value,
 			});
+
+			await expect(
+				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
+			).rejects.toThrowError("call not allowed");
+		});
+
+		it("Should not allow value > 0 on ERC20 transfers", async () => {
+			const commitmentParams: EvmCommitmentParameters =
+				new EvmCommitmentParameters(extraData, refundTo, permittedOps);
+			const value = 1000000n;
+			const forwardingParams = getForwardingParams(commitmentParams, { value });
+
+			const tee = new Tee(teeProvider, publickey, chainCode);
 
 			await expect(
 				tee.getSignedTx(ProtocolCode.EVM, forwardingParams),
