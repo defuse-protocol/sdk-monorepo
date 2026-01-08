@@ -35,10 +35,12 @@ import {
 import type { Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
+import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected env: NearIntentsEnv;
+	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -46,8 +48,16 @@ export class PoaBridge implements Bridge {
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
 
-	constructor({ env }: { env: NearIntentsEnv }) {
+	constructor({
+		env,
+		routeMigratedPoaTokensThroughOmniBridge,
+	}: {
+		env: NearIntentsEnv;
+		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+	}) {
 		this.env = env;
+		this.routeMigratedPoaTokensThroughOmniBridge =
+			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
 
 	private is(routeConfig: RouteConfig) {
@@ -70,6 +80,19 @@ export class PoaBridge implements Bridge {
 				"`assetId` does not match `routeConfig`.",
 			);
 		}
+
+		// When the feature flag is enabled, delegate eligible tokens to Omni Bridge
+		// unless the user explicitly specified PoA Bridge via routeConfig
+		if (
+			this.routeMigratedPoaTokensThroughOmniBridge &&
+			assetInfo != null &&
+			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[assetInfo.contractId] !==
+				undefined &&
+			params.routeConfig === undefined
+		) {
+			return false;
+		}
+
 		return isValid;
 	}
 
