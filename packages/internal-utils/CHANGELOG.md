@@ -1,5 +1,25 @@
 # @defuse-protocol/internal-utils
 
+## 0.22.0
+
+### Minor Changes
+
+- 5b1e80a: Add latency-optimized polling for intent settlement
+
+  - New `poll()` utility with probability-based intervals that polls aggressively early and backs off for outliers
+  - `waitForIntentSettlement()` now uses production timing stats (p50=2s, p90=10s, p99=356s)
+
+### Patch Changes
+
+- f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
+
+  BREAKING CHANGES:
+
+  - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
+  - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
+
+- 0af920c: Detect and throw IntentSettlementError when intent settlement fails on-chain (e.g., out of gas) instead of polling until timeout.
+
 ## 0.21.1
 
 ### Patch Changes
