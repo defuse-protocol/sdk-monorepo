@@ -325,7 +325,9 @@ export class HotBridge implements Bridge {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
-		const status = await this.hotSdk.getGaslessWithdrawStatus(nonce.toString());
+		const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
+			nonce.toString(),
+		);
 
 		if (status === HotWithdrawStatus.Canceled) {
 			return {

@@ -7,7 +7,6 @@ import {
 	createNearWithdrawalRoute,
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
-import { Chains } from "../../lib/caip2";
 import { DirectBridge } from "./direct-bridge";
 import {
 	MIN_GAS_AMOUNT,
@@ -232,7 +231,7 @@ describe("withdrawalParamsInvariant", () => {
 
 	it("throws when routeConfig is not NearWithdrawal", () => {
 		const params = {
-			routeConfig: createPoaBridgeRoute(Chains.Bitcoin),
+			routeConfig: createPoaBridgeRoute(),
 		};
 		expect(() => withdrawalParamsInvariant(params)).toThrow(
 			"Bridge is not direct",
