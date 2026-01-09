@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.45.1
+
+### Patch Changes
+
+- 0dc36b1: Increase withdrawal polling timeout to 3x p99 with extra 12 minutes for HOT bridge
+
 ## 0.45.0
 
 ### Minor Changes
