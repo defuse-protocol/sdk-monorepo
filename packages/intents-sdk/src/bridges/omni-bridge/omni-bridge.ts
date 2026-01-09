@@ -801,7 +801,7 @@ export class OmniBridge implements Bridge {
 	}
 
 	/**
-	 * Gets cached token decimals on destination chain and on near.
+	 * Gets cached storade_balance value of intents contract on Omni Bridge contract.
 	 */
 	private async getCachedIntentsStorageBalance(): Promise<bigint> {
 		const cached = this.intentsStorageBalanceCache.get(
