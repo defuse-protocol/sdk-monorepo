@@ -49,6 +49,10 @@ export const BlockchainEnum = {
 	HYPERLIQUID: "hyperliquid:999",
 	/* ADI is operated by HOT bridge */
 	ADI: "eth:36900",
+	/* PLASMA is operated by HOT bridge */
+	PLASMA: "eth:9745",
+	/* SCROLL is operated by HOT bridge */
+	SCROLL: "eth:534352",
 } as const;
 
 export type BlockchainEnum =

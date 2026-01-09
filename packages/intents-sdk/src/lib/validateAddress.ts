@@ -75,6 +75,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Arbitrum:
 		case Chains.Avalanche:
 		case Chains.Berachain:
+		case Chains.Plasma:
+		case Chains.Scroll:
 			return validateEthAddress(address);
 
 		default:

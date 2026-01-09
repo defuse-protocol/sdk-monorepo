@@ -11,6 +11,8 @@
 	"eip155:42161": "arbitrum",
 	"eip155:43114": "avalanche",
 	"eip155:80085": "berachain",
+	"eip155:9745": "plasma",
+	"eip155:534352": "scroll",
 	"bip122:000000000019d6689c085ae165831e93": "bitcoin",
 	"bip122:00040fe8ec8471911baa1db1266ea15d": "zcash",
 	"bip122:1a91e3dace36e2be3bf030a65679fe82": "doge",
