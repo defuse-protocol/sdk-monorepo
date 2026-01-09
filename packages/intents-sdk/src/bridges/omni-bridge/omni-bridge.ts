@@ -82,7 +82,7 @@ export class OmniBridge implements Bridge {
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
 	protected intentsStorageBalanceCache = new TTLCache<
-		"INTENTS_STORAGE_BALANCE_CACHE",
+		"INTENTS_STORAGE_BALANCE",
 		bigint
 	>({
 		max: 1,
@@ -805,7 +805,7 @@ export class OmniBridge implements Bridge {
 	 */
 	private async getCachedIntentsStorageBalance(): Promise<bigint> {
 		const cached = this.intentsStorageBalanceCache.get(
-			"INTENTS_STORAGE_BALANCE_CACHE",
+			"INTENTS_STORAGE_BALANCE",
 		);
 		if (cached !== undefined) {
 			return cached;
@@ -820,7 +820,7 @@ export class OmniBridge implements Bridge {
 
 		if (intentsStorageBalance > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			this.intentsStorageBalanceCache.set(
-				"INTENTS_STORAGE_BALANCE_CACHE",
+				"INTENTS_STORAGE_BALANCE",
 				intentsStorageBalance,
 			);
 		}
