@@ -23,7 +23,10 @@ export async function watchWithdrawal(args: {
 	signal?: AbortSignal;
 	logger?: ILogger;
 }): Promise<TxInfo | TxNoInfo> {
-	const stats = getWithdrawalStatsForChain(args.wid.landingChain);
+	const stats = getWithdrawalStatsForChain({
+		chain: args.wid.landingChain,
+		bridgeRoute: args.bridge.route,
+	});
 	let consecutiveErrors = 0;
 
 	try {
