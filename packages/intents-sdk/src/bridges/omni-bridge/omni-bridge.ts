@@ -51,7 +51,6 @@ import {
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
-	OMNI_STORAGE_MS_BALANCE_CACHE,
 } from "./omni-bridge-constants";
 import {
 	caip2ToChainKind,
@@ -72,7 +71,6 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
-import cachedAsync from "../../lib/cachedAsync";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 type MinStorageBalance = bigint;
@@ -83,7 +81,13 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
-	protected getCachedOmniStorageBalance: () => Promise<bigint>;
+	protected intentsStorageBalanceCache = new TTLCache<
+		"INTENTS_STORAGE_BALANCE_CACHE",
+		bigint
+	>({
+		max: 1,
+		ttl: 3000,
+	});
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
 		string,
@@ -112,22 +116,6 @@ export class OmniBridge implements Bridge {
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.getCachedOmniStorageBalance = cachedAsync({
-			func: async () => {
-				const storageBalance = await getAccountOmniStorageBalance(
-					this.nearProvider,
-					configsByEnvironment[this.env].contractID,
-				);
-				return storageBalance === null ? 0n : BigInt(storageBalance.available);
-			},
-			conditionalCaching: (intentsNearStorageBalance) => {
-				return (
-					intentsNearStorageBalance >
-					MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
-				);
-			},
-			ttl: OMNI_STORAGE_MS_BALANCE_CACHE,
-		});
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
@@ -450,16 +438,14 @@ export class OmniBridge implements Bridge {
 			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
 		}
 
-		const intentsNearStorageBalance = await this.getCachedOmniStorageBalance();
+		const intentsStorageBalance = await this.getCachedIntentsStorageBalance();
 
 		// Ensure available storage balance is > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents contract account instead of the original withdrawing account.
-		if (
-			intentsNearStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
-		) {
+		if (intentsStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError(
-				intentsNearStorageBalance.toString(),
+				intentsStorageBalance.toString(),
 			);
 		}
 
@@ -812,6 +798,34 @@ export class OmniBridge implements Bridge {
 		}
 
 		return tokenDecimals;
+	}
+
+	/**
+	 * Gets cached token decimals on destination chain and on near.
+	 */
+	private async getCachedIntentsStorageBalance(): Promise<bigint> {
+		const cached = this.intentsStorageBalanceCache.get(
+			"INTENTS_STORAGE_BALANCE_CACHE",
+		);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const storageBalance = await getAccountOmniStorageBalance(
+			this.nearProvider,
+			configsByEnvironment[this.env].contractID,
+		);
+		const intentsStorageBalance =
+			storageBalance === null ? 0n : BigInt(storageBalance.available);
+
+		if (intentsStorageBalance > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
+			this.intentsStorageBalanceCache.set(
+				"INTENTS_STORAGE_BALANCE_CACHE",
+				intentsStorageBalance,
+			);
+		}
+
+		return intentsStorageBalance;
 	}
 
 	/**
