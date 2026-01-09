@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.1.0
+
+### Minor Changes
+
+- dd7b27d: Add support for Plasma and Scroll network to Hot bridge
+
 ## 1.0.4
 
 ### Patch Changes

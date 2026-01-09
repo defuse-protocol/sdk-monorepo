@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.45.0
+
+### Minor Changes
+
+- dd7b27d: Add support for Plasma and Scroll network to Hot bridge
+
+### Patch Changes
+
+- Updated dependencies [dd7b27d]
+  - @defuse-protocol/internal-utils@0.23.0
+
 ## 0.44.0
 
 ### Minor Changes
