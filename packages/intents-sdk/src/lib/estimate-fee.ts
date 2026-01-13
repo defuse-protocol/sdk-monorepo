@@ -152,7 +152,10 @@ export async function getFeeQuote({
 		}
 
 		if (BigInt(quote.amount_out) < feeAmount) {
-			logger?.warn("Quote amount_out is less than feeAmount");
+			logger?.warn(
+				`Quote amount_out (${quote.amount_out}) is less than feeAmount (${feeAmount}), exact_amount_in: ${exactAmountIn}, ` +
+					`fee asset price: ${feeAssetPrice.price} USD, token asset price: ${tokenAssetPrice.price} USD`,
+			);
 			throw err;
 		}
 		return quote;
