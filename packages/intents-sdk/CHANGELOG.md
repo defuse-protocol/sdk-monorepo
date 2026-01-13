@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.45.2
+
+### Patch Changes
+
+- dd5d36e: Add more details to 1.2x fallback failure warning including quote amounts and asset prices
+
 ## 0.45.1
 
 ### Patch Changes
