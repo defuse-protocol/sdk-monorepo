@@ -32,6 +32,7 @@ describe("DirectBridge", () => {
 		])("supports NEP-141 even if routeConfig not passed", async (tokenId) => {
 			const bridge = new DirectBridge({
 				env: "production",
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
 
@@ -49,6 +50,7 @@ describe("DirectBridge", () => {
 			async (tokenId) => {
 				const bridge = new DirectBridge({
 					env: "production",
+					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
 
@@ -68,6 +70,7 @@ describe("DirectBridge", () => {
 			async (assetId) => {
 				const bridge = new DirectBridge({
 					env: "production",
+					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
 
@@ -108,6 +111,7 @@ describe("DirectBridge", () => {
 		])("blocks non NEAR addresses", async (destinationAddress) => {
 			const bridge = new DirectBridge({
 				env: "production",
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
 

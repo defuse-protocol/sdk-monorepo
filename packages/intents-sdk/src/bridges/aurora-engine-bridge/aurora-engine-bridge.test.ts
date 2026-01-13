@@ -28,6 +28,7 @@ describe("AuroraEngineBridge", () => {
 		])("supports NEP-141 if routeConfig passed", async (tokenId) => {
 			const bridge = new AuroraEngineBridge({
 				env: "production",
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
 
@@ -46,6 +47,7 @@ describe("AuroraEngineBridge", () => {
 		])("doesn't support any if routeConfig not passed", async (tokenId) => {
 			const bridge = new AuroraEngineBridge({
 				env: "production",
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
 
@@ -64,6 +66,7 @@ describe("AuroraEngineBridge", () => {
 			async (assetId) => {
 				const bridge = new AuroraEngineBridge({
 					env: "production",
+					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
 
@@ -82,6 +85,7 @@ describe("AuroraEngineBridge", () => {
 			async (destinationAddress) => {
 				const bridge = new AuroraEngineBridge({
 					env: "production",
+					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
 
@@ -110,6 +114,7 @@ describe("AuroraEngineBridge", () => {
 		])("blocks non EVM addresses", async (destinationAddress) => {
 			const bridge = new AuroraEngineBridge({
 				env: "production",
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
 

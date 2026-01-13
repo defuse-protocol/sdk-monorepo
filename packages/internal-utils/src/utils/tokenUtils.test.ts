@@ -814,7 +814,7 @@ describe("getUnderlyingBaseTokenInfos", () => {
 	});
 
 	it("should return input array for token array input", () => {
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: test fixture has 2 grouped tokens
 		const tokens = [baseToken, unifiedToken.groupedTokens[1]!];
 		expect(getUnderlyingBaseTokenInfos(tokens)).toEqual(tokens);
 	});
@@ -823,7 +823,7 @@ describe("getUnderlyingBaseTokenInfos", () => {
 		const tokensWithDuplicate = [
 			baseToken,
 			baseToken,
-			// biome-ignore lint/style/noNonNullAssertion: <explanation>
+			// biome-ignore lint/style/noNonNullAssertion: test fixture has 2 grouped tokens
 			unifiedToken.groupedTokens[1]!,
 		];
 		const result = getUnderlyingBaseTokenInfos(tokensWithDuplicate);

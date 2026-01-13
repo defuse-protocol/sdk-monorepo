@@ -460,7 +460,7 @@ export type RPCEndpointMap = Record<
 type DeepPartial<T> = T extends object
 	? T extends Array<infer U>
 		? Array<DeepPartial<U>>
-		: // biome-ignore lint/complexity/noBannedTypes: <explanation>
+		: // biome-ignore lint/complexity/noBannedTypes: Function type needed for type guard
 			T extends Function
 			? T
 			: { [P in keyof T]?: DeepPartial<T[P]> }

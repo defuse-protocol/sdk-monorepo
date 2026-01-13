@@ -35,6 +35,7 @@ export class SaltManager implements ISaltManager {
 	 */
 	async getCachedSalt(): Promise<Salt> {
 		if (this.isCacheValid()) {
+			// biome-ignore lint/style/noNonNullAssertion: isCacheValid ensures currentSalt is set
 			return this.currentSalt!;
 		}
 

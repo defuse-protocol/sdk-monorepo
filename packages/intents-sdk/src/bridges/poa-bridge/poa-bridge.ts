@@ -202,7 +202,7 @@ export class PoaBridge implements Bridge {
 			{
 				token: utils.getTokenAccountId(args.withdrawalParams.assetId),
 				address: args.withdrawalParams.destinationAddress,
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				// biome-ignore lint/suspicious/noExplicitAny: toPoaNetwork returns a known chain string
 				chain: toPoaNetwork(assetInfo.blockchain) as any,
 			},
 			{

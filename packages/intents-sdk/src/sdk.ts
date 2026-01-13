@@ -463,7 +463,7 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		assert(result.length === 1, "Unexpected result length");
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: length asserted above
 		return result[0]!;
 	}
 
@@ -761,11 +761,11 @@ export class IntentsSDK implements IIntentsSDK {
 
 		if (!Array.isArray(args.withdrawalParams)) {
 			return {
-				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				// biome-ignore lint/style/noNonNullAssertion: single withdrawal returns single-element arrays
 				feeEstimation: feeEstimation[0]!,
 				intentHash,
 				intentTx,
-				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				// biome-ignore lint/style/noNonNullAssertion: single withdrawal returns single-element arrays
 				destinationTx: destinationTx[0]!,
 			};
 		}
