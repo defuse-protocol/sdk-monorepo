@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.4.4
+
+### Patch Changes
+
+- 414bcbf: Upgrade build tooling (tsdown) from 0.15.5 to 0.19.0
+
 ## 0.4.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.1.1
+
+### Patch Changes
+
+- 414bcbf: Upgrade build tooling (tsdown) from 0.15.5 to 0.19.0
+
 ## 1.1.0
 
 ### Minor Changes
