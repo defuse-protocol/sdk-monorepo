@@ -38,7 +38,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"tsdown": "0.15.5",
+		"tsdown": "0.19.0",
 		"typescript": "^5.4.2"
 	}
 }
