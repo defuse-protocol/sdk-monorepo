@@ -7,12 +7,12 @@ import { dirname } from "node:path";
 const UC = {
 	// RFC3986 unreserved + encodeURIComponent output (plus %HH)
 	uriComponent: String.raw`(?:[A-Za-z0-9\-_.!~*'()]|%[0-9A-Fa-f]{2})+`,
-	chain: String.raw`[a-z0-9][a-z0-9-]*`,
-	namespace: String.raw`[a-z][a-z0-9-]*`,
+	chain: `[a-z0-9][a-z0-9-]*`,
+	namespace: `[a-z][a-z0-9-]*`,
 };
 
 // Final ID grammar: 1cs_v1:<chain>:<namespace>:<reference>[:<selector>]
-const STRING_PATTERN = String.raw`^1cs_v1:${UC.chain}:${UC.namespace}:${UC.uriComponent}(?::${UC.uriComponent})?$`;
+const STRING_PATTERN = `^1cs_v1:${UC.chain}:${UC.namespace}:${UC.uriComponent}(?::${UC.uriComponent})?$`;
 
 // sanity-compile
 new RegExp(STRING_PATTERN);
@@ -89,14 +89,14 @@ const objectSchema = {
 // ---- Write files ----
 function writeJSON(path: string, data: unknown) {
 	mkdirSync(dirname(path), { recursive: true });
-	// biome-ignore lint/style/useTemplate: <explanation>
+	// biome-ignore lint/style/useTemplate: newline suffix clearer than template
 	writeFileSync(path, JSON.stringify(data, null, 2) + "\n", "utf8");
 }
 
 writeJSON("./schemas/1cs_v1-string.schema.json", stringSchema);
 writeJSON("./schemas/1cs_v1-object.schema.json", objectSchema);
 
-// biome-ignore lint/suspicious/noConsole: <explanation>
+// biome-ignore lint/suspicious/noConsole: build-time script output
 console.log("✅ Wrote schemas to ./schemas");
-// biome-ignore lint/suspicious/noConsole: <explanation>
+// biome-ignore lint/suspicious/noConsole: build-time script output
 console.log("↳ STRING pattern:\n", STRING_PATTERN);

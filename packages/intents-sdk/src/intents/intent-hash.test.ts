@@ -121,5 +121,6 @@ async function sim(signedIntent: MultiPayload) {
 		}),
 	});
 
+	// biome-ignore lint/style/noNonNullAssertion: test expects exactly one result
 	return result.intents_executed[0]!.intent_hash;
 }

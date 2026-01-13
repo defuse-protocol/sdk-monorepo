@@ -1,7 +1,7 @@
 // It is AbortSignal.any
 export function mergeAbortSignals(signals: AbortSignal[]): AbortSignal {
 	if (signals.length === 1) {
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: length checked above
 		return signals[0]!;
 	}
 
