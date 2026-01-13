@@ -55,3 +55,8 @@ This includes:
 - Extra defensive checks or try/catch blocks that are abnormal for that area of the codebase (especially if called by trusted / validated codepaths)
 - Casts to any to get around type issues
 - Any other style that is inconsistent with the file
+
+# Plan Mode
+
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.
