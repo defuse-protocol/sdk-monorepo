@@ -1,4 +1,5 @@
 import {
+	assert,
 	configsByEnvironment,
 	type ILogger,
 	type NearIntentsEnv,
@@ -103,12 +104,32 @@ export async function getFeeQuote({
 		// Precision-safe computation using fixed-point BigInt
 		// Scale USD prices to 1e6 (micro-dollars) for stable integer math
 		const USD_SCALE = 1_000_000; // 1e6
+
+		validatePrice(feeAssetPrice.price, "feeAssetPrice.price", USD_SCALE);
+		validatePrice(tokenAssetPrice.price, "tokenAssetPrice.price", USD_SCALE);
 		const feePriceScaled = BigInt(Math.round(feeAssetPrice.price * USD_SCALE));
 		const tokenPriceScaled = BigInt(
 			Math.round(tokenAssetPrice.price * USD_SCALE),
 		);
 		const feeDecimals = BigInt(feeAssetPrice.decimals);
 		const tokenDecimals = BigInt(tokenAssetPrice.decimals);
+
+		const MAX_DECIMALS = 24n;
+
+		assert(
+			feeDecimals <= MAX_DECIMALS,
+			`Fee asset decimals (${feeDecimals}) exceeds maximum allowed (${MAX_DECIMALS})`,
+		);
+
+		assert(
+			tokenDecimals <= MAX_DECIMALS,
+			`Token asset decimals (${tokenDecimals}) exceeds maximum allowed (${MAX_DECIMALS})`,
+		);
+
+		assert(
+			feeDecimals >= 0n && tokenDecimals >= 0n,
+			"Decimals cannot be negative",
+		);
 
 		// ceil( feeAmount * feePrice / 10^feeDecimals / tokenPrice * 10^tokenDecimals * 1.2 )
 		const num = feeAmount * feePriceScaled * 12n * 10n ** tokenDecimals;
@@ -161,3 +182,15 @@ export async function getFeeQuote({
 		return quote;
 	}
 }
+
+const validatePrice = (price: number, fieldName: string, USD_SCALE: number) => {
+	assert(
+		Number.isFinite(price) && price > 0,
+		`Invalid ${fieldName}: ${price}. Must be a positive finite number.`,
+	);
+	const minPrice = 1 / USD_SCALE;
+	assert(
+		price >= minPrice,
+		`Price too small: ${price}. Minimum supported price is ${minPrice}.`,
+	);
+};
