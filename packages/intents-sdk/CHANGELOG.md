@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.45.4
+
+### Patch Changes
+
+- 47057d1: Hot fix plasma withdrawals via increasing gasFee
+
 ## 0.45.3
 
 ### Patch Changes
