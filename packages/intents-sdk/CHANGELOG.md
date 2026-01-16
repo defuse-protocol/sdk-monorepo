@@ -1,5 +1,14 @@
 # @defuse-protocol/intents-sdk
 
+## 0.45.3
+
+### Patch Changes
+
+- 414bcbf: Upgrade build tooling (tsdown) from 0.15.5 to 0.19.0
+- Updated dependencies [414bcbf]
+  - @defuse-protocol/contract-types@0.4.4
+  - @defuse-protocol/internal-utils@0.23.1
+
 ## 0.45.2
 
 ### Patch Changes
