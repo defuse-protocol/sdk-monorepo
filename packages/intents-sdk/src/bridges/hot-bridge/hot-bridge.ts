@@ -270,7 +270,7 @@ export class HotBridge implements Bridge {
 					assetInfo.blockchain === Chains.Plasma &&
 					args.withdrawalParams.assetId !== feeAssetId
 				) {
-					result.gasPrice *= 5n;
+					result.gasPrice *= 16n;
 				}
 				return result;
 			},
