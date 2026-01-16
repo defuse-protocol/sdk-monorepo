@@ -270,6 +270,7 @@ export class HotBridge implements Bridge {
 					assetInfo.blockchain === Chains.Plasma &&
 					args.withdrawalParams.assetId !== feeAssetId
 				) {
+					// Plasma withdrawals require inflated gas price for solver to quote non-native tokens
 					result.gasPrice *= 16n;
 				}
 				return result;
