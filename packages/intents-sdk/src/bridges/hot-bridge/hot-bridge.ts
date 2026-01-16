@@ -257,20 +257,29 @@ export class HotBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
+		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const { gasPrice: feeAmount, blockNumber } = await withTimeout(
-			() =>
-				this.hotSdk.getGaslessWithdrawFee({
+			async () => {
+				const result = await this.hotSdk.getGaslessWithdrawFee({
 					chain: toHotNetworkId(assetInfo.blockchain),
 					token: "native" in assetInfo ? "native" : assetInfo.address,
 					receiver: args.withdrawalParams.destinationAddress,
-				}),
+				});
+				if (
+					assetInfo.blockchain === Chains.Plasma &&
+					args.withdrawalParams.assetId !== feeAssetId
+				) {
+					// Plasma withdrawals require inflated gas price for solver to quote non-native tokens
+					result.gasPrice *= 20n;
+				}
+				return result;
+			},
 			{
 				errorInstance: new HotWithdrawalApiFeeRequestTimeoutError(),
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 			},
 		);
-		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
