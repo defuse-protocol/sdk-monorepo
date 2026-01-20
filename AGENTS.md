@@ -11,10 +11,32 @@
 - `pnpm lint:fix` to run linter and formatter (biomejs)
 - `pnpm build` to build packages
 
+# Verifying Changes
+
+Before finishing work on any file:
+
+1. **TypeScript**: Check if the file/directory has its own `tsconfig.json`. If so, run `npx tsc --noEmit -p <path-to-tsconfig>` directly. The root `pnpm typecheck` may not cover all files (e.g., scripts with separate tsconfig).
+2. **Lint**: Run `pnpm biome check <file>` on modified files.
+3. **Tests**: Run relevant tests with `pnpm vitest run <path>`.
+
+Example for `packages/contract-types/scripts/`:
+```bash
+cd packages/contract-types
+npx tsc --noEmit -p scripts/tsconfig.json  # scripts have their own tsconfig
+pnpm biome check scripts/gen-defuse-types.ts
+```
+
 # Code Style
 
 - Do not use `any` type
+- Do not use `as` typecasting to silence TypeScript errors. If you encounter type errors:
+  - Fix the root cause (add proper type guards, narrow types correctly)
+  - Use destructuring and validation to build properly typed values
+  - Throw an error if the data is invalid
+  - Ask for help if stuck
 - Do not use `as never` cast
+- Do not use `as unknown as X` pattern - this is a double cast that hides type errors
+- The only acceptable use of `as` is `as const` for literal types
 - Do not use barrel files
 - Avoid arbitrary strings, use const enums (`as const`) instead.
 - In catch blocks error is `unknown`: `catch (err: unknown) { ... }`

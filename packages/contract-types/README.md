@@ -44,14 +44,14 @@ pnpm run build
 
 ### Generating Types
 
-The types are automatically generated from the Defuse Protocol contract ABI using the script at `scripts/gen-defuse-types.sh`. This script extracts the type definitions from the contract ABI and converts them to TypeScript interfaces.
+The types are automatically generated from the Defuse Protocol contract ABI using the script at `scripts/gen-defuse-types.ts`. This script extracts the type definitions from the contract ABI and converts them to TypeScript interfaces.
 
 To regenerate the types:
 
 ```bash
 # Run the type generation script
 cd packages/contract-types
-./scripts/gen-defuse-types.sh
+pnpm run gen-defuse-types
 ```
 
 ### Development Mode
