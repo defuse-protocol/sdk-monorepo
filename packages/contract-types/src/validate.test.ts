@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { MultiPayloadValidator, MultiPayloadNarrowedValidator } from "./validate.js";
+import {
+	MultiPayloadValidator,
+	MultiPayloadNarrowedValidator,
+} from "./validate.js";
 
 const validDefusePayload = JSON.stringify({
 	deadline: "2025-12-31T23:59:59Z",
@@ -105,6 +108,17 @@ describe("MultiPayloadNarrowedValidator", () => {
 
 		const result = MultiPayloadNarrowedValidator.validate(input);
 		expect(result.issues).toBeDefined();
+	});
+
+	it("returns issue for non-serializable input", () => {
+		const input = {
+			standard: "erc191",
+			payload: BigInt(123),
+		};
+
+		const result = MultiPayloadNarrowedValidator.validate(input);
+		expect(result.issues).toBeDefined();
+		expect(result.issues?.[0]?.message).toContain("BigInt");
 	});
 
 	it("exposes schema", () => {

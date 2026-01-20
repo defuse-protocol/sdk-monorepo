@@ -18,8 +18,14 @@ export type InferInput<V> = V extends Validator<infer I, unknown> ? I : never;
 /** Extracts the output type from a Validator */
 export type InferOutput<V> = V extends Validator<unknown, infer O> ? O : never;
 
-function cloneDeep<T>(value: T): T {
-	return JSON.parse(JSON.stringify(value));
+function cloneDeep<T>(value: T): ValidationResult<T> {
+	try {
+		return { value: JSON.parse(JSON.stringify(value)) };
+	} catch (err: unknown) {
+		const message =
+			err instanceof Error ? err.message : "Value is not JSON-serializable";
+		return { issues: [{ message }] };
+	}
 }
 
 function ajvErrorToIssue(error: ErrorObject): ValidationIssue {
@@ -51,10 +57,18 @@ export function wrapValidator<Input, Output>(
 
 	function validate(value: unknown): ValidationResult<Output> {
 		const validateFunction = getValidator();
-		const input = shouldClone ? cloneDeep(value) : value;
-		const isValid = validateFunction(input);
-		if (isValid) {
-			return { value: input };
+		if (shouldClone) {
+			const cloneResult = cloneDeep(value);
+			if (cloneResult.issues) {
+				return cloneResult;
+			}
+			if (validateFunction(cloneResult.value)) {
+				return { value: cloneResult.value };
+			}
+		} else {
+			if (validateFunction(value)) {
+				return { value };
+			}
 		}
 		const issues = (validateFunction.errors ?? []).map((error) =>
 			ajvErrorToIssue(error),
