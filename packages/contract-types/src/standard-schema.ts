@@ -6,10 +6,10 @@ export type { StandardSchemaV1 };
 export type ValidationResult<Output> = StandardSchemaV1.Result<Output>;
 export type ValidationIssue = StandardSchemaV1.Issue;
 
-export interface Validator<Input, Output> {
+export interface Validator<Input, Output>
+	extends StandardSchemaV1<Input, Output> {
 	readonly validate: (value: unknown) => ValidationResult<Output>;
 	readonly schema: AnySchema;
-	readonly toStandardSchema: () => StandardSchemaV1<Input, Output>;
 }
 
 /** Extracts the input type from a Validator */
@@ -81,14 +81,10 @@ export function wrapValidator<Input, Output>(
 		get schema() {
 			return getValidator().schema;
 		},
-		toStandardSchema(): StandardSchemaV1<Input, Output> {
-			return {
-				"~standard": {
-					version: 1,
-					vendor: "ajv",
-					validate,
-				},
-			};
+		"~standard": {
+			version: 1,
+			vendor: "ajv",
+			validate,
 		},
 	};
 }

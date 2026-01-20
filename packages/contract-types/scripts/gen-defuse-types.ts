@@ -1582,7 +1582,7 @@ import { wrapValidator } from "./standard-schema.js";
 // All schemas in a single JSON string for fast parsing
 const schemas = JSON.parse(${schemasJsonString});
 
-export const ajv = new Ajv({
+const ajv = new Ajv({
 	formats: {
 		// Rust/schemars formats - ignore validation but allow in schema
 		uint32: true,
