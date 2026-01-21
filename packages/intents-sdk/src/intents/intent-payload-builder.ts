@@ -1,5 +1,5 @@
-import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
-import { configsByEnvironment, utils } from "@defuse-protocol/internal-utils";
+import type { EnvConfig } from "@defuse-protocol/internal-utils";
+import { utils } from "@defuse-protocol/internal-utils";
 import { VersionedNonceBuilder, type Salt } from "./expirable-nonce";
 import type { ISaltManager } from "./interfaces/salt-manager";
 import type {
@@ -14,7 +14,7 @@ import {
 } from "./intent-payload-factory";
 
 export interface IntentPayloadBuilderConfig {
-	env: NearIntentsEnv;
+	envConfig: EnvConfig;
 	saltManager: ISaltManager;
 }
 
@@ -50,7 +50,7 @@ type IntentPayloadWithSigner<HasSigner extends boolean> = HasSigner extends true
  * ```
  */
 export class IntentPayloadBuilder<HasSigner extends boolean = false> {
-	private env: NearIntentsEnv;
+	private envConfig: EnvConfig;
 	private saltManager: ISaltManager;
 	private verifyingContract: string;
 	private signerId?: string;
@@ -59,9 +59,9 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	private customNonce?: string;
 
 	constructor(config: IntentPayloadBuilderConfig) {
-		this.env = config.env;
+		this.envConfig = config.envConfig;
 		this.saltManager = config.saltManager;
-		this.verifyingContract = configsByEnvironment[this.env].contractID;
+		this.verifyingContract = this.envConfig.contractID;
 	}
 
 	/**
@@ -162,7 +162,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 		this.deadline = undefined;
 		this.intents = [];
 		this.customNonce = undefined;
-		this.verifyingContract = configsByEnvironment[this.env].contractID;
+		this.verifyingContract = this.envConfig.contractID;
 		return this as unknown as IntentPayloadBuilder<false>;
 	}
 
@@ -227,7 +227,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	 */
 	clone(): IntentPayloadBuilder<HasSigner> {
 		const builder = new IntentPayloadBuilder({
-			env: this.env,
+			envConfig: this.envConfig,
 			saltManager: this.saltManager,
 		}) as IntentPayloadBuilder<HasSigner>;
 
@@ -247,7 +247,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	 * @returns Object containing the current builder state
 	 */
 	getState(): {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		verifyingContract: string;
 		signerId?: string;
 		deadline?: Date;
@@ -255,7 +255,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 		customNonce?: string;
 	} {
 		return {
-			env: this.env,
+			envConfig: this.envConfig,
 			verifyingContract: this.verifyingContract,
 			signerId: this.signerId,
 			deadline: this.deadline,

@@ -1,3 +1,4 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { providers } from "near-api-js";
 import { base64 } from "@scure/base";
 import { privateKeyToAccount } from "viem/accounts";
@@ -17,8 +18,10 @@ describe("IntentExecuter", () => {
 		);
 
 		const exec = new IntentExecuter({
-			env: "production",
-			intentRelayer: new IntentRelayerPublic({ env: "production" }),
+			envConfig: configsByEnvironment.production,
+			intentRelayer: new IntentRelayerPublic({
+				envConfig: configsByEnvironment.production,
+			}),
 			intentSigner,
 			intentPayloadFactory() {
 				return {
@@ -73,8 +76,10 @@ describe("IntentExecuter", () => {
 		);
 
 		const exec = new IntentExecuter({
-			env: "production",
-			intentRelayer: new IntentRelayerPublic({ env: "production" }),
+			envConfig: configsByEnvironment.production,
+			intentRelayer: new IntentRelayerPublic({
+				envConfig: configsByEnvironment.production,
+			}),
 			intentSigner,
 			intentPayloadFactory(intentPayload) {
 				return {
@@ -132,7 +137,7 @@ describe("IntentExecuter", () => {
 		const onBeforePublishIntent = vi.fn();
 
 		const exec = new IntentExecuter({
-			env: "production",
+			envConfig: configsByEnvironment.production,
 			intentRelayer,
 			intentSigner,
 			onBeforePublishIntent,
@@ -176,7 +181,7 @@ describe("IntentExecuter", () => {
 		};
 
 		const exec = new IntentExecuter({
-			env: "production",
+			envConfig: configsByEnvironment.production,
 			intentRelayer,
 			intentSigner,
 			onBeforePublishIntent,
@@ -201,7 +206,7 @@ describe("IntentExecuter", () => {
 		});
 
 		const exec = new IntentExecuter({
-			env: "production",
+			envConfig: configsByEnvironment.production,
 			intentRelayer,
 			intentSigner,
 			intentPayloadFactory: () => ({
@@ -225,7 +230,7 @@ describe("IntentExecuter", () => {
 		});
 
 		const saltManager = new SaltManager({
-			env: "production",
+			envConfig: configsByEnvironment.production,
 			nearProvider: rpc,
 		});
 
@@ -243,7 +248,7 @@ describe("IntentExecuter", () => {
 			vi.mocked(intentRelayer.publishIntent).mockResolvedValue("ticket-123");
 
 			const exec = new IntentExecuter({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				intentRelayer,
 				intentSigner,
 			});
@@ -282,7 +287,7 @@ describe("IntentExecuter", () => {
 			]);
 
 			const exec = new IntentExecuter({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				intentRelayer,
 				intentSigner,
 			});
@@ -336,7 +341,7 @@ describe("IntentExecuter", () => {
 			]);
 
 			const exec = new IntentExecuter({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				intentRelayer,
 				intentSigner,
 			});
@@ -383,7 +388,9 @@ function setupMocks() {
 	});
 	vi.spyOn(intentSigner, "signIntent");
 
-	const intentRelayer = new IntentRelayerPublic({ env: "production" });
+	const intentRelayer = new IntentRelayerPublic({
+		envConfig: configsByEnvironment.production,
+	});
 	vi.spyOn(intentRelayer, "publishIntent");
 	vi.spyOn(intentRelayer, "publishIntents");
 

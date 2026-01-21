@@ -1,7 +1,7 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
+	type EnvConfig,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	utils,
@@ -43,7 +43,7 @@ type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class DirectBridge implements Bridge {
 	readonly route = RouteEnum.NearWithdrawal;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
 	private storageDepositCache = new LRUCache<
@@ -55,15 +55,15 @@ export class DirectBridge implements Bridge {
 		ttl: 3600000,
 	});
 	constructor({
-		env,
+		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 	}: {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 	}) {
-		this.env = env;
+		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
@@ -236,7 +236,7 @@ export class DirectBridge implements Bridge {
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
-						env: this.env,
+						envConfig: this.envConfig,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});

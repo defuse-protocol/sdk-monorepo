@@ -1,3 +1,4 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, expect, it } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
@@ -31,7 +32,7 @@ describe("DirectBridge", () => {
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 		])("supports NEP-141 even if routeConfig not passed", async (tokenId) => {
 			const bridge = new DirectBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
@@ -49,7 +50,7 @@ describe("DirectBridge", () => {
 			"doesn't support NEP-245",
 			async (tokenId) => {
 				const bridge = new DirectBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
@@ -69,7 +70,7 @@ describe("DirectBridge", () => {
 			"throws UnsupportedAssetIdError if routeConfig passed, but assetId is not NEP-141",
 			async (assetId) => {
 				const bridge = new DirectBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
@@ -88,7 +89,7 @@ describe("DirectBridge", () => {
 			"allows EVM and regular addresses",
 			async (destinationAddress) => {
 				const bridge = new DirectBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider: nearFailoverRpcProvider({
 						urls: PUBLIC_NEAR_RPC_URLS,
 					}),
@@ -110,7 +111,7 @@ describe("DirectBridge", () => {
 			"9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R", // Solana
 		])("blocks non NEAR addresses", async (destinationAddress) => {
 			const bridge = new DirectBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
@@ -127,7 +128,7 @@ describe("DirectBridge", () => {
 			"blocks withdrawal to explicit accounts that do not exist (not funded) on NEAR",
 			async (destinationAddress) => {
 				const bridge = new DirectBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider: nearFailoverRpcProvider({
 						urls: PUBLIC_NEAR_RPC_URLS,
 					}),

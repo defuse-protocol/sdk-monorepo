@@ -1,10 +1,10 @@
-import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
+import type { EnvConfig } from "@defuse-protocol/internal-utils";
 export type { RequestErrorType } from "@defuse-protocol/internal-utils";
 
 export type RequestConfig = {
 	timeout?: number | undefined;
 	fetchOptions?: Omit<RequestInit, "body"> | undefined;
-	env: NearIntentsEnv;
+	envConfig: EnvConfig;
 };
 
 export type TokenUsdPriceInfo = {

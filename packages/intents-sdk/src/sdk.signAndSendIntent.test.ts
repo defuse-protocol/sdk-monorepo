@@ -1,3 +1,7 @@
+import {
+	configsByEnvironment,
+	RelayPublishError,
+} from "@defuse-protocol/internal-utils";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
@@ -5,7 +9,6 @@ import { createIntentSignerViem } from "./intents/intent-signer-impl/factories";
 import { IntentsSDK } from "./sdk";
 import type { ISaltManager } from "./intents/interfaces/salt-manager";
 import type { Salt } from "./intents/expirable-nonce";
-import { RelayPublishError } from "@defuse-protocol/internal-utils";
 
 describe("sdk.signAndSendIntent()", () => {
 	it("signs with default signer", async () => {
@@ -112,7 +115,9 @@ function setupMocks() {
 	});
 	vi.spyOn(intentSigner2, "signIntent");
 
-	const intentRelayer = new IntentRelayerPublic({ env: "production" });
+	const intentRelayer = new IntentRelayerPublic({
+		envConfig: configsByEnvironment.production,
+	});
 	vi.spyOn(intentRelayer, "publishIntent");
 
 	const saltManager = new MockSaltManager();

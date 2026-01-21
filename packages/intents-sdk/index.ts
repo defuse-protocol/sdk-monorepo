@@ -171,6 +171,7 @@ export type {
 	ILogger,
 	RetryOptions,
 	NearIntentsEnv,
+	EnvConfig,
 } from "@defuse-protocol/internal-utils";
 
 // ============================================================================

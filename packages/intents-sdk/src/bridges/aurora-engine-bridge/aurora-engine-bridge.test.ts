@@ -1,3 +1,4 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, expect, it } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
@@ -27,7 +28,7 @@ describe("AuroraEngineBridge", () => {
 			"nep141:wrap.near",
 		])("supports NEP-141 if routeConfig passed", async (tokenId) => {
 			const bridge = new AuroraEngineBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
@@ -46,7 +47,7 @@ describe("AuroraEngineBridge", () => {
 			"nep245:v2_1.omni.hot.tg:56_11111111111111111111",
 		])("doesn't support any if routeConfig not passed", async (tokenId) => {
 			const bridge = new AuroraEngineBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});
@@ -65,7 +66,7 @@ describe("AuroraEngineBridge", () => {
 			"throws UnsupportedAssetIdError if routeConfig passed, but assetId is not NEP-141 token",
 			async (assetId) => {
 				const bridge = new AuroraEngineBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
@@ -84,7 +85,7 @@ describe("AuroraEngineBridge", () => {
 			"allows EVM addresses",
 			async (destinationAddress) => {
 				const bridge = new AuroraEngineBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 					nearProvider: {} as any,
 				});
@@ -113,7 +114,7 @@ describe("AuroraEngineBridge", () => {
 			"addr1qxg5fnc2dfssnhzygvkqzzy2fcqcph533ek58jngqksaqjwwk2uhs32lj8zh62fq5zdeawrshdfp23t5vcm538glyn6sqngmem", // Cardano
 		])("blocks non EVM addresses", async (destinationAddress) => {
 			const bridge = new AuroraEngineBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used in this test
 				nearProvider: {} as any,
 			});

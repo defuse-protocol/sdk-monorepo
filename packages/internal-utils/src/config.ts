@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import type { ILogger } from "./logger";
 
 interface SDKConfig {
@@ -17,7 +18,57 @@ export interface EnvConfig {
 	nearIntentsBaseURL: string;
 }
 
+const optionalUrlSchema = v.pipe(
+	v.string(),
+	v.check(
+		(value) => value === "" || URL.canParse(value),
+		"must be a valid URL or empty string",
+	),
+);
+
+const envConfigSchema = v.object({
+	contractID: v.pipe(v.string(), v.minLength(1, "contractID is required")),
+	poaTokenFactoryContractID: v.string(),
+	poaBridgeBaseURL: optionalUrlSchema,
+	solverRelayBaseURL: optionalUrlSchema,
+	managerConsoleBaseURL: optionalUrlSchema,
+	nearIntentsBaseURL: optionalUrlSchema,
+});
+
 export type NearIntentsEnv = "production" | "stage";
+
+/**
+ * Resolves environment configuration from either a preset name or custom config.
+ * Defaults to "production" if no env is provided.
+ *
+ * @param env - Either "production"/"stage" preset name, or a custom EnvConfig object
+ * @returns Resolved EnvConfig
+ * @throws Error if custom config fails validation
+ */
+export function resolveEnvConfig(
+	env: NearIntentsEnv | EnvConfig | undefined,
+): EnvConfig {
+	if (env === undefined) {
+		return configsByEnvironment.production;
+	}
+
+	if (typeof env === "string") {
+		return configsByEnvironment[env];
+	}
+
+	const result = v.safeParse(envConfigSchema, env);
+	if (!result.success) {
+		const issues = result.issues
+			.map(
+				(issue) =>
+					`${issue.path?.map((p) => p.key).join(".")}: ${issue.message}`,
+			)
+			.join(", ");
+		throw new Error(`Invalid EnvConfig: ${issues}`);
+	}
+
+	return result.output;
+}
 
 export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 	production: {
@@ -65,10 +116,8 @@ export function configureSDK({
 		}
 	}
 
-	if (typeof env === "string") {
-		config = { ...config, env: configsByEnvironment[env] };
-	} else if (env) {
-		config = { ...config, env };
+	if (env !== undefined) {
+		config = { ...config, env: resolveEnvConfig(env) };
 	}
 
 	config = {

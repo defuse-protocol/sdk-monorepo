@@ -1,8 +1,7 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
-	configsByEnvironment,
+	type EnvConfig,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	withTimeout,
@@ -77,7 +76,7 @@ type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
 export class OmniBridge implements Bridge {
 	readonly route = RouteEnum.OmniBridge;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
@@ -95,17 +94,17 @@ export class OmniBridge implements Bridge {
 	});
 
 	constructor({
-		env,
+		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 	}) {
-		this.env = env;
+		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new OmniBridgeAPI();
 		this.solverRelayApiKey = solverRelayApiKey;
@@ -348,7 +347,7 @@ export class OmniBridge implements Bridge {
 				destinationAddress: args.withdrawalParams.destinationAddress,
 				amount,
 				omniChainKind,
-				intentsContract: configsByEnvironment[this.env].contractID,
+				intentsContract: this.envConfig.contractID,
 				nativeFee: relayerFee,
 				storageDepositAmount: getUnderlyingFee(
 					args.feeEstimation,
@@ -433,7 +432,7 @@ export class OmniBridge implements Bridge {
 
 		const storageBalance = await getAccountOmniStorageBalance(
 			this.nearProvider,
-			configsByEnvironment[this.env].contractID,
+			this.envConfig.contractID,
 		);
 
 		const intentsNearStorageBalance =
@@ -473,10 +472,7 @@ export class OmniBridge implements Bridge {
 			const fee = await withTimeout(
 				() =>
 					this.omniBridgeAPI.getFee(
-						omniAddress(
-							ChainKind.Near,
-							configsByEnvironment[this.env].contractID,
-						),
+						omniAddress(ChainKind.Near, this.envConfig.contractID),
 						omniAddress(omniChainKind, args.destinationAddress),
 						omniAddress(ChainKind.Near, assetInfo.contractId),
 						args.amount,
@@ -561,10 +557,7 @@ export class OmniBridge implements Bridge {
 		const fee = await withTimeout(
 			() =>
 				this.omniBridgeAPI.getFee(
-					omniAddress(
-						ChainKind.Near,
-						configsByEnvironment[this.env].contractID,
-					),
+					omniAddress(ChainKind.Near, this.envConfig.contractID),
 					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 					omniAddress(ChainKind.Near, assetInfo.contractId),
 					args.withdrawalParams.amount,
@@ -617,7 +610,7 @@ export class OmniBridge implements Bridge {
 				feeAssetId: NEAR_NATIVE_ASSET_ID,
 				tokenAssetId: args.withdrawalParams.assetId,
 				logger: args.logger,
-				env: this.env,
+				envConfig: this.envConfig,
 				quoteOptions: args.quoteOptions,
 				solverRelayApiKey: this.solverRelayApiKey,
 			});
