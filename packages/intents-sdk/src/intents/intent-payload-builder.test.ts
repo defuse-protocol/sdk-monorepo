@@ -1,7 +1,7 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { IntentPayloadBuilder } from "./intent-payload-builder";
 import type { ISaltManager } from "./interfaces/salt-manager";
-import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "./shared-types";
 import {
 	VersionedNonceBuilder,
@@ -13,7 +13,7 @@ describe("IntentPayloadBuilder", () => {
 	let mockSaltManager: ISaltManager;
 	let builder: IntentPayloadBuilder;
 	const testSalt = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
-	const testEnv: NearIntentsEnv = "production";
+	const testEnvConfig = configsByEnvironment.production;
 
 	beforeEach(() => {
 		mockSaltManager = {
@@ -22,7 +22,7 @@ describe("IntentPayloadBuilder", () => {
 		};
 
 		builder = new IntentPayloadBuilder({
-			env: testEnv,
+			envConfig: testEnvConfig,
 			saltManager: mockSaltManager,
 		});
 	});
@@ -36,7 +36,7 @@ describe("IntentPayloadBuilder", () => {
 	describe("basic builder operations", () => {
 		it("creates a builder with correct environment", () => {
 			const state = builder.getState();
-			expect(state.env).toBe("production");
+			expect(state.envConfig).toEqual(testEnvConfig);
 			expect(state.verifyingContract).toBe("intents.near");
 		});
 
@@ -412,7 +412,7 @@ describe("IntentPayloadBuilder", () => {
 	describe("environment configurations", () => {
 		it("uses production contract for production env", () => {
 			const productionBuilder = new IntentPayloadBuilder({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				saltManager: mockSaltManager,
 			});
 
@@ -422,7 +422,7 @@ describe("IntentPayloadBuilder", () => {
 
 		it("uses staging contract for stage env", () => {
 			const stageBuilder = new IntentPayloadBuilder({
-				env: "stage",
+				envConfig: configsByEnvironment.stage,
 				saltManager: mockSaltManager,
 			});
 

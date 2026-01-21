@@ -1,4 +1,8 @@
-import { poaBridge, RpcRequestError } from "@defuse-protocol/internal-utils";
+import {
+	configsByEnvironment,
+	poaBridge,
+	RpcRequestError,
+} from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -44,7 +48,9 @@ describe("PoaBridge", () => {
 			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 		])("supports `omft.near` tokens", async (tokenId) => {
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(true);
 			await expect(
@@ -59,7 +65,7 @@ describe("PoaBridge", () => {
 			"doesn't support `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					routeMigratedPoaTokensThroughOmniBridge: true,
 				});
 
@@ -73,7 +79,7 @@ describe("PoaBridge", () => {
 			"supports `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true only when route config is specified",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					routeMigratedPoaTokensThroughOmniBridge: true,
 				});
 
@@ -90,7 +96,9 @@ describe("PoaBridge", () => {
 			"nep141:wrap.near",
 			"nep245:v2_1.omni.hot.tg:56_11111111111111111111",
 		])("doesn't support not `omft.near` tokens", async (tokenId) => {
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(false);
 		});
@@ -98,7 +106,9 @@ describe("PoaBridge", () => {
 		it.each(["nep141:bitcoin.omft.near", "nep141:unknown.omft.near"])(
 			"throws UnsupportedAssetIdError if misspelled POA token",
 			async (assetId) => {
-				const bridge = new PoaBridge({ env: "production" });
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+				});
 
 				await expect(bridge.supports({ assetId })).rejects.toThrow(
 					UnsupportedAssetIdError,
@@ -121,7 +131,9 @@ describe("PoaBridge", () => {
 		])(
 			"throws UnsupportedAssetIdError if routeConfig passed, but assetId is not POA token",
 			async (assetId) => {
-				const bridge = new PoaBridge({ env: "production" });
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+				});
 
 				await expect(
 					bridge.supports({
@@ -133,7 +145,9 @@ describe("PoaBridge", () => {
 		);
 
 		it("returns false when routeConfig is for different bridge", async () => {
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.supports({
 				assetId: "nep141:btc.omft.near",
@@ -199,7 +213,7 @@ describe("PoaBridge", () => {
 			// }, // BCH Legacy
 		])("allows correct addresses", async ({ assetId, destinationAddress }) => {
 			const bridge = new PoaBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 			});
 
 			await expect(
@@ -228,7 +242,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			// Call validateWithdrawal twice with the same asset
 			await bridge.validateWithdrawal({
@@ -264,7 +280,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			await expect(
 				bridge.validateWithdrawal({
@@ -292,7 +310,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			await expect(
 				bridge.validateWithdrawal({
@@ -351,7 +371,7 @@ describe("PoaBridge", () => {
 			"blocks non corresponding addresses",
 			async ({ assetId, destinationAddress }) => {
 				const bridge = new PoaBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 				});
 
 				await expect(
@@ -367,7 +387,9 @@ describe("PoaBridge", () => {
 
 	describe("createWithdrawalIdentifier()", () => {
 		it("derives landing chain from asset", () => {
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -407,7 +429,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -432,7 +456,9 @@ describe("PoaBridge", () => {
 				withdrawals: [],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -470,7 +496,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -509,7 +537,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -565,7 +595,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -609,7 +641,9 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Zcash,
@@ -659,7 +693,9 @@ describe("PoaBridge", () => {
 					],
 				});
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -693,7 +729,9 @@ describe("PoaBridge", () => {
 				notFoundError,
 			);
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			const resultPromise = bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -729,7 +767,9 @@ describe("PoaBridge", () => {
 				serverError,
 			);
 
-			const bridge = new PoaBridge({ env: "production" });
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+			});
 
 			await expect(
 				bridge.describeWithdrawal({

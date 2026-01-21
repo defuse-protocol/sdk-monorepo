@@ -1,4 +1,5 @@
 import {
+	configsByEnvironment,
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
@@ -27,7 +28,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -50,7 +51,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -77,7 +78,7 @@ describe("OmniBridge", () => {
 				});
 
 				const bridge = new OmniBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider,
 				});
 
@@ -95,7 +96,7 @@ describe("OmniBridge", () => {
 				});
 
 				const bridge = new OmniBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider,
 				});
 
@@ -113,7 +114,7 @@ describe("OmniBridge", () => {
 				});
 
 				const bridge = new OmniBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider,
 				});
 
@@ -138,7 +139,7 @@ describe("OmniBridge", () => {
 					});
 
 					const bridge = new OmniBridge({
-						env: "production",
+						envConfig: configsByEnvironment.production,
 						nearProvider,
 					});
 
@@ -161,7 +162,7 @@ describe("OmniBridge", () => {
 					});
 
 					const bridge = new OmniBridge({
-						env: "production",
+						envConfig: configsByEnvironment.production,
 						nearProvider,
 					});
 
@@ -194,7 +195,7 @@ describe("OmniBridge", () => {
 				});
 
 				const bridge = new OmniBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider,
 				});
 
@@ -238,7 +239,7 @@ describe("OmniBridge", () => {
 				});
 
 				const bridge = new OmniBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					nearProvider,
 				});
 
@@ -270,7 +271,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -292,7 +296,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -356,7 +363,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Ethereum,
@@ -401,7 +411,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Solana,
@@ -428,7 +441,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Ethereum,
@@ -464,7 +480,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Ethereum,
@@ -523,7 +542,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Ethereum,
@@ -581,7 +603,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -641,7 +666,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -685,7 +713,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Bitcoin,
@@ -715,7 +746,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.describeWithdrawal({
 				landingChain: Chains.Ethereum,
@@ -739,7 +773,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.parseAssetId("nep141:eth.bridge.near");
 
@@ -755,7 +792,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.parseAssetId(
 				"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
@@ -769,7 +809,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.parseAssetId("nep141:wrap.near");
 
@@ -783,7 +826,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.supports({
 				assetId: "nep141:eth.bridge.near",
@@ -798,7 +844,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			await expect(
 				bridge.supports({
@@ -813,7 +862,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.supports({
 				assetId: "nep141:zec.omft.near",
@@ -827,7 +879,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = await bridge.supports({
 				assetId: "nep141:zec.omft.near",
@@ -840,7 +895,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			await expect(
 				bridge.supports({
@@ -856,7 +914,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -873,7 +931,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -892,7 +950,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -910,7 +968,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -929,7 +987,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
@@ -947,7 +1005,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
@@ -966,7 +1024,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
@@ -985,7 +1043,7 @@ describe("OmniBridge", () => {
 			});
 
 			const bridge = new OmniBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
@@ -1006,7 +1064,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.makeAssetInfo(
 				"nep141:wrap.near",
@@ -1026,7 +1087,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.makeAssetInfo(
 				"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
@@ -1040,7 +1104,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.makeAssetInfo("nep141:wrap.near");
 
@@ -1052,7 +1119,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.makeAssetInfo("nep141:eth.bridge.near");
 
@@ -1069,7 +1139,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.targetChainSpecified(
 				createOmniBridgeRoute(Chains.Ethereum),
@@ -1083,7 +1156,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.targetChainSpecified(createOmniBridgeRoute());
 
@@ -1095,7 +1171,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.targetChainSpecified(undefined);
 
@@ -1107,7 +1186,10 @@ describe("OmniBridge", () => {
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
 
-			const bridge = new OmniBridge({ env: "production", nearProvider });
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
 
 			const result = bridge.targetChainSpecified(createPoaBridgeRoute());
 

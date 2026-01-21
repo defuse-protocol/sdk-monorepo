@@ -2,8 +2,9 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
+	type EnvConfig,
 	PUBLIC_NEAR_RPC_URLS,
-	configsByEnvironment,
+	resolveEnvConfig,
 	nearFailoverRpcProvider,
 	solverRelay,
 	RelayPublishError,
@@ -76,7 +77,31 @@ import { DEFAULT_DEADLINE_MS } from "./intents/intent-payload-factory";
 import * as v from "valibot";
 
 export interface IntentsSDKConfig {
-	env?: NearIntentsEnv;
+	/**
+	 * Environment configuration. Can be:
+	 * - "production" or "stage" to use preset configurations
+	 * - A custom EnvConfig object for private environments
+	 *
+	 * Defaults to "production" if not specified.
+	 *
+	 * @example
+	 * // Use preset
+	 * new IntentsSDK({ env: "production", referral: "..." });
+	 *
+	 * // Use custom config for private environment
+	 * new IntentsSDK({
+	 *   env: {
+	 *     contractID: "intents.private-shard",
+	 *     poaTokenFactoryContractID: "",
+	 *     poaBridgeBaseURL: "",
+	 *     solverRelayBaseURL: "https://private-relay.example.com",
+	 *     managerConsoleBaseURL: "",
+	 *     nearIntentsBaseURL: "",
+	 *   },
+	 *   referral: "...",
+	 * });
+	 */
+	env?: NearIntentsEnv | EnvConfig;
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
@@ -91,7 +116,7 @@ export interface IntentsSDKConfig {
 }
 
 export class IntentsSDK implements IIntentsSDK {
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected referral: string;
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
@@ -100,7 +125,7 @@ export class IntentsSDK implements IIntentsSDK {
 	protected saltManager: ISaltManager;
 
 	constructor(args: IntentsSDKConfig) {
-		this.env = args.env ?? "production";
+		this.envConfig = resolveEnvConfig(args.env);
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
 
@@ -126,17 +151,17 @@ export class IntentsSDK implements IIntentsSDK {
 		this.bridges = [
 			new IntentsBridge(),
 			new AuroraEngineBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 			new PoaBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
 			new HotBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
 				hotSdk: new hotLabsOmniSdk_HotBridge({
 					logger: console,
@@ -152,28 +177,28 @@ export class IntentsSDK implements IIntentsSDK {
 				}),
 			}),
 			new OmniBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
 			new DirectBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 		];
 
 		this.intentRelayer = new IntentRelayerPublic({
-			env: this.env,
+			envConfig: this.envConfig,
 			solverRelayApiKey: this.solverRelayApiKey,
 		});
 
 		this.intentSigner = args.intentSigner;
 
 		this.saltManager = new SaltManager({
-			env: this.env,
+			envConfig: this.envConfig,
 			nearProvider,
 		});
 	}
@@ -208,7 +233,7 @@ export class IntentsSDK implements IIntentsSDK {
 	 */
 	public intentBuilder(): IntentPayloadBuilder {
 		return new IntentPayloadBuilder({
-			env: this.env,
+			envConfig: this.envConfig,
 			saltManager: this.saltManager,
 		});
 	}
@@ -590,7 +615,7 @@ export class IntentsSDK implements IIntentsSDK {
 		assert(intentSigner != null, "Intent signer is not provided");
 
 		const intentExecuter = new IntentExecuter({
-			env: this.env,
+			envConfig: this.envConfig,
 			logger: args.logger,
 			intentSigner,
 			intentRelayer: this.intentRelayer,
@@ -692,7 +717,7 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<NearTxInfo> {
 		const intentExecuter = new IntentExecuter({
-			env: this.env,
+			envConfig: this.envConfig,
 			logger: args.logger,
 			intentSigner: noopIntentSigner,
 			intentRelayer: this.intentRelayer,
@@ -716,7 +741,7 @@ export class IntentsSDK implements IIntentsSDK {
 				intent_hash: intentHash,
 			},
 			{
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				baseURL: this.envConfig.solverRelayBaseURL,
 				logger,
 				solverRelayApiKey: this.solverRelayApiKey,
 			},

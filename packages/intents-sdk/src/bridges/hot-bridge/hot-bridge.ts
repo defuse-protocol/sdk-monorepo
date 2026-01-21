@@ -1,7 +1,7 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
+	type EnvConfig,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
@@ -47,16 +47,16 @@ import isHex from "../../lib/hex";
 
 export class HotBridge implements Bridge {
 	readonly route = RouteEnum.HotBridge;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
 
 	constructor({
-		env,
+		envConfig,
 		hotSdk,
 		solverRelayApiKey,
-	}: { env: NearIntentsEnv; hotSdk: HotSdk; solverRelayApiKey?: string }) {
-		this.env = env;
+	}: { envConfig: EnvConfig; hotSdk: HotSdk; solverRelayApiKey?: string }) {
+		this.envConfig = envConfig;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
@@ -289,7 +289,7 @@ export class HotBridge implements Bridge {
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
-						env: this.env,
+						envConfig: this.envConfig,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});

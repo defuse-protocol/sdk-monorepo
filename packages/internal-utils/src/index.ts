@@ -13,7 +13,9 @@ export {
 	configureSDK,
 	config,
 	configsByEnvironment,
+	resolveEnvConfig,
 	type NearIntentsEnv,
+	type EnvConfig,
 } from "./config";
 export {
 	type RetryOptions,

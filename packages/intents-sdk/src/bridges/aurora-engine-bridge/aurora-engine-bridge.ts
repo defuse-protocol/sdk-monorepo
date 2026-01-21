@@ -1,7 +1,7 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
+	type EnvConfig,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	utils,
@@ -35,20 +35,20 @@ import {
 
 export class AuroraEngineBridge implements Bridge {
 	readonly route = RouteEnum.VirtualChain;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
 
 	constructor({
-		env,
+		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 	}: {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 	}) {
-		this.env = env;
+		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
 	}
@@ -188,7 +188,7 @@ export class AuroraEngineBridge implements Bridge {
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
-						env: this.env,
+						envConfig: this.envConfig,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});

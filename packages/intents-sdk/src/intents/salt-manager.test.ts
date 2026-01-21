@@ -3,6 +3,7 @@ import { SALT_TTL_MS, SaltManager } from "../intents/salt-manager";
 import type { providers } from "near-api-js";
 
 import {
+	configsByEnvironment,
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
@@ -17,7 +18,7 @@ describe("SaltManager", () => {
 			});
 
 			const saltManager = new SaltManager({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider,
 			});
 
@@ -42,7 +43,7 @@ describe("SaltManager", () => {
 
 		it("should return cached salt within TTL", async () => {
 			const saltManager = new SaltManager({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider: {} as providers.Provider,
 			});
 			mockQueryWithVal(saltManager, initialSalt);
@@ -62,7 +63,7 @@ describe("SaltManager", () => {
 
 		it("should fetch new salt after TTL expires", async () => {
 			const saltManager = new SaltManager({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider: {} as providers.Provider,
 			});
 			mockQueryWithVal(saltManager, initialSalt);
@@ -81,7 +82,7 @@ describe("SaltManager", () => {
 
 		it("should deduplicate concurrent requests", async () => {
 			const saltManager = new SaltManager({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider: {} as providers.Provider,
 			});
 			mockQueryWithVal(saltManager, initialSalt);
@@ -100,7 +101,7 @@ describe("SaltManager", () => {
 
 		it("should handle fetch errors", async () => {
 			const saltManager = new SaltManager({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				nearProvider: {} as providers.Provider,
 			});
 

@@ -1,3 +1,4 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, expect, it, vi } from "vitest";
 import { HotBridge } from "./hot-bridge";
 import {
@@ -32,7 +33,7 @@ describe("HotBridge", () => {
 			// todo: add more test cases for each supported chain
 		])("supports `v2_1.omni.hot.tg` tokens", async (tokenId) => {
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: new HotOmniSdk({
 					async executeNearTransaction() {
 						throw new Error("not implemented");
@@ -54,7 +55,7 @@ describe("HotBridge", () => {
 			"nep245:v3_1.omni.hot.tg:56_11111111111111111111",
 		])("doesn't support `v2_1.omni.hot.tg` tokens", async (tokenId) => {
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: new HotOmniSdk({
 					async executeNearTransaction() {
 						throw new Error("not implemented");
@@ -72,7 +73,7 @@ describe("HotBridge", () => {
 			"throws UnsupportedAssetIdError if misspelled HOT token",
 			async (assetId) => {
 				const bridge = new HotBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					hotSdk: new HotOmniSdk({
 						async executeNearTransaction() {
 							throw new Error("not implemented");
@@ -98,7 +99,7 @@ describe("HotBridge", () => {
 			"throws UnsupportedAssetIdError if routeConfig passed, but assetId is not HOT token",
 			async (assetId) => {
 				const bridge = new HotBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					hotSdk: new HotOmniSdk({
 						async executeNearTransaction() {
 							throw new Error("not implemented");
@@ -117,7 +118,7 @@ describe("HotBridge", () => {
 
 		it("returns false when routeConfig is for different bridge", async () => {
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: new HotOmniSdk({
 					async executeNearTransaction() {
 						throw new Error("not implemented");
@@ -164,7 +165,7 @@ describe("HotBridge", () => {
 			);
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: new HotOmniSdk({
 					logger: console,
 					evmRpc: evmRpcUrls,
@@ -207,7 +208,7 @@ describe("HotBridge", () => {
 			"blocks non corresponding addresses",
 			async ({ assetId, destinationAddress }) => {
 				const bridge = new HotBridge({
-					env: "production",
+					envConfig: configsByEnvironment.production,
 					hotSdk: {} as unknown as HotOmniSdk,
 				});
 
@@ -225,7 +226,7 @@ describe("HotBridge", () => {
 	describe("createWithdrawalIdentifier()", () => {
 		it("derives landing chain from asset", () => {
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: {} as unknown as HotOmniSdk,
 			});
 
@@ -259,7 +260,7 @@ describe("HotBridge", () => {
 			});
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: hotSDK,
 			});
 
@@ -296,7 +297,7 @@ describe("HotBridge", () => {
 			});
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: hotSDK,
 			});
 
@@ -349,7 +350,7 @@ describe("HotBridge", () => {
 			});
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: hotSDK,
 			});
 
@@ -389,7 +390,7 @@ describe("HotBridge", () => {
 			});
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: hotSDK,
 			});
 
@@ -426,7 +427,7 @@ describe("HotBridge", () => {
 			});
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk: hotSDK,
 			});
 
@@ -462,7 +463,7 @@ describe("HotBridge", () => {
 			} as unknown as HotOmniSdk;
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk,
 			});
 
@@ -506,7 +507,7 @@ describe("HotBridge", () => {
 			} as unknown as HotOmniSdk;
 
 			const bridge = new HotBridge({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				hotSdk,
 			});
 
