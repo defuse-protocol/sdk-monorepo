@@ -126,11 +126,12 @@ describe("MultiPayloadNarrowedValidator", () => {
 		expect(typeof MultiPayloadNarrowedValidator.schema).toBe("object");
 	});
 
-	it("provides Standard Schema interface via toStandardSchema()", () => {
-		const standardSchema = MultiPayloadNarrowedValidator.toStandardSchema();
-		expect(standardSchema["~standard"].version).toBe(1);
-		expect(standardSchema["~standard"].vendor).toBe("ajv");
-		expect(typeof standardSchema["~standard"].validate).toBe("function");
+	it("implements Standard Schema interface", () => {
+		expect(MultiPayloadNarrowedValidator["~standard"].version).toBe(1);
+		expect(MultiPayloadNarrowedValidator["~standard"].vendor).toBe("ajv");
+		expect(typeof MultiPayloadNarrowedValidator["~standard"].validate).toBe(
+			"function",
+		);
 	});
 });
 
