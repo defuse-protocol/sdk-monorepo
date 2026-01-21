@@ -131,6 +131,12 @@ export type ProcessWithdrawalArgs<
 export interface IIntentsSDK {
 	setIntentSigner(signer: IIntentSigner): void;
 
+	sendSignedIntents(args: {
+		multiPayloads: MultiPayload[];
+		quoteHashes?: string[];
+		logger?: ILogger;
+	}): Promise<{ tickets: IntentHash[] }>;
+
 	signAndSendIntent(args: SignAndSendArgs): Promise<IntentPublishResult>;
 
 	waitForIntentSettlement(args: {
