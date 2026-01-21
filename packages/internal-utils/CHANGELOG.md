@@ -1,5 +1,26 @@
 # @defuse-protocol/internal-utils
 
+## 0.24.0
+
+### Minor Changes
+
+- 574fed3: feat: allow custom EnvConfig via SDK constructor
+
+  SDK now accepts custom `EnvConfig` objects for private environments:
+
+  ```typescript
+  new IntentsSDK({
+    env: {
+      contractID: "intents.private-shard",
+      solverRelayBaseURL: "https://private-relay.example.com",
+      // ... other URLs
+    },
+    referral: "...",
+  });
+  ```
+
+  Empty string in config means service unavailable (throws at use time).
+
 ## 0.23.1
 
 ### Patch Changes
