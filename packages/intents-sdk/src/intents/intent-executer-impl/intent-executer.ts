@@ -148,6 +148,21 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 			signal: ctx?.signal,
 		});
 	}
+
+	async sendSignedIntents(params: {
+		multiPayloads: MultiPayload[];
+		quoteHashes?: string[];
+	}): Promise<{ tickets: Ticket[] }> {
+		const tickets = await this.intentRelayer.publishIntents(
+			{
+				multiPayloads: params.multiPayloads,
+				quoteHashes: params.quoteHashes ?? [],
+			},
+			{ logger: this.logger },
+		);
+
+		return { tickets };
+	}
 }
 
 async function mergeIntentPayloads(

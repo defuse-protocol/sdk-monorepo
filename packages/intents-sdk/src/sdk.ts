@@ -31,6 +31,7 @@ import type {
 	IntentHash,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
+	MultiPayload,
 } from "./intents/shared-types";
 import { zip } from "./lib/array";
 import { type Chain, Chains } from "./lib/caip2";
@@ -564,6 +565,22 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		throw new Error(`Cannot determine bridge for assetId = ${assetId}`);
+	}
+
+	public async sendSignedIntents(args: {
+		multiPayloads: MultiPayload[];
+		quoteHashes?: string[];
+		logger?: ILogger;
+	}): Promise<{ tickets: IntentHash[] }> {
+		const tickets = await this.intentRelayer.publishIntents(
+			{
+				multiPayloads: args.multiPayloads,
+				quoteHashes: args.quoteHashes ?? [],
+			},
+			{ logger: args.logger },
+		);
+
+		return { tickets };
 	}
 
 	public async signAndSendIntent(
