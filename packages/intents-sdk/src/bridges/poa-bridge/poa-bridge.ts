@@ -59,6 +59,15 @@ export class PoaBridge implements Bridge {
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
 
+	private getPoaBridgeBaseURL(): string {
+		if (!this.envConfig.poaBridgeBaseURL) {
+			throw new Error(
+				"POA Bridge is not available in this environment: poaBridgeBaseURL is not configured",
+			);
+		}
+		return this.envConfig.poaBridgeBaseURL;
+	}
+
 	private is(routeConfig: RouteConfig) {
 		return routeConfig.route === RouteEnum.PoaBridge;
 	}
@@ -96,6 +105,10 @@ export class PoaBridge implements Bridge {
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
+		if (!this.envConfig.poaTokenFactoryContractID) {
+			return null;
+		}
+
 		const parsed = parseDefuseAssetId(assetId);
 		const contractIdSatisfies = parsed.contractId.endsWith(
 			`.${this.envConfig.poaTokenFactoryContractID}`,
@@ -204,7 +217,7 @@ export class PoaBridge implements Bridge {
 				chain: toPoaNetwork(assetInfo.blockchain),
 			},
 			{
-				baseURL: this.envConfig.poaBridgeBaseURL,
+				baseURL: this.getPoaBridgeBaseURL(),
 				logger: args.logger,
 			},
 		);
@@ -284,7 +297,7 @@ export class PoaBridge implements Bridge {
 				return await poaBridge.httpClient.getWithdrawalStatus(
 					{ withdrawal_hash: args.tx.hash },
 					{
-						baseURL: this.envConfig.poaBridgeBaseURL,
+						baseURL: this.getPoaBridgeBaseURL(),
 						logger: args.logger,
 					},
 				);
@@ -323,7 +336,7 @@ export class PoaBridge implements Bridge {
 		const data = await poaBridge.httpClient.getSupportedTokens(
 			{ chains },
 			{
-				baseURL: this.envConfig.poaBridgeBaseURL,
+				baseURL: this.getPoaBridgeBaseURL(),
 				logger,
 			},
 		);

@@ -18,13 +18,21 @@ export interface EnvConfig {
 	nearIntentsBaseURL: string;
 }
 
+const optionalUrlSchema = v.pipe(
+	v.string(),
+	v.check(
+		(value) => value === "" || URL.canParse(value),
+		"must be a valid URL or empty string",
+	),
+);
+
 const envConfigSchema = v.object({
-	contractID: v.string(),
+	contractID: v.pipe(v.string(), v.minLength(1, "contractID is required")),
 	poaTokenFactoryContractID: v.string(),
-	poaBridgeBaseURL: v.string(),
-	solverRelayBaseURL: v.string(),
-	managerConsoleBaseURL: v.string(),
-	nearIntentsBaseURL: v.string(),
+	poaBridgeBaseURL: optionalUrlSchema,
+	solverRelayBaseURL: optionalUrlSchema,
+	managerConsoleBaseURL: optionalUrlSchema,
+	nearIntentsBaseURL: optionalUrlSchema,
 });
 
 export type NearIntentsEnv = "production" | "stage";
@@ -108,10 +116,8 @@ export function configureSDK({
 		}
 	}
 
-	if (typeof env === "string") {
-		config = { ...config, env: configsByEnvironment[env] };
-	} else if (env) {
-		config = { ...config, env };
+	if (env !== undefined) {
+		config = { ...config, env: resolveEnvConfig(env) };
 	}
 
 	config = {
