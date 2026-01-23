@@ -1,5 +1,13 @@
 # @defuse-protocol/intents-sdk
 
+## 0.46.1
+
+### Patch Changes
+
+- Updated dependencies [fecef80]
+  - @defuse-protocol/contract-types@0.5.0
+  - @defuse-protocol/internal-utils@0.24.1
+
 ## 0.46.0
 
 ### Minor Changes
@@ -72,18 +80,15 @@
 - f6d10ea: Add `createWithdrawalCompletionPromises()` for granular control over batch withdrawals
 
   **New exports:**
-
   - `WithdrawalWatchError` - thrown when status polling fails (timeout or consecutive errors)
   - `WithdrawalFailedError` - thrown when the withdrawal fails on the destination chain
 
   **Breaking changes:**
-
   - Remove `retryOptions` parameter from `waitForWithdrawalCompletion()` and `processWithdrawal()`. Waiting continues until completion, failure, or chain-specific p99 timeout. Use `AbortSignal.timeout()` to set a shorter timeout.
 
 - f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
 
   BREAKING CHANGES:
-
   - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
   - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
 
@@ -404,7 +409,6 @@
 ### Patch Changes
 
 - 160a024: Enhance NEAR address validation with improved support for different account types
-
   - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
   - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
   - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
@@ -678,18 +682,15 @@
   Introduce more methods for granular control over the execution, which support single and batch withdrawals.
 
   New intent-specific methods:
-
   - `signAndSendIntent()`
   - `waitForIntentSettlement()`
   - `getIntentStatus()`
 
   New withdraw-specific methods:
-
   - `signAndSendWithdrawalIntent()`
   - `processWithdrawal()` (replacement for deleted classes)
 
   Changed signatures:
-
   - `waitForWithdrawalCompletion()`
 
 ### Patch Changes
@@ -722,16 +723,13 @@
 - 89554ed: Re-organize package exports.
 
   Renamed:
-
   - `CAIP2_NETWORK` -> `Chains` and `Chain` type
 
   Removed:
-
   - `HOT_BRIDGE_CHAINS_CAIP2`
   - Intent relayer
 
   Added:
-
   - `createPoaBridgeRoute()` and `createHotBridgeRoute()`
   - Types: `BridgeSDKConfig`, `WithdrawalIdentifier`, `NearWithdrawalRouteConfig`, `InternalTransferRouteConfig`, `VirtualChainRouteConfig`, `PoaBridgeRouteConfig`, `HotBridgeRouteConfig`, `NearTxInfo`, `TxInfo`, `TxNoInfo`, `ParsedAssetInfo`, `ILogger`, `RetryOptions`, `NearIntentsEnv`, `IntentPrimitive`, `IntentPayload`, `IntentPayloadFactory`, `IntentRelayParamsFactory`, `MultiPayload`
   - All error types
