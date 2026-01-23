@@ -23,22 +23,51 @@
 			"require": "./dist/index.cjs",
 			"default": "./dist/index.js"
 		},
-		"./schemas/intents.schema.json": "./schemas/intents.schema.json"
+		"./schemas/intents.schema.json": "./schemas/intents.schema.json",
+		"./validate": {
+			"types": "./dist/validate.d.ts",
+			"import": "./dist/validate.js",
+			"require": "./dist/validate.cjs",
+			"default": "./dist/validate.js"
+		}
+	},
+	"typesVersions": {
+		"*": {
+			"validate": [
+				"./dist/validate.d.ts"
+			]
+		}
 	},
 	"files": [
 		"dist",
 		"schemas"
 	],
 	"scripts": {
-		"build": "tsdown",
+		"build": "tsc --noEmit && tsdown",
 		"dev": "tsdown --watch",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"gen-defuse-types": "node --experimental-strip-types scripts/gen-defuse-types.ts"
+	},
+	"dependencies": {
+		"@standard-schema/spec": "^1.1.0",
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1"
 	},
 	"devDependencies": {
+		"@hono/standard-validator": "^0.2.2",
+		"@nestjs/swagger": "^11.2.5",
+		"arktype": "^2.1.29",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.3",
+		"hono": "^4.11.4",
+		"json-schema-to-typescript": "^15.0.4",
+		"reflect-metadata": "^0.2.2",
 		"tsdown": "0.19.0",
-		"typescript": "^5.4.2"
+		"typescript": "^5.4.2",
+		"valibot": "^1.1.0",
+		"zod": "^4.3.5"
 	}
 }
