@@ -1,5 +1,12 @@
 # @defuse-protocol/internal-utils
 
+## 0.24.1
+
+### Patch Changes
+
+- Updated dependencies [fecef80]
+  - @defuse-protocol/contract-types@0.5.0
+
 ## 0.24.0
 
 ### Minor Changes
@@ -40,7 +47,6 @@
 ### Minor Changes
 
 - 5b1e80a: Add latency-optimized polling for intent settlement
-
   - New `poll()` utility with probability-based intervals that polls aggressively early and backs off for outliers
   - `waitForIntentSettlement()` now uses production timing stats (p50=2s, p90=10s, p99=356s)
 
@@ -49,7 +55,6 @@
 - f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
 
   BREAKING CHANGES:
-
   - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
   - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
 
@@ -170,7 +175,6 @@
 ### Patch Changes
 
 - 160a024: Enhance NEAR address validation with improved support for different account types
-
   - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
   - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
   - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
@@ -308,7 +312,6 @@
 ### Minor Changes
 
 - 468246c: Introduce app fee support.
-
   - Updated message factory to accept app fee parameters.
   - Exported app fee utilities from the package index.
 
@@ -330,16 +333,13 @@
 - 89554ed: Re-organize package exports.
 
   Renamed:
-
   - `CAIP2_NETWORK` -> `Chains` and `Chain` type
 
   Removed:
-
   - `HOT_BRIDGE_CHAINS_CAIP2`
   - Intent relayer
 
   Added:
-
   - `createPoaBridgeRoute()` and `createHotBridgeRoute()`
   - Types: `BridgeSDKConfig`, `WithdrawalIdentifier`, `NearWithdrawalRouteConfig`, `InternalTransferRouteConfig`, `VirtualChainRouteConfig`, `PoaBridgeRouteConfig`, `HotBridgeRouteConfig`, `NearTxInfo`, `TxInfo`, `TxNoInfo`, `ParsedAssetInfo`, `ILogger`, `RetryOptions`, `NearIntentsEnv`, `IntentPrimitive`, `IntentPayload`, `IntentPayloadFactory`, `IntentRelayParamsFactory`, `MultiPayload`
   - All error types
@@ -372,7 +372,6 @@
 - 61d00ec: Change name of network from CoinEasy to EasyChain
 - 6d588d6: Make `evmRpc` optional, fallback to public URLs.
 - fbe2b7c: Extended and fixed exports for @defuse-protocol/internal-utils:
-
   - Extended `poaBridge` exports: now includes `httpClient`, `waitForWithdrawalCompletion`, `constants/blockchains`, `getPendingDeposits`, and `createWithdrawMemo`.
   - Extended `solverRelay` exports: now includes `getQuote`, `publishIntents`, `waitForIntentSettlement`, `publishIntent`, `quote`, and types (`Quote`, `FailedQuote`, `IntentSettlementError`, `WaitForIntentSettlementReturnType`, `PublishIntentRequest`, `Params`).
   - Extended `utils` exports: now includes `authIdentity`, `prepareBroadcastRequest`, and `tokenUtils`.
