@@ -1,5 +1,17 @@
 # @defuse-protocol/intents-sdk
 
+## 0.47.0
+
+### Minor Changes
+
+- de39e32: Add dual-source polling for HOT withdrawals with API fallback when contract returns pending.
+
+### Patch Changes
+
+- 2663c94: Update default Near RPC list.
+- Updated dependencies [2663c94]
+  - @defuse-protocol/internal-utils@0.24.2
+
 ## 0.46.1
 
 ### Patch Changes
