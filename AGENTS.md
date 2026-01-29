@@ -26,6 +26,10 @@ npx tsc --noEmit -p scripts/tsconfig.json  # scripts have their own tsconfig
 pnpm biome check scripts/gen-defuse-types.ts
 ```
 
+# Architecture
+
+- Progressive disclosure - simple things simple, complex things possible. Give escape hatches when needed
+
 # Code Style
 
 - Do not use `any` type
@@ -61,22 +65,6 @@ Write tests with these rules:
 - Do not write conditional tests (e.g. `if (condition) { ... }`). Tests should be deterministic. If you still need conditional tests, use `expect.assertions(N)` to ensure all expected assertions run.
 - When asserting collaborator calls, use `expect.objectContaining` and focus on important fields instead of all properties.
 - Avoid using "should" in test descriptions, use present tense instead.
-
-# Commit Instructions
-
-- Use conventional commit messages.
-- Use imperative tense in commit messages.
-- Prefer short still descriptive commit messages without long tail description.
-
-## Remove AI code slop before commiting
-
-Check the diff, and remove all AI generated slop introduced in this branch.
-
-This includes:
-- Extra comments that a human wouldn't add or is inconsistent with the rest of the file
-- Extra defensive checks or try/catch blocks that are abnormal for that area of the codebase (especially if called by trusted / validated codepaths)
-- Casts to any to get around type issues
-- Any other style that is inconsistent with the file
 
 # Plan Mode
 
