@@ -6,6 +6,8 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
+import { LRUCache } from "lru-cache";
+import * as v from "valibot";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
@@ -45,11 +47,32 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
 
+const HotApiWithdrawalSchema = v.object({
+	hash: v.nullable(v.string()),
+	nonce: v.string(),
+	near_trx: v.string(),
+	verified_withdraw: v.boolean(),
+	chain_id: v.number(),
+});
+
+const HotApiWithdrawalResponseSchema = v.object({
+	hash: v.nullable(v.string()),
+	nonce: v.string(),
+	near_trx: v.string(),
+	withdrawals: v.array(HotApiWithdrawalSchema),
+});
+
 export class HotBridge implements Bridge {
+	private static readonly API_FALLBACK_TIMEOUT_MS = 5000;
+	private static readonly NEAR_RPC_TIMEOUT_MS = 10000;
+
 	readonly route = RouteEnum.HotBridge;
 	protected envConfig: EnvConfig;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
+
+	// Nonces are immutable for a given tx, use LRU with fetchMethod for readthrough
+	private noncesCache: LRUCache<`${string}:${string}`, bigint[], NearTxInfo>;
 
 	constructor({
 		envConfig,
@@ -59,6 +82,24 @@ export class HotBridge implements Bridge {
 		this.envConfig = envConfig;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.noncesCache = new LRUCache<
+			`${string}:${string}`,
+			bigint[],
+			NearTxInfo
+		>({
+			max: 50,
+			ttl: 60 * 60 * 1000, // 1 hour
+			fetchMethod: async (_key, _staleValue, { context: tx }) => {
+				return withTimeout(
+					() => this.hotSdk.near.parseWithdrawalNonces(tx.hash, tx.accountId),
+					{ timeout: HotBridge.NEAR_RPC_TIMEOUT_MS },
+				);
+			},
+		});
+	}
+
+	private getNoncesCacheKey(tx: NearTxInfo): `${string}:${string}` {
+		return `${tx.hash}:${tx.accountId}`;
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -324,16 +365,18 @@ export class HotBridge implements Bridge {
 	async describeWithdrawal(
 		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus> {
-		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
-			args.tx.hash,
-			args.tx.accountId,
-		);
+		const cacheKey = this.getNoncesCacheKey(args.tx);
+		const nonces = await this.noncesCache.fetch(cacheKey, { context: args.tx });
+		if (nonces == null) {
+			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
+		}
 
 		const nonce = nonces[args.index];
 		if (nonce == null) {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
+		// Primary source: contract view method
 		const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
 			nonce.toString(),
 		);
@@ -361,6 +404,64 @@ export class HotBridge implements Bridge {
 			};
 		}
 
+		// Fallback: API indexer (when contract returns null/pending)
+		const apiHash = await this.fetchWithdrawalHashFromApi(
+			args.tx.hash,
+			nonce,
+			args.logger,
+		);
+		if (apiHash != null) {
+			return {
+				status: "completed",
+				txHash: formatTxHash(apiHash, args.landingChain),
+			};
+		}
+
 		return { status: "pending" };
+	}
+
+	private async fetchWithdrawalHashFromApi(
+		nearTxHash: string,
+		nonce: bigint,
+		logger?: ILogger,
+	): Promise<string | null> {
+		try {
+			const response = await withTimeout(
+				() =>
+					this.hotSdk.api.requestApi(
+						`/api/v1/evm/bridge_withdrawal_hash?near_trx=${nearTxHash}`,
+						{ method: "GET" },
+					),
+				{ timeout: HotBridge.API_FALLBACK_TIMEOUT_MS },
+			);
+			const data: unknown = await response.json();
+
+			const parseResult = v.safeParse(HotApiWithdrawalResponseSchema, data);
+			if (!parseResult.success) {
+				logger?.debug("HOT API response parse failed", {
+					issues: parseResult.issues,
+				});
+				return null;
+			}
+
+			const withdrawal = parseResult.output.withdrawals.find(
+				(w) => w.nonce === nonce.toString(),
+			);
+
+			if (withdrawal?.hash) {
+				const hash = withdrawal.hash.replace(/^0x/, "");
+				if (isHex(hash)) {
+					logger?.info("HOT withdrawal hash found via API fallback", {
+						nearTxHash,
+						nonce: nonce.toString(),
+					});
+					return hash;
+				}
+			}
+			return null;
+		} catch (error) {
+			logger?.debug("HOT API fallback failed", { error, nearTxHash });
+			return null;
+		}
 	}
 }
