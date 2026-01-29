@@ -433,15 +433,16 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
-			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue({
-				json: () =>
-					Promise.resolve({
+			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
+				new Response(
+					JSON.stringify({
 						hash: null,
 						nonce: "1",
 						near_trx: "txhash",
 						withdrawals: [],
 					}),
-			} as Response);
+				),
+			);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -477,9 +478,9 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
-			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue({
-				json: () =>
-					Promise.resolve({
+			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
+				new Response(
+					JSON.stringify({
 						hash: "0xDEADBEEF",
 						nonce: "1",
 						near_trx: "txhash",
@@ -493,7 +494,8 @@ describe("HotBridge", () => {
 							},
 						],
 					}),
-			} as Response);
+				),
+			);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -567,9 +569,9 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
-			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue({
-				json: () =>
-					Promise.resolve({
+			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
+				new Response(
+					JSON.stringify({
 						hash: "not_a_hex_hash",
 						nonce: "1",
 						near_trx: "txhash",
@@ -583,7 +585,8 @@ describe("HotBridge", () => {
 							},
 						],
 					}),
-			} as Response);
+				),
+			);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
