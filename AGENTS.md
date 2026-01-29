@@ -43,7 +43,6 @@ pnpm biome check scripts/gen-defuse-types.ts
 - The only acceptable use of `as` is `as const` for literal types
 - Do not use barrel files
 - Avoid arbitrary strings, use const enums (`as const`) instead.
-- In catch blocks error is `unknown`: `catch (err: unknown) { ... }`
 
 # Testing Guidelines
 

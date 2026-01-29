@@ -416,7 +416,7 @@ describe("HotBridge", () => {
 			expect(result).toEqual({ status: "completed", txHash: null });
 		});
 
-		it("returns pending status when status is Pending", async () => {
+		it("returns pending status when contract returns null and API has no hash", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -433,6 +433,16 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
+				new Response(
+					JSON.stringify({
+						hash: null,
+						nonce: "1",
+						near_trx: "txhash",
+						withdrawals: [],
+					}),
+				),
+			);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -443,12 +453,199 @@ describe("HotBridge", () => {
 					feeInclusive: false,
 				},
 				index: 0,
-				tx: { hash: "", accountId: "" },
+				tx: { hash: "txhash", accountId: "test.near" },
 			});
 
 			const result = await bridge.describeWithdrawal(wid);
 
 			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("returns completed via API fallback when contract returns null but API has hash", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
+				new Response(
+					JSON.stringify({
+						hash: "0xDEADBEEF",
+						nonce: "1",
+						near_trx: "txhash",
+						withdrawals: [
+							{
+								hash: "0xDEADBEEF",
+								nonce: "1",
+								near_trx: "txhash",
+								verified_withdraw: true,
+								chain_id: 1117,
+							},
+						],
+					}),
+				),
+			);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "txhash", accountId: "test.near" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "completed", txHash: "DEADBEEF" });
+		});
+
+		it("returns pending when API request fails", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			vi.spyOn(hotSDK.api, "requestApi").mockRejectedValue(
+				new Error("Network error"),
+			);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "txhash", accountId: "test.near" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("ignores API response with invalid hash format", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
+				new Response(
+					JSON.stringify({
+						hash: "not_a_hex_hash",
+						nonce: "1",
+						near_trx: "txhash",
+						withdrawals: [
+							{
+								hash: "not_a_hex_hash",
+								nonce: "1",
+								near_trx: "txhash",
+								verified_withdraw: true,
+								chain_id: 1117,
+							},
+						],
+					}),
+				),
+			);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "txhash", accountId: "test.near" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "pending" });
+		});
+
+		it("caches nonces and calls parseWithdrawalNonces only once per tx", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk: hotSDK,
+			});
+
+			const parseNoncesSpy = vi
+				.spyOn(hotSDK.near, "parseWithdrawalNonces")
+				.mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				"DEADBEEF",
+			);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					amount: 100n,
+					destinationAddress:
+						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "same-tx-hash", accountId: "same.near" },
+			});
+
+			// Call describeWithdrawal multiple times with same tx
+			await bridge.describeWithdrawal(wid);
+			await bridge.describeWithdrawal(wid);
+			await bridge.describeWithdrawal(wid);
+
+			// parseWithdrawalNonces should only be called once due to caching
+			expect(parseNoncesSpy).toHaveBeenCalledTimes(1);
 		});
 	});
 
