@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.24.2
+
+### Patch Changes
+
+- 2663c94: Update default Near RPC list.
+
 ## 0.24.1
 
 ### Patch Changes
