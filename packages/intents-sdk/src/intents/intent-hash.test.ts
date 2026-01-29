@@ -100,7 +100,7 @@ describe("computeIntentHash()", () => {
 
 async function sim(signedIntent: MultiPayload) {
 	const rpc = new providers.JsonRpcProvider({
-		url: "https://relmn.aurora.dev",
+		url: "https://near-rpc.defuse.org",
 	});
 
 	const result = await utils.queryContract({
