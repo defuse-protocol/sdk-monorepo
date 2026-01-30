@@ -202,7 +202,7 @@ describe("IntentExecuter", () => {
 		const { intentSigner, intentRelayer } = setupMocks();
 
 		const rpc = new providers.JsonRpcProvider({
-			url: "https://relmn.aurora.dev",
+			url: "https://near-rpc.defuse.org",
 		});
 
 		const exec = new IntentExecuter({
