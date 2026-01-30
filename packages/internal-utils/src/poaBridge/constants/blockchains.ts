@@ -29,7 +29,7 @@ export const PoaBridgeNetworkReference = {
 	MONAD: "eth:143",
 	LAYERX: "eth:196",
 	STARKNET: "starknet:mainnet",
-	ALEO: "aleo:0"
+	ALEO: "aleo:0",
 } as const;
 
 export const VirtualNetworkReference = {

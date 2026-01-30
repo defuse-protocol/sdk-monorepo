@@ -99,7 +99,7 @@ const tokenPrefixMapping = {
 	cardano: Chains.Cardano,
 	ltc: Chains.Litecoin,
 	starknet: Chains.Starknet,
-	aleo: Chains.Aleo
+	aleo: Chains.Aleo,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {

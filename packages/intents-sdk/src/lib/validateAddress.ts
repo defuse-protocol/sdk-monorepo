@@ -473,7 +473,7 @@ function validateLitecoinBech32Address(address: string): boolean {
 export function validateAleoAddress(address: string) {
 	try {
 		const decoded = bech32m.decode(address as `${string}1${string}`, 63);
-		return decoded.prefix === 'aleo';
+		return decoded.prefix === "aleo";
 	} catch {
 		return false;
 	}
