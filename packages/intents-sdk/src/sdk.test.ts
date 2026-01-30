@@ -18,12 +18,8 @@ import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
 import { BridgeNameEnum } from "./constants/bridge-name-enum";
 import { InsufficientUtxoForOmniBridgeWithdrawalError } from "./bridges/omni-bridge/error";
-import {
-	calculateStorageAccountId,
-	ChainKind,
-	omniAddress,
-	OmniBridgeAPI,
-} from "omni-bridge-sdk";
+import { ChainKind, omniAddress, BridgeAPI } from "@omni-bridge/core";
+import { calculateStorageAccountId } from "@omni-bridge/near";
 import type { FeeEstimation } from "./shared-types";
 import { RouteEnum } from "./constants/route-enum";
 
@@ -1064,7 +1060,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
 			gas_fee: utxoMaxGasFee,
@@ -1139,7 +1135,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: relayerFee,
 			transferred_token_fee: "0",
 			gas_fee: 0n,
@@ -1226,7 +1222,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
 			gas_fee: utxoMaxGasFee,
@@ -1362,7 +1358,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
 			gas_fee: utxoMaxGasFee,
@@ -1404,7 +1400,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
 			gas_fee: utxoMaxGasFee,
@@ -1458,7 +1454,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
 			gas_fee: utxoMaxGasFee,
@@ -1556,7 +1552,7 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		vi.spyOn(OmniBridgeAPI.prototype, "getFee").mockResolvedValue({
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 			native_token_fee: 0n,
 			transferred_token_fee: "0",
 			gas_fee: utxoMaxGasFee,

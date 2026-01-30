@@ -3,7 +3,7 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { OmniBridgeAPI } from "omni-bridge-sdk";
+import { BridgeAPI } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -320,8 +320,8 @@ describe("OmniBridge", () => {
 
 	describe("describeWithdrawal()", () => {
 		function createTransferMock(
-			overrides: Partial<Awaited<ReturnType<OmniBridgeAPI["getTransfer"]>>[0]>,
-		): Awaited<ReturnType<OmniBridgeAPI["getTransfer"]>>[0] {
+			overrides: Partial<Awaited<ReturnType<BridgeAPI["getTransfer"]>>[0]>,
+		): Awaited<ReturnType<BridgeAPI["getTransfer"]>>[0] {
 			return {
 				id: null,
 				initialized: null,
@@ -339,7 +339,7 @@ describe("OmniBridge", () => {
 		}
 
 		it("returns completed status with EVM tx hash", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:eth.bridge.near",
@@ -387,7 +387,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns completed status with Solana signature", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:sol.omdep.near",
@@ -435,7 +435,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns pending status when transfer not found", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([]);
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([]);
 
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
@@ -462,7 +462,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns pending status when tx hash not yet available", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:eth.bridge.near",
@@ -501,7 +501,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns correct transfer by index", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:eth.bridge.near",
@@ -566,7 +566,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns completed status with BTC pending tx hash in browser environment", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:nbtc.bridge.near",
@@ -629,7 +629,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns completed status with BTC final tx hash in server environment", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:nbtc.bridge.near",
@@ -692,7 +692,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns pending when BTC utxo_transfer has no pending id", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
 						token: "near:nbtc.bridge.near",
@@ -736,7 +736,7 @@ describe("OmniBridge", () => {
 		});
 
 		it("returns pending when transfer_message is null", async () => {
-			vi.spyOn(OmniBridgeAPI.prototype, "getTransfer").mockResolvedValue([
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: null,
 				}),
