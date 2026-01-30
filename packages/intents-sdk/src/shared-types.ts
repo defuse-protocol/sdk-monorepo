@@ -1,4 +1,8 @@
-import type { ILogger, solverRelay } from "@defuse-protocol/internal-utils";
+import type {
+	ILogger,
+	RpcEndpoint,
+	solverRelay,
+} from "@defuse-protocol/internal-utils";
 import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
 import { RouteEnum, type RouteEnumValues } from "./constants/route-enum";
@@ -458,21 +462,20 @@ export type ParsedAssetInfo = (
 
 export type RPCEndpointMap = Record<
 	typeof Chains.Near | HotBridgeEVMChain,
-	string[]
+	RpcEndpoint[]
 > & {
 	[K in typeof Chains.Stellar]: {
-		soroban: string[];
-		horizon: string[];
+		soroban: RpcEndpoint[];
+		horizon: RpcEndpoint[];
 	};
 };
 
-type DeepPartial<T> = T extends object
-	? T extends Array<infer U>
-		? Array<DeepPartial<U>>
-		: // biome-ignore lint/complexity/noBannedTypes: Function type needed for type guard
-			T extends Function
-			? T
-			: { [P in keyof T]?: DeepPartial<T[P]> }
-	: T;
-
-export type PartialRPCEndpointMap = DeepPartial<RPCEndpointMap>;
+/**
+ * Partial RPC endpoint map where each chain's URLs are optional,
+ * but individual RpcEndpoint items remain valid (not deeply partial).
+ */
+export type PartialRPCEndpointMap = {
+	[K in keyof RPCEndpointMap]?: K extends typeof Chains.Stellar
+		? { soroban?: RpcEndpoint[]; horizon?: RpcEndpoint[] }
+		: RpcEndpoint[];
+};

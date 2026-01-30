@@ -39,6 +39,12 @@ export {
 	nearFailoverRpcProvider,
 	unwrapNearFailoverRpcProvider,
 } from "./utils/failover";
+export {
+	extractRpcUrls,
+	normalizeRpcEndpoint,
+	type RpcEndpoint,
+	type RpcEndpointConfig,
+} from "./utils/rpc-endpoint";
 export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";
 export { AuthMethod } from "./types/authHandle";
 

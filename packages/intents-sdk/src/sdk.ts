@@ -6,8 +6,10 @@ import {
 	PUBLIC_NEAR_RPC_URLS,
 	resolveEnvConfig,
 	nearFailoverRpcProvider,
+	extractRpcUrls,
 	solverRelay,
 	RelayPublishError,
+	type RpcEndpoint,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -129,9 +131,12 @@ export class IntentsSDK implements IIntentsSDK {
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
 
-		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
-		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
-		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
+		const nearRpcEndpoints: RpcEndpoint[] =
+			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
+		assert(nearRpcEndpoints.length > 0, "NEAR RPC URLs are not provided");
+		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcEndpoints });
+		// Plain URLs for external SDKs that don't support config objects
+		const nearRpcUrls = extractRpcUrls(nearRpcEndpoints);
 
 		const stellarRpcUrls = configureStellarRpcUrls(
 			PUBLIC_STELLAR_RPC_URLS,
