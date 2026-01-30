@@ -1,5 +1,14 @@
 # @defuse-protocol/internal-utils
 
+## 0.25.0
+
+### Minor Changes
+
+- 7aff108: Add support for authenticated RPC URLs.
+  - URLs with embedded credentials (`http://user:pass@host:3030`) are now automatically parsed and converted to `Authorization: Basic` header
+  - New `RpcEndpoint` type allows passing either plain URL strings or config objects with custom headers
+  - New `extractRpcUrls()` and `normalizeRpcEndpoint()` utilities for RPC endpoint handling
+
 ## 0.24.2
 
 ### Patch Changes
