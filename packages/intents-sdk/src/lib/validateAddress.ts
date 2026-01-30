@@ -78,7 +78,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Plasma:
 		case Chains.Scroll:
 			return validateEthAddress(address);
-
+		case Chains.Aleo:
+			return validateAleoAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -467,4 +468,13 @@ function validateLitecoinBech32Address(address: string): boolean {
 
 	// Other versions
 	return false;
+}
+
+export function validateAleoAddress(address: string) {
+	try {
+		const decoded = bech32m.decode(address as `${string}1${string}`, 63);
+		return decoded.prefix === 'aleo';
+	} catch {
+		return false;
+	}
 }

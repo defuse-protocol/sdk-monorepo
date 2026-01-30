@@ -79,6 +79,61 @@ describe("validateEthAddress", () => {
 	});
 });
 
+describe("validateAleoAddress", () => {
+	it("accepts valid checksummed addresses", () => {
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(true);
+	});
+
+	it("rejects addresses with wrong prefix", () => {
+		// Wrong prefix (not 'aleo')
+		expect(
+			validateAddress(
+				"near1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses with invalid bech32m checksum", () => {
+		// Invalid checksum (changed last character from 'j' to 'k')
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0k",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses that are too short", () => {
+		expect(validateAddress("aleo1dg722m22fzpz6", Chains.Aleo)).toBe(false);
+	});
+
+	it("rejects addresses with extra characters", () => {
+		expect(
+			validateAddress(
+				"xaleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0jx",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects completely invalid strings", () => {
+		expect(validateAddress("not-an-aleo-address", Chains.Aleo)).toBe(false);
+		expect(validateAddress("aleo1", Chains.Aleo)).toBe(false);
+	});
+});
+
 describe("validateSolAddress", () => {
 	it("accepts valid addresses", () => {
 		expect(
