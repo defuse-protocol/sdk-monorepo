@@ -172,6 +172,8 @@ export type {
 	RetryOptions,
 	NearIntentsEnv,
 	EnvConfig,
+	RpcEndpoint,
+	RpcEndpointConfig,
 } from "@defuse-protocol/internal-utils";
 
 // ============================================================================

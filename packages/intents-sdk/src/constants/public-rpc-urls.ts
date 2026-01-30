@@ -1,3 +1,4 @@
+import type { RpcEndpoint } from "@defuse-protocol/internal-utils";
 import type { HotBridgeEVMChain } from "../bridges/hot-bridge/hot-bridge-chains";
 import { Chains } from "../lib/caip2";
 import type { RPCEndpointMap } from "../shared-types";
@@ -5,7 +6,7 @@ import type { RPCEndpointMap } from "../shared-types";
 /**
  * Default EVM RPC endpoints for HOT bridge supported chains
  */
-export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChain, string[]> = {
+export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChain, RpcEndpoint[]> = {
 	[Chains.BNB]: ["https://bsc-rpc.publicnode.com"],
 	[Chains.Polygon]: ["https://polygon-bor-rpc.publicnode.com"],
 	[Chains.Monad]: ["https://rpc.monad.xyz"],

@@ -1,11 +1,22 @@
 import { providers } from "near-api-js";
+import { type RpcEndpoint, normalizeRpcEndpoint } from "./rpc-endpoint";
 
 /**
- * @note This function is specifically designed for NEAR RPC providers and should not be used with other blockchain networks.
- * It creates a failover provider that will automatically switch between the provided RPC endpoints if one fails.
+ * Creates a NEAR failover RPC provider from a list of endpoints.
+ *
+ * @note This function is specifically designed for NEAR RPC providers
+ * and should not be used with other blockchain networks.
+ *
+ * Supports:
+ * - Plain URL strings: "https://rpc.example.com"
+ * - URLs with embedded credentials: "http://user:pass@host:3030" (auto-converted to Authorization header)
+ * - Config objects: { url: "https://rpc.example.com", headers: { "Authorization": "..." } }
  */
-export function nearFailoverRpcProvider({ urls }: { urls: string[] }) {
-	const providers_ = urls.map((url) => new providers.JsonRpcProvider({ url }));
+export function nearFailoverRpcProvider({ urls }: { urls: RpcEndpoint[] }) {
+	const providers_ = urls.map((endpoint) => {
+		const { url, headers } = normalizeRpcEndpoint(endpoint);
+		return new providers.JsonRpcProvider({ url, headers });
+	});
 	return createNearFailoverRpcProvider({ providers: providers_ });
 }
 

@@ -192,6 +192,6 @@ describe("configureStellarRpcUrls()", () => {
 				},
 			});
 
-		expect(fn).toThrow("Stellar RPC URL for horizon is not provided");
+		expect(fn).toThrow("Stellar Horizon RPC URL is not provided");
 	});
 });
