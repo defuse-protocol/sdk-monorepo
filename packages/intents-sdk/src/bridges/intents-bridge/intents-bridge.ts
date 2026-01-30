@@ -46,6 +46,7 @@ export class IntentsBridge implements Bridge {
 					[args.withdrawalParams.assetId]:
 						args.withdrawalParams.amount.toString(),
 				},
+				memo: args.withdrawalParams.destinationMemo,
 			},
 		];
 
