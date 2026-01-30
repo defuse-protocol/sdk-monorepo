@@ -244,7 +244,10 @@ export interface WithdrawalParams {
 	amount: bigint;
 	destinationAddress: string;
 	/**
-	 * XRP Leger chain specific. MEMO IS NOT SUPPORTED FOR STELLAR AND TON.
+	 * Optional memo attached to the withdrawal.
+	 * - XRP Ledger: included in the transaction memo field
+	 * - Internal transfers (intents): passed as memo in the transfer intent
+	 * - Stellar, TON: NOT SUPPORTED (will throw error)
 	 */
 	destinationMemo?: string | undefined;
 	feeInclusive: boolean;
