@@ -470,10 +470,22 @@ function validateLitecoinBech32Address(address: string): boolean {
 	return false;
 }
 
-export function validateAleoAddress(address: string) {
+export function validateAleoAddress(address: string): boolean {
 	try {
+		if (address.length !== 63) {
+			return false;
+		}
 		const decoded = bech32m.decode(address as `${string}1${string}`, 63);
-		return decoded.prefix === "aleo";
+
+		if (decoded.prefix !== "aleo") {
+			return false;
+		}
+
+		if (decoded.words.length === 0) {
+			return false;
+		}
+
+		return true;
 	} catch {
 		return false;
 	}
