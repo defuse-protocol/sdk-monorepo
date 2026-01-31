@@ -3,11 +3,11 @@ import {
 	ChainKind,
 	omniAddress,
 	isBridgeToken,
-	calculateStorageAccountId,
 	type OmniAddress,
 	type TokenDecimals,
 	getChain,
-} from "omni-bridge-sdk";
+} from "@omni-bridge/core";
+import { calculateStorageAccountId } from "@omni-bridge/near";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT, OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";

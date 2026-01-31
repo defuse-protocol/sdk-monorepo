@@ -1,4 +1,4 @@
-import { ChainKind } from "omni-bridge-sdk";
+import { ChainKind } from "@omni-bridge/core";
 
 /**
  * These tokens can be routed through either PoA Bridge or Omni Bridge
