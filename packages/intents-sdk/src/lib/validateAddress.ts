@@ -472,7 +472,7 @@ function validateLitecoinBech32Address(address: string): boolean {
 
 export function validateAleoAddress(address: string): boolean {
 	try {
-		Address.from_string(address)
+		Address.from_string(address);
 		return true;
 	} catch {
 		return false;
