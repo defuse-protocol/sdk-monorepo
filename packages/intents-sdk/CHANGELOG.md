@@ -16,6 +16,7 @@
 - Updated dependencies [98c96ca]
 - Updated dependencies [8fb6d4b]
   - @defuse-protocol/contract-types@0.6.0
+- Updated dependencies [8fb6d4b]
   - @defuse-protocol/internal-utils@0.26.0
 
 ## 0.48.0
