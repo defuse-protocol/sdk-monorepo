@@ -10,18 +10,6 @@
 import type { JSONSchemaType } from "ajv";
 import type * as Types from "./index.js";
 
-export const AccountIdSchema: JSONSchemaType<Types.AccountId> = {
-	description:
-		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-	type: "string",
-};
-
-export const AccountIdRefSchema: JSONSchemaType<Types.AccountIdRef> = {
-	description:
-		'Account identifier. This is the human readable UTF-8 string which is used internally to index accounts on the network and their respective state.\n\nThis is the "referenced" version of the account ID. It is to [`AccountId`] what [`str`] is to [`String`], and works quite similarly to [`Path`]. Like with [`str`] and [`Path`], you can\'t have a value of type `AccountIdRef`, but you can have a reference like `&AccountIdRef` or `&mut AccountIdRef`.\n\nThis type supports zero-copy deserialization offered by [`serde`](https://docs.rs/serde/), but cannot do the same for [`borsh`](https://docs.rs/borsh/) since the latter does not support zero-copy.\n\n# Examples ``` use near_account_id::{AccountId, AccountIdRef}; use std::convert::{TryFrom, TryInto};\n\n// Construction let alice = AccountIdRef::new("alice.near").unwrap(); assert!(AccountIdRef::new("invalid.").is_err()); ```\n\n[`FromStr`]: std::str::FromStr [`Path`]: std::path::Path',
-	type: "string",
-};
-
 export const AuthCallSchema: JSONSchemaType<Types.AuthCall> = {
 	description:
 		"Call [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth) with `signer_id` of intent.",
@@ -50,18 +38,57 @@ export const AuthCallSchema: JSONSchemaType<Types.AuthCall> = {
 				"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 			type: "string",
 		},
+		state_init: {
+			description:
+				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
+							type: "object",
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
+						},
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
+				},
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
+		},
 	},
 	additionalProperties: false,
 };
 
 export const DeadlineSchema: JSONSchemaType<Types.Deadline> = {
 	type: "string",
-	format: "date-time",
 };
 
-export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
+// Cast allowed here due to AJV v8 limitation: Optional object properties with defaults (roles, admins, grantees) - AJV limitation
+// See: https://github.com/ajv-validator/ajv/issues/2132
+export const DefuseConfigSchema = {
 	type: "object",
-	required: ["fees", "roles", "wnear_id"],
+	required: ["fees", "wnear_id"],
 	properties: {
 		fees: {
 			type: "object",
@@ -82,10 +109,11 @@ export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
 			additionalProperties: false,
 		},
 		roles: {
+			default: { admins: {}, grantees: {}, super_admins: [] },
 			type: "object",
-			required: ["admins", "grantees", "super_admins"],
 			properties: {
 				admins: {
+					default: {},
 					type: "object",
 					additionalProperties: {
 						type: "array",
@@ -99,6 +127,7 @@ export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
 					required: [],
 				},
 				grantees: {
+					default: {},
 					type: "object",
 					additionalProperties: {
 						type: "array",
@@ -112,6 +141,7 @@ export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
 					required: [],
 				},
 				super_admins: {
+					default: [],
 					type: "array",
 					items: {
 						description:
@@ -130,14 +160,14 @@ export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
 		},
 	},
 	additionalProperties: false,
-};
+} as unknown as JSONSchemaType<Types.DefuseConfig>;
 
 export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePayloadFor_DefuseIntents> =
 	{
 		type: "object",
 		required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 		properties: {
-			deadline: { type: "string", format: "date-time" },
+			deadline: { type: "string" },
 			intents: {
 				description:
 					"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -185,10 +215,59 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 							properties: {
 								intent: { type: "string", enum: ["transfer"] },
 								memo: { type: "string", nullable: true },
+								min_gas: {
+									description:
+										"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+									type: "string",
+									nullable: true,
+								},
+								msg: {
+									description: "Message to pass to `mt_on_transfer`",
+									type: "string",
+									nullable: true,
+								},
 								receiver_id: {
 									description:
 										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									type: "object",
@@ -292,7 +371,7 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 								memo: { type: "string", nullable: true },
 								min_gas: {
 									description:
-										"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+										"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 									type: "string",
 									nullable: true,
 								},
@@ -424,6 +503,138 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 										"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 									type: "string",
 								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
+								},
+							},
+							additionalProperties: false,
+						},
+						{
+							description:
+								"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+							type: "object",
+							required: ["intent", "receiver_id", "tokens"],
+							properties: {
+								intent: { type: "string", enum: ["imt_mint"] },
+								memo: { type: "string", nullable: true },
+								min_gas: {
+									description:
+										"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+									type: "string",
+									nullable: true,
+								},
+								msg: {
+									description: "Message to pass to `mt_on_transfer`",
+									type: "string",
+									nullable: true,
+								},
+								receiver_id: {
+									description: "Receiver of the minted tokens",
+									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
+								},
+								tokens: {
+									description:
+										"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+									type: "object",
+									additionalProperties: { type: "string" },
+									required: [],
+								},
+							},
+							additionalProperties: false,
+						},
+						{
+							description:
+								"Burn a set of imt tokens, within the intents contract.",
+							type: "object",
+							required: ["intent", "minter_id", "tokens"],
+							properties: {
+								intent: { type: "string", enum: ["imt_burn"] },
+								memo: { type: "string", nullable: true },
+								minter_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+								tokens: {
+									description:
+										"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+									type: "object",
+									additionalProperties: { type: "string" },
+									required: [],
+								},
 							},
 							additionalProperties: false,
 						},
@@ -515,6 +726,29 @@ export const FtWithdrawSchema: JSONSchemaType<Types.FtWithdraw> = {
 	additionalProperties: false,
 };
 
+export const GlobalContractIdSchema: JSONSchemaType<Types.GlobalContractId> = {
+	oneOf: [
+		{
+			type: "object",
+			required: ["hash"],
+			properties: { hash: { type: "string" } },
+			additionalProperties: false,
+		},
+		{
+			type: "object",
+			required: ["account_id"],
+			properties: {
+				account_id: {
+					description:
+						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+					type: "string",
+				},
+			},
+			additionalProperties: false,
+		},
+	],
+};
+
 export const IntentSchema: JSONSchemaType<Types.Intent> = {
 	oneOf: [
 		{
@@ -558,10 +792,59 @@ export const IntentSchema: JSONSchemaType<Types.Intent> = {
 			properties: {
 				intent: { type: "string", enum: ["transfer"] },
 				memo: { type: "string", nullable: true },
+				min_gas: {
+					description:
+						"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+					type: "string",
+					nullable: true,
+				},
+				msg: {
+					description: "Message to pass to `mt_on_transfer`",
+					type: "string",
+					nullable: true,
+				},
 				receiver_id: {
 					description:
 						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 					type: "string",
+				},
+				state_init: {
+					description:
+						"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+					type: "object",
+					required: ["code", "data", "version"],
+					properties: {
+						code: {
+							oneOf: [
+								{
+									type: "object",
+									required: ["hash"],
+									properties: { hash: { type: "string" } },
+									additionalProperties: false,
+								},
+								{
+									type: "object",
+									required: ["account_id"],
+									properties: {
+										account_id: {
+											description:
+												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+											type: "string",
+										},
+									},
+									additionalProperties: false,
+								},
+							],
+						},
+						data: {
+							type: "object",
+							additionalProperties: { type: "string" },
+							required: [],
+						},
+						version: { type: "string", enum: ["v1"] },
+					},
+					additionalProperties: false,
+					nullable: true,
 				},
 				tokens: {
 					type: "object",
@@ -659,7 +942,7 @@ export const IntentSchema: JSONSchemaType<Types.Intent> = {
 				memo: { type: "string", nullable: true },
 				min_gas: {
 					description:
-						"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+						"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 					type: "string",
 					nullable: true,
 				},
@@ -783,6 +1066,137 @@ export const IntentSchema: JSONSchemaType<Types.Intent> = {
 						"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 					type: "string",
 				},
+				state_init: {
+					description:
+						"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+					type: "object",
+					required: ["code", "data", "version"],
+					properties: {
+						code: {
+							oneOf: [
+								{
+									type: "object",
+									required: ["hash"],
+									properties: { hash: { type: "string" } },
+									additionalProperties: false,
+								},
+								{
+									type: "object",
+									required: ["account_id"],
+									properties: {
+										account_id: {
+											description:
+												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+											type: "string",
+										},
+									},
+									additionalProperties: false,
+								},
+							],
+						},
+						data: {
+							type: "object",
+							additionalProperties: { type: "string" },
+							required: [],
+						},
+						version: { type: "string", enum: ["v1"] },
+					},
+					additionalProperties: false,
+					nullable: true,
+				},
+			},
+			additionalProperties: false,
+		},
+		{
+			description:
+				"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+			type: "object",
+			required: ["intent", "receiver_id", "tokens"],
+			properties: {
+				intent: { type: "string", enum: ["imt_mint"] },
+				memo: { type: "string", nullable: true },
+				min_gas: {
+					description:
+						"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+					type: "string",
+					nullable: true,
+				},
+				msg: {
+					description: "Message to pass to `mt_on_transfer`",
+					type: "string",
+					nullable: true,
+				},
+				receiver_id: {
+					description: "Receiver of the minted tokens",
+					type: "string",
+				},
+				state_init: {
+					description:
+						"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+					type: "object",
+					required: ["code", "data", "version"],
+					properties: {
+						code: {
+							oneOf: [
+								{
+									type: "object",
+									required: ["hash"],
+									properties: { hash: { type: "string" } },
+									additionalProperties: false,
+								},
+								{
+									type: "object",
+									required: ["account_id"],
+									properties: {
+										account_id: {
+											description:
+												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+											type: "string",
+										},
+									},
+									additionalProperties: false,
+								},
+							],
+						},
+						data: {
+							type: "object",
+							additionalProperties: { type: "string" },
+							required: [],
+						},
+						version: { type: "string", enum: ["v1"] },
+					},
+					additionalProperties: false,
+					nullable: true,
+				},
+				tokens: {
+					description:
+						"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+			},
+			additionalProperties: false,
+		},
+		{
+			description: "Burn a set of imt tokens, within the intents contract.",
+			type: "object",
+			required: ["intent", "minter_id", "tokens"],
+			properties: {
+				intent: { type: "string", enum: ["imt_burn"] },
+				memo: { type: "string", nullable: true },
+				minter_id: {
+					description:
+						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+					type: "string",
+				},
+				tokens: {
+					description:
+						"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
 			},
 			additionalProperties: false,
 		},
@@ -840,7 +1254,7 @@ export const MtWithdrawSchema: JSONSchemaType<Types.MtWithdraw> = {
 		memo: { type: "string", nullable: true },
 		min_gas: {
 			description:
-				"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+				"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 			type: "string",
 			nullable: true,
 		},
@@ -896,7 +1310,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "object",
 								required: ["deadline", "signer_id"],
 								properties: {
-									deadline: { type: "string", format: "date-time" },
+									deadline: { type: "string" },
 									signer_id: {
 										description:
 											'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
@@ -955,10 +1369,60 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 													properties: {
 														intent: { type: "string", enum: ["transfer"] },
 														memo: { type: "string", nullable: true },
+														min_gas: {
+															description:
+																"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															type: "string",
+															nullable: true,
+														},
+														msg: {
+															description:
+																"Message to pass to `mt_on_transfer`",
+															type: "string",
+															nullable: true,
+														},
 														receiver_id: {
 															description:
 																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 															type: "string",
+														},
+														state_init: {
+															description:
+																"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+															type: "object",
+															required: ["code", "data", "version"],
+															properties: {
+																code: {
+																	oneOf: [
+																		{
+																			type: "object",
+																			required: ["hash"],
+																			properties: { hash: { type: "string" } },
+																			additionalProperties: false,
+																		},
+																		{
+																			type: "object",
+																			required: ["account_id"],
+																			properties: {
+																				account_id: {
+																					description:
+																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																					type: "string",
+																				},
+																			},
+																			additionalProperties: false,
+																		},
+																	],
+																},
+																data: {
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+																version: { type: "string", enum: ["v1"] },
+															},
+															additionalProperties: false,
+															nullable: true,
 														},
 														tokens: {
 															type: "object",
@@ -1075,7 +1539,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 														memo: { type: "string", nullable: true },
 														min_gas: {
 															description:
-																"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 															type: "string",
 															nullable: true,
 														},
@@ -1216,6 +1680,139 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 																"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 															type: "string",
 														},
+														state_init: {
+															description:
+																"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+															type: "object",
+															required: ["code", "data", "version"],
+															properties: {
+																code: {
+																	oneOf: [
+																		{
+																			type: "object",
+																			required: ["hash"],
+																			properties: { hash: { type: "string" } },
+																			additionalProperties: false,
+																		},
+																		{
+																			type: "object",
+																			required: ["account_id"],
+																			properties: {
+																				account_id: {
+																					description:
+																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																					type: "string",
+																				},
+																			},
+																			additionalProperties: false,
+																		},
+																	],
+																},
+																data: {
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+																version: { type: "string", enum: ["v1"] },
+															},
+															additionalProperties: false,
+															nullable: true,
+														},
+													},
+													additionalProperties: false,
+												},
+												{
+													description:
+														"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+													type: "object",
+													required: ["intent", "receiver_id", "tokens"],
+													properties: {
+														intent: { type: "string", enum: ["imt_mint"] },
+														memo: { type: "string", nullable: true },
+														min_gas: {
+															description:
+																"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															type: "string",
+															nullable: true,
+														},
+														msg: {
+															description:
+																"Message to pass to `mt_on_transfer`",
+															type: "string",
+															nullable: true,
+														},
+														receiver_id: {
+															description: "Receiver of the minted tokens",
+															type: "string",
+														},
+														state_init: {
+															description:
+																"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+															type: "object",
+															required: ["code", "data", "version"],
+															properties: {
+																code: {
+																	oneOf: [
+																		{
+																			type: "object",
+																			required: ["hash"],
+																			properties: { hash: { type: "string" } },
+																			additionalProperties: false,
+																		},
+																		{
+																			type: "object",
+																			required: ["account_id"],
+																			properties: {
+																				account_id: {
+																					description:
+																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																					type: "string",
+																				},
+																			},
+																			additionalProperties: false,
+																		},
+																	],
+																},
+																data: {
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+																version: { type: "string", enum: ["v1"] },
+															},
+															additionalProperties: false,
+															nullable: true,
+														},
+														tokens: {
+															description:
+																"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+													},
+													additionalProperties: false,
+												},
+												{
+													description:
+														"Burn a set of imt tokens, within the intents contract.",
+													type: "object",
+													required: ["intent", "minter_id", "tokens"],
+													properties: {
+														intent: { type: "string", enum: ["imt_burn"] },
+														memo: { type: "string", nullable: true },
+														minter_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+														tokens: {
+															description:
+																"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
 													},
 													additionalProperties: false,
 												},
@@ -1260,7 +1857,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 						type: "object",
 						required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 						properties: {
-							deadline: { type: "string", format: "date-time" },
+							deadline: { type: "string" },
 							intents: {
 								description:
 									"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -1308,10 +1905,59 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											properties: {
 												intent: { type: "string", enum: ["transfer"] },
 												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
 												receiver_id: {
 													description:
 														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -1415,7 +2061,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												memo: { type: "string", nullable: true },
 												min_gas: {
 													description:
-														"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 													type: "string",
 													nullable: true,
 												},
@@ -1546,6 +2192,138 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 													description:
 														"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+											type: "object",
+											required: ["intent", "receiver_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_mint"] },
+												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
+												receiver_id: {
+													description: "Receiver of the minted tokens",
+													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Burn a set of imt tokens, within the intents contract.",
+											type: "object",
+											required: ["intent", "minter_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_burn"] },
+												memo: { type: "string", nullable: true },
+												minter_id: {
+													description:
+														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+													type: "string",
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
 												},
 											},
 											additionalProperties: false,
@@ -1597,7 +2375,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 						type: "object",
 						required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 						properties: {
-							deadline: { type: "string", format: "date-time" },
+							deadline: { type: "string" },
 							intents: {
 								description:
 									"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -1645,10 +2423,59 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											properties: {
 												intent: { type: "string", enum: ["transfer"] },
 												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
 												receiver_id: {
 													description:
 														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -1752,7 +2579,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												memo: { type: "string", nullable: true },
 												min_gas: {
 													description:
-														"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 													type: "string",
 													nullable: true,
 												},
@@ -1883,6 +2710,138 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 													description:
 														"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+											type: "object",
+											required: ["intent", "receiver_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_mint"] },
+												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
+												receiver_id: {
+													description: "Receiver of the minted tokens",
+													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Burn a set of imt tokens, within the intents contract.",
+											type: "object",
+											required: ["intent", "minter_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_burn"] },
+												memo: { type: "string", nullable: true },
+												minter_id: {
+													description:
+														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+													type: "string",
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
 												},
 											},
 											additionalProperties: false,
@@ -1932,7 +2891,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 						type: "object",
 						required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 						properties: {
-							deadline: { type: "string", format: "date-time" },
+							deadline: { type: "string" },
 							intents: {
 								description:
 									"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -1980,10 +2939,59 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											properties: {
 												intent: { type: "string", enum: ["transfer"] },
 												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
 												receiver_id: {
 													description:
 														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -2087,7 +3095,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												memo: { type: "string", nullable: true },
 												min_gas: {
 													description:
-														"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 													type: "string",
 													nullable: true,
 												},
@@ -2218,6 +3226,138 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 													description:
 														"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+											type: "object",
+											required: ["intent", "receiver_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_mint"] },
+												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
+												receiver_id: {
+													description: "Receiver of the minted tokens",
+													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Burn a set of imt tokens, within the intents contract.",
+											type: "object",
+											required: ["intent", "minter_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_burn"] },
+												memo: { type: "string", nullable: true },
+												minter_id: {
+													description:
+														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+													type: "string",
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
 												},
 											},
 											additionalProperties: false,
@@ -2286,7 +3426,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 						type: "object",
 						required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 						properties: {
-							deadline: { type: "string", format: "date-time" },
+							deadline: { type: "string" },
 							intents: {
 								description:
 									"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -2334,10 +3474,59 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											properties: {
 												intent: { type: "string", enum: ["transfer"] },
 												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
 												receiver_id: {
 													description:
 														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -2441,7 +3630,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												memo: { type: "string", nullable: true },
 												min_gas: {
 													description:
-														"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 													type: "string",
 													nullable: true,
 												},
@@ -2572,6 +3761,138 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 													description:
 														"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+											type: "object",
+											required: ["intent", "receiver_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_mint"] },
+												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
+												receiver_id: {
+													description: "Receiver of the minted tokens",
+													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Burn a set of imt tokens, within the intents contract.",
+											type: "object",
+											required: ["intent", "minter_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_burn"] },
+												memo: { type: "string", nullable: true },
+												minter_id: {
+													description:
+														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+													type: "string",
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
 												},
 											},
 											additionalProperties: false,
@@ -2642,7 +3963,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 						type: "object",
 						required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 						properties: {
-							deadline: { type: "string", format: "date-time" },
+							deadline: { type: "string" },
 							intents: {
 								description:
 									"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -2690,10 +4011,59 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											properties: {
 												intent: { type: "string", enum: ["transfer"] },
 												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
 												receiver_id: {
 													description:
 														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -2797,7 +4167,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												memo: { type: "string", nullable: true },
 												min_gas: {
 													description:
-														"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 													type: "string",
 													nullable: true,
 												},
@@ -2928,6 +4298,138 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 													description:
 														"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+											type: "object",
+											required: ["intent", "receiver_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_mint"] },
+												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
+												receiver_id: {
+													description: "Receiver of the minted tokens",
+													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Burn a set of imt tokens, within the intents contract.",
+											type: "object",
+											required: ["intent", "minter_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_burn"] },
+												memo: { type: "string", nullable: true },
+												minter_id: {
+													description:
+														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+													type: "string",
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
 												},
 											},
 											additionalProperties: false,
@@ -3010,7 +4512,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											"verifying_contract",
 										],
 										properties: {
-											deadline: { type: "string", format: "date-time" },
+											deadline: { type: "string" },
 											intents: {
 												description:
 													"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -3064,10 +4566,62 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 															properties: {
 																intent: { type: "string", enum: ["transfer"] },
 																memo: { type: "string", nullable: true },
+																min_gas: {
+																	description:
+																		"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																	type: "string",
+																	nullable: true,
+																},
+																msg: {
+																	description:
+																		"Message to pass to `mt_on_transfer`",
+																	type: "string",
+																	nullable: true,
+																},
 																receiver_id: {
 																	description:
 																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 																	type: "string",
+																},
+																state_init: {
+																	description:
+																		"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+																	type: "object",
+																	required: ["code", "data", "version"],
+																	properties: {
+																		code: {
+																			oneOf: [
+																				{
+																					type: "object",
+																					required: ["hash"],
+																					properties: {
+																						hash: { type: "string" },
+																					},
+																					additionalProperties: false,
+																				},
+																				{
+																					type: "object",
+																					required: ["account_id"],
+																					properties: {
+																						account_id: {
+																							description:
+																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																							type: "string",
+																						},
+																					},
+																					additionalProperties: false,
+																				},
+																			],
+																		},
+																		data: {
+																			type: "object",
+																			additionalProperties: { type: "string" },
+																			required: [],
+																		},
+																		version: { type: "string", enum: ["v1"] },
+																	},
+																	additionalProperties: false,
+																	nullable: true,
 																},
 																tokens: {
 																	type: "object",
@@ -3193,7 +4747,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 																memo: { type: "string", nullable: true },
 																min_gas: {
 																	description:
-																		"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																		"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 																	type: "string",
 																	nullable: true,
 																},
@@ -3337,6 +4891,143 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 																		"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 																	type: "string",
 																},
+																state_init: {
+																	description:
+																		"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+																	type: "object",
+																	required: ["code", "data", "version"],
+																	properties: {
+																		code: {
+																			oneOf: [
+																				{
+																					type: "object",
+																					required: ["hash"],
+																					properties: {
+																						hash: { type: "string" },
+																					},
+																					additionalProperties: false,
+																				},
+																				{
+																					type: "object",
+																					required: ["account_id"],
+																					properties: {
+																						account_id: {
+																							description:
+																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																							type: "string",
+																						},
+																					},
+																					additionalProperties: false,
+																				},
+																			],
+																		},
+																		data: {
+																			type: "object",
+																			additionalProperties: { type: "string" },
+																			required: [],
+																		},
+																		version: { type: "string", enum: ["v1"] },
+																	},
+																	additionalProperties: false,
+																	nullable: true,
+																},
+															},
+															additionalProperties: false,
+														},
+														{
+															description:
+																"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+															type: "object",
+															required: ["intent", "receiver_id", "tokens"],
+															properties: {
+																intent: { type: "string", enum: ["imt_mint"] },
+																memo: { type: "string", nullable: true },
+																min_gas: {
+																	description:
+																		"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																	type: "string",
+																	nullable: true,
+																},
+																msg: {
+																	description:
+																		"Message to pass to `mt_on_transfer`",
+																	type: "string",
+																	nullable: true,
+																},
+																receiver_id: {
+																	description: "Receiver of the minted tokens",
+																	type: "string",
+																},
+																state_init: {
+																	description:
+																		"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+																	type: "object",
+																	required: ["code", "data", "version"],
+																	properties: {
+																		code: {
+																			oneOf: [
+																				{
+																					type: "object",
+																					required: ["hash"],
+																					properties: {
+																						hash: { type: "string" },
+																					},
+																					additionalProperties: false,
+																				},
+																				{
+																					type: "object",
+																					required: ["account_id"],
+																					properties: {
+																						account_id: {
+																							description:
+																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																							type: "string",
+																						},
+																					},
+																					additionalProperties: false,
+																				},
+																			],
+																		},
+																		data: {
+																			type: "object",
+																			additionalProperties: { type: "string" },
+																			required: [],
+																		},
+																		version: { type: "string", enum: ["v1"] },
+																	},
+																	additionalProperties: false,
+																	nullable: true,
+																},
+																tokens: {
+																	description:
+																		"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+															},
+															additionalProperties: false,
+														},
+														{
+															description:
+																"Burn a set of imt tokens, within the intents contract.",
+															type: "object",
+															required: ["intent", "minter_id", "tokens"],
+															properties: {
+																intent: { type: "string", enum: ["imt_burn"] },
+																memo: { type: "string", nullable: true },
+																minter_id: {
+																	description:
+																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																	type: "string",
+																},
+																tokens: {
+																	description:
+																		"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
 															},
 															additionalProperties: false,
 														},
@@ -3366,25 +5057,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 									},
 								},
 								type: { type: "string", enum: ["text"] },
-							},
-							additionalProperties: false,
-						},
-						{
-							type: "object",
-							required: ["bytes", "type"],
-							properties: {
-								bytes: { type: "string", description: "Encoding: base64" },
-								type: { type: "string", enum: ["binary"] },
-							},
-							additionalProperties: false,
-						},
-						{
-							type: "object",
-							required: ["cell", "schema_crc", "type"],
-							properties: {
-								cell: { type: "string", description: "Encoding: base64" },
-								schema_crc: { type: "integer", format: "uint32", minimum: 0 },
-								type: { type: "string", enum: ["cell"] },
 							},
 							additionalProperties: false,
 						},
@@ -3424,7 +5096,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 						type: "object",
 						required: ["deadline", "nonce", "signer_id", "verifying_contract"],
 						properties: {
-							deadline: { type: "string", format: "date-time" },
+							deadline: { type: "string" },
 							intents: {
 								description:
 									"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -3472,10 +5144,59 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 											properties: {
 												intent: { type: "string", enum: ["transfer"] },
 												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
 												receiver_id: {
 													description:
 														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -3579,7 +5300,7 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												memo: { type: "string", nullable: true },
 												min_gas: {
 													description:
-														"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 													type: "string",
 													nullable: true,
 												},
@@ -3711,6 +5432,138 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 														"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 													type: "string",
 												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+											type: "object",
+											required: ["intent", "receiver_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_mint"] },
+												memo: { type: "string", nullable: true },
+												min_gas: {
+													description:
+														"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+													type: "string",
+													nullable: true,
+												},
+												msg: {
+													description: "Message to pass to `mt_on_transfer`",
+													type: "string",
+													nullable: true,
+												},
+												receiver_id: {
+													description: "Receiver of the minted tokens",
+													type: "string",
+												},
+												state_init: {
+													description:
+														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
+																	type: "object",
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
+																},
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
+														},
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
+											},
+											additionalProperties: false,
+										},
+										{
+											description:
+												"Burn a set of imt tokens, within the intents contract.",
+											type: "object",
+											required: ["intent", "minter_id", "tokens"],
+											properties: {
+												intent: { type: "string", enum: ["imt_burn"] },
+												memo: { type: "string", nullable: true },
+												minter_id: {
+													description:
+														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+													type: "string",
+												},
+												tokens: {
+													description:
+														"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+													type: "object",
+													additionalProperties: { type: "string" },
+													required: [],
+												},
 											},
 											additionalProperties: false,
 										},
@@ -3777,7 +5630,7 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 		type: "object",
 		required: ["deadline", "signer_id"],
 		properties: {
-			deadline: { type: "string", format: "date-time" },
+			deadline: { type: "string" },
 			intents: {
 				description:
 					"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -3825,10 +5678,59 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 							properties: {
 								intent: { type: "string", enum: ["transfer"] },
 								memo: { type: "string", nullable: true },
+								min_gas: {
+									description:
+										"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+									type: "string",
+									nullable: true,
+								},
+								msg: {
+									description: "Message to pass to `mt_on_transfer`",
+									type: "string",
+									nullable: true,
+								},
 								receiver_id: {
 									description:
 										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									type: "object",
@@ -3932,7 +5834,7 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 								memo: { type: "string", nullable: true },
 								min_gas: {
 									description:
-										"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+										"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 									type: "string",
 									nullable: true,
 								},
@@ -4063,6 +5965,138 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 									description:
 										"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
+								},
+							},
+							additionalProperties: false,
+						},
+						{
+							description:
+								"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+							type: "object",
+							required: ["intent", "receiver_id", "tokens"],
+							properties: {
+								intent: { type: "string", enum: ["imt_mint"] },
+								memo: { type: "string", nullable: true },
+								min_gas: {
+									description:
+										"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+									type: "string",
+									nullable: true,
+								},
+								msg: {
+									description: "Message to pass to `mt_on_transfer`",
+									type: "string",
+									nullable: true,
+								},
+								receiver_id: {
+									description: "Receiver of the minted tokens",
+									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
+								},
+								tokens: {
+									description:
+										"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+									type: "object",
+									additionalProperties: { type: "string" },
+									required: [],
+								},
+							},
+							additionalProperties: false,
+						},
+						{
+							description:
+								"Burn a set of imt tokens, within the intents contract.",
+							type: "object",
+							required: ["intent", "minter_id", "tokens"],
+							properties: {
+								intent: { type: "string", enum: ["imt_burn"] },
+								memo: { type: "string", nullable: true },
+								minter_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+								tokens: {
+									description:
+										"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+									type: "object",
+									additionalProperties: { type: "string" },
+									required: [],
 								},
 							},
 							additionalProperties: false,
@@ -4231,11 +6265,13 @@ export const PipsSchema: JSONSchemaType<Types.Pips> = {
 	minimum: 0,
 };
 
-export const RolesConfigSchema: JSONSchemaType<Types.RolesConfig> = {
+// Cast allowed here due to AJV v8 limitation: Optional object properties with defaults (admins, grantees) - AJV limitation
+// See: https://github.com/ajv-validator/ajv/issues/2132
+export const RolesConfigSchema = {
 	type: "object",
-	required: ["admins", "grantees", "super_admins"],
 	properties: {
 		admins: {
+			default: {},
 			type: "object",
 			additionalProperties: {
 				type: "array",
@@ -4249,6 +6285,7 @@ export const RolesConfigSchema: JSONSchemaType<Types.RolesConfig> = {
 			required: [],
 		},
 		grantees: {
+			default: {},
 			type: "object",
 			additionalProperties: {
 				type: "array",
@@ -4262,6 +6299,7 @@ export const RolesConfigSchema: JSONSchemaType<Types.RolesConfig> = {
 			required: [],
 		},
 		super_admins: {
+			default: [],
 			type: "array",
 			items: {
 				description:
@@ -4272,7 +6310,7 @@ export const RolesConfigSchema: JSONSchemaType<Types.RolesConfig> = {
 		},
 	},
 	additionalProperties: false,
-};
+} as unknown as JSONSchemaType<Types.RolesConfig>;
 
 // Cast allowed here due to AJV v8 limitation: Optional union property (invariant_violated?: InvariantViolated | null) - AJV limitation
 // See: https://github.com/ajv-validator/ajv/issues/2132
@@ -4324,7 +6362,7 @@ export const SimulationOutputSchema = {
 			],
 		},
 		logs: { type: "array", items: { type: "string" } },
-		min_deadline: { type: "string", format: "date-time" },
+		min_deadline: { type: "string" },
 		state: {
 			description: "Additional info about current state",
 			type: "object",
@@ -4343,6 +6381,46 @@ export const SimulationOutputSchema = {
 	},
 	additionalProperties: false,
 } as unknown as JSONSchemaType<Types.SimulationOutput>;
+
+export const StateInitSchema: JSONSchemaType<Types.StateInit> = {
+	oneOf: [
+		{
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
+							type: "object",
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
+						},
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
+				},
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+		},
+	],
+};
 
 export const StateOutputSchema: JSONSchemaType<Types.StateOutput> = {
 	type: "object",
@@ -4380,6 +6458,8 @@ export const StorageDepositSchema: JSONSchemaType<Types.StorageDeposit> = {
 	additionalProperties: false,
 };
 
+export const StringSchema: JSONSchemaType<Types.String> = { type: "string" };
+
 export const Tip191PayloadSchema: JSONSchemaType<Types.Tip191Payload> = {
 	description:
 		"See [TIP-191](https://github.com/tronprotocol/tips/blob/master/tip-191.md)",
@@ -4412,25 +6492,6 @@ export const TonConnectPayloadSchemaSchema: JSONSchemaType<Types.TonConnectPaylo
 				properties: {
 					text: { type: "string" },
 					type: { type: "string", enum: ["text"] },
-				},
-				additionalProperties: false,
-			},
-			{
-				type: "object",
-				required: ["bytes", "type"],
-				properties: {
-					bytes: { type: "string", description: "Encoding: base64" },
-					type: { type: "string", enum: ["binary"] },
-				},
-				additionalProperties: false,
-			},
-			{
-				type: "object",
-				required: ["cell", "schema_crc", "type"],
-				properties: {
-					cell: { type: "string", description: "Encoding: base64" },
-					schema_crc: { type: "integer", format: "uint32", minimum: 0 },
-					type: { type: "string", enum: ["cell"] },
 				},
 				additionalProperties: false,
 			},
@@ -4482,10 +6543,59 @@ export const IntentTransferSchema: JSONSchemaType<Types.IntentTransfer> = {
 	properties: {
 		intent: { type: "string", enum: ["transfer"] },
 		memo: { type: "string", nullable: true },
+		min_gas: {
+			description:
+				"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+			type: "string",
+			nullable: true,
+		},
+		msg: {
+			description: "Message to pass to `mt_on_transfer`",
+			type: "string",
+			nullable: true,
+		},
 		receiver_id: {
 			description:
 				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 			type: "string",
+		},
+		state_init: {
+			description:
+				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
+							type: "object",
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
+						},
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
+				},
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
 		},
 		tokens: {
 			type: "object",
@@ -4587,7 +6697,7 @@ export const IntentMtWithdrawSchema: JSONSchemaType<Types.IntentMtWithdraw> = {
 		memo: { type: "string", nullable: true },
 		min_gas: {
 			description:
-				"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+				"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 			type: "string",
 			nullable: true,
 		},
@@ -4718,6 +6828,139 @@ export const IntentAuthCallSchema: JSONSchemaType<Types.IntentAuthCall> = {
 			description:
 				"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 			type: "string",
+		},
+		state_init: {
+			description:
+				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
+							type: "object",
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
+						},
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
+				},
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
+		},
+	},
+	additionalProperties: false,
+};
+
+export const IntentImtMintSchema: JSONSchemaType<Types.IntentImtMint> = {
+	description:
+		"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+	type: "object",
+	required: ["intent", "receiver_id", "tokens"],
+	properties: {
+		intent: { type: "string", enum: ["imt_mint"] },
+		memo: { type: "string", nullable: true },
+		min_gas: {
+			description:
+				"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+			type: "string",
+			nullable: true,
+		},
+		msg: {
+			description: "Message to pass to `mt_on_transfer`",
+			type: "string",
+			nullable: true,
+		},
+		receiver_id: {
+			description: "Receiver of the minted tokens",
+			type: "string",
+		},
+		state_init: {
+			description:
+				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
+							type: "object",
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
+						},
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
+				},
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
+		},
+		tokens: {
+			description:
+				"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+			type: "object",
+			additionalProperties: { type: "string" },
+			required: [],
+		},
+	},
+	additionalProperties: false,
+};
+
+export const IntentImtBurnSchema: JSONSchemaType<Types.IntentImtBurn> = {
+	description: "Burn a set of imt tokens, within the intents contract.",
+	type: "object",
+	required: ["intent", "minter_id", "tokens"],
+	properties: {
+		intent: { type: "string", enum: ["imt_burn"] },
+		memo: { type: "string", nullable: true },
+		minter_id: {
+			description:
+				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+			type: "string",
+		},
+		tokens: {
+			description:
+				"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+			type: "object",
+			additionalProperties: { type: "string" },
+			required: [],
 		},
 	},
 	additionalProperties: false,
@@ -4924,25 +7167,6 @@ export const MultiPayloadTonConnectSchema: JSONSchemaType<Types.MultiPayloadTonC
 						},
 						additionalProperties: false,
 					},
-					{
-						type: "object",
-						required: ["bytes", "type"],
-						properties: {
-							bytes: { type: "string", description: "Encoding: base64" },
-							type: { type: "string", enum: ["binary"] },
-						},
-						additionalProperties: false,
-					},
-					{
-						type: "object",
-						required: ["cell", "schema_crc", "type"],
-						properties: {
-							cell: { type: "string", description: "Encoding: base64" },
-							schema_crc: { type: "integer", format: "uint32", minimum: 0 },
-							type: { type: "string", enum: ["cell"] },
-						},
-						additionalProperties: false,
-					},
 				],
 			},
 			public_key: {
@@ -4991,6 +7215,42 @@ export const MultiPayloadSep53Schema: JSONSchemaType<Types.MultiPayloadSep53> =
 		additionalProperties: false,
 	};
 
+export const StateInitV1Schema: JSONSchemaType<Types.StateInitV1> = {
+	type: "object",
+	required: ["code", "data", "version"],
+	properties: {
+		code: {
+			oneOf: [
+				{
+					type: "object",
+					required: ["hash"],
+					properties: { hash: { type: "string" } },
+					additionalProperties: false,
+				},
+				{
+					type: "object",
+					required: ["account_id"],
+					properties: {
+						account_id: {
+							description:
+								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+							type: "string",
+						},
+					},
+					additionalProperties: false,
+				},
+			],
+		},
+		data: {
+			type: "object",
+			additionalProperties: { type: "string" },
+			required: [],
+		},
+		version: { type: "string", enum: ["v1"] },
+	},
+	additionalProperties: false,
+};
+
 export const TonConnectPayloadSchemaTextSchema: JSONSchemaType<Types.TonConnectPayloadSchemaText> =
 	{
 		type: "object",
@@ -5002,35 +7262,12 @@ export const TonConnectPayloadSchemaTextSchema: JSONSchemaType<Types.TonConnectP
 		additionalProperties: false,
 	};
 
-export const TonConnectPayloadSchemaBinarySchema: JSONSchemaType<Types.TonConnectPayloadSchemaBinary> =
-	{
-		type: "object",
-		required: ["bytes", "type"],
-		properties: {
-			bytes: { type: "string", description: "Encoding: base64" },
-			type: { type: "string", enum: ["binary"] },
-		},
-		additionalProperties: false,
-	};
-
-export const TonConnectPayloadSchemaCellSchema: JSONSchemaType<Types.TonConnectPayloadSchemaCell> =
-	{
-		type: "object",
-		required: ["cell", "schema_crc", "type"],
-		properties: {
-			cell: { type: "string", description: "Encoding: base64" },
-			schema_crc: { type: "integer", format: "uint32", minimum: 0 },
-			type: { type: "string", enum: ["cell"] },
-		},
-		additionalProperties: false,
-	};
-
 export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload> =
 	{
 		type: "object",
 		required: ["deadline", "signer_id"],
 		properties: {
-			deadline: { type: "string", format: "date-time" },
+			deadline: { type: "string" },
 			signer_id: {
 				description:
 					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
@@ -5083,10 +7320,59 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 							properties: {
 								intent: { type: "string", enum: ["transfer"] },
 								memo: { type: "string", nullable: true },
+								min_gas: {
+									description:
+										"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+									type: "string",
+									nullable: true,
+								},
+								msg: {
+									description: "Message to pass to `mt_on_transfer`",
+									type: "string",
+									nullable: true,
+								},
 								receiver_id: {
 									description:
 										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									type: "object",
@@ -5190,7 +7476,7 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 								memo: { type: "string", nullable: true },
 								min_gas: {
 									description:
-										"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+										"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 									type: "string",
 									nullable: true,
 								},
@@ -5322,6 +7608,138 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 										"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 									type: "string",
 								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
+								},
+							},
+							additionalProperties: false,
+						},
+						{
+							description:
+								"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+							type: "object",
+							required: ["intent", "receiver_id", "tokens"],
+							properties: {
+								intent: { type: "string", enum: ["imt_mint"] },
+								memo: { type: "string", nullable: true },
+								min_gas: {
+									description:
+										"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+									type: "string",
+									nullable: true,
+								},
+								msg: {
+									description: "Message to pass to `mt_on_transfer`",
+									type: "string",
+									nullable: true,
+								},
+								receiver_id: {
+									description: "Receiver of the minted tokens",
+									type: "string",
+								},
+								state_init: {
+									description:
+										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
+													type: "object",
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
+												},
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
+										},
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
+								},
+								tokens: {
+									description:
+										"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+									type: "object",
+									additionalProperties: { type: "string" },
+									required: [],
+								},
+							},
+							additionalProperties: false,
+						},
+						{
+							description:
+								"Burn a set of imt tokens, within the intents contract.",
+							type: "object",
+							required: ["intent", "minter_id", "tokens"],
+							properties: {
+								intent: { type: "string", enum: ["imt_burn"] },
+								memo: { type: "string", nullable: true },
+								minter_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+								tokens: {
+									description:
+										"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+									type: "object",
+									additionalProperties: { type: "string" },
+									required: [],
+								},
 							},
 							additionalProperties: false,
 						},
@@ -5357,7 +7775,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 									type: "object",
 									required: ["deadline", "signer_id"],
 									properties: {
-										deadline: { type: "string", format: "date-time" },
+										deadline: { type: "string" },
 										signer_id: {
 											description:
 												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
@@ -5416,10 +7834,62 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														properties: {
 															intent: { type: "string", enum: ["transfer"] },
 															memo: { type: "string", nullable: true },
+															min_gas: {
+																description:
+																	"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																type: "string",
+																nullable: true,
+															},
+															msg: {
+																description:
+																	"Message to pass to `mt_on_transfer`",
+																type: "string",
+																nullable: true,
+															},
 															receiver_id: {
 																description:
 																	'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 																type: "string",
+															},
+															state_init: {
+																description:
+																	"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+																type: "object",
+																required: ["code", "data", "version"],
+																properties: {
+																	code: {
+																		oneOf: [
+																			{
+																				type: "object",
+																				required: ["hash"],
+																				properties: {
+																					hash: { type: "string" },
+																				},
+																				additionalProperties: false,
+																			},
+																			{
+																				type: "object",
+																				required: ["account_id"],
+																				properties: {
+																					account_id: {
+																						description:
+																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																						type: "string",
+																					},
+																				},
+																				additionalProperties: false,
+																			},
+																		],
+																	},
+																	data: {
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																	version: { type: "string", enum: ["v1"] },
+																},
+																additionalProperties: false,
+																nullable: true,
 															},
 															tokens: {
 																type: "object",
@@ -5539,7 +8009,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 															memo: { type: "string", nullable: true },
 															min_gas: {
 																description:
-																	"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																	"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 																type: "string",
 																nullable: true,
 															},
@@ -5680,6 +8150,143 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																	"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 																type: "string",
 															},
+															state_init: {
+																description:
+																	"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+																type: "object",
+																required: ["code", "data", "version"],
+																properties: {
+																	code: {
+																		oneOf: [
+																			{
+																				type: "object",
+																				required: ["hash"],
+																				properties: {
+																					hash: { type: "string" },
+																				},
+																				additionalProperties: false,
+																			},
+																			{
+																				type: "object",
+																				required: ["account_id"],
+																				properties: {
+																					account_id: {
+																						description:
+																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																						type: "string",
+																					},
+																				},
+																				additionalProperties: false,
+																			},
+																		],
+																	},
+																	data: {
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																	version: { type: "string", enum: ["v1"] },
+																},
+																additionalProperties: false,
+																nullable: true,
+															},
+														},
+														additionalProperties: false,
+													},
+													{
+														description:
+															"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+														type: "object",
+														required: ["intent", "receiver_id", "tokens"],
+														properties: {
+															intent: { type: "string", enum: ["imt_mint"] },
+															memo: { type: "string", nullable: true },
+															min_gas: {
+																description:
+																	"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																type: "string",
+																nullable: true,
+															},
+															msg: {
+																description:
+																	"Message to pass to `mt_on_transfer`",
+																type: "string",
+																nullable: true,
+															},
+															receiver_id: {
+																description: "Receiver of the minted tokens",
+																type: "string",
+															},
+															state_init: {
+																description:
+																	"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+																type: "object",
+																required: ["code", "data", "version"],
+																properties: {
+																	code: {
+																		oneOf: [
+																			{
+																				type: "object",
+																				required: ["hash"],
+																				properties: {
+																					hash: { type: "string" },
+																				},
+																				additionalProperties: false,
+																			},
+																			{
+																				type: "object",
+																				required: ["account_id"],
+																				properties: {
+																					account_id: {
+																						description:
+																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																						type: "string",
+																					},
+																				},
+																				additionalProperties: false,
+																			},
+																		],
+																	},
+																	data: {
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																	version: { type: "string", enum: ["v1"] },
+																},
+																additionalProperties: false,
+																nullable: true,
+															},
+															tokens: {
+																description:
+																	"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+														},
+														additionalProperties: false,
+													},
+													{
+														description:
+															"Burn a set of imt tokens, within the intents contract.",
+														type: "object",
+														required: ["intent", "minter_id", "tokens"],
+														properties: {
+															intent: { type: "string", enum: ["imt_burn"] },
+															memo: { type: "string", nullable: true },
+															minter_id: {
+																description:
+																	'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																type: "string",
+															},
+															tokens: {
+																description:
+																	"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
 														},
 														additionalProperties: false,
 													},
@@ -5717,7 +8324,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								"verifying_contract",
 							],
 							properties: {
-								deadline: { type: "string", format: "date-time" },
+								deadline: { type: "string" },
 								intents: {
 									description:
 										"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -5768,10 +8375,59 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												properties: {
 													intent: { type: "string", enum: ["transfer"] },
 													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
 													receiver_id: {
 														description:
 															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -5880,7 +8536,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													memo: { type: "string", nullable: true },
 													min_gas: {
 														description:
-															"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 														type: "string",
 														nullable: true,
 													},
@@ -6014,6 +8670,138 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														description:
 															"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+												type: "object",
+												required: ["intent", "receiver_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_mint"] },
+													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
+													receiver_id: {
+														description: "Receiver of the minted tokens",
+														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Burn a set of imt tokens, within the intents contract.",
+												type: "object",
+												required: ["intent", "minter_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_burn"] },
+													memo: { type: "string", nullable: true },
+													minter_id: {
+														description:
+															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+														type: "string",
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
 													},
 												},
 												additionalProperties: false,
@@ -6062,7 +8850,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								"verifying_contract",
 							],
 							properties: {
-								deadline: { type: "string", format: "date-time" },
+								deadline: { type: "string" },
 								intents: {
 									description:
 										"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -6113,10 +8901,59 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												properties: {
 													intent: { type: "string", enum: ["transfer"] },
 													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
 													receiver_id: {
 														description:
 															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -6225,7 +9062,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													memo: { type: "string", nullable: true },
 													min_gas: {
 														description:
-															"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 														type: "string",
 														nullable: true,
 													},
@@ -6359,6 +9196,138 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														description:
 															"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+												type: "object",
+												required: ["intent", "receiver_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_mint"] },
+													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
+													receiver_id: {
+														description: "Receiver of the minted tokens",
+														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Burn a set of imt tokens, within the intents contract.",
+												type: "object",
+												required: ["intent", "minter_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_burn"] },
+													memo: { type: "string", nullable: true },
+													minter_id: {
+														description:
+															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+														type: "string",
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
 													},
 												},
 												additionalProperties: false,
@@ -6405,7 +9374,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								"verifying_contract",
 							],
 							properties: {
-								deadline: { type: "string", format: "date-time" },
+								deadline: { type: "string" },
 								intents: {
 									description:
 										"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -6456,10 +9425,59 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												properties: {
 													intent: { type: "string", enum: ["transfer"] },
 													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
 													receiver_id: {
 														description:
 															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -6568,7 +9586,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													memo: { type: "string", nullable: true },
 													min_gas: {
 														description:
-															"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 														type: "string",
 														nullable: true,
 													},
@@ -6702,6 +9720,138 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														description:
 															"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+												type: "object",
+												required: ["intent", "receiver_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_mint"] },
+													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
+													receiver_id: {
+														description: "Receiver of the minted tokens",
+														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Burn a set of imt tokens, within the intents contract.",
+												type: "object",
+												required: ["intent", "minter_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_burn"] },
+													memo: { type: "string", nullable: true },
+													minter_id: {
+														description:
+															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+														type: "string",
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
 													},
 												},
 												additionalProperties: false,
@@ -6748,7 +9898,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								"verifying_contract",
 							],
 							properties: {
-								deadline: { type: "string", format: "date-time" },
+								deadline: { type: "string" },
 								intents: {
 									description:
 										"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -6799,10 +9949,59 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												properties: {
 													intent: { type: "string", enum: ["transfer"] },
 													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
 													receiver_id: {
 														description:
 															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -6911,7 +10110,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													memo: { type: "string", nullable: true },
 													min_gas: {
 														description:
-															"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 														type: "string",
 														nullable: true,
 													},
@@ -7045,6 +10244,138 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														description:
 															"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+												type: "object",
+												required: ["intent", "receiver_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_mint"] },
+													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
+													receiver_id: {
+														description: "Receiver of the minted tokens",
+														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Burn a set of imt tokens, within the intents contract.",
+												type: "object",
+												required: ["intent", "minter_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_burn"] },
+													memo: { type: "string", nullable: true },
+													minter_id: {
+														description:
+															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+														type: "string",
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
 													},
 												},
 												additionalProperties: false,
@@ -7091,7 +10422,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								"verifying_contract",
 							],
 							properties: {
-								deadline: { type: "string", format: "date-time" },
+								deadline: { type: "string" },
 								intents: {
 									description:
 										"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -7142,10 +10473,59 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												properties: {
 													intent: { type: "string", enum: ["transfer"] },
 													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
 													receiver_id: {
 														description:
 															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -7254,7 +10634,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													memo: { type: "string", nullable: true },
 													min_gas: {
 														description:
-															"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 														type: "string",
 														nullable: true,
 													},
@@ -7388,6 +10768,138 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														description:
 															"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+												type: "object",
+												required: ["intent", "receiver_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_mint"] },
+													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
+													receiver_id: {
+														description: "Receiver of the minted tokens",
+														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Burn a set of imt tokens, within the intents contract.",
+												type: "object",
+												required: ["intent", "minter_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_burn"] },
+													memo: { type: "string", nullable: true },
+													minter_id: {
+														description:
+															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+														type: "string",
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
 													},
 												},
 												additionalProperties: false,
@@ -7442,7 +10954,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												"verifying_contract",
 											],
 											properties: {
-												deadline: { type: "string", format: "date-time" },
+												deadline: { type: "string" },
 												intents: {
 													description:
 														"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -7499,10 +11011,64 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																		enum: ["transfer"],
 																	},
 																	memo: { type: "string", nullable: true },
+																	min_gas: {
+																		description:
+																			"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																		type: "string",
+																		nullable: true,
+																	},
+																	msg: {
+																		description:
+																			"Message to pass to `mt_on_transfer`",
+																		type: "string",
+																		nullable: true,
+																	},
 																	receiver_id: {
 																		description:
 																			'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 																		type: "string",
+																	},
+																	state_init: {
+																		description:
+																			"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+																		type: "object",
+																		required: ["code", "data", "version"],
+																		properties: {
+																			code: {
+																				oneOf: [
+																					{
+																						type: "object",
+																						required: ["hash"],
+																						properties: {
+																							hash: { type: "string" },
+																						},
+																						additionalProperties: false,
+																					},
+																					{
+																						type: "object",
+																						required: ["account_id"],
+																						properties: {
+																							account_id: {
+																								description:
+																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																								type: "string",
+																							},
+																						},
+																						additionalProperties: false,
+																					},
+																				],
+																			},
+																			data: {
+																				type: "object",
+																				additionalProperties: {
+																					type: "string",
+																				},
+																				required: [],
+																			},
+																			version: { type: "string", enum: ["v1"] },
+																		},
+																		additionalProperties: false,
+																		nullable: true,
 																	},
 																	tokens: {
 																		type: "object",
@@ -7628,7 +11194,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																	memo: { type: "string", nullable: true },
 																	min_gas: {
 																		description:
-																			"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																			"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 																		type: "string",
 																		nullable: true,
 																	},
@@ -7775,6 +11341,154 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																			"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 																		type: "string",
 																	},
+																	state_init: {
+																		description:
+																			"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+																		type: "object",
+																		required: ["code", "data", "version"],
+																		properties: {
+																			code: {
+																				oneOf: [
+																					{
+																						type: "object",
+																						required: ["hash"],
+																						properties: {
+																							hash: { type: "string" },
+																						},
+																						additionalProperties: false,
+																					},
+																					{
+																						type: "object",
+																						required: ["account_id"],
+																						properties: {
+																							account_id: {
+																								description:
+																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																								type: "string",
+																							},
+																						},
+																						additionalProperties: false,
+																					},
+																				],
+																			},
+																			data: {
+																				type: "object",
+																				additionalProperties: {
+																					type: "string",
+																				},
+																				required: [],
+																			},
+																			version: { type: "string", enum: ["v1"] },
+																		},
+																		additionalProperties: false,
+																		nullable: true,
+																	},
+																},
+																additionalProperties: false,
+															},
+															{
+																description:
+																	"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+																type: "object",
+																required: ["intent", "receiver_id", "tokens"],
+																properties: {
+																	intent: {
+																		type: "string",
+																		enum: ["imt_mint"],
+																	},
+																	memo: { type: "string", nullable: true },
+																	min_gas: {
+																		description:
+																			"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+																		type: "string",
+																		nullable: true,
+																	},
+																	msg: {
+																		description:
+																			"Message to pass to `mt_on_transfer`",
+																		type: "string",
+																		nullable: true,
+																	},
+																	receiver_id: {
+																		description:
+																			"Receiver of the minted tokens",
+																		type: "string",
+																	},
+																	state_init: {
+																		description:
+																			"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+																		type: "object",
+																		required: ["code", "data", "version"],
+																		properties: {
+																			code: {
+																				oneOf: [
+																					{
+																						type: "object",
+																						required: ["hash"],
+																						properties: {
+																							hash: { type: "string" },
+																						},
+																						additionalProperties: false,
+																					},
+																					{
+																						type: "object",
+																						required: ["account_id"],
+																						properties: {
+																							account_id: {
+																								description:
+																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																								type: "string",
+																							},
+																						},
+																						additionalProperties: false,
+																					},
+																				],
+																			},
+																			data: {
+																				type: "object",
+																				additionalProperties: {
+																					type: "string",
+																				},
+																				required: [],
+																			},
+																			version: { type: "string", enum: ["v1"] },
+																		},
+																		additionalProperties: false,
+																		nullable: true,
+																	},
+																	tokens: {
+																		description:
+																			"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																},
+																additionalProperties: false,
+															},
+															{
+																description:
+																	"Burn a set of imt tokens, within the intents contract.",
+																type: "object",
+																required: ["intent", "minter_id", "tokens"],
+																properties: {
+																	intent: {
+																		type: "string",
+																		enum: ["imt_burn"],
+																	},
+																	memo: { type: "string", nullable: true },
+																	minter_id: {
+																		description:
+																			'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																		type: "string",
+																	},
+																	tokens: {
+																		description:
+																			"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
 																},
 																additionalProperties: false,
 															},
@@ -7807,25 +11521,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								},
 								additionalProperties: false,
 							},
-							{
-								type: "object",
-								required: ["bytes", "type"],
-								properties: {
-									bytes: { type: "string", description: "Encoding: base64" },
-									type: { type: "string", enum: ["binary"] },
-								},
-								additionalProperties: false,
-							},
-							{
-								type: "object",
-								required: ["cell", "schema_crc", "type"],
-								properties: {
-									cell: { type: "string", description: "Encoding: base64" },
-									schema_crc: { type: "integer", format: "uint32", minimum: 0 },
-									type: { type: "string", enum: ["cell"] },
-								},
-								additionalProperties: false,
-							},
 						],
 					},
 				},
@@ -7847,7 +11542,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 								"verifying_contract",
 							],
 							properties: {
-								deadline: { type: "string", format: "date-time" },
+								deadline: { type: "string" },
 								intents: {
 									description:
 										"Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure",
@@ -7898,10 +11593,59 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 												properties: {
 													intent: { type: "string", enum: ["transfer"] },
 													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
 													receiver_id: {
 														description:
 															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -8010,7 +11754,7 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													memo: { type: "string", nullable: true },
 													min_gas: {
 														description:
-															"Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+															"Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
 														type: "string",
 														nullable: true,
 													},
@@ -8144,6 +11888,138 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 														description:
 															"`msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)",
 														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Mint a set of tokens from the signer to a specified account id, within the intents contract.",
+												type: "object",
+												required: ["intent", "receiver_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_mint"] },
+													memo: { type: "string", nullable: true },
+													min_gas: {
+														description:
+															"Minimum gas for `mt_on_transfer()`\n\nRemaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.",
+														type: "string",
+														nullable: true,
+													},
+													msg: {
+														description: "Message to pass to `mt_on_transfer`",
+														type: "string",
+														nullable: true,
+													},
+													receiver_id: {
+														description: "Receiver of the minted tokens",
+														type: "string",
+													},
+													state_init: {
+														description:
+															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
+																		type: "object",
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
+																	},
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
+															},
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
+													},
+												},
+												additionalProperties: false,
+											},
+											{
+												description:
+													"Burn a set of imt tokens, within the intents contract.",
+												type: "object",
+												required: ["intent", "minter_id", "tokens"],
+												properties: {
+													intent: { type: "string", enum: ["imt_burn"] },
+													memo: { type: "string", nullable: true },
+													minter_id: {
+														description:
+															'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+														type: "string",
+													},
+													tokens: {
+														description:
+															"The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`",
+														type: "object",
+														additionalProperties: { type: "string" },
+														required: [],
 													},
 												},
 												additionalProperties: false,

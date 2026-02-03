@@ -4,43 +4,38 @@
  */
 
 /**
- * NEAR Account Identifier.
- *
- * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
- *
- * [See the crate-level docs for information about validation.](index.html#account-id-rules)
- *
- * Also see [Error kind precedence](AccountId#error-kind-precedence).
- *
- * ## Examples
- *
- * ``` use near_account_id::AccountId;
- *
- * let alice: AccountId = "alice.near".parse().unwrap();
- *
- * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
- *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
- * via the `definition` "AccountId".
+ * via the `definition` "StateInit".
  */
-export type AccountId = string;
+export type StateInit = StateInitV1;
 /**
- * Account identifier. This is the human readable UTF-8 string which is used internally to index accounts on the network and their respective state.
- *
- * This is the "referenced" version of the account ID. It is to [`AccountId`] what [`str`] is to [`String`], and works quite similarly to [`Path`]. Like with [`str`] and [`Path`], you can't have a value of type `AccountIdRef`, but you can have a reference like `&AccountIdRef` or `&mut AccountIdRef`.
- *
- * This type supports zero-copy deserialization offered by [`serde`](https://docs.rs/serde/), but cannot do the same for [`borsh`](https://docs.rs/borsh/) since the latter does not support zero-copy.
- *
- * # Examples ``` use near_account_id::{AccountId, AccountIdRef}; use std::convert::{TryFrom, TryInto};
- *
- * // Construction let alice = AccountIdRef::new("alice.near").unwrap(); assert!(AccountIdRef::new("invalid.").is_err()); ```
- *
- * [`FromStr`]: std::str::FromStr [`Path`]: std::path::Path
- *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
- * via the `definition` "AccountIdRef".
+ * via the `definition` "GlobalContractId".
  */
-export type AccountIdRef = string;
+export type GlobalContractId =
+	| {
+			hash: string;
+	  }
+	| {
+			/**
+			 * NEAR Account Identifier.
+			 *
+			 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+			 *
+			 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+			 *
+			 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+			 *
+			 * ## Examples
+			 *
+			 * ``` use near_account_id::AccountId;
+			 *
+			 * let alice: AccountId = "alice.near".parse().unwrap();
+			 *
+			 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+			 */
+			account_id: string;
+	  };
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Deadline".
@@ -68,7 +63,9 @@ export type Intent =
 	| IntentStorageDeposit
 	| IntentTokenDiff
 	| IntentSetAuthByPredecessorId
-	| IntentAuthCall;
+	| IntentAuthCall
+	| IntentImtMint
+	| IntentImtBurn;
 /**
  * See [ERC-191](https://github.com/ethereum/ercs/blob/master/ERCS/erc-191.md)
  *
@@ -107,15 +104,17 @@ export type MultiPayload =
  */
 export type Tip191Payload = string;
 /**
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
+ * via the `definition` "String".
+ */
+export type String = string;
+/**
  * See <https://docs.tonconsole.com/academy/sign-data#choosing-the-right-format>
  *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchema".
  */
-export type TonConnectPayloadSchema =
-	| TonConnectPayloadSchemaText
-	| TonConnectPayloadSchemaBinary
-	| TonConnectPayloadSchemaCell;
+export type TonConnectPayloadSchema = TonConnectPayloadSchemaText;
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "PickFirst(DateTimeint64)".
@@ -125,16 +124,13 @@ export type PickFirstDateTimeint64 = string | number;
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "TonConnectPayloadSchema__Parsed".
  */
-export type TonConnectPayloadSchema__Parsed =
-	| {
-			text: {
-				original: string;
-				parsed: DefusePayloadFor_DefuseIntents;
-			};
-			type: "text";
-	  }
-	| TonConnectPayloadSchemaBinary
-	| TonConnectPayloadSchemaCell;
+export type TonConnectPayloadSchema__Parsed = {
+	text: {
+		original: string;
+		parsed: DefusePayloadFor_DefuseIntents;
+	};
+	type: "text";
+};
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadNarrowed".
@@ -248,7 +244,7 @@ export interface AuthCall {
 	/**
 	 * Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
 	 */
-	contract_id: AccountId;
+	contract_id: string;
 	/**
 	 * Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.
 	 *
@@ -259,6 +255,21 @@ export interface AuthCall {
 	 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
 	 */
 	msg: string;
+	/**
+	 * Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).
+	 */
+	state_init?: StateInit | null;
+}
+/**
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
+ * via the `definition` "StateInitV1".
+ */
+export interface StateInitV1 {
+	code: GlobalContractId;
+	data: {
+		[k: string]: string;
+	};
+	version: "v1";
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
@@ -266,8 +277,25 @@ export interface AuthCall {
  */
 export interface DefuseConfig {
 	fees: FeesConfig;
-	roles: RolesConfig;
-	wnear_id: AccountId;
+	roles?: RolesConfig;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	wnear_id: string;
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
@@ -275,20 +303,37 @@ export interface DefuseConfig {
  */
 export interface FeesConfig {
 	fee: Pips;
-	fee_collector: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	fee_collector: string;
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "RolesConfig".
  */
 export interface RolesConfig {
-	admins: {
-		[k: string]: AccountId[];
+	admins?: {
+		[k: string]: string[];
 	};
-	grantees: {
-		[k: string]: AccountId[];
+	grantees?: {
+		[k: string]: string[];
 	};
-	super_admins: AccountId[];
+	super_admins?: string[];
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
@@ -301,8 +346,42 @@ export interface DefusePayloadFor_DefuseIntents {
 	 */
 	intents?: Intent[];
 	nonce: string;
-	signer_id: AccountId;
-	verifying_contract: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	signer_id: string;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	verifying_contract: string;
 }
 /**
  * See [`AddPublicKey`]
@@ -333,7 +412,38 @@ export interface IntentRemovePublicKey {
 export interface IntentTransfer {
 	intent: "transfer";
 	memo?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * Minimum gas for `mt_on_transfer()`
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * Message to pass to `mt_on_transfer`
+	 */
+	msg?: string;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
+	/**
+	 * Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).
+	 */
+	state_init?: StateInit | null;
 	tokens: {
 		[k: string]: string;
 	};
@@ -358,12 +468,46 @@ export interface IntentFtWithdraw {
 	 * Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 	/**
 	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
 	 */
 	storage_deposit?: string | null;
-	token: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	token: string;
 }
 /**
  * See [`NftWithdraw`]
@@ -384,12 +528,46 @@ export interface IntentNftWithdraw {
 	 * Message to pass to `nft_transfer_call`. Otherwise, `nft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 	/**
 	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
 	 */
 	storage_deposit?: string | null;
-	token: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	token: string;
 	token_id: string;
 }
 /**
@@ -403,7 +581,7 @@ export interface IntentMtWithdraw {
 	intent: "mt_withdraw";
 	memo?: string | null;
 	/**
-	 * Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
+	 * Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
 	 *
 	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
 	 */
@@ -412,12 +590,46 @@ export interface IntentMtWithdraw {
 	 * Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 	/**
 	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
 	 */
 	storage_deposit?: string | null;
-	token: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	token: string;
 	token_ids: string[];
 }
 /**
@@ -429,7 +641,24 @@ export interface IntentMtWithdraw {
 export interface IntentNativeWithdraw {
 	amount: string;
 	intent: "native_withdraw";
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 }
 /**
  * See [`StorageDeposit`]
@@ -439,8 +668,42 @@ export interface IntentNativeWithdraw {
  */
 export interface IntentStorageDeposit {
 	amount: string;
-	contract_id: AccountId;
-	deposit_for_account_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	contract_id: string;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	deposit_for_account_id: string;
 	intent: "storage_deposit";
 }
 /**
@@ -455,7 +718,24 @@ export interface IntentTokenDiff {
 	};
 	intent: "token_diff";
 	memo?: string | null;
-	referral?: AccountId | null;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	referral?: string | null;
 }
 /**
  * See [`SetAuthByPredecessorId`]
@@ -483,7 +763,7 @@ export interface IntentAuthCall {
 	/**
 	 * Callee for [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
 	 */
-	contract_id: AccountId;
+	contract_id: string;
 	intent: "auth_call";
 	/**
 	 * Optional minimum gas required for created promise to succeed. By default, only [`MIN_GAS_DEFAULT`](AuthCall::MIN_GAS_DEFAULT) is required.
@@ -495,6 +775,78 @@ export interface IntentAuthCall {
 	 * `msg` to pass in [`.on_auth`](::defuse_auth_call::AuthCallee::on_auth)
 	 */
 	msg: string;
+	/**
+	 * Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).
+	 */
+	state_init?: StateInit | null;
+}
+/**
+ * Mint a set of tokens from the signer to a specified account id, within the intents contract.
+ *
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
+ * via the `definition` "IntentImtMint".
+ */
+export interface IntentImtMint {
+	intent: "imt_mint";
+	memo?: string | null;
+	/**
+	 * Minimum gas for `mt_on_transfer()`
+	 *
+	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
+	 */
+	min_gas?: string | null;
+	/**
+	 * Message to pass to `mt_on_transfer`
+	 */
+	msg?: string;
+	/**
+	 * Receiver of the minted tokens
+	 */
+	receiver_id: string;
+	/**
+	 * Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).
+	 */
+	state_init?: StateInit | null;
+	/**
+	 * The token_ids will be wrapped to bind the token ID to the minter authority (i.e. signer of this intent). The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`
+	 */
+	tokens: {
+		[k: string]: string;
+	};
+}
+/**
+ * Burn a set of imt tokens, within the intents contract.
+ *
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
+ * via the `definition` "IntentImtBurn".
+ */
+export interface IntentImtBurn {
+	intent: "imt_burn";
+	memo?: string | null;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	minter_id: string;
+	/**
+	 * The token_ids will be wrapped to bind the token ID to the minter authority. The final string representation of the token will be as follows: `imt:<minter_id>:<token_id>`
+	 */
+	tokens: {
+		[k: string]: string;
+	};
 }
 /**
  * Withdraw given FT tokens from the intents contract to a given external account id (external being outside of intents).
@@ -515,19 +867,66 @@ export interface FtWithdraw {
 	 * Message to pass to `ft_transfer_call`. Otherwise, `ft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 	/**
 	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
 	 */
 	storage_deposit?: string | null;
-	token: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	token: string;
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "IntentEvent_for_AccountEvent_for_NonceEvent".
  */
 export interface IntentEventFor_AccountEventFor_NonceEvent {
-	account_id: AccountIdRef;
+	/**
+	 * Account identifier. This is the human readable UTF-8 string which is used internally to index accounts on the network and their respective state.
+	 *
+	 * This is the "referenced" version of the account ID. It is to [`AccountId`] what [`str`] is to [`String`], and works quite similarly to [`Path`]. Like with [`str`] and [`Path`], you can't have a value of type `AccountIdRef`, but you can have a reference like `&AccountIdRef` or `&mut AccountIdRef`.
+	 *
+	 * This type supports zero-copy deserialization offered by [`serde`](https://docs.rs/serde/), but cannot do the same for [`borsh`](https://docs.rs/borsh/) since the latter does not support zero-copy.
+	 *
+	 * # Examples ``` use near_account_id::{AccountId, AccountIdRef}; use std::convert::{TryFrom, TryInto};
+	 *
+	 * // Construction let alice = AccountIdRef::new("alice.near").unwrap(); assert!(AccountIdRef::new("invalid.").is_err()); ```
+	 *
+	 * [`FromStr`]: std::str::FromStr [`Path`]: std::path::Path
+	 */
+	account_id: string;
 	intent_hash: string;
 	nonce: string;
 }
@@ -560,7 +959,7 @@ export interface MtWithdraw {
 	amounts: string[];
 	memo?: string | null;
 	/**
-	 * Optional minimum required Near gas for created Promise to succeed: * `mt_batch_transfer`:      minimum: 15TGas, default: 15TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
+	 * Optional minimum required Near gas for created Promise to succeed per token: * `mt_batch_transfer`:      minimum: 20TGas, default: 20TGas * `mt_batch_transfer_call`: minimum: 35TGas, default: 50TGas
 	 *
 	 * Remaining gas will be distributed evenly across all Function Call Promises created during execution of current receipt.
 	 */
@@ -569,12 +968,46 @@ export interface MtWithdraw {
 	 * Message to pass to `mt_batch_transfer_call`. Otherwise, `mt_batch_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 	/**
 	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
 	 */
 	storage_deposit?: string | null;
-	token: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	token: string;
 	token_ids: string[];
 }
 /**
@@ -671,7 +1104,7 @@ export interface MultiPayloadTonConnect {
 	/**
 	 * Wallet address in either [Raw](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#raw-address) representation or [user-friendly](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#user-friendly-address) format
 	 */
-	address: string;
+	address: String;
 	/**
 	 * dApp domain
 	 */
@@ -694,23 +1127,6 @@ export interface TonConnectPayloadSchemaText {
 	type: "text";
 }
 /**
- * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
- * via the `definition` "TonConnectPayloadSchemaBinary".
- */
-export interface TonConnectPayloadSchemaBinary {
-	bytes: string;
-	type: "binary";
-}
-/**
- * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
- * via the `definition` "TonConnectPayloadSchemaCell".
- */
-export interface TonConnectPayloadSchemaCell {
-	cell: string;
-	schema_crc: number;
-	type: "cell";
-}
-/**
  * SEP-53: The standard for signing data off-chain for Stellar accounts. See [SEP-53](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0053.md)
  *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
@@ -730,7 +1146,24 @@ export interface MultiPayloadSep53 {
  */
 export interface NativeWithdraw {
 	amount: string;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
@@ -742,7 +1175,24 @@ export interface Nep413DefuseMessageFor_DefuseIntents {
 	 * Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure
 	 */
 	intents?: Intent[];
-	signer_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	signer_id: string;
 }
 /**
  * Withdraw given NFT tokens from the intents contract to a given external account id (external being outside of intents).
@@ -762,12 +1212,46 @@ export interface NftWithdraw {
 	 * Message to pass to `nft_transfer_call`. Otherwise, `nft_transfer` will be used. NOTE: No refund will be made in case of insufficient `storage_deposit` on `token` for `receiver_id`
 	 */
 	msg?: string | null;
-	receiver_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	receiver_id: string;
 	/**
 	 * Optionally make `storage_deposit` for `receiver_id` on `token`. The amount will be subtracted from user's NEP-141 `wNEAR` balance. NOTE: the `wNEAR` will not be refunded in case of fail
 	 */
 	storage_deposit?: string | null;
-	token: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	token: string;
 	token_id: string;
 }
 /**
@@ -800,7 +1284,7 @@ export interface PermissionedAccounts {
 	/**
 	 * The accounts that have super admin permissions.
 	 */
-	super_admins: AccountId[];
+	super_admins: string[];
 }
 /**
  * Collects all admins and grantees of a role.
@@ -816,11 +1300,11 @@ export interface PermissionedAccountsPerRole {
 	/**
 	 * The accounts that have admin permissions for the role.
 	 */
-	admins: AccountId[];
+	admins: string[];
 	/**
 	 * The accounts that have been granted the role.
 	 */
-	grantees: AccountId[];
+	grantees: string[];
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
@@ -857,15 +1341,66 @@ export interface StateOutput {
  */
 export interface StorageDeposit {
 	amount: string;
-	contract_id: AccountId;
-	deposit_for_account_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	contract_id: string;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	deposit_for_account_id: string;
 }
 /**
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "Token".
  */
 export interface Token {
-	owner_id?: AccountId | null;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	owner_id?: string | null;
 	token_id: string;
 }
 /**
@@ -874,7 +1409,24 @@ export interface Token {
  */
 export interface Nep413DefusePayload {
 	deadline: Deadline;
-	signer_id: AccountId;
+	/**
+	 * NEAR Account Identifier.
+	 *
+	 * This is a unique, syntactically valid, human-readable account identifier on the NEAR network.
+	 *
+	 * [See the crate-level docs for information about validation.](index.html#account-id-rules)
+	 *
+	 * Also see [Error kind precedence](AccountId#error-kind-precedence).
+	 *
+	 * ## Examples
+	 *
+	 * ``` use near_account_id::AccountId;
+	 *
+	 * let alice: AccountId = "alice.near".parse().unwrap();
+	 *
+	 * assert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```
+	 */
+	signer_id: string;
 	/**
 	 * Sequence of intents to execute in given order. Empty list is also a valid sequence, i.e. it doesn't do anything, but still invalidates the `nonce` for the signer WARNING: Promises created by different intents are executed concurrently and does not rely on the order of the intents in this structure
 	 */
@@ -989,7 +1541,7 @@ export interface MultiPayloadTonConnect__Parsed {
 	/**
 	 * Wallet address in either [Raw](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#raw-address) representation or [user-friendly](https://docs.ton.org/v3/documentation/smart-contracts/addresses/address-formats#user-friendly-address) format
 	 */
-	address: string;
+	address: String;
 	/**
 	 * dApp domain
 	 */
