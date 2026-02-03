@@ -68,7 +68,7 @@ import type {
 	WithdrawalResult,
 } from "./shared-types";
 import type { ISaltManager } from "./intents/interfaces/salt-manager";
-import { SaltManager } from "./intents/salt-manager";
+import { SaltManager, StaticSaltManager } from "./intents/salt-manager";
 import type { Salt } from "./intents/expirable-nonce";
 import {
 	VersionedNonceBuilder,
@@ -202,10 +202,13 @@ export class IntentsSDK implements IIntentsSDK {
 
 		this.intentSigner = args.intentSigner;
 
-		this.saltManager = new SaltManager({
-			envConfig: this.envConfig,
-			nearProvider,
-		});
+		this.saltManager =
+			this.envConfig.contractSalt != null
+				? new StaticSaltManager(this.envConfig.contractSalt)
+				: new SaltManager({
+						envConfig: this.envConfig,
+						nearProvider,
+					});
 	}
 
 	public setIntentSigner(signer: IIntentSigner) {

@@ -11,6 +11,13 @@ interface SDKConfig {
 
 export interface EnvConfig {
 	contractID: string;
+	/**
+	 * Static contract salt as hex string (e.g., "01020304").
+	 * Use when salt is known ahead of time, e.g., for private blockchains
+	 * where salt cannot be read from the contract.
+	 * If not provided, salt will be fetched from the contract.
+	 */
+	contractSalt?: string;
 	poaTokenFactoryContractID: string;
 	poaBridgeBaseURL: string;
 	solverRelayBaseURL: string;
@@ -28,6 +35,7 @@ const optionalUrlSchema = v.pipe(
 
 const envConfigSchema = v.object({
 	contractID: v.pipe(v.string(), v.minLength(1, "contractID is required")),
+	contractSalt: v.optional(v.pipe(v.string(), v.regex(/^[0-9a-fA-F]{8}$/))),
 	poaTokenFactoryContractID: v.string(),
 	poaBridgeBaseURL: optionalUrlSchema,
 	solverRelayBaseURL: optionalUrlSchema,
