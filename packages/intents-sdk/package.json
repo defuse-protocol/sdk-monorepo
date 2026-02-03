@@ -47,7 +47,7 @@
 		"@near-js/accounts": "^2.0.1",
 		"@near-js/client": "^2.0.1",
 		"@near-js/keystores": "^2.0.1",
-		"@provablehq/sdk": "0.9.15",
+		"@provablehq/sdk": "^0.9.15",
 		"@noble/hashes": "^1.7.1",
 		"@scure/base": "^1.0.0",
 		"@solana/web3.js": "^1.0.0",

@@ -115,7 +115,7 @@ importers:
         specifier: ^1.7.1
         version: 1.8.0
       '@provablehq/sdk':
-        specifier: 0.9.15
+        specifier: ^0.9.15
         version: 0.9.15
       '@scure/base':
         specifier: ^1.0.0
