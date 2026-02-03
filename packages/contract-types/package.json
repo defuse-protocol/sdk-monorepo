@@ -43,7 +43,7 @@
 		"schemas"
 	],
 	"scripts": {
-		"build": "tsc --noEmit && tsdown",
+		"build": "$npm_execpath gen-defuse-types && tsdown",
 		"dev": "tsdown --watch",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
