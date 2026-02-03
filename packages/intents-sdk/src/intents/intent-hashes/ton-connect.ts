@@ -79,8 +79,6 @@ export function parseTonAddress(addressString: string): TonAddress {
  *   payload
  * )
  *
- * For cell payloads: Uses TON TLB message serialization (not fully implemented here)
- *
  * @param payload - The TON Connect payload to hash
  * @returns 32-byte hash as Uint8Array
  */
@@ -123,13 +121,6 @@ export function computeTonConnectHash(
 
 			return sha256(message);
 		}
-		case "binary": {
-			throw new Error("Binary payload hashing is not yet supported");
-		}
-		case "cell": {
-			throw new Error("Cell payload hashing is not yet supported.");
-		}
-
 		default: {
 			schemaType satisfies never;
 			throw new Error(`Unknown TON Connect payload type: ${schemaType}`);

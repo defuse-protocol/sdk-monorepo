@@ -41,44 +41,40 @@ export const AuthCallSchema: JSONSchemaType<Types.AuthCall> = {
 		state_init: {
 			description:
 				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-			oneOf: [
-				{
-					type: "object",
-					required: ["code", "data", "version"],
-					properties: {
-						code: {
-							oneOf: [
-								{
-									type: "object",
-									required: ["hash"],
-									properties: { hash: { type: "string" } },
-									additionalProperties: false,
-								},
-								{
-									type: "object",
-									required: ["account_id"],
-									properties: {
-										account_id: {
-											description:
-												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-											type: "string",
-										},
-									},
-									additionalProperties: false,
-								},
-							],
-						},
-						data: {
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
 							type: "object",
-							additionalProperties: { type: "string" },
-							required: [],
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
 						},
-						version: { type: "string", enum: ["v1"] },
-					},
-					additionalProperties: false,
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
 				},
-				{ type: "null" },
-			],
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
 		},
 	},
 	additionalProperties: false,
@@ -88,7 +84,9 @@ export const DeadlineSchema: JSONSchemaType<Types.Deadline> = {
 	type: "string",
 };
 
-export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
+// Cast allowed here due to AJV v8 limitation: Optional object properties with defaults (roles, admins, grantees) - AJV limitation
+// See: https://github.com/ajv-validator/ajv/issues/2132
+export const DefuseConfigSchema = {
 	type: "object",
 	required: ["fees", "wnear_id"],
 	properties: {
@@ -162,7 +160,7 @@ export const DefuseConfigSchema: JSONSchemaType<Types.DefuseConfig> = {
 		},
 	},
 	additionalProperties: false,
-};
+} as unknown as JSONSchemaType<Types.DefuseConfig>;
 
 export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePayloadFor_DefuseIntents> =
 	{
@@ -236,44 +234,40 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									type: "object",
@@ -512,44 +506,40 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 							},
 							additionalProperties: false,
@@ -580,44 +570,40 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									description:
@@ -825,44 +811,40 @@ export const IntentSchema: JSONSchemaType<Types.Intent> = {
 				state_init: {
 					description:
 						"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-					oneOf: [
-						{
-							type: "object",
-							required: ["code", "data", "version"],
-							properties: {
-								code: {
-									oneOf: [
-										{
-											type: "object",
-											required: ["hash"],
-											properties: { hash: { type: "string" } },
-											additionalProperties: false,
-										},
-										{
-											type: "object",
-											required: ["account_id"],
-											properties: {
-												account_id: {
-													description:
-														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-													type: "string",
-												},
-											},
-											additionalProperties: false,
-										},
-									],
-								},
-								data: {
+					type: "object",
+					required: ["code", "data", "version"],
+					properties: {
+						code: {
+							oneOf: [
+								{
 									type: "object",
-									additionalProperties: { type: "string" },
-									required: [],
+									required: ["hash"],
+									properties: { hash: { type: "string" } },
+									additionalProperties: false,
 								},
-								version: { type: "string", enum: ["v1"] },
-							},
-							additionalProperties: false,
+								{
+									type: "object",
+									required: ["account_id"],
+									properties: {
+										account_id: {
+											description:
+												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+											type: "string",
+										},
+									},
+									additionalProperties: false,
+								},
+							],
 						},
-						{ type: "null" },
-					],
+						data: {
+							type: "object",
+							additionalProperties: { type: "string" },
+							required: [],
+						},
+						version: { type: "string", enum: ["v1"] },
+					},
+					additionalProperties: false,
+					nullable: true,
 				},
 				tokens: {
 					type: "object",
@@ -1087,44 +1069,40 @@ export const IntentSchema: JSONSchemaType<Types.Intent> = {
 				state_init: {
 					description:
 						"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-					oneOf: [
-						{
-							type: "object",
-							required: ["code", "data", "version"],
-							properties: {
-								code: {
-									oneOf: [
-										{
-											type: "object",
-											required: ["hash"],
-											properties: { hash: { type: "string" } },
-											additionalProperties: false,
-										},
-										{
-											type: "object",
-											required: ["account_id"],
-											properties: {
-												account_id: {
-													description:
-														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-													type: "string",
-												},
-											},
-											additionalProperties: false,
-										},
-									],
-								},
-								data: {
+					type: "object",
+					required: ["code", "data", "version"],
+					properties: {
+						code: {
+							oneOf: [
+								{
 									type: "object",
-									additionalProperties: { type: "string" },
-									required: [],
+									required: ["hash"],
+									properties: { hash: { type: "string" } },
+									additionalProperties: false,
 								},
-								version: { type: "string", enum: ["v1"] },
-							},
-							additionalProperties: false,
+								{
+									type: "object",
+									required: ["account_id"],
+									properties: {
+										account_id: {
+											description:
+												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+											type: "string",
+										},
+									},
+									additionalProperties: false,
+								},
+							],
 						},
-						{ type: "null" },
-					],
+						data: {
+							type: "object",
+							additionalProperties: { type: "string" },
+							required: [],
+						},
+						version: { type: "string", enum: ["v1"] },
+					},
+					additionalProperties: false,
+					nullable: true,
 				},
 			},
 			additionalProperties: false,
@@ -1155,44 +1133,40 @@ export const IntentSchema: JSONSchemaType<Types.Intent> = {
 				state_init: {
 					description:
 						"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-					oneOf: [
-						{
-							type: "object",
-							required: ["code", "data", "version"],
-							properties: {
-								code: {
-									oneOf: [
-										{
-											type: "object",
-											required: ["hash"],
-											properties: { hash: { type: "string" } },
-											additionalProperties: false,
-										},
-										{
-											type: "object",
-											required: ["account_id"],
-											properties: {
-												account_id: {
-													description:
-														'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-													type: "string",
-												},
-											},
-											additionalProperties: false,
-										},
-									],
-								},
-								data: {
+					type: "object",
+					required: ["code", "data", "version"],
+					properties: {
+						code: {
+							oneOf: [
+								{
 									type: "object",
-									additionalProperties: { type: "string" },
-									required: [],
+									required: ["hash"],
+									properties: { hash: { type: "string" } },
+									additionalProperties: false,
 								},
-								version: { type: "string", enum: ["v1"] },
-							},
-							additionalProperties: false,
+								{
+									type: "object",
+									required: ["account_id"],
+									properties: {
+										account_id: {
+											description:
+												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+											type: "string",
+										},
+									},
+									additionalProperties: false,
+								},
+							],
 						},
-						{ type: "null" },
-					],
+						data: {
+							type: "object",
+							additionalProperties: { type: "string" },
+							required: [],
+						},
+						version: { type: "string", enum: ["v1"] },
+					},
+					additionalProperties: false,
+					nullable: true,
 				},
 				tokens: {
 					description:
@@ -1415,46 +1389,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 														state_init: {
 															description:
 																"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-															oneOf: [
-																{
-																	type: "object",
-																	required: ["code", "data", "version"],
-																	properties: {
-																		code: {
-																			oneOf: [
-																				{
-																					type: "object",
-																					required: ["hash"],
-																					properties: {
-																						hash: { type: "string" },
-																					},
-																					additionalProperties: false,
-																				},
-																				{
-																					type: "object",
-																					required: ["account_id"],
-																					properties: {
-																						account_id: {
-																							description:
-																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																							type: "string",
-																						},
-																					},
-																					additionalProperties: false,
-																				},
-																			],
-																		},
-																		data: {
+															type: "object",
+															required: ["code", "data", "version"],
+															properties: {
+																code: {
+																	oneOf: [
+																		{
 																			type: "object",
-																			additionalProperties: { type: "string" },
-																			required: [],
+																			required: ["hash"],
+																			properties: { hash: { type: "string" } },
+																			additionalProperties: false,
 																		},
-																		version: { type: "string", enum: ["v1"] },
-																	},
-																	additionalProperties: false,
+																		{
+																			type: "object",
+																			required: ["account_id"],
+																			properties: {
+																				account_id: {
+																					description:
+																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																					type: "string",
+																				},
+																			},
+																			additionalProperties: false,
+																		},
+																	],
 																},
-																{ type: "null" },
-															],
+																data: {
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+																version: { type: "string", enum: ["v1"] },
+															},
+															additionalProperties: false,
+															nullable: true,
 														},
 														tokens: {
 															type: "object",
@@ -1715,46 +1683,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 														state_init: {
 															description:
 																"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-															oneOf: [
-																{
-																	type: "object",
-																	required: ["code", "data", "version"],
-																	properties: {
-																		code: {
-																			oneOf: [
-																				{
-																					type: "object",
-																					required: ["hash"],
-																					properties: {
-																						hash: { type: "string" },
-																					},
-																					additionalProperties: false,
-																				},
-																				{
-																					type: "object",
-																					required: ["account_id"],
-																					properties: {
-																						account_id: {
-																							description:
-																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																							type: "string",
-																						},
-																					},
-																					additionalProperties: false,
-																				},
-																			],
-																		},
-																		data: {
+															type: "object",
+															required: ["code", "data", "version"],
+															properties: {
+																code: {
+																	oneOf: [
+																		{
 																			type: "object",
-																			additionalProperties: { type: "string" },
-																			required: [],
+																			required: ["hash"],
+																			properties: { hash: { type: "string" } },
+																			additionalProperties: false,
 																		},
-																		version: { type: "string", enum: ["v1"] },
-																	},
-																	additionalProperties: false,
+																		{
+																			type: "object",
+																			required: ["account_id"],
+																			properties: {
+																				account_id: {
+																					description:
+																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																					type: "string",
+																				},
+																			},
+																			additionalProperties: false,
+																		},
+																	],
 																},
-																{ type: "null" },
-															],
+																data: {
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+																version: { type: "string", enum: ["v1"] },
+															},
+															additionalProperties: false,
+															nullable: true,
 														},
 													},
 													additionalProperties: false,
@@ -1786,46 +1748,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 														state_init: {
 															description:
 																"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-															oneOf: [
-																{
-																	type: "object",
-																	required: ["code", "data", "version"],
-																	properties: {
-																		code: {
-																			oneOf: [
-																				{
-																					type: "object",
-																					required: ["hash"],
-																					properties: {
-																						hash: { type: "string" },
-																					},
-																					additionalProperties: false,
-																				},
-																				{
-																					type: "object",
-																					required: ["account_id"],
-																					properties: {
-																						account_id: {
-																							description:
-																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																							type: "string",
-																						},
-																					},
-																					additionalProperties: false,
-																				},
-																			],
-																		},
-																		data: {
+															type: "object",
+															required: ["code", "data", "version"],
+															properties: {
+																code: {
+																	oneOf: [
+																		{
 																			type: "object",
-																			additionalProperties: { type: "string" },
-																			required: [],
+																			required: ["hash"],
+																			properties: { hash: { type: "string" } },
+																			additionalProperties: false,
 																		},
-																		version: { type: "string", enum: ["v1"] },
-																	},
-																	additionalProperties: false,
+																		{
+																			type: "object",
+																			required: ["account_id"],
+																			properties: {
+																				account_id: {
+																					description:
+																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																					type: "string",
+																				},
+																			},
+																			additionalProperties: false,
+																		},
+																	],
 																},
-																{ type: "null" },
-															],
+																data: {
+																	type: "object",
+																	additionalProperties: { type: "string" },
+																	required: [],
+																},
+																version: { type: "string", enum: ["v1"] },
+															},
+															additionalProperties: false,
+															nullable: true,
 														},
 														tokens: {
 															description:
@@ -1968,44 +1924,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -2244,44 +2196,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 											},
 											additionalProperties: false,
@@ -2312,44 +2260,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													description:
@@ -2498,44 +2442,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -2774,44 +2714,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 											},
 											additionalProperties: false,
@@ -2842,44 +2778,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													description:
@@ -3026,44 +2958,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -3302,44 +3230,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 											},
 											additionalProperties: false,
@@ -3370,44 +3294,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													description:
@@ -3573,44 +3493,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -3849,44 +3765,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 											},
 											additionalProperties: false,
@@ -3917,44 +3829,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													description:
@@ -4122,44 +4030,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -4398,44 +4302,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 											},
 											additionalProperties: false,
@@ -4466,44 +4366,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													description:
@@ -4690,51 +4586,42 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 																state_init: {
 																	description:
 																		"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["code", "data", "version"],
-																			properties: {
-																				code: {
-																					oneOf: [
-																						{
-																							type: "object",
-																							required: ["hash"],
-																							properties: {
-																								hash: { type: "string" },
-																							},
-																							additionalProperties: false,
-																						},
-																						{
-																							type: "object",
-																							required: ["account_id"],
-																							properties: {
-																								account_id: {
-																									description:
-																										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																									type: "string",
-																								},
-																							},
-																							additionalProperties: false,
-																						},
-																					],
-																				},
-																				data: {
+																	type: "object",
+																	required: ["code", "data", "version"],
+																	properties: {
+																		code: {
+																			oneOf: [
+																				{
 																					type: "object",
-																					additionalProperties: {
-																						type: "string",
+																					required: ["hash"],
+																					properties: {
+																						hash: { type: "string" },
 																					},
-																					required: [],
+																					additionalProperties: false,
 																				},
-																				version: {
-																					type: "string",
-																					enum: ["v1"],
+																				{
+																					type: "object",
+																					required: ["account_id"],
+																					properties: {
+																						account_id: {
+																							description:
+																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																							type: "string",
+																						},
+																					},
+																					additionalProperties: false,
 																				},
-																			},
-																			additionalProperties: false,
+																			],
 																		},
-																		{ type: "null" },
-																	],
+																		data: {
+																			type: "object",
+																			additionalProperties: { type: "string" },
+																			required: [],
+																		},
+																		version: { type: "string", enum: ["v1"] },
+																	},
+																	additionalProperties: false,
+																	nullable: true,
 																},
 																tokens: {
 																	type: "object",
@@ -5007,51 +4894,42 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 																state_init: {
 																	description:
 																		"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["code", "data", "version"],
-																			properties: {
-																				code: {
-																					oneOf: [
-																						{
-																							type: "object",
-																							required: ["hash"],
-																							properties: {
-																								hash: { type: "string" },
-																							},
-																							additionalProperties: false,
-																						},
-																						{
-																							type: "object",
-																							required: ["account_id"],
-																							properties: {
-																								account_id: {
-																									description:
-																										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																									type: "string",
-																								},
-																							},
-																							additionalProperties: false,
-																						},
-																					],
-																				},
-																				data: {
+																	type: "object",
+																	required: ["code", "data", "version"],
+																	properties: {
+																		code: {
+																			oneOf: [
+																				{
 																					type: "object",
-																					additionalProperties: {
-																						type: "string",
+																					required: ["hash"],
+																					properties: {
+																						hash: { type: "string" },
 																					},
-																					required: [],
+																					additionalProperties: false,
 																				},
-																				version: {
-																					type: "string",
-																					enum: ["v1"],
+																				{
+																					type: "object",
+																					required: ["account_id"],
+																					properties: {
+																						account_id: {
+																							description:
+																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																							type: "string",
+																						},
+																					},
+																					additionalProperties: false,
 																				},
-																			},
-																			additionalProperties: false,
+																			],
 																		},
-																		{ type: "null" },
-																	],
+																		data: {
+																			type: "object",
+																			additionalProperties: { type: "string" },
+																			required: [],
+																		},
+																		version: { type: "string", enum: ["v1"] },
+																	},
+																	additionalProperties: false,
+																	nullable: true,
 																},
 															},
 															additionalProperties: false,
@@ -5083,51 +4961,42 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 																state_init: {
 																	description:
 																		"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["code", "data", "version"],
-																			properties: {
-																				code: {
-																					oneOf: [
-																						{
-																							type: "object",
-																							required: ["hash"],
-																							properties: {
-																								hash: { type: "string" },
-																							},
-																							additionalProperties: false,
-																						},
-																						{
-																							type: "object",
-																							required: ["account_id"],
-																							properties: {
-																								account_id: {
-																									description:
-																										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																									type: "string",
-																								},
-																							},
-																							additionalProperties: false,
-																						},
-																					],
-																				},
-																				data: {
+																	type: "object",
+																	required: ["code", "data", "version"],
+																	properties: {
+																		code: {
+																			oneOf: [
+																				{
 																					type: "object",
-																					additionalProperties: {
-																						type: "string",
+																					required: ["hash"],
+																					properties: {
+																						hash: { type: "string" },
 																					},
-																					required: [],
+																					additionalProperties: false,
 																				},
-																				version: {
-																					type: "string",
-																					enum: ["v1"],
+																				{
+																					type: "object",
+																					required: ["account_id"],
+																					properties: {
+																						account_id: {
+																							description:
+																								'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																							type: "string",
+																						},
+																					},
+																					additionalProperties: false,
 																				},
-																			},
-																			additionalProperties: false,
+																			],
 																		},
-																		{ type: "null" },
-																	],
+																		data: {
+																			type: "object",
+																			additionalProperties: { type: "string" },
+																			required: [],
+																		},
+																		version: { type: "string", enum: ["v1"] },
+																	},
+																	additionalProperties: false,
+																	nullable: true,
 																},
 																tokens: {
 																	description:
@@ -5294,44 +5163,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													type: "object",
@@ -5570,44 +5435,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 											},
 											additionalProperties: false,
@@ -5638,44 +5499,40 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												state_init: {
 													description:
 														"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-													oneOf: [
-														{
-															type: "object",
-															required: ["code", "data", "version"],
-															properties: {
-																code: {
-																	oneOf: [
-																		{
-																			type: "object",
-																			required: ["hash"],
-																			properties: { hash: { type: "string" } },
-																			additionalProperties: false,
-																		},
-																		{
-																			type: "object",
-																			required: ["account_id"],
-																			properties: {
-																				account_id: {
-																					description:
-																						'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																					type: "string",
-																				},
-																			},
-																			additionalProperties: false,
-																		},
-																	],
-																},
-																data: {
+													type: "object",
+													required: ["code", "data", "version"],
+													properties: {
+														code: {
+															oneOf: [
+																{
 																	type: "object",
-																	additionalProperties: { type: "string" },
-																	required: [],
+																	required: ["hash"],
+																	properties: { hash: { type: "string" } },
+																	additionalProperties: false,
 																},
-																version: { type: "string", enum: ["v1"] },
-															},
-															additionalProperties: false,
+																{
+																	type: "object",
+																	required: ["account_id"],
+																	properties: {
+																		account_id: {
+																			description:
+																				'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																			type: "string",
+																		},
+																	},
+																	additionalProperties: false,
+																},
+															],
 														},
-														{ type: "null" },
-													],
+														data: {
+															type: "object",
+															additionalProperties: { type: "string" },
+															required: [],
+														},
+														version: { type: "string", enum: ["v1"] },
+													},
+													additionalProperties: false,
+													nullable: true,
 												},
 												tokens: {
 													description:
@@ -5840,44 +5697,40 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									type: "object",
@@ -6116,44 +5969,40 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 							},
 							additionalProperties: false,
@@ -6184,44 +6033,40 @@ export const Nep413DefuseMessageFor_DefuseIntentsSchema: JSONSchemaType<Types.Ne
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									description:
@@ -6420,7 +6265,9 @@ export const PipsSchema: JSONSchemaType<Types.Pips> = {
 	minimum: 0,
 };
 
-export const RolesConfigSchema: JSONSchemaType<Types.RolesConfig> = {
+// Cast allowed here due to AJV v8 limitation: Optional object properties with defaults (admins, grantees) - AJV limitation
+// See: https://github.com/ajv-validator/ajv/issues/2132
+export const RolesConfigSchema = {
 	type: "object",
 	properties: {
 		admins: {
@@ -6463,7 +6310,7 @@ export const RolesConfigSchema: JSONSchemaType<Types.RolesConfig> = {
 		},
 	},
 	additionalProperties: false,
-};
+} as unknown as JSONSchemaType<Types.RolesConfig>;
 
 // Cast allowed here due to AJV v8 limitation: Optional union property (invariant_violated?: InvariantViolated | null) - AJV limitation
 // See: https://github.com/ajv-validator/ajv/issues/2132
@@ -6715,44 +6562,40 @@ export const IntentTransferSchema: JSONSchemaType<Types.IntentTransfer> = {
 		state_init: {
 			description:
 				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-			oneOf: [
-				{
-					type: "object",
-					required: ["code", "data", "version"],
-					properties: {
-						code: {
-							oneOf: [
-								{
-									type: "object",
-									required: ["hash"],
-									properties: { hash: { type: "string" } },
-									additionalProperties: false,
-								},
-								{
-									type: "object",
-									required: ["account_id"],
-									properties: {
-										account_id: {
-											description:
-												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-											type: "string",
-										},
-									},
-									additionalProperties: false,
-								},
-							],
-						},
-						data: {
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
 							type: "object",
-							additionalProperties: { type: "string" },
-							required: [],
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
 						},
-						version: { type: "string", enum: ["v1"] },
-					},
-					additionalProperties: false,
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
 				},
-				{ type: "null" },
-			],
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
 		},
 		tokens: {
 			type: "object",
@@ -6989,44 +6832,40 @@ export const IntentAuthCallSchema: JSONSchemaType<Types.IntentAuthCall> = {
 		state_init: {
 			description:
 				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-			oneOf: [
-				{
-					type: "object",
-					required: ["code", "data", "version"],
-					properties: {
-						code: {
-							oneOf: [
-								{
-									type: "object",
-									required: ["hash"],
-									properties: { hash: { type: "string" } },
-									additionalProperties: false,
-								},
-								{
-									type: "object",
-									required: ["account_id"],
-									properties: {
-										account_id: {
-											description:
-												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-											type: "string",
-										},
-									},
-									additionalProperties: false,
-								},
-							],
-						},
-						data: {
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
 							type: "object",
-							additionalProperties: { type: "string" },
-							required: [],
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
 						},
-						version: { type: "string", enum: ["v1"] },
-					},
-					additionalProperties: false,
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
 				},
-				{ type: "null" },
-			],
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
 		},
 	},
 	additionalProperties: false,
@@ -7058,44 +6897,40 @@ export const IntentImtMintSchema: JSONSchemaType<Types.IntentImtMint> = {
 		state_init: {
 			description:
 				"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-			oneOf: [
-				{
-					type: "object",
-					required: ["code", "data", "version"],
-					properties: {
-						code: {
-							oneOf: [
-								{
-									type: "object",
-									required: ["hash"],
-									properties: { hash: { type: "string" } },
-									additionalProperties: false,
-								},
-								{
-									type: "object",
-									required: ["account_id"],
-									properties: {
-										account_id: {
-											description:
-												'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-											type: "string",
-										},
-									},
-									additionalProperties: false,
-								},
-							],
-						},
-						data: {
+			type: "object",
+			required: ["code", "data", "version"],
+			properties: {
+				code: {
+					oneOf: [
+						{
 							type: "object",
-							additionalProperties: { type: "string" },
-							required: [],
+							required: ["hash"],
+							properties: { hash: { type: "string" } },
+							additionalProperties: false,
 						},
-						version: { type: "string", enum: ["v1"] },
-					},
-					additionalProperties: false,
+						{
+							type: "object",
+							required: ["account_id"],
+							properties: {
+								account_id: {
+									description:
+										'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+									type: "string",
+								},
+							},
+							additionalProperties: false,
+						},
+					],
 				},
-				{ type: "null" },
-			],
+				data: {
+					type: "object",
+					additionalProperties: { type: "string" },
+					required: [],
+				},
+				version: { type: "string", enum: ["v1"] },
+			},
+			additionalProperties: false,
+			nullable: true,
 		},
 		tokens: {
 			description:
@@ -7504,44 +7339,40 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									type: "object",
@@ -7780,44 +7611,40 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 							},
 							additionalProperties: false,
@@ -7848,44 +7675,40 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 								state_init: {
 									description:
 										"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-									oneOf: [
-										{
-											type: "object",
-											required: ["code", "data", "version"],
-											properties: {
-												code: {
-													oneOf: [
-														{
-															type: "object",
-															required: ["hash"],
-															properties: { hash: { type: "string" } },
-															additionalProperties: false,
-														},
-														{
-															type: "object",
-															required: ["account_id"],
-															properties: {
-																account_id: {
-																	description:
-																		'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																	type: "string",
-																},
-															},
-															additionalProperties: false,
-														},
-													],
-												},
-												data: {
+									type: "object",
+									required: ["code", "data", "version"],
+									properties: {
+										code: {
+											oneOf: [
+												{
 													type: "object",
-													additionalProperties: { type: "string" },
-													required: [],
+													required: ["hash"],
+													properties: { hash: { type: "string" } },
+													additionalProperties: false,
 												},
-												version: { type: "string", enum: ["v1"] },
-											},
-											additionalProperties: false,
+												{
+													type: "object",
+													required: ["account_id"],
+													properties: {
+														account_id: {
+															description:
+																'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+															type: "string",
+														},
+													},
+													additionalProperties: false,
+												},
+											],
 										},
-										{ type: "null" },
-									],
+										data: {
+											type: "object",
+											additionalProperties: { type: "string" },
+											required: [],
+										},
+										version: { type: "string", enum: ["v1"] },
+									},
+									additionalProperties: false,
+									nullable: true,
 								},
 								tokens: {
 									description:
@@ -8031,48 +7854,42 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 															state_init: {
 																description:
 																	"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-																oneOf: [
-																	{
-																		type: "object",
-																		required: ["code", "data", "version"],
-																		properties: {
-																			code: {
-																				oneOf: [
-																					{
-																						type: "object",
-																						required: ["hash"],
-																						properties: {
-																							hash: { type: "string" },
-																						},
-																						additionalProperties: false,
-																					},
-																					{
-																						type: "object",
-																						required: ["account_id"],
-																						properties: {
-																							account_id: {
-																								description:
-																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																								type: "string",
-																							},
-																						},
-																						additionalProperties: false,
-																					},
-																				],
-																			},
-																			data: {
+																type: "object",
+																required: ["code", "data", "version"],
+																properties: {
+																	code: {
+																		oneOf: [
+																			{
 																				type: "object",
-																				additionalProperties: {
-																					type: "string",
+																				required: ["hash"],
+																				properties: {
+																					hash: { type: "string" },
 																				},
-																				required: [],
+																				additionalProperties: false,
 																			},
-																			version: { type: "string", enum: ["v1"] },
-																		},
-																		additionalProperties: false,
+																			{
+																				type: "object",
+																				required: ["account_id"],
+																				properties: {
+																					account_id: {
+																						description:
+																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																						type: "string",
+																					},
+																				},
+																				additionalProperties: false,
+																			},
+																		],
 																	},
-																	{ type: "null" },
-																],
+																	data: {
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																	version: { type: "string", enum: ["v1"] },
+																},
+																additionalProperties: false,
+																nullable: true,
 															},
 															tokens: {
 																type: "object",
@@ -8336,48 +8153,42 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 															state_init: {
 																description:
 																	"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-																oneOf: [
-																	{
-																		type: "object",
-																		required: ["code", "data", "version"],
-																		properties: {
-																			code: {
-																				oneOf: [
-																					{
-																						type: "object",
-																						required: ["hash"],
-																						properties: {
-																							hash: { type: "string" },
-																						},
-																						additionalProperties: false,
-																					},
-																					{
-																						type: "object",
-																						required: ["account_id"],
-																						properties: {
-																							account_id: {
-																								description:
-																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																								type: "string",
-																							},
-																						},
-																						additionalProperties: false,
-																					},
-																				],
-																			},
-																			data: {
+																type: "object",
+																required: ["code", "data", "version"],
+																properties: {
+																	code: {
+																		oneOf: [
+																			{
 																				type: "object",
-																				additionalProperties: {
-																					type: "string",
+																				required: ["hash"],
+																				properties: {
+																					hash: { type: "string" },
 																				},
-																				required: [],
+																				additionalProperties: false,
 																			},
-																			version: { type: "string", enum: ["v1"] },
-																		},
-																		additionalProperties: false,
+																			{
+																				type: "object",
+																				required: ["account_id"],
+																				properties: {
+																					account_id: {
+																						description:
+																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																						type: "string",
+																					},
+																				},
+																				additionalProperties: false,
+																			},
+																		],
 																	},
-																	{ type: "null" },
-																],
+																	data: {
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																	version: { type: "string", enum: ["v1"] },
+																},
+																additionalProperties: false,
+																nullable: true,
 															},
 														},
 														additionalProperties: false,
@@ -8409,48 +8220,42 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 															state_init: {
 																description:
 																	"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-																oneOf: [
-																	{
-																		type: "object",
-																		required: ["code", "data", "version"],
-																		properties: {
-																			code: {
-																				oneOf: [
-																					{
-																						type: "object",
-																						required: ["hash"],
-																						properties: {
-																							hash: { type: "string" },
-																						},
-																						additionalProperties: false,
-																					},
-																					{
-																						type: "object",
-																						required: ["account_id"],
-																						properties: {
-																							account_id: {
-																								description:
-																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																								type: "string",
-																							},
-																						},
-																						additionalProperties: false,
-																					},
-																				],
-																			},
-																			data: {
+																type: "object",
+																required: ["code", "data", "version"],
+																properties: {
+																	code: {
+																		oneOf: [
+																			{
 																				type: "object",
-																				additionalProperties: {
-																					type: "string",
+																				required: ["hash"],
+																				properties: {
+																					hash: { type: "string" },
 																				},
-																				required: [],
+																				additionalProperties: false,
 																			},
-																			version: { type: "string", enum: ["v1"] },
-																		},
-																		additionalProperties: false,
+																			{
+																				type: "object",
+																				required: ["account_id"],
+																				properties: {
+																					account_id: {
+																						description:
+																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																						type: "string",
+																					},
+																				},
+																				additionalProperties: false,
+																			},
+																		],
 																	},
-																	{ type: "null" },
-																],
+																	data: {
+																		type: "object",
+																		additionalProperties: { type: "string" },
+																		required: [],
+																	},
+																	version: { type: "string", enum: ["v1"] },
+																},
+																additionalProperties: false,
+																nullable: true,
 															},
 															tokens: {
 																description:
@@ -8589,46 +8394,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -8875,46 +8674,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 												},
 												additionalProperties: false,
@@ -8945,46 +8738,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														description:
@@ -9133,46 +8920,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -9419,46 +9200,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 												},
 												additionalProperties: false,
@@ -9489,46 +9264,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														description:
@@ -9675,46 +9444,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -9961,46 +9724,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 												},
 												additionalProperties: false,
@@ -10031,46 +9788,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														description:
@@ -10217,46 +9968,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -10503,46 +10248,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 												},
 												additionalProperties: false,
@@ -10573,46 +10312,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														description:
@@ -10759,46 +10492,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -11045,46 +10772,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 												},
 												additionalProperties: false,
@@ -11115,46 +10836,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														description:
@@ -11316,51 +11031,44 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																	state_init: {
 																		description:
 																			"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["code", "data", "version"],
-																				properties: {
-																					code: {
-																						oneOf: [
-																							{
-																								type: "object",
-																								required: ["hash"],
-																								properties: {
-																									hash: { type: "string" },
-																								},
-																								additionalProperties: false,
-																							},
-																							{
-																								type: "object",
-																								required: ["account_id"],
-																								properties: {
-																									account_id: {
-																										description:
-																											'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																										type: "string",
-																									},
-																								},
-																								additionalProperties: false,
-																							},
-																						],
-																					},
-																					data: {
+																		type: "object",
+																		required: ["code", "data", "version"],
+																		properties: {
+																			code: {
+																				oneOf: [
+																					{
 																						type: "object",
-																						additionalProperties: {
-																							type: "string",
+																						required: ["hash"],
+																						properties: {
+																							hash: { type: "string" },
 																						},
-																						required: [],
+																						additionalProperties: false,
 																					},
-																					version: {
-																						type: "string",
-																						enum: ["v1"],
+																					{
+																						type: "object",
+																						required: ["account_id"],
+																						properties: {
+																							account_id: {
+																								description:
+																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																								type: "string",
+																							},
+																						},
+																						additionalProperties: false,
 																					},
-																				},
-																				additionalProperties: false,
+																				],
 																			},
-																			{ type: "null" },
-																		],
+																			data: {
+																				type: "object",
+																				additionalProperties: {
+																					type: "string",
+																				},
+																				required: [],
+																			},
+																			version: { type: "string", enum: ["v1"] },
+																		},
+																		additionalProperties: false,
+																		nullable: true,
 																	},
 																	tokens: {
 																		type: "object",
@@ -11636,51 +11344,44 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																	state_init: {
 																		description:
 																			"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["code", "data", "version"],
-																				properties: {
-																					code: {
-																						oneOf: [
-																							{
-																								type: "object",
-																								required: ["hash"],
-																								properties: {
-																									hash: { type: "string" },
-																								},
-																								additionalProperties: false,
-																							},
-																							{
-																								type: "object",
-																								required: ["account_id"],
-																								properties: {
-																									account_id: {
-																										description:
-																											'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																										type: "string",
-																									},
-																								},
-																								additionalProperties: false,
-																							},
-																						],
-																					},
-																					data: {
+																		type: "object",
+																		required: ["code", "data", "version"],
+																		properties: {
+																			code: {
+																				oneOf: [
+																					{
 																						type: "object",
-																						additionalProperties: {
-																							type: "string",
+																						required: ["hash"],
+																						properties: {
+																							hash: { type: "string" },
 																						},
-																						required: [],
+																						additionalProperties: false,
 																					},
-																					version: {
-																						type: "string",
-																						enum: ["v1"],
+																					{
+																						type: "object",
+																						required: ["account_id"],
+																						properties: {
+																							account_id: {
+																								description:
+																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																								type: "string",
+																							},
+																						},
+																						additionalProperties: false,
 																					},
-																				},
-																				additionalProperties: false,
+																				],
 																			},
-																			{ type: "null" },
-																		],
+																			data: {
+																				type: "object",
+																				additionalProperties: {
+																					type: "string",
+																				},
+																				required: [],
+																			},
+																			version: { type: "string", enum: ["v1"] },
+																		},
+																		additionalProperties: false,
+																		nullable: true,
 																	},
 																},
 																additionalProperties: false,
@@ -11716,51 +11417,44 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 																	state_init: {
 																		description:
 																			"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["code", "data", "version"],
-																				properties: {
-																					code: {
-																						oneOf: [
-																							{
-																								type: "object",
-																								required: ["hash"],
-																								properties: {
-																									hash: { type: "string" },
-																								},
-																								additionalProperties: false,
-																							},
-																							{
-																								type: "object",
-																								required: ["account_id"],
-																								properties: {
-																									account_id: {
-																										description:
-																											'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																										type: "string",
-																									},
-																								},
-																								additionalProperties: false,
-																							},
-																						],
-																					},
-																					data: {
+																		type: "object",
+																		required: ["code", "data", "version"],
+																		properties: {
+																			code: {
+																				oneOf: [
+																					{
 																						type: "object",
-																						additionalProperties: {
-																							type: "string",
+																						required: ["hash"],
+																						properties: {
+																							hash: { type: "string" },
 																						},
-																						required: [],
+																						additionalProperties: false,
 																					},
-																					version: {
-																						type: "string",
-																						enum: ["v1"],
+																					{
+																						type: "object",
+																						required: ["account_id"],
+																						properties: {
+																							account_id: {
+																								description:
+																									'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																								type: "string",
+																							},
+																						},
+																						additionalProperties: false,
 																					},
-																				},
-																				additionalProperties: false,
+																				],
 																			},
-																			{ type: "null" },
-																		],
+																			data: {
+																				type: "object",
+																				additionalProperties: {
+																					type: "string",
+																				},
+																				required: [],
+																			},
+																			version: { type: "string", enum: ["v1"] },
+																		},
+																		additionalProperties: false,
+																		nullable: true,
 																	},
 																	tokens: {
 																		description:
@@ -11918,46 +11612,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														type: "object",
@@ -12204,46 +11892,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling [`.on_auth()`](::defuse_auth_call::AuthCallee::on_auth) (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 												},
 												additionalProperties: false,
@@ -12274,46 +11956,40 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													state_init: {
 														description:
 															"Optionally initialize the receiver's contract (Deterministic AccountId) via [`state_init`](https://github.com/near/NEPs/blob/master/neps/nep-0616.md#stateinit-action) right before calling `mt_on_transfer()` (in the same receipt).",
-														oneOf: [
-															{
-																type: "object",
-																required: ["code", "data", "version"],
-																properties: {
-																	code: {
-																		oneOf: [
-																			{
-																				type: "object",
-																				required: ["hash"],
-																				properties: {
-																					hash: { type: "string" },
-																				},
-																				additionalProperties: false,
-																			},
-																			{
-																				type: "object",
-																				required: ["account_id"],
-																				properties: {
-																					account_id: {
-																						description:
-																							'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
-																						type: "string",
-																					},
-																				},
-																				additionalProperties: false,
-																			},
-																		],
-																	},
-																	data: {
+														type: "object",
+														required: ["code", "data", "version"],
+														properties: {
+															code: {
+																oneOf: [
+																	{
 																		type: "object",
-																		additionalProperties: { type: "string" },
-																		required: [],
+																		required: ["hash"],
+																		properties: { hash: { type: "string" } },
+																		additionalProperties: false,
 																	},
-																	version: { type: "string", enum: ["v1"] },
-																},
-																additionalProperties: false,
+																	{
+																		type: "object",
+																		required: ["account_id"],
+																		properties: {
+																			account_id: {
+																				description:
+																					'NEAR Account Identifier.\n\nThis is a unique, syntactically valid, human-readable account identifier on the NEAR network.\n\n[See the crate-level docs for information about validation.](index.html#account-id-rules)\n\nAlso see [Error kind precedence](AccountId#error-kind-precedence).\n\n## Examples\n\n``` use near_account_id::AccountId;\n\nlet alice: AccountId = "alice.near".parse().unwrap();\n\nassert!("ƒelicia.near".parse::<AccountId>().is_err()); // (ƒ is not f) ```',
+																				type: "string",
+																			},
+																		},
+																		additionalProperties: false,
+																	},
+																],
 															},
-															{ type: "null" },
-														],
+															data: {
+																type: "object",
+																additionalProperties: { type: "string" },
+																required: [],
+															},
+															version: { type: "string", enum: ["v1"] },
+														},
+														additionalProperties: false,
+														nullable: true,
 													},
 													tokens: {
 														description:
