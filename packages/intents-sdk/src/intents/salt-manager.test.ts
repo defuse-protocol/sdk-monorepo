@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { SALT_TTL_MS, SaltManager } from "../intents/salt-manager";
+import {
+	SALT_TTL_MS,
+	SaltManager,
+	StaticSaltManager,
+} from "../intents/salt-manager";
 import type { providers } from "near-api-js";
 
 import {
@@ -126,3 +130,35 @@ function mockQueryWithVal(saltManager: SaltManager, val: Uint8Array) {
 		return salt;
 	});
 }
+
+describe("StaticSaltManager", () => {
+	it("returns the configured salt", async () => {
+		const saltManager = new StaticSaltManager("01020304");
+
+		const salt = await saltManager.getCachedSalt();
+
+		expect(Array.from(salt)).toEqual([1, 2, 3, 4]);
+	});
+
+	it("refresh returns the same salt", async () => {
+		const saltManager = new StaticSaltManager("aabbccdd");
+
+		const salt1 = await saltManager.getCachedSalt();
+		const salt2 = await saltManager.refresh();
+
+		expect(salt1).toBe(salt2);
+	});
+
+	it("rejects invalid salt length", () => {
+		expect(() => new StaticSaltManager("0102")).toThrow(
+			/Invalid salt length: 2, expected 4/,
+		);
+		expect(() => new StaticSaltManager("0102030405")).toThrow(
+			/Invalid salt length: 5, expected 4/,
+		);
+	});
+
+	it("rejects invalid hex", () => {
+		expect(() => new StaticSaltManager("zzzz")).toThrow();
+	});
+});
