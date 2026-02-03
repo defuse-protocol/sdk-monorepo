@@ -199,11 +199,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 			this.deadline ?? new Date(Date.now() + DEFAULT_DEADLINE_MS);
 		const nonce =
 			this.customNonce ??
-			VersionedNonceBuilder.encodeNonce(
-				salt,
-				deadline,
-				this.customRandomBytes,
-			);
+			VersionedNonceBuilder.encodeNonce(salt, deadline, this.customRandomBytes);
 
 		return {
 			verifying_contract: this.verifyingContract,
