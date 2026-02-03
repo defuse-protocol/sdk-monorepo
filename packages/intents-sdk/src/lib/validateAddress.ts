@@ -8,7 +8,7 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
-
+import { Address } from "@provablehq/sdk";
 /**
  * Validates that an address matches the expected format for a given blockchain.
  *
@@ -472,19 +472,7 @@ function validateLitecoinBech32Address(address: string): boolean {
 
 export function validateAleoAddress(address: string): boolean {
 	try {
-		if (address.length !== 63) {
-			return false;
-		}
-		const decoded = bech32m.decode(address as `${string}1${string}`, 63);
-
-		if (decoded.prefix !== "aleo") {
-			return false;
-		}
-
-		if (decoded.words.length === 0) {
-			return false;
-		}
-
+		Address.from_string(address)
 		return true;
 	} catch {
 		return false;

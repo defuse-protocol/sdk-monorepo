@@ -89,6 +89,15 @@ describe("validateAleoAddress", () => {
 		).toBe(true);
 	});
 
+	it("do not accept correctly benchm32 encode address that is not a point on the Elliptic Curve", () => {
+		expect(
+			validateAddress(
+				"aleo18kqq6556r4kk5vcth0h84l4hxlsqgm70jum4aeylvy7es0ew9yzqcj9jzh",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
 	it("rejects addresses with wrong prefix", () => {
 		// Wrong prefix (not 'aleo')
 		expect(
