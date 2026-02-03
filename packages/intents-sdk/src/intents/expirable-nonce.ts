@@ -58,7 +58,7 @@ class VersionedNonce {
 	}
 }
 
-const SALTED_NONCE_BORSH_SCHEMA: Schema = {
+export const SALTED_NONCE_BORSH_SCHEMA: Schema = {
 	struct: {
 		salt: { array: { type: "u8", len: 4 } },
 		inner: {
@@ -71,20 +71,48 @@ const SALTED_NONCE_BORSH_SCHEMA: Schema = {
 };
 
 export namespace VersionedNonceBuilder {
+	const RANDOM_BYTES_LENGTH = 15;
+
+	/**
+	 * Creates nonce bytes with embedded start timestamp.
+	 * Layout: [startTime: 8 bytes LE nanoseconds] [random: 7 bytes]
+	 *
+	 * @param startTime The start time to embed in the nonce
+	 * @returns 15-byte Uint8Array with timestamp and random data
+	 */
+	export function createTimestampedNonceBytes(startTime: Date): Uint8Array {
+		const bytes = new Uint8Array(RANDOM_BYTES_LENGTH);
+		const view = new DataView(bytes.buffer);
+		view.setBigInt64(0, BigInt(startTime.getTime()) * 1_000_000n, true);
+		crypto.getRandomValues(bytes.subarray(8));
+		return bytes;
+	}
+
 	/**
 	 * Encodes a versioned expirable nonce with the given salt and deadline
 	 *
 	 * @param salt The salt to use for the nonce
 	 * @param deadline The expiration deadline for the nonce
+	 * @param randomBytes Optional random bytes to use. If not provided, random bytes will be generated.
 	 * @returns The encoded nonce as a base64 string
 	 */
-	export function encodeNonce(salt: Salt, deadline: Date): string {
+	export function encodeNonce(
+		salt: Salt,
+		deadline: Date,
+		randomBytes: Uint8Array<ArrayBufferLike> = crypto.getRandomValues(
+			new Uint8Array(RANDOM_BYTES_LENGTH),
+		),
+	): string {
 		if (salt.length !== 4) {
 			throw new Error(`Invalid salt length: ${salt.length}, expected 4`);
 		}
+		if (randomBytes.length !== RANDOM_BYTES_LENGTH) {
+			throw new Error(
+				`Invalid randomBytes length: ${randomBytes.length}, expected ${RANDOM_BYTES_LENGTH}`,
+			);
+		}
 
 		const deadlineBigInt = BigInt(deadline.getTime()) * 1_000_000n;
-		const nonceBytes = crypto.getRandomValues(new Uint8Array(15));
 
 		// Manual serialization of SaltedNonce
 		// salt (4) + deadline (8) + nonce (15) = 27 bytes
@@ -101,8 +129,8 @@ export namespace VersionedNonceBuilder {
 		);
 		view.setBigUint64(4, deadlineBigInt, true);
 
-		// Nonce
-		borshBytes.set(nonceBytes, 12);
+		// Random bytes
+		borshBytes.set(randomBytes, 12);
 
 		// Serializing in full format: MAGIC_PREFIX (4) | VERSION (1) | NONCE_BYTES (27)
 		const result = new Uint8Array(4 + 1 + borshBytes.length);
