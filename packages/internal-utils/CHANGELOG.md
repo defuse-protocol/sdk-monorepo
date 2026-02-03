@@ -1,5 +1,15 @@
 # @defuse-protocol/internal-utils
 
+## 0.26.0
+
+### Minor Changes
+
+- 8fb6d4b: Add nonce customization and static salt support for private blockchains.
+  - `VersionedNonceBuilder.createTimestampedNonceBytes(startTime)` — embed start timestamp in nonce
+  - `EnvConfig.contractSalt` — static salt (hex) for private blockchains
+  - `IntentPayloadBuilder.setNonceRandomBytes(bytes)` — custom random bytes for nonce generation
+  - **Breaking:** nonce deadline now equals intent deadline (removed 5s offset)
+
 ## 0.25.0
 
 ### Minor Changes
