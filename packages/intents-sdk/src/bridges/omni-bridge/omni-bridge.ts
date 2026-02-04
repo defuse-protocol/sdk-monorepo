@@ -12,7 +12,7 @@ import type { providers } from "near-api-js";
 import {
 	ChainKind,
 	type OmniAddress,
-	OmniBridgeAPI,
+	BridgeAPI,
 	type TokenDecimals,
 	getChain,
 	getMinimumTransferableAmount,
@@ -20,7 +20,7 @@ import {
 	omniAddress,
 	parseOriginChain,
 	verifyTransferAmount,
-} from "omni-bridge-sdk";
+} from "@omni-bridge/core";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -78,7 +78,7 @@ export class OmniBridge implements Bridge {
 	readonly route = RouteEnum.OmniBridge;
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
-	protected omniBridgeAPI: OmniBridgeAPI;
+	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
@@ -106,7 +106,7 @@ export class OmniBridge implements Bridge {
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
-		this.omniBridgeAPI = new OmniBridgeAPI();
+		this.omniBridgeAPI = new BridgeAPI("mainnet");
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
