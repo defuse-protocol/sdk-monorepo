@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.51.0
+
+### Minor Changes
+
+- 31c7736: Add `signRaw()` method to signers for signing arbitrary payloads (e.g. server-generated challenges)
+
 ## 0.50.0
 
 ### Minor Changes
