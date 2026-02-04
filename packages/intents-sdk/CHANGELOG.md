@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.50.0
+
+### Minor Changes
+
+- 92a4ba7: Update omni sdk to use latest version
+
 ## 0.49.0
 
 ### Minor Changes
