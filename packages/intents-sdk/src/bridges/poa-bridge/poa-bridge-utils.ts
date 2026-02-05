@@ -66,6 +66,7 @@ const caip2Mapping = {
 	[Chains.Cardano]: "cardano:mainnet",
 	[Chains.Litecoin]: "ltc:mainnet",
 	[Chains.Starknet]: "starknet:mainnet",
+	[Chains.Aleo]: "aleo:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
