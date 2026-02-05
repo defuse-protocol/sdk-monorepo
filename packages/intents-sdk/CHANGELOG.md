@@ -1,5 +1,36 @@
 # @defuse-protocol/intents-sdk
 
+## 0.51.0
+
+### Minor Changes
+
+- 31c7736: Add `signRaw()` method to signers for signing arbitrary payloads (e.g. server-generated challenges)
+
+## 0.50.0
+
+### Minor Changes
+
+- 92a4ba7: Update omni sdk to use latest version
+
+## 0.49.0
+
+### Minor Changes
+
+- 8fb6d4b: Add nonce customization and static salt support for private blockchains.
+  - `VersionedNonceBuilder.createTimestampedNonceBytes(startTime)` — embed start timestamp in nonce
+  - `EnvConfig.contractSalt` — static salt (hex) for private blockchains
+  - `IntentPayloadBuilder.setNonceRandomBytes(bytes)` — custom random bytes for nonce generation
+  - **Breaking:** nonce deadline now equals intent deadline (removed 5s offset)
+
+### Patch Changes
+
+- 98c96ca: Remove unused binary/cell payload handling from TON Connect (only text payloads supported)
+- Updated dependencies [98c96ca]
+- Updated dependencies [8fb6d4b]
+  - @defuse-protocol/contract-types@0.6.0
+- Updated dependencies [8fb6d4b]
+  - @defuse-protocol/internal-utils@0.26.0
+
 ## 0.48.0
 
 ### Minor Changes

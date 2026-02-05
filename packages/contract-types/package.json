@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/contract-types",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -43,7 +43,7 @@
 		"schemas"
 	],
 	"scripts": {
-		"build": "tsc --noEmit && tsdown",
+		"build": "$npm_execpath gen-defuse-types && tsdown",
 		"dev": "tsdown --watch",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",

@@ -53,6 +53,10 @@ const ALL_SUPPORTED_STANDARDS = [
 const JSONSCHEMATYPE_INCOMPATIBLE: Record<string, string> = {
 	SimulationOutput:
 		"Optional union property (invariant_violated?: InvariantViolated | null) - AJV limitation",
+	DefuseConfig:
+		"Optional object properties with defaults (roles, admins, grantees) - AJV limitation",
+	RolesConfig:
+		"Optional object properties with defaults (admins, grantees) - AJV limitation",
 };
 
 /**
@@ -1010,6 +1014,61 @@ export const fixAnyOfNullable = createSchemaTransformer(
 );
 
 /**
+ * Handles oneOf: [T, { type: "null" }] patterns for AJV JSONSchemaType compatibility.
+ * Converts to T with nullable: true when T is a simple typed object.
+ * When T itself has oneOf (nested union), keeps the oneOf structure with null variant.
+ */
+export const fixOneOfNullable = createSchemaTransformer(
+	"fixOneOfNullable",
+	(entries, recurse) => {
+		const result: [string, unknown][] = [];
+
+		for (const [key, value] of entries) {
+			if (key === "oneOf" && Array.isArray(value) && value.length === 2) {
+				const nullVariant = value.find(
+					(v) => isPlainObject(v) && v.type === "null",
+				);
+				const nonNullVariant = value.find(
+					(v) => isPlainObject(v) && v.type !== "null",
+				);
+
+				if (nullVariant && nonNullVariant && isPlainObject(nonNullVariant)) {
+					const fixed = recurse(nonNullVariant);
+					if (!isPlainObject(fixed)) {
+						result.push([key, recurse(value)]);
+						continue;
+					}
+
+					// If non-null variant has nested oneOf, keep oneOf structure with null
+					if (Array.isArray(fixed.oneOf)) {
+						result.push(["oneOf", [...fixed.oneOf, { type: "null" }]]);
+						// Copy other properties from fixed (like description)
+						for (const [k, v] of Object.entries(fixed)) {
+							if (k !== "oneOf") {
+								result.push([k, v]);
+							}
+						}
+						continue;
+					}
+
+					// For typed objects, flatten and add nullable: true
+					if (typeof fixed.type === "string") {
+						for (const [k, v] of Object.entries(fixed)) {
+							result.push([k, v]);
+						}
+						result.push(["nullable", true]);
+						continue;
+					}
+				}
+			}
+			result.push([key, recurse(value)]);
+		}
+
+		return result;
+	},
+);
+
+/**
  * Remove discriminator from dereferenced schema.
  * The discriminator keyword was added for OpenAPI tooling but AJV's implementation
  * has strict requirements that don't match our schema. oneOf validation works without it.
@@ -1029,6 +1088,7 @@ function applyAjvFixes(schema: JsonSchema): JsonSchema {
 	result = fixOptionalProperties(result);
 	result = flattenAllOf(result);
 	result = fixAnyOfNullable(result);
+	result = fixOneOfNullable(result);
 	return result;
 }
 

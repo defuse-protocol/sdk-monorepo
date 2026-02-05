@@ -8,6 +8,32 @@ import { hex } from "@scure/base";
 
 export const SALT_TTL_MS = 5 * 60 * 1000; // 5 mins
 
+/**
+ * Salt manager that returns a static, pre-configured salt.
+ * Use when salt is known ahead of time (e.g., private blockchain with fixed salt).
+ */
+export class StaticSaltManager implements ISaltManager {
+	private salt: Salt;
+
+	/**
+	 * @param saltHex Salt as hex string (e.g., "01020304")
+	 */
+	constructor(saltHex: string) {
+		this.salt = hex.decode(saltHex);
+		if (this.salt.length !== 4) {
+			throw new Error(`Invalid salt length: ${this.salt.length}, expected 4`);
+		}
+	}
+
+	async getCachedSalt(): Promise<Salt> {
+		return this.salt;
+	}
+
+	async refresh(): Promise<Salt> {
+		return this.salt;
+	}
+}
+
 export class SaltManager implements ISaltManager {
 	protected intentsContract: string;
 	protected nearProvider: providers.Provider;

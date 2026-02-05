@@ -14,7 +14,7 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress } from "omni-bridge-sdk";
+import { ChainKind, omniAddress } from "@omni-bridge/core";
 import { Chains } from "../../lib/caip2";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 

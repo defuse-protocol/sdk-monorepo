@@ -13,6 +13,8 @@ export {
 } from "./src/intents/intent-signer-impl/factories";
 
 export type { IIntentSigner } from "./src/intents/interfaces/intent-signer";
+export type { Erc191RawPayload } from "./src/intents/intent-signer-impl/intent-signer-viem";
+export type { Nep413RawPayload } from "./src/intents/intent-signer-impl/intent-signer-nep413";
 
 // ============================================================================
 // Core Types
