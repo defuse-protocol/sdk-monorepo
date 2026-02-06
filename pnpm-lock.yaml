@@ -120,9 +120,6 @@ importers:
       '@omni-bridge/near':
         specifier: 0.2.3
         version: 0.2.3(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.5.1(@near-js/types@2.5.1)(@near-js/utils@2.2.5(@near-js/types@2.5.1)))(@near-js/types@2.5.1))(@near-js/utils@2.2.5(@near-js/types@2.5.1)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
-      '@provablehq/sdk':
-        specifier: ^0.9.15
-        version: 0.9.15
       '@scure/base':
         specifier: ^1.0.0
         version: 1.2.6
@@ -1328,12 +1325,6 @@ packages:
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
 
-  '@provablehq/sdk@0.9.15':
-    resolution: {integrity: sha512-i4afwCH8oO/qoF+OgrHh32RH2qnDPiqeZmQt2Rzro/KSiq3BmjdWSQu7fmLf9qfeyQTOKP9uEMJVBYs0MmE6BQ==}
-
-  '@provablehq/wasm@0.9.15':
-    resolution: {integrity: sha512-7aWOfvosDYG97S4OiQYY3Q+t95zdkt2wQ4oPTDHwRz4f+7shgYoQDkfm3QIepuf+82jvQ8jJrbBNVl/UNrYoSQ==}
-
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
 
@@ -2386,9 +2377,6 @@ packages:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
 
-  comlink@4.4.2:
-    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
-
   commander@12.1.0:
     resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
     engines: {node: '>=18'}
@@ -2413,9 +2401,6 @@ packages:
 
   core-js-pure@3.43.0:
     resolution: {integrity: sha512-i/AgxU2+A+BbJdMxh3v7/vxi2SbFqxiFmg6VsDwYB4jkucrd1BZNA9a9gphC0fYMG5IBSgQcbQnk865VCLe7xA==}
-
-  core-js@3.48.0:
-    resolution: {integrity: sha512-zpEHTy1fjTMZCKLHUZoVeylt9XrzaIN2rbPXEt0k+q7JE5CkCZdo6bNq55bn24a69CH7ErAVLKijxJja4fw+UQ==}
 
   cosmjs-types@0.10.1:
     resolution: {integrity: sha512-CENXb4O5GN+VyB68HYXFT2SOhv126Z59631rZC56m8uMWa6/cSlFeai8BwZGT1NMepw0Ecf+U8XSOnBzZUWh9Q==}
@@ -3190,11 +3175,6 @@ packages:
   mime-types@2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
     engines: {node: '>= 0.6'}
-
-  mime@4.1.0:
-    resolution: {integrity: sha512-X5ju04+cAzsojXKes0B/S4tcYtFAJ6tTMuSPBEn9CPGlrWr8Fiw7qYeLT0XyH80HSoAoqWCaz+MWKh22P7G1cw==}
-    engines: {node: '>=16'}
-    hasBin: true
 
   mimic-response@1.0.1:
     resolution: {integrity: sha512-j5EctnkH7amfV/q5Hgmoal1g2QHFJRraOtmx0JpIqkxhBhI/lJSl1nMpQ45hVarwNETOoWEimndZ4QK0RHxuxQ==}
@@ -4207,10 +4187,6 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
-
-  xmlhttprequest-ssl@4.0.0:
-    resolution: {integrity: sha512-b7DXzbCm8VWmII2mQiQHy5VG1L6YBUnNxuCooldWpMUXTwa08uXEz1q5Nv6wlULnSI5GiHuwBIq6pNJrqRh/8Q==}
-    engines: {node: '>=13.0.0'}
 
   xstream@11.14.0:
     resolution: {integrity: sha512-1bLb+kKKtKPbgTK6i/BaoAn03g47PpFstlbe1BA+y3pNS/LfvcaghS5BFf9+EE1J+KwSQsEpfJvFN5GqFtiNmw==}
@@ -5836,17 +5812,6 @@ snapshots:
 
   '@protobufjs/utf8@1.1.0': {}
 
-  '@provablehq/sdk@0.9.15':
-    dependencies:
-      '@provablehq/wasm': 0.9.15
-      '@scure/base': 2.0.0
-      comlink: 4.4.2
-      core-js: 3.48.0
-      mime: 4.1.0
-      xmlhttprequest-ssl: 4.0.0
-
-  '@provablehq/wasm@0.9.15': {}
-
   '@quansync/fs@1.0.0':
     dependencies:
       quansync: 1.0.0
@@ -7239,8 +7204,6 @@ snapshots:
     dependencies:
       delayed-stream: 1.0.0
 
-  comlink@4.4.2: {}
-
   commander@12.1.0: {}
 
   commander@13.1.0: {}
@@ -7254,8 +7217,6 @@ snapshots:
   cookie@0.7.2: {}
 
   core-js-pure@3.43.0: {}
-
-  core-js@3.48.0: {}
 
   cosmjs-types@0.10.1:
     optional: true
@@ -8098,8 +8059,6 @@ snapshots:
   mime-types@2.1.35:
     dependencies:
       mime-db: 1.52.0
-
-  mime@4.1.0: {}
 
   mimic-response@1.0.1: {}
 
@@ -9100,8 +9059,6 @@ snapshots:
     optionalDependencies:
       bufferutil: 4.0.9
       utf-8-validate: 5.0.10
-
-  xmlhttprequest-ssl@4.0.0: {}
 
   xstream@11.14.0:
     dependencies:

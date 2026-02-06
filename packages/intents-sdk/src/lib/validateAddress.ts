@@ -8,7 +8,6 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
-import { Address } from "@provablehq/sdk";
 /**
  * Validates that an address matches the expected format for a given blockchain.
  *
@@ -470,10 +469,77 @@ function validateLitecoinBech32Address(address: string): boolean {
 	return false;
 }
 
+/**
+ * Edwards BLS12-377 field modulus (scalar field order of BLS12-377).
+ * This is the base field for the twisted Edwards curve used by Aleo.
+ */
+const ALEO_FIELD_MODULUS =
+	8444461749428370424248824938781546531375899335154063827935233455917409239041n;
+
+/**
+ * Edwards curve coefficient d.
+ * Curve equation: -x² + y² = 1 + d·x²·y²  (a = -1)
+ */
+const ALEO_COEFF_D = 3021n;
+
+/** Modular exponentiation: base^exp mod m */
+function modPow(base: bigint, exp: bigint, m: bigint): bigint {
+	let result = 1n;
+	base = ((base % m) + m) % m;
+	while (exp > 0n) {
+		if (exp & 1n) {
+			result = (result * base) % m;
+		}
+		exp >>= 1n;
+		base = (base * base) % m;
+	}
+	return result;
+}
+
+/**
+ * Validates an Aleo address by decoding the bech32m payload and verifying
+ * the compressed point lies on the Edwards BLS12-377 curve.
+ *
+ * Compressed format: x-coordinate (little-endian, 32 bytes) with y-sign
+ * flag in bit 7 of byte 31.
+ */
 export function validateAleoAddress(address: string): boolean {
 	try {
-		Address.from_string(address);
-		return true;
+		const decoded = bech32m.decodeToBytes(address);
+		if (decoded.prefix !== "aleo") return false;
+		if (decoded.bytes.length !== 32) return false;
+
+		// Extract x-coordinate, clearing the y-sign flag (MSB of last byte)
+		const bytes = new Uint8Array(decoded.bytes);
+		// Length is checked above, so index 31 is safe
+		bytes[31] = (bytes[31] as number) & 0x7f;
+
+		let x = 0n;
+		for (let i = 31; i >= 0; i--) {
+			x = (x << 8n) | BigInt(bytes[i] as number);
+		}
+
+		const p = ALEO_FIELD_MODULUS;
+		if (x >= p) return false;
+
+		// From -x² + y² = 1 + d·x²·y²:
+		//   y² = (1 + x²) / (1 - d·x²)
+		const x2 = (x * x) % p;
+		const numerator = (1n + x2) % p;
+		const denominator = (((1n - ((ALEO_COEFF_D * x2) % p)) % p) + p) % p;
+
+		if (denominator === 0n) {
+			return numerator === 0n;
+		}
+
+		const denomInv = modPow(denominator, p - 2n, p);
+		const y2 = (numerator * denomInv) % p;
+
+		if (y2 === 0n) return true;
+
+		// Euler's criterion: y² is a quadratic residue iff y²^((p-1)/2) ≡ 1
+		const legendre = modPow(y2, (p - 1n) / 2n, p);
+		return legendre === 1n;
 	} catch {
 		return false;
 	}
