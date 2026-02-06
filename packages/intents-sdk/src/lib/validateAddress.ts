@@ -470,36 +470,140 @@ function validateLitecoinBech32Address(address: string): boolean {
 	return false;
 }
 
-/**
- * Edwards BLS12-377 field modulus (scalar field order of BLS12-377).
- * This is the base field for the twisted Edwards curve used by Aleo.
- */
-const ALEO_FIELD_MODULUS =
+// ──────────────────────────────────────────────────────────────────────
+// Edwards BLS12-377 curve parameters and arithmetic
+//
+// Matches the validation in snarkVM:
+//   curves/src/templates/twisted_edwards_extended/affine.rs  (point decompression)
+//   console/types/group/src/from_x_coordinate.rs            (subgroup check)
+//   curves/src/edwards_bls12/parameters.rs                  (curve constants)
+// ──────────────────────────────────────────────────────────────────────
+
+/** Base field modulus (= scalar field order of BLS12-377). */
+const P =
 	8444461749428370424248824938781546531375899335154063827935233455917409239041n;
 
-/**
- * Edwards curve coefficient d.
- * Curve equation: -x² + y² = 1 + d·x²·y²  (a = -1)
- */
-const ALEO_COEFF_D = 3021n;
+/** Edwards curve coefficient d.  Curve: -x² + y² = 1 + d·x²·y² (a = -1). */
+const D = 3021n;
 
-/** Modular exponentiation: base^exp mod m */
+/** Prime-order subgroup order (= scalar field of Edwards BLS12-377, cofactor = 4). */
+const SUBGROUP_ORDER =
+	2111115437357092606062206234695386632838870926408408195193685246394721360383n;
+
+// ── field helpers ────────────────────────────────────────────────────
+
 function modPow(base: bigint, exp: bigint, m: bigint): bigint {
 	let result = 1n;
 	base = ((base % m) + m) % m;
 	while (exp > 0n) {
-		if (exp & 1n) {
-			result = (result * base) % m;
-		}
+		if (exp & 1n) result = (result * base) % m;
 		exp >>= 1n;
 		base = (base * base) % m;
 	}
 	return result;
 }
 
+/** Tonelli-Shanks square root in F_P. Returns null when n is a non-residue. */
+function modSqrt(n: bigint): bigint | null {
+	n = ((n % P) + P) % P;
+	if (n === 0n) return 0n;
+	if (modPow(n, (P - 1n) / 2n, P) !== 1n) return null;
+
+	// Factor P-1 = 2^s · q
+	let s = 0;
+	let q = P - 1n;
+	while ((q & 1n) === 0n) {
+		s++;
+		q >>= 1n;
+	}
+
+	// Find a quadratic non-residue z
+	let z = 2n;
+	while (modPow(z, (P - 1n) / 2n, P) !== P - 1n) z++;
+
+	let m = s;
+	let c = modPow(z, q, P);
+	let t = modPow(n, q, P);
+	let r = modPow(n, (q + 1n) / 2n, P);
+
+	for (;;) {
+		if (t === 1n) return r;
+		// Find least i such that t^(2^i) ≡ 1
+		let i = 1;
+		let tmp = (t * t) % P;
+		while (tmp !== 1n) {
+			tmp = (tmp * tmp) % P;
+			i++;
+		}
+		// b = c^(2^(m-i-1))
+		let b = c;
+		for (let j = 0; j < m - i - 1; j++) b = (b * b) % P;
+		m = i;
+		c = (b * b) % P;
+		t = (t * c) % P;
+		r = (r * b) % P;
+	}
+}
+
+// ── Extended twisted-Edwards point arithmetic ───────────────────────
+// Representation: (X, Y, T, Z) with x = X/Z, y = Y/Z, T = X·Y/Z.
+// Formulas from "Twisted Edwards Curves Revisited" §3 (a = -1 case).
+
+type ExtPoint = readonly [bigint, bigint, bigint, bigint];
+
+const EXT_ZERO: ExtPoint = [0n, 1n, 0n, 1n];
+
+function extAdd(a: ExtPoint, b: ExtPoint): ExtPoint {
+	const [X1, Y1, T1, Z1] = a;
+	const [X2, Y2, T2, Z2] = b;
+	const A = (X1 * X2) % P;
+	const B = (Y1 * Y2) % P;
+	const C = (((T1 * D) % P) * T2) % P;
+	const Dd = (Z1 * Z2) % P;
+	const E = (((((X1 + Y1) % P) * ((X2 + Y2) % P)) % P) - A - B + 2n * P) % P;
+	const F = (((Dd - C) % P) + P) % P;
+	const G = (Dd + C) % P;
+	const H = (B + A) % P; // a = -1 → B - aA = B + A
+	return [(E * F) % P, (G * H) % P, (E * H) % P, (F * G) % P];
+}
+
+function extDouble(a: ExtPoint): ExtPoint {
+	const [X, Y, _T, Z] = a;
+	const A = (X * X) % P;
+	const B = (Y * Y) % P;
+	const C = (2n * ((Z * Z) % P)) % P;
+	const Dd = (P - A) % P; // a·A = -A
+	const E = (((((X + Y) % P) * ((X + Y) % P)) % P) - A - B + 2n * P) % P;
+	const G = (Dd + B) % P;
+	const F = (((G - C) % P) + P) % P;
+	const H = (((Dd - B) % P) + P) % P;
+	return [(E * F) % P, (G * H) % P, (E * H) % P, (F * G) % P];
+}
+
+function scalarMul(pt: ExtPoint, scalar: bigint): ExtPoint {
+	let result: ExtPoint = EXT_ZERO;
+	let base = pt;
+	let s = scalar;
+	while (s > 0n) {
+		if (s & 1n) result = extAdd(result, base);
+		base = extDouble(base);
+		s >>= 1n;
+	}
+	return result;
+}
+
+/** Check whether an extended point is the identity (0, 1). */
+function isIdentity(pt: ExtPoint): boolean {
+	// X/Z == 0  and  Y/Z == 1  ⟹  X == 0  and  Y == Z
+	return pt[0] === 0n && pt[1] === pt[3];
+}
+
+// ── public API ──────────────────────────────────────────────────────
+
 /**
- * Validates an Aleo address by decoding the bech32m payload and verifying
- * the compressed point lies on the Edwards BLS12-377 curve.
+ * Validates an Aleo address by decoding the bech32m payload, decompressing
+ * the Edwards BLS12-377 point, and verifying it lies in the prime-order
+ * subgroup — matching snarkVM's `Group::from_x_coordinate` exactly.
  *
  * Compressed format: x-coordinate (little-endian, 32 bytes) with y-sign
  * flag in bit 7 of byte 31.
@@ -512,35 +616,36 @@ export function validateAleoAddress(address: string): boolean {
 
 		// Extract x-coordinate, clearing the y-sign flag (MSB of last byte)
 		const bytes = new Uint8Array(decoded.bytes);
-		// Length is checked above, so index 31 is safe
 		bytes[31] = (bytes[31] as number) & 0x7f;
 
 		let x = 0n;
 		for (let i = 31; i >= 0; i--) {
 			x = (x << 8n) | BigInt(bytes[i] as number);
 		}
+		if (x >= P) return false;
 
-		const p = ALEO_FIELD_MODULUS;
-		if (x >= p) return false;
+		// y² = (1 + x²) / (1 - d·x²)  (equivalent to Rust: (a·x²-1)/(d·x²-1) with a=-1)
+		const x2 = (x * x) % P;
+		const num = (1n + x2) % P;
+		const den = (((1n - ((D * x2) % P)) % P) + P) % P;
+		if (den === 0n) return false;
 
-		// From -x² + y² = 1 + d·x²·y²:
-		//   y² = (1 + x²) / (1 - d·x²)
-		const x2 = (x * x) % p;
-		const numerator = (1n + x2) % p;
-		const denominator = (((1n - ((ALEO_COEFF_D * x2) % p)) % p) + p) % p;
+		const denInv = modPow(den, P - 2n, P);
+		const y2 = (num * denInv) % P;
 
-		if (denominator === 0n) {
-			return numerator === 0n;
+		// Decompress: recover y via square root
+		const y = modSqrt(y2);
+		if (y === null) return false;
+
+		// snarkVM checks both (x, y) and (x, -y) for subgroup membership
+		const negY = y === 0n ? 0n : P - y;
+		const p1: ExtPoint = [x, y, (x * y) % P, 1n];
+		const p2: ExtPoint = [x, negY, (x * negY) % P, 1n];
+
+		for (const pt of [p1, p2]) {
+			if (isIdentity(scalarMul(pt, SUBGROUP_ORDER))) return true;
 		}
-
-		const denomInv = modPow(denominator, p - 2n, p);
-		const y2 = (numerator * denomInv) % p;
-
-		if (y2 === 0n) return true;
-
-		// Euler's criterion: y² is a quadratic residue iff y²^((p-1)/2) ≡ 1
-		const legendre = modPow(y2, (p - 1n) / 2n, p);
-		return legendre === 1n;
+		return false;
 	} catch {
 		return false;
 	}
