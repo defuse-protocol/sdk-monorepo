@@ -24,5 +24,6 @@
 	"sui:mainnet": "sui",
 	"aptos:mainnet": "aptos",
 	"stellar:pubnet": "stellar",
-	"cip34:1-764824073": "cardano"
+	"cip34:1-764824073": "cardano",
+	"aleo:0": "aleo"
 }
