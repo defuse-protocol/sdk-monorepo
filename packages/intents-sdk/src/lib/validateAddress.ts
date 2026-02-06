@@ -8,6 +8,7 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
+
 /**
  * Validates that an address matches the expected format for a given blockchain.
  *
