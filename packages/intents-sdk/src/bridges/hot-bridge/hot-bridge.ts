@@ -3,6 +3,7 @@ import {
 	type ILogger,
 	type EnvConfig,
 	withTimeout,
+	request,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
@@ -34,8 +35,9 @@ import {
 	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalNotFoundError,
 } from "./error";
-import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
+import { MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
+	BridgeIndexerResponseSchema,
 	formatTxHash,
 	getFeeAssetIdForChain,
 	hotBlockchainInvariant,
@@ -376,31 +378,16 @@ export class HotBridge implements Bridge {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
-		// Primary source: contract view method
-		const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
+		// Primary method - bridge indexer
+		const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
+			args.tx.hash,
 			nonce.toString(),
+			args.logger,
 		);
-
-		if (status === HotWithdrawStatus.Canceled) {
-			return {
-				status: "failed",
-				reason: "Withdrawal was cancelled",
-			};
-		}
-		if (status === HotWithdrawStatus.Completed) {
-			return { status: "completed", txHash: null };
-		}
-		if (typeof status === "string") {
-			// HOT returns hexified raw bytes without 0x prefix, any other value should be ignored.
-			if (!isHex(status)) {
-				args.logger?.warn("HOT Bridge incorrect destination tx hash detected", {
-					value: status,
-				});
-				return { status: "completed", txHash: null };
-			}
+		if (bridgeIndexerHash !== null) {
 			return {
 				status: "completed",
-				txHash: formatTxHash(status, args.landingChain),
+				txHash: bridgeIndexerHash,
 			};
 		}
 
@@ -420,6 +407,55 @@ export class HotBridge implements Bridge {
 		return { status: "pending" };
 	}
 
+	private async fetchWithdrawalHashBridgeIndexer(
+		nearTxHash: string,
+		nonce: string,
+		logger?: ILogger,
+	): Promise<string | null> {
+		try {
+			const url = new URL(
+				"/api/v1/withdrawals",
+				this.envConfig.bridgeIndexerUrl,
+			);
+			url.searchParams.set("near_trx", nearTxHash);
+
+			const response = await request({
+				url,
+				fetchOptions: {
+					method: "GET",
+				},
+			});
+
+			const json = await response.json();
+
+			const parseResult = v.safeParse(BridgeIndexerResponseSchema, json);
+			if (!parseResult.success) {
+				logger?.debug("HOT Bridge indexer response parse failed", {
+					issues: parseResult.issues,
+				});
+				return null;
+			}
+
+			const withdrawal = parseResult.output.withdrawals.find((withdrawal) => {
+				return withdrawal.nonce === nonce;
+			});
+
+			if (withdrawal === undefined) {
+				logger?.info("HOT Bridge indexer withdrawal hash found", {
+					nearTxHash,
+					nonce: nonce.toString(),
+				});
+				return null;
+			}
+			return withdrawal.hash;
+		} catch {
+			logger?.info("HOT Bridge indexer failed", {
+				nearTxHash,
+				nonce: nonce.toString(),
+			});
+			return null;
+		}
+	}
 	private async fetchWithdrawalHashFromApi(
 		nearTxHash: string,
 		nonce: bigint,

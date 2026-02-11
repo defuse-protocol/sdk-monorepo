@@ -2,6 +2,7 @@ import { assert } from "@defuse-protocol/internal-utils";
 import { Network } from "@hot-labs/omni-sdk";
 import { type Chain, Chains } from "../../lib/caip2";
 import { type HotBridgeChain, HotBridgeChains } from "./hot-bridge-chains";
+import * as v from "valibot";
 
 // HOT SDK still maps Network.Monad (10143) to their testnet, so force mainnet id.
 const MONAD_MAINNET_NETWORK_ID = 143 as Network;
@@ -77,3 +78,26 @@ export function hotBlockchainInvariant(
 		`${blockchain} is not a valid HOT Bridge blockchain. Supported values: ${HotBridgeChains.join()}`,
 	);
 }
+
+const WithdrawalSchema = v.object({
+	hash: v.nullable(v.string()),
+	nonce: v.string(),
+	chain_id: v.number(),
+	withdraw_asset: v.string(),
+	withdraw_token: v.string(),
+	withdraw_amount: v.string(),
+	receiver_address: v.nullable(v.string()),
+	signature: v.string(),
+	near_tx_time: v.string(),
+	near_tx_block: v.string(),
+	destination_chain_block: v.nullable(v.string()),
+});
+
+export const BridgeIndexerResponseSchema = v.object({
+	near_trx: v.string(),
+	withdrawals: v.array(WithdrawalSchema),
+});
+
+export type BridgeIndexerResponseSchema = v.InferOutput<
+	typeof BridgeIndexerResponseSchema
+>;
