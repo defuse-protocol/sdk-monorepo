@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.2.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
 ## 1.1.1
 
 ### Patch Changes
