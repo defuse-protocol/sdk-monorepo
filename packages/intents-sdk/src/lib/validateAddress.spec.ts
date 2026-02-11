@@ -79,6 +79,106 @@ describe("validateEthAddress", () => {
 	});
 });
 
+describe("validateAleoAddress", () => {
+	it("accepts valid bech32m addresses", () => {
+		const valid = [
+			// From existing tests
+			"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+			"aleo1hd0xpfhlys8npclk5mwzs8mrjtst4tf6ww2kqeauhtajma2duyyqy74d2m",
+			"aleo1utccvqnv2wudda5zp4seuj0a72ln43w5m5njkckcfgc4jkccyyzsezysts",
+			"aleo1lakx4yl4anysx0uygkaq87pteev4rnzm9gkhfx6f8ae7yvg0a5ps5tcj0j",
+			"aleo1xqtecvkjs5chpah5afgv6vmege0c6yzvqzj7st5x63lqhh8mg5xqcnxp7r",
+			// From snarkVM console/account test constants
+			"aleo1wvgwnqvy46qq0zemj0k6sfp3zv0mp77rw97khvwuhac05yuwscxqmfyhwf",
+			// From ProvableHQ SDK test data (account-data.ts)
+			"aleo184vuwr5u7u0ha5f5k44067dd2uaqewxx6pe5ltha5pv99wvhfqxqv339h4",
+			"aleo1j7qxyunfldj2lp8hsvy7mw5k8zaqgjfyr72x2gh3x4ewgae8v5gscf5jh3",
+			"aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px",
+			"aleo1n43sa2tl5zu28nma3uklpq77gg67rsvg6m460gkzref4ps9wlvgqdvlemw",
+			// From ProvableHQ SDK test data (records.ts)
+			"aleo12a4wll9ax6w5355jph0dr5wt2vla5sss2t4cnch0tc3vzh643v8qcfvc7a",
+			"aleo1j92w9mhqznj2hvufad796y8suykjppk7f6n6xmncmktfm95vggzqx4sjlh",
+			"aleo1vskzxa2qqgnhznxsqh6tgq93c30sfkj6xqwe7sr85lgjkexjlcxs3lxhy3",
+			"aleo1q8zc0asncaw9d83ft2dynyqz08fcpq3p40depmrj4wjda28rdvrsvegg45",
+			"aleo1jqnajd8g6ezqjq0eefm4zeqynwx6vzed8flnkmejw0afy09dusrszzk46k",
+			// From ProvableHQ SDK wasm tests (credits.aleo program)
+			"aleo1lqmly7ez2k48ajf5hs92ulphaqr05qm4n8qwzj8v0yprmasgpqgsez59gg",
+		];
+
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.Aleo)).toBe(true);
+		}
+	});
+
+	it("rejects bech32m-encoded addresses that are not on the elliptic curve", () => {
+		const offCurve = [
+			// Original test vector
+			"aleo18kqq6556r4kk5vcth0h84l4hxlsqgm70jum4aeylvy7es0ew9yzqcj9jzh",
+			// Generated: valid bech32m, 32-byte payload, but y² is a non-quadratic residue
+			// x=1
+			"aleo1qyqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhezjc8",
+			// x=3
+			"aleo1qvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqm4th9s",
+			// x=4
+			"aleo1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqf8qw3l",
+			// x=12
+			"aleo1pcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhjxjjn",
+			// Mixed byte pattern
+			"aleo1vsqqqqqqqqqqqqqqqqqqqqqqluqqqqqqqqqqqqqqqqqqqqqq4vqqtzmh99",
+		];
+
+		for (const address of offCurve) {
+			expect(validateAddress(address, Chains.Aleo)).toBe(false);
+		}
+	});
+
+	it("rejects addresses with wrong prefix", () => {
+		// Wrong prefix (not 'aleo')
+		expect(
+			validateAddress(
+				"near1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses with invalid bech32m checksum", () => {
+		// Invalid checksum (changed last character from 'j' to 'k')
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0k",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses that are too short", () => {
+		expect(validateAddress("aleo1dg722m22fzpz6", Chains.Aleo)).toBe(false);
+	});
+
+	it("rejects addresses with extra characters", () => {
+		expect(
+			validateAddress(
+				"xaleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0jx",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects completely invalid strings", () => {
+		expect(validateAddress("not-an-aleo-address", Chains.Aleo)).toBe(false);
+		expect(validateAddress("aleo1", Chains.Aleo)).toBe(false);
+		expect(validateAddress("aleo1xyz", Chains.Aleo)).toBe(false);
+		expect(validateAddress("", Chains.Aleo)).toBe(false);
+	});
+});
+
 describe("validateSolAddress", () => {
 	it("accepts valid addresses", () => {
 		expect(
