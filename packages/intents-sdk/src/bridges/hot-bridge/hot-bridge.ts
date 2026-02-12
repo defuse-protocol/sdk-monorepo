@@ -470,7 +470,6 @@ export class HotBridge implements Bridge {
 	): Promise<string | null> {
 		const { withdrawals } =
 			await bridgeIndexer.httpClient.withdrawalsByNearTxHash(nearTxHash, {
-				envConfig: this.envConfig,
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 			});
 

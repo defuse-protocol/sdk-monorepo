@@ -1,5 +1,4 @@
-import { handleResponse } from "../../utils/handleResponse";
-import { request } from "../../utils/request";
+import { httpRequest } from "./runtime";
 import {
 	BridgeIndexerResponseSchema,
 	type BridgeIndexerResponse,
@@ -8,19 +7,12 @@ import {
 
 export async function withdrawalsByNearTxHash(
 	nearTxHash: string,
-	config: RequestConfig,
+	config?: RequestConfig,
 ): Promise<BridgeIndexerResponse> {
-	const url = new URL("/api/v1/withdrawals", config.envConfig.bridgeIndexerUrl);
-	url.searchParams.set("near_trx", nearTxHash);
-
-	const response = await request({
-		url,
-		...config,
-		fetchOptions: {
-			...config.fetchOptions,
-			method: "GET",
-		},
-	});
-
-	return handleResponse(response, undefined, BridgeIndexerResponseSchema);
+	return httpRequest(
+		"/api/v1/withdrawals",
+		{ near_trx: nearTxHash },
+		config,
+		BridgeIndexerResponseSchema,
+	);
 }

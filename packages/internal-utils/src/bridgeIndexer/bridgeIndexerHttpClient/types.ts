@@ -1,10 +1,13 @@
-import type { EnvConfig } from "../../config";
+import type { ILogger } from "../../logger";
+import type { RetryOptions } from "../../utils/retry";
 import * as v from "valibot";
 
 export type RequestConfig = {
 	timeout?: number | undefined;
-	envConfig: EnvConfig;
+	baseUrl?: string | undefined;
 	fetchOptions?: Omit<RequestInit, "body"> | undefined;
+	retryOptions?: RetryOptions;
+	logger?: ILogger;
 };
 
 const WithdrawalSchema = v.object({
