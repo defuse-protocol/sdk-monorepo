@@ -482,6 +482,15 @@ export class HotBridge implements Bridge {
 				});
 				return null;
 			}
+
+			if (withdrawal.hash === "") {
+				logger?.info("HOT Bridge indexer withdrawal hash invalid", {
+					withdrawalHash: withdrawal.hash,
+					nonce: nonce.toString(),
+				});
+				return null;
+			}
+
 			return withdrawal.hash;
 		} catch (error) {
 			logger?.info("HOT Bridge indexer request failed", {
