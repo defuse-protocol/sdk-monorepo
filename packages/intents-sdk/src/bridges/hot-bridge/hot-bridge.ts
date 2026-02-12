@@ -35,7 +35,7 @@ import {
 	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalNotFoundError,
 } from "./error";
-import { MIN_GAS_AMOUNT } from "./hot-bridge-constants";
+import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
 	BridgeIndexerResponseSchema,
 	formatTxHash,
@@ -377,9 +377,9 @@ export class HotBridge implements Bridge {
 		if (nonce == null) {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
-
-		// Primary method - bridge indexer, currently support only EVM
-		if (args.landingChain.startsWith("eip155:")) {
+		const isEvm = args.landingChain.startsWith("eip155:");
+		// Use bridge indexer as single source of truth for EVM networks
+		if (isEvm) {
 			const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
 				args.tx.hash,
 				nonce.toString(),
@@ -391,19 +391,51 @@ export class HotBridge implements Bridge {
 					txHash: bridgeIndexerHash,
 				};
 			}
-		}
+		} else {
+			// Fallback for other non EVM networks
+			// Primary source: contract view method
+			const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
+				nonce.toString(),
+			);
 
-		// Fallback: API indexer (when contract returns null/pending)
-		const apiHash = await this.fetchWithdrawalHashFromApi(
-			args.tx.hash,
-			nonce,
-			args.logger,
-		);
-		if (apiHash != null) {
-			return {
-				status: "completed",
-				txHash: formatTxHash(apiHash, args.landingChain),
-			};
+			if (status === HotWithdrawStatus.Canceled) {
+				return {
+					status: "failed",
+					reason: "Withdrawal was cancelled",
+				};
+			}
+			if (status === HotWithdrawStatus.Completed) {
+				return { status: "completed", txHash: null };
+			}
+			if (typeof status === "string") {
+				// HOT returns hexified raw bytes without 0x prefix, any other value should be ignored.
+				if (!isHex(status)) {
+					args.logger?.warn(
+						"HOT Bridge incorrect destination tx hash detected",
+						{
+							value: status,
+						},
+					);
+					return { status: "completed", txHash: null };
+				}
+				return {
+					status: "completed",
+					txHash: formatTxHash(status, args.landingChain),
+				};
+			}
+
+			// Fallback: API indexer (when contract returns null/pending)
+			const apiHash = await this.fetchWithdrawalHashFromApi(
+				args.tx.hash,
+				nonce,
+				args.logger,
+			);
+			if (apiHash != null) {
+				return {
+					status: "completed",
+					txHash: formatTxHash(apiHash, args.landingChain),
+				};
+			}
 		}
 
 		return { status: "pending" };
