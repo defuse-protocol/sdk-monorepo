@@ -380,16 +380,39 @@ export class HotBridge implements Bridge {
 		const isEvm = args.landingChain.startsWith("eip155:");
 		// Use bridge indexer as single source of truth for EVM networks
 		if (isEvm) {
-			const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
-				args.tx.hash,
-				nonce.toString(),
-				args.logger,
-			);
-			if (bridgeIndexerHash !== null) {
-				return {
-					status: "completed",
-					txHash: bridgeIndexerHash,
-				};
+			try {
+				const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
+					args.tx.hash,
+					nonce.toString(),
+					args.logger,
+				);
+				if (bridgeIndexerHash !== null) {
+					return {
+						status: "completed",
+						txHash: bridgeIndexerHash,
+					};
+				}
+			} catch (error) {
+				// Bridge indexer failed, fall back to API
+				args.logger?.info(
+					"Bridge indexer failed unexpectedly, trying HOT API fallback",
+					{
+						nearTxHash: args.tx.hash,
+						nonce: nonce.toString(),
+						error,
+					},
+				);
+				const apiHash = await this.fetchWithdrawalHashFromApi(
+					args.tx.hash,
+					nonce,
+					args.logger,
+				);
+				if (apiHash != null) {
+					return {
+						status: "completed",
+						txHash: formatTxHash(apiHash, args.landingChain),
+					};
+				}
 			}
 		} else {
 			// Fallback for other non EVM networks
@@ -446,60 +469,47 @@ export class HotBridge implements Bridge {
 		nonce: string,
 		logger?: ILogger,
 	): Promise<string | null> {
-		try {
-			const url = new URL(
-				"/api/v1/withdrawals",
-				this.envConfig.bridgeIndexerUrl,
-			);
-			url.searchParams.set("near_trx", nearTxHash);
+		const url = new URL("/api/v1/withdrawals", this.envConfig.bridgeIndexerUrl);
+		url.searchParams.set("near_trx", nearTxHash);
 
-			const response = await request({
-				url,
-				fetchOptions: {
-					method: "GET",
-				},
-				timeout: typeof window !== "undefined" ? 10_000 : 3000,
-			});
+		const response = await request({
+			url,
+			fetchOptions: {
+				method: "GET",
+			},
+			timeout: typeof window !== "undefined" ? 10_000 : 3000,
+		});
+		const json = await response.json();
 
-			const json = await response.json();
-
-			const parseResult = v.safeParse(BridgeIndexerResponseSchema, json);
-			if (!parseResult.success) {
-				logger?.debug("HOT Bridge indexer response parse failed", {
-					issues: parseResult.issues,
-				});
-				return null;
-			}
-
-			const withdrawal = parseResult.output.withdrawals.find((withdrawal) => {
-				return withdrawal.nonce === nonce;
-			});
-
-			if (withdrawal === undefined) {
-				logger?.info("HOT Bridge indexer withdrawal hash not found", {
-					nearTxHash,
-					nonce: nonce.toString(),
-				});
-				return null;
-			}
-
-			if (withdrawal.hash === "") {
-				logger?.info("HOT Bridge indexer withdrawal hash invalid", {
-					withdrawalHash: withdrawal.hash,
-					nonce: nonce.toString(),
-				});
-				return null;
-			}
-
-			return withdrawal.hash;
-		} catch (error) {
-			logger?.info("HOT Bridge indexer request failed", {
-				nearTxHash,
-				nonce: nonce.toString(),
-				error,
+		const parseResult = v.safeParse(BridgeIndexerResponseSchema, json);
+		if (!parseResult.success) {
+			logger?.debug("HOT Bridge indexer response parse failed", {
+				issues: parseResult.issues,
 			});
 			return null;
 		}
+
+		const withdrawal = parseResult.output.withdrawals.find((withdrawal) => {
+			return withdrawal.nonce === nonce;
+		});
+
+		if (withdrawal === undefined) {
+			logger?.info("HOT Bridge indexer withdrawal hash not found", {
+				nearTxHash,
+				nonce: nonce.toString(),
+			});
+			return null;
+		}
+
+		if (withdrawal.hash === "") {
+			logger?.info("HOT Bridge indexer withdrawal hash invalid", {
+				withdrawalHash: withdrawal.hash,
+				nonce: nonce.toString(),
+			});
+			return null;
+		}
+
+		return withdrawal.hash;
 	}
 	private async fetchWithdrawalHashFromApi(
 		nearTxHash: string,
