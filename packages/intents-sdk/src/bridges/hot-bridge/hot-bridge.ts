@@ -46,7 +46,7 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
-import { withdrawalsByNearTxHash } from "../../lib/bridgeIndexerHttpClient";
+import { bridgeIndexer } from "@defuse-protocol/internal-utils";
 
 const HotApiWithdrawalSchema = v.object({
 	hash: v.nullable(v.string()),
@@ -468,10 +468,11 @@ export class HotBridge implements Bridge {
 		nonce: string,
 		logger?: ILogger,
 	): Promise<string | null> {
-		const { withdrawals } = await withdrawalsByNearTxHash(nearTxHash, {
-			envConfig: this.envConfig,
-			timeout: typeof window !== "undefined" ? 10_000 : 3000,
-		});
+		const { withdrawals } =
+			await bridgeIndexer.httpClient.withdrawalsByNearTxHash(nearTxHash, {
+				envConfig: this.envConfig,
+				timeout: typeof window !== "undefined" ? 10_000 : 3000,
+			});
 
 		const withdrawal = withdrawals.find((withdrawal) => {
 			return withdrawal.nonce === nonce;

@@ -1,10 +1,10 @@
-import { request } from "@defuse-protocol/internal-utils";
+import { handleResponse } from "../../utils/handleResponse";
+import { request } from "../../utils/request";
 import {
 	BridgeIndexerResponseSchema,
 	type BridgeIndexerResponse,
 	type RequestConfig,
 } from "./types";
-import * as v from "valibot";
 
 export async function withdrawalsByNearTxHash(
 	nearTxHash: string,
@@ -22,7 +22,5 @@ export async function withdrawalsByNearTxHash(
 		},
 	});
 
-	const json = await response.json();
-
-	return v.parse(BridgeIndexerResponseSchema, json);
+	return handleResponse(response, undefined, BridgeIndexerResponseSchema);
 }
