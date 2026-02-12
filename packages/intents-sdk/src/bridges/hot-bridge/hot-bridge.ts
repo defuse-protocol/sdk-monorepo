@@ -3,7 +3,6 @@ import {
 	type ILogger,
 	type EnvConfig,
 	withTimeout,
-	request,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
@@ -37,7 +36,6 @@ import {
 } from "./error";
 import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
-	BridgeIndexerResponseSchema,
 	formatTxHash,
 	getFeeAssetIdForChain,
 	hotBlockchainInvariant,
@@ -48,6 +46,7 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
+import { withdrawalsByNearTxHash } from "../../lib/bridgeIndexerHttpClient";
 
 const HotApiWithdrawalSchema = v.object({
 	hash: v.nullable(v.string()),
@@ -469,27 +468,12 @@ export class HotBridge implements Bridge {
 		nonce: string,
 		logger?: ILogger,
 	): Promise<string | null> {
-		const url = new URL("/api/v1/withdrawals", this.envConfig.bridgeIndexerUrl);
-		url.searchParams.set("near_trx", nearTxHash);
-
-		const response = await request({
-			url,
-			fetchOptions: {
-				method: "GET",
-			},
+		const { withdrawals } = await withdrawalsByNearTxHash(nearTxHash, {
+			envConfig: this.envConfig,
 			timeout: typeof window !== "undefined" ? 10_000 : 3000,
 		});
-		const json = await response.json();
 
-		const parseResult = v.safeParse(BridgeIndexerResponseSchema, json);
-		if (!parseResult.success) {
-			logger?.debug("HOT Bridge indexer response parse failed", {
-				issues: parseResult.issues,
-			});
-			return null;
-		}
-
-		const withdrawal = parseResult.output.withdrawals.find((withdrawal) => {
+		const withdrawal = withdrawals.find((withdrawal) => {
 			return withdrawal.nonce === nonce;
 		});
 
