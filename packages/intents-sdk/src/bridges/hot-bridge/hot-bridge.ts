@@ -167,8 +167,8 @@ export class HotBridge implements Bridge {
 				bridgeName: BridgeNameEnum.Hot,
 			},
 			(address === "native" ? { native: true } : { address }) as
-				| { native: true }
-				| { address: string },
+			| { native: true }
+			| { address: string },
 		);
 	}
 
@@ -328,14 +328,14 @@ export class HotBridge implements Bridge {
 			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
 				? null
 				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+					feeAmount,
+					feeAssetId,
+					tokenAssetId: args.withdrawalParams.assetId,
+					logger: args.logger,
+					envConfig: this.envConfig,
+					quoteOptions: args.quoteOptions,
+					solverRelayApiKey: this.solverRelayApiKey,
+				});
 
 		return {
 			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
@@ -475,7 +475,7 @@ export class HotBridge implements Bridge {
 			});
 
 			if (withdrawal === undefined) {
-				logger?.info("HOT Bridge indexer withdrawal hash found", {
+				logger?.info("HOT Bridge indexer withdrawal hash not found", {
 					nearTxHash,
 					nonce: nonce.toString(),
 				});
@@ -483,7 +483,7 @@ export class HotBridge implements Bridge {
 			}
 			return withdrawal.hash;
 		} catch (error) {
-			logger?.info("HOT Bridge indexer failed", {
+			logger?.info("HOT Bridge indexer request failed", {
 				nearTxHash,
 				nonce: nonce.toString(),
 				error,
