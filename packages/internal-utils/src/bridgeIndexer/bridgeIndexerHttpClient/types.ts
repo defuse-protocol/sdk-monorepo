@@ -1,4 +1,4 @@
-import type { EnvConfig } from "@defuse-protocol/internal-utils";
+import type { EnvConfig } from "../../config";
 import * as v from "valibot";
 
 export type RequestConfig = {
