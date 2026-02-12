@@ -378,17 +378,19 @@ export class HotBridge implements Bridge {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
 
-		// Primary method - bridge indexer
-		const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
-			args.tx.hash,
-			nonce.toString(),
-			args.logger,
-		);
-		if (bridgeIndexerHash !== null) {
-			return {
-				status: "completed",
-				txHash: bridgeIndexerHash,
-			};
+		// Primary method - bridge indexer, currently support only EVM
+		if (args.landingChain.startsWith("eip155:")) {
+			const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
+				args.tx.hash,
+				nonce.toString(),
+				args.logger,
+			);
+			if (bridgeIndexerHash !== null) {
+				return {
+					status: "completed",
+					txHash: bridgeIndexerHash,
+				};
+			}
 		}
 
 		// Fallback: API indexer (when contract returns null/pending)
