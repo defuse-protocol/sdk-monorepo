@@ -448,10 +448,11 @@ export class HotBridge implements Bridge {
 				return null;
 			}
 			return withdrawal.hash;
-		} catch {
+		} catch (error) {
 			logger?.info("HOT Bridge indexer failed", {
 				nearTxHash,
 				nonce: nonce.toString(),
+				error,
 			});
 			return null;
 		}
