@@ -458,6 +458,7 @@ export class HotBridge implements Bridge {
 				fetchOptions: {
 					method: "GET",
 				},
+				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 			});
 
 			const json = await response.json();
