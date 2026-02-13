@@ -407,7 +407,7 @@ export class HotBridge implements Bridge {
 					};
 				}
 			} catch (error) {
-				// Bridge indexer failed, fall back to API
+				// Bridge indexer failed, fall back to HOT API
 				args.logger?.error(
 					"Bridge indexer failed unexpectedly, trying HOT API fallback",
 					{

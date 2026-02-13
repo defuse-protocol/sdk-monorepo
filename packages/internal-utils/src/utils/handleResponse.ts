@@ -13,7 +13,7 @@ export async function handleResponse<
 	} catch (error) {
 		throw new JsonDeserializationError({
 			body,
-			cause: error instanceof Error ? error : new Error(String(error)),
+			error: error instanceof Error ? error : new Error(String(error)),
 			url: response.url,
 		});
 	}
@@ -25,7 +25,7 @@ export async function handleResponse<
 
 	throw new JsonParsingError({
 		body,
-		issues: parsed.issues,
+		error: parsed.issues,
 		url: response.url,
 	});
 }

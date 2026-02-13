@@ -94,16 +94,16 @@ export type JsonDeserializationErrorType = JsonDeserializationError & {
 export class JsonDeserializationError extends BaseError {
 	constructor({
 		body,
-		cause,
+		error,
 		url,
 	}: {
 		body: unknown;
-		cause: Error;
+		error: Error;
 		url: string;
 	}) {
 		super("Failed to deserialize the response as JSON.", {
-			cause,
-			details: cause.message,
+			cause: error,
+			details: error.message,
 			metaMessages: [`URL: ${url}`, `Request body: ${serialize(body)}`],
 			name: "JsonDeserializationError",
 		});
@@ -114,15 +114,15 @@ export type JsonParsingErrorType = JsonParsingError & {
 	name: "JsonParsingError";
 };
 export class JsonParsingError extends BaseError {
-	issues: ReadonlyArray<unknown>;
+	error: ReadonlyArray<unknown>;
 
 	constructor({
 		body,
-		issues,
+		error,
 		url,
 	}: {
 		body: unknown;
-		issues: ReadonlyArray<unknown>;
+		error: ReadonlyArray<unknown>;
 		url: string;
 	}) {
 		super("Failed to parse the response.", {
@@ -130,10 +130,10 @@ export class JsonParsingError extends BaseError {
 			metaMessages: [
 				`URL: ${url}`,
 				`Request body: ${serialize(body)}`,
-				`Issues: ${serialize(issues)}`,
+				`Error: ${serialize(error)}`,
 			],
 			name: "JsonParsingError",
 		});
-		this.issues = issues;
+		this.error = error;
 	}
 }
