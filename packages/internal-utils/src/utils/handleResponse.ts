@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { HttpRequestError } from "../errors/request";
+import { serialize } from "./serialize";
 
 export async function handleResponse<
 	TSchema extends v.BaseSchema<TInput, TOutput, TIssue>,
@@ -27,7 +28,7 @@ export async function handleResponse<
 	throw new HttpRequestError({
 		body,
 		details: "Failed to parse response JSON",
-		cause: new Error(String(parsed.issues)),
+		cause: new Error(serialize(parsed.issues)),
 		url: response.url,
 	});
 }
