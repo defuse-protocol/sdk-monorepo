@@ -64,6 +64,10 @@ export {
 export {
 	HttpRequestError,
 	type HttpRequestErrorType,
+	JsonDeserializationError,
+	type JsonDeserializationErrorType,
+	JsonParsingError,
+	type JsonParsingErrorType,
 	RpcRequestError,
 	type RpcRequestErrorType,
 	TimeoutError,

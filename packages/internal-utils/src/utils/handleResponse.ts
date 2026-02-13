@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { HttpRequestError } from "../errors/request";
+import { JsonDeserializationError, JsonParsingError } from "../errors/request";
 
 export async function handleResponse<
 	TSchema extends v.BaseSchema<TInput, TOutput, TIssue>,
@@ -7,17 +7,25 @@ export async function handleResponse<
 	TOutput,
 	TIssue extends v.BaseIssue<unknown>,
 >(response: Response, body: unknown, schema: TSchema): Promise<TOutput> {
-	const json = await response.json();
+	let json: unknown;
+	try {
+		json = await response.json();
+	} catch (error) {
+		throw new JsonDeserializationError({
+			body,
+			cause: error instanceof Error ? error : new Error(String(error)),
+			url: response.url,
+		});
+	}
 
 	const parsed = v.safeParse(schema, json);
 	if (parsed.success) {
 		return parsed.output;
 	}
 
-	throw new HttpRequestError({
+	throw new JsonParsingError({
 		body,
-		details: "Response validation failed",
-		status: response.status,
+		issues: parsed.issues,
 		url: response.url,
 	});
 }
