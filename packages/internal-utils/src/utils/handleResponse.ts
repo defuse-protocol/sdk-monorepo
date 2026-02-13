@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { JsonDeserializationError, JsonParsingError } from "../errors/request";
+import { HttpRequestError } from "../errors/request";
 
 export async function handleResponse<
 	TSchema extends v.BaseSchema<TInput, TOutput, TIssue>,
@@ -11,9 +11,10 @@ export async function handleResponse<
 	try {
 		json = await response.json();
 	} catch (error) {
-		throw new JsonDeserializationError({
+		throw new HttpRequestError({
 			body,
-			error: error instanceof Error ? error : new Error(String(error)),
+			details: "Failed to deserialize JSON",
+			cause: error instanceof Error ? error : new Error(String(error)),
 			url: response.url,
 		});
 	}
@@ -23,9 +24,10 @@ export async function handleResponse<
 		return parsed.output;
 	}
 
-	throw new JsonParsingError({
+	throw new HttpRequestError({
 		body,
-		error: parsed.issues,
+		details: "Failed to parse response JSON",
+		cause: new Error(String(parsed.issues)),
 		url: response.url,
 	});
 }
