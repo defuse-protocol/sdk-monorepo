@@ -386,6 +386,9 @@ export class HotBridge implements Bridge {
 					args.logger,
 				);
 				if (bridgeIndexerHash !== null) {
+					args.logger?.info(
+						`Bridge indexer returned withdrawHash=${bridgeIndexerHash} for nearTxHash=${args.tx.hash} nonce=${nonce.toString()}`,
+					);
 					return {
 						status: "completed",
 						txHash: bridgeIndexerHash,
@@ -393,7 +396,7 @@ export class HotBridge implements Bridge {
 				}
 			} catch (error) {
 				// Bridge indexer failed, fall back to API
-				args.logger?.info(
+				args.logger?.error(
 					"Bridge indexer failed unexpectedly, trying HOT API fallback",
 					{
 						nearTxHash: args.tx.hash,
@@ -407,6 +410,9 @@ export class HotBridge implements Bridge {
 					args.logger,
 				);
 				if (apiHash != null) {
+					args.logger?.info(
+						`Hot Api returned withdrawHash=${apiHash} for nearTxHash=${args.tx.hash} nonce=${nonce.toString()}`,
+					);
 					return {
 						status: "completed",
 						txHash: formatTxHash(apiHash, args.landingChain),
