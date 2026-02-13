@@ -376,6 +376,18 @@ export class HotBridge implements Bridge {
 		if (nonce == null) {
 			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
 		}
+
+		const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
+			nonce.toString(),
+		);
+		// stop polling in case withdrawal is cancelled
+		if (status === HotWithdrawStatus.Canceled) {
+			return {
+				status: "failed",
+				reason: "Withdrawal was cancelled",
+			};
+		}
+
 		const isEvm = args.landingChain.startsWith("eip155:");
 		// Use bridge indexer as single source of truth for EVM networks
 		if (isEvm) {
@@ -422,16 +434,6 @@ export class HotBridge implements Bridge {
 		} else {
 			// Fallback for other non EVM networks
 			// Primary source: contract view method
-			const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
-				nonce.toString(),
-			);
-
-			if (status === HotWithdrawStatus.Canceled) {
-				return {
-					status: "failed",
-					reason: "Withdrawal was cancelled",
-				};
-			}
 			if (status === HotWithdrawStatus.Completed) {
 				return { status: "completed", txHash: null };
 			}
