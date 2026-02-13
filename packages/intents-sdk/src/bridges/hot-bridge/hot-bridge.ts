@@ -389,7 +389,8 @@ export class HotBridge implements Bridge {
 		}
 
 		const isEvm = args.landingChain.startsWith("eip155:");
-		// Use bridge indexer as single source of truth for EVM networks
+		// For EVM networks, the bridge indexer is the source of truth for withdrawal hashes.
+		// The HOT API is only used as a fallback since the contract view method can return invalid hashes.
 		if (isEvm) {
 			try {
 				args.logger?.info(
@@ -497,7 +498,18 @@ export class HotBridge implements Bridge {
 			return null;
 		}
 
-		return withdrawal.hash || null;
+		if (withdrawal.hash === null || withdrawal.hash === "") {
+			logger?.info(
+				`HOT Bridge returned invalid hash, expected a non empty string, got ${withdrawal.hash}`,
+				{
+					nearTxHash,
+					nonce: nonce.toString(),
+				},
+			);
+			return null;
+		}
+
+		return withdrawal.hash;
 	}
 	private async fetchWithdrawalHashFromApi(
 		nearTxHash: string,
