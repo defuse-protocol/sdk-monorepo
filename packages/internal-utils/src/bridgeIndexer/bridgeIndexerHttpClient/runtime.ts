@@ -16,7 +16,7 @@ export async function httpRequest<
 	schema: TSchema,
 ): Promise<TOutput> {
 	// Use config.envConfig if provided, otherwise fall back to global config
-	const baseURL = config?.baseUrl ?? globalConfig.env.bridgeIndexerUrl;
+	const baseURL = config?.baseUrl ?? globalConfig.env.bridgeIndexerURL;
 	const url = new URL(path, baseURL);
 	if (searchParams) {
 		for (const [key, value] of Object.entries(searchParams)) {

@@ -22,7 +22,7 @@ export interface EnvConfig {
 	poaBridgeBaseURL: string;
 	solverRelayBaseURL: string;
 	managerConsoleBaseURL: string;
-	bridgeIndexerUrl: string;
+	bridgeIndexerURL: string;
 	nearIntentsBaseURL: string;
 }
 
@@ -41,7 +41,7 @@ const envConfigSchema = v.object({
 	poaBridgeBaseURL: optionalUrlSchema,
 	solverRelayBaseURL: optionalUrlSchema,
 	managerConsoleBaseURL: optionalUrlSchema,
-	bridgeIndexerUrl: optionalUrlSchema,
+	bridgeIndexerURL: optionalUrlSchema,
 	nearIntentsBaseURL: optionalUrlSchema,
 });
 
@@ -87,7 +87,7 @@ export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 		poaBridgeBaseURL: "https://bridge.chaindefuser.com",
 		solverRelayBaseURL: "https://solver-relay-v2.chaindefuser.com",
 		managerConsoleBaseURL: "https://api-mng-console.chaindefuser.com/api/",
-		bridgeIndexerUrl: "https://bridge-indexer.chaindefuser.com",
+		bridgeIndexerURL: "https://bridge-indexer.chaindefuser.com",
 		nearIntentsBaseURL: "https://near-intents.org/api/",
 	},
 	stage: {
@@ -96,7 +96,7 @@ export const configsByEnvironment: Record<NearIntentsEnv, EnvConfig> = {
 		poaBridgeBaseURL: "https://poa-stage.intents-near.org",
 		solverRelayBaseURL: "https://solver-relay-stage.intents-near.org",
 		managerConsoleBaseURL: "https://mng-console-stage.intents-near.org/api/",
-		bridgeIndexerUrl: "https://bridge-indexer.chaindefuser.com",
+		bridgeIndexerURL: "https://bridge-indexer.chaindefuser.com",
 		nearIntentsBaseURL: "https://stage.near-intents.org/api/",
 	},
 };
