@@ -392,6 +392,9 @@ export class HotBridge implements Bridge {
 		// Use bridge indexer as single source of truth for EVM networks
 		if (isEvm) {
 			try {
+				args.logger?.info(
+					`Using bridge indexer to retrieve HOT withdrawal hash with nearTxHash=${args.tx.hash} nonce=${nonce.toString()}`,
+				);
 				const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
 					args.tx.hash,
 					nonce.toString(),
