@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.53.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+### Patch Changes
+
+- Updated dependencies [feb1e30]
+  - @defuse-protocol/internal-utils@0.28.0
+
 ## 0.52.0
 
 ### Minor Changes
