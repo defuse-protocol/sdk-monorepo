@@ -91,14 +91,15 @@ function validateEthAddress(address: string) {
 }
 
 function validateBtcAddress(address: string) {
-	// Bech32 SegWit v0 (bc1q...)
-	if (/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address)) {
-		return validateBtcBech32Address(address);
-	}
-
-	// Bech32m Taproot (bc1p...)
+	// Check Taproot (bc1p...) BEFORE generic SegWit (bc1q...)
+	// to avoid bc1p being matched by the broader bc1 pattern
 	if (/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)) {
 		return validateBtcBech32mAddress(address);
+	}
+
+	// Bech32 SegWit v0 (bc1q...) - use specific bc1q pattern
+	if (/^bc1q[02-9ac-hj-np-z]{11,87}$/.test(address)) {
+		return validateBtcBech32Address(address);
 	}
 
 	// P2PKH (1...) - requires Base58Check validation
