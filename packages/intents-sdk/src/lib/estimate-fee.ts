@@ -12,6 +12,37 @@ import type {
 } from "../shared-types";
 
 /**
+ * Convert a floating-point price to a scaled BigInt without intermediate overflow.
+ * This avoids Number precision loss for high-priced assets by parsing the string
+ * representation and building the BigInt from integer and fractional parts.
+ *
+ * @param price - The price as a floating-point number
+ * @param scale - The scale factor as a BigInt (e.g., 1_000_000_000_000n for 1e12)
+ * @returns The scaled price as a BigInt
+ */
+function priceToScaledBigInt(price: number, scale: bigint): bigint {
+	if (price <= 0 || !Number.isFinite(price)) {
+		return 0n;
+	}
+
+	// Convert to string to avoid floating-point precision issues
+	const priceStr = price.toFixed(18); // 18 decimal places for maximum precision
+	const [integerPart, fractionalPart = ""] = priceStr.split(".");
+
+	// Calculate how many digits the scale represents (log10 of scale)
+	const scaleDigits = scale.toString().length - 1; // e.g., 1e12 has 12 zeros
+
+	// Pad or truncate fractional part to match scale digits
+	const paddedFractional = fractionalPart.slice(0, scaleDigits).padEnd(scaleDigits, "0");
+
+	// Build the scaled BigInt: integer * scale + fractional
+	const integerBigInt = BigInt(integerPart || "0");
+	const fractionalBigInt = BigInt(paddedFractional || "0");
+
+	return integerBigInt * scale + fractionalBigInt;
+}
+
+/**
  * Helper to extract a specific fee from FeeEstimation's underlyingFees.
  * Throws if the route's fee object doesn't exist (invariant: bridges must populate their fees during estimation).
  * Returns the fee value which may be undefined for optional fees within the route object.
@@ -102,26 +133,32 @@ export async function getFeeQuote({
 		// Precision-safe computation using fixed-point BigInt
 		// Scale USD prices to 1e12 (pico-dollars) for stable integer math
 		// This allows handling tokens priced as low as $0.000000000001
-		const USD_SCALE = 1_000_000_000_000; // 1e12 for better precision with low-value tokens
-		const MIN_SCALED_PRICE = 1n; // Minimum scaled price to prevent division by zero
+		const USD_SCALE = 1_000_000_000_000n; // 1e12 for better precision with low-value tokens
 
-		const feePriceScaled = BigInt(Math.round(feeAssetPrice.price * USD_SCALE));
-		const tokenPriceScaled = BigInt(
-			Math.round(tokenAssetPrice.price * USD_SCALE),
+		// Convert price to scaled BigInt without intermediate floating-point overflow
+		// This handles prices up to Number.MAX_SAFE_INTEGER correctly
+		const feePriceScaled = priceToScaledBigInt(feeAssetPrice.price, USD_SCALE);
+		const tokenPriceScaled = priceToScaledBigInt(
+			tokenAssetPrice.price,
+			USD_SCALE,
 		);
 
-		// Ensure prices are at least MIN_SCALED_PRICE to prevent division by zero
-		const safeFeePriceScaled =
-			feePriceScaled > 0n ? feePriceScaled : MIN_SCALED_PRICE;
-		const safeTokenPriceScaled =
-			tokenPriceScaled > 0n ? tokenPriceScaled : MIN_SCALED_PRICE;
+		// If either price scales to zero, we cannot compute a valid quote
+		// Re-throw the original error to let callers know
+		if (feePriceScaled === 0n || tokenPriceScaled === 0n) {
+			logger?.warn(
+				`Cannot compute fee quote: price scaled to zero. ` +
+					`Fee asset price: ${feeAssetPrice.price} USD, Token asset price: ${tokenAssetPrice.price} USD`,
+			);
+			throw err;
+		}
 
 		const feeDecimals = BigInt(feeAssetPrice.decimals);
 		const tokenDecimals = BigInt(tokenAssetPrice.decimals);
 
 		// ceil( feeAmount * feePrice / 10^feeDecimals / tokenPrice * 10^tokenDecimals * 1.2 )
-		const num = feeAmount * safeFeePriceScaled * 12n * 10n ** tokenDecimals;
-		const den = safeTokenPriceScaled * 10n ** feeDecimals * 10n;
+		const num = feeAmount * feePriceScaled * 12n * 10n ** tokenDecimals;
+		const den = tokenPriceScaled * 10n ** feeDecimals * 10n;
 		let exactAmountIn = num / den;
 		if (num % den !== 0n) exactAmountIn += 1n; // ceil
 
