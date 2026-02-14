@@ -91,12 +91,107 @@ function validateEthAddress(address: string) {
 }
 
 function validateBtcAddress(address: string) {
-	return (
-		/^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address) ||
-		/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)
-	);
+	// Bech32 SegWit v0 (bc1q...)
+	if (/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address)) {
+		return validateBtcBech32Address(address);
+	}
+
+	// Bech32m Taproot (bc1p...)
+	if (/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)) {
+		return validateBtcBech32mAddress(address);
+	}
+
+	// P2PKH (1...) - requires Base58Check validation
+	if (/^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address)) {
+		return validateBtcBase58Address(address, 0x00);
+	}
+
+	// P2SH (3...) - requires Base58Check validation
+	if (/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address)) {
+		return validateBtcBase58Address(address, 0x05);
+	}
+
+	return false;
+}
+
+/**
+ * Validates Bitcoin Base58Check addresses (P2PKH and P2SH)
+ * Verifies the double SHA-256 checksum to prevent typos and transcription errors
+ */
+function validateBtcBase58Address(
+	address: string,
+	expectedVersion: number,
+): boolean {
+	try {
+		const decoded = base58.decode(address);
+
+		// version (1) + payload (20) + checksum (4) = 25 bytes
+		if (decoded.length !== 25) return false;
+
+		const version = decoded[0];
+		if (version !== expectedVersion) return false;
+
+		const payload = decoded.subarray(0, 21); // version + hash160
+		const checksum = decoded.subarray(21, 25);
+
+		// Calculate expected checksum: double SHA-256 of payload
+		const hash1 = sha256(payload);
+		const hash2 = sha256(hash1);
+		const expectedChecksum = hash2.subarray(0, 4);
+
+		// Compare checksums
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Validates Bitcoin Bech32 addresses (SegWit v0)
+ */
+function validateBtcBech32Address(address: string): boolean {
+	try {
+		const decoded = bech32.decode(address as `${string}1${string}`);
+		if (decoded.prefix !== "bc") return false;
+
+		const { words } = decoded;
+		if (!words || words.length < 1) return false;
+
+		const version = words[0];
+		if (version !== 0) return false;
+
+		const program = bech32.fromWords(words.slice(1));
+		// SegWit v0: 20 bytes (P2WPKH) or 32 bytes (P2WSH)
+		return program.length === 20 || program.length === 32;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Validates Bitcoin Bech32m addresses (Taproot)
+ */
+function validateBtcBech32mAddress(address: string): boolean {
+	try {
+		const decoded = bech32m.decode(address as `${string}1${string}`);
+		if (decoded.prefix !== "bc") return false;
+
+		const { words } = decoded;
+		if (!words || words.length < 1) return false;
+
+		const version = words[0];
+		if (version !== 1) return false; // Taproot is version 1
+
+		const program = bech32m.fromWords(words.slice(1));
+		// Taproot: 32 bytes
+		return program.length === 32;
+	} catch {
+		return false;
+	}
 }
 
 /**

@@ -100,18 +100,28 @@ export async function getFeeQuote({
 		}
 
 		// Precision-safe computation using fixed-point BigInt
-		// Scale USD prices to 1e6 (micro-dollars) for stable integer math
-		const USD_SCALE = 1_000_000; // 1e6
+		// Scale USD prices to 1e12 (pico-dollars) for stable integer math
+		// This allows handling tokens priced as low as $0.000000000001
+		const USD_SCALE = 1_000_000_000_000; // 1e12 for better precision with low-value tokens
+		const MIN_SCALED_PRICE = 1n; // Minimum scaled price to prevent division by zero
+
 		const feePriceScaled = BigInt(Math.round(feeAssetPrice.price * USD_SCALE));
 		const tokenPriceScaled = BigInt(
 			Math.round(tokenAssetPrice.price * USD_SCALE),
 		);
+
+		// Ensure prices are at least MIN_SCALED_PRICE to prevent division by zero
+		const safeFeePriceScaled =
+			feePriceScaled > 0n ? feePriceScaled : MIN_SCALED_PRICE;
+		const safeTokenPriceScaled =
+			tokenPriceScaled > 0n ? tokenPriceScaled : MIN_SCALED_PRICE;
+
 		const feeDecimals = BigInt(feeAssetPrice.decimals);
 		const tokenDecimals = BigInt(tokenAssetPrice.decimals);
 
 		// ceil( feeAmount * feePrice / 10^feeDecimals / tokenPrice * 10^tokenDecimals * 1.2 )
-		const num = feeAmount * feePriceScaled * 12n * 10n ** tokenDecimals;
-		const den = tokenPriceScaled * 10n ** feeDecimals * 10n;
+		const num = feeAmount * safeFeePriceScaled * 12n * 10n ** tokenDecimals;
+		const den = safeTokenPriceScaled * 10n ** feeDecimals * 10n;
 		let exactAmountIn = num / den;
 		if (num % den !== 0n) exactAmountIn += 1n; // ceil
 
