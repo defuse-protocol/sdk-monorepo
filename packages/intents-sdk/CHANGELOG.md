@@ -1,5 +1,27 @@
 # @defuse-protocol/intents-sdk
 
+## 0.53.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+### Patch Changes
+
+- Updated dependencies [feb1e30]
+  - @defuse-protocol/internal-utils@0.28.0
+
+## 0.52.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
+### Patch Changes
+
+- Updated dependencies [d4e0311]
+  - @defuse-protocol/internal-utils@0.27.0
+
 ## 0.51.0
 
 ### Minor Changes

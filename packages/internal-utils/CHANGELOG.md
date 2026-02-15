@@ -1,5 +1,17 @@
 # @defuse-protocol/internal-utils
 
+## 0.28.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+## 0.27.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
 ## 0.26.0
 
 ### Minor Changes
