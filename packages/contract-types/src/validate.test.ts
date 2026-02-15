@@ -78,6 +78,42 @@ describe("MultiPayloadNarrowedValidator", () => {
 		});
 	});
 
+	it("parses and validates tip191 variant", () => {
+		const input = {
+			standard: "tip191",
+			payload: validDefusePayload,
+		};
+
+		const result = MultiPayloadNarrowedValidator.validate(input);
+		expect(result.issues).toBeUndefined();
+		if (result.issues) throw new Error("Expected success");
+		expect(result.value).toEqual({
+			standard: "tip191",
+			payload: {
+				original: validDefusePayload,
+				parsed: JSON.parse(validDefusePayload),
+			},
+		});
+	});
+
+	it("parses and validates sep53 variant", () => {
+		const input = {
+			standard: "sep53",
+			payload: validDefusePayload,
+		};
+
+		const result = MultiPayloadNarrowedValidator.validate(input);
+		expect(result.issues).toBeUndefined();
+		if (result.issues) throw new Error("Expected success");
+		expect(result.value).toEqual({
+			standard: "sep53",
+			payload: {
+				original: validDefusePayload,
+				parsed: JSON.parse(validDefusePayload),
+			},
+		});
+	});
+
 	it("does not modify original input", () => {
 		const input = {
 			standard: "erc191",
@@ -150,6 +186,62 @@ describe("MultiPayloadValidator", () => {
 			original: validDefusePayload,
 			parsed: JSON.parse(validDefusePayload),
 		});
+	});
+
+	it("parses and validates JSON payload for tip191", () => {
+		const input = {
+			standard: "tip191",
+			payload: validDefusePayload,
+			signature: "secp256k1:sig123",
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeUndefined();
+		if (result.issues) throw new Error("Expected success");
+		expect(result.value.payload).toEqual({
+			original: validDefusePayload,
+			parsed: JSON.parse(validDefusePayload),
+		});
+	});
+
+	it("parses and validates JSON payload for sep53", () => {
+		const input = {
+			standard: "sep53",
+			payload: validDefusePayload,
+			public_key: "ed25519:key123",
+			signature: "ed25519:sig123",
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeUndefined();
+		if (result.issues) throw new Error("Expected success");
+		expect(result.value.payload).toEqual({
+			original: validDefusePayload,
+			parsed: JSON.parse(validDefusePayload),
+		});
+	});
+
+	it("rejects tip191 with wrong signature prefix", () => {
+		const input = {
+			standard: "tip191",
+			payload: validDefusePayload,
+			signature: "ed25519:wrong_prefix",
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeDefined();
+	});
+
+	it("rejects sep53 with wrong key prefix", () => {
+		const input = {
+			standard: "sep53",
+			payload: validDefusePayload,
+			public_key: "secp256k1:wrong_prefix",
+			signature: "ed25519:sig123",
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeDefined();
 	});
 
 	it("rejects invalid JSON payload", () => {

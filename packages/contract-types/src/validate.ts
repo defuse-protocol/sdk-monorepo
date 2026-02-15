@@ -26,9 +26,11 @@ const ajv = new Ajv({
 });
 addFormats(ajv);
 
-// parseJson keyword for parsing JSON string payloads in MultiPayload.
-// The keyword value is the schema to validate the parsed JSON against.
-// Replaces the string with { original: string, parsed: T } object.
+// Mutating data in-place inside oneOf corrupts sibling branches:
+// erc191 branch replaces payload string with {original, parsed} object,
+// so tip191/sep53 branches see an object instead of a string and fail.
+let activeMutations: Array<() => void> = [];
+
 ajv.addKeyword({
 	keyword: "parseJson",
 	modifying: true,
@@ -45,10 +47,11 @@ ajv.addKeyword({
 			const parsed: unknown = JSON.parse(data);
 			const isValid = ajv.validate(schema, parsed);
 			if (isValid) {
-				dataCtx.parentData[dataCtx.parentDataProperty] = {
-					original: data,
-					parsed,
-				};
+				const { parentData, parentDataProperty } = dataCtx;
+				const original = data;
+				activeMutations.push(() => {
+					parentData[parentDataProperty] = { original, parsed };
+				});
 			}
 			return isValid;
 		} catch {
@@ -56,6 +59,23 @@ ajv.addKeyword({
 		}
 	},
 });
+
+function compileParseJson<T>(schema: Parameters<typeof ajv.compile>[0]) {
+	const validate = ajv.compile<T>(schema);
+	const wrapped = (data: unknown): data is T => {
+		const mutations: Array<() => void> = [];
+		activeMutations = mutations;
+		const valid = validate(data) as boolean;
+		if (valid) {
+			for (const m of mutations) m();
+		}
+		wrapped.errors = validate.errors;
+		return valid;
+	};
+	wrapped.errors = validate.errors;
+	wrapped.schema = validate.schema;
+	return wrapped as typeof validate;
+}
 
 export const AuthCallValidator = wrapValidator<Types.AuthCall, Types.AuthCall>(
 	() => ajv.compile(schemas.AuthCall as JSONSchemaType<Types.AuthCall>),
@@ -127,7 +147,7 @@ export const MultiPayloadValidator = wrapValidator<
 	Types.MultiPayload__Parsed
 >(
 	() =>
-		ajv.compile(
+		compileParseJson<Types.MultiPayload__Parsed>(
 			schemas.MultiPayload as JSONSchemaType<Types.MultiPayload__Parsed>,
 		),
 	true,
@@ -420,7 +440,7 @@ export const MultiPayloadNarrowedValidator = wrapValidator<
 	Types.MultiPayloadNarrowed__Parsed
 >(
 	() =>
-		ajv.compile(
+		compileParseJson<Types.MultiPayloadNarrowed__Parsed>(
 			schemas.MultiPayloadNarrowed as JSONSchemaType<Types.MultiPayloadNarrowed__Parsed>,
 		),
 	true,
