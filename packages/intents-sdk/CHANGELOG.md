@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.53.2
+
+### Patch Changes
+
+- a570209: Improve logging for hot bridge destination hash fetching
+
 ## 0.53.1
 
 ### Patch Changes
