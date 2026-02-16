@@ -393,25 +393,28 @@ export class HotBridge implements Bridge {
 		// The HOT API is only used as a fallback since the contract view method can return invalid hashes.
 		if (isEvm) {
 			try {
-				args.logger?.info(
-					`Using bridge indexer to retrieve HOT withdrawal hash with nearTxHash=${args.tx.hash} nonce=${nonce.toString()}`,
-				);
+				args.logger?.info("Fetching withdrawal hash from bridge indexer", {
+					nearTxHash: args.tx.hash,
+					nonce: nonce.toString(),
+				});
 				const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
 					args.tx.hash,
 					nonce.toString(),
 					args.logger,
 				);
 				if (bridgeIndexerHash !== null) {
-					args.logger?.info(
-						`Bridge indexer returned withdrawHash=${bridgeIndexerHash} for nearTxHash=${args.tx.hash} nonce=${nonce.toString()}`,
-					);
+					args.logger?.info("Bridge indexer found withdrawal hash", {
+						withdrawalHash: bridgeIndexerHash,
+						nearTxHash: args.tx.hash,
+						nonce: nonce.toString(),
+					});
 					return {
 						status: "completed",
 						txHash: bridgeIndexerHash,
 					};
 				}
 			} catch (error) {
-				// Bridge indexer failed, fall back to HOT API
+				// Bridge indexer failed, fallback to HOT API
 				args.logger?.error(
 					"Bridge indexer failed unexpectedly, trying HOT API fallback",
 					{
@@ -426,9 +429,11 @@ export class HotBridge implements Bridge {
 					args.logger,
 				);
 				if (apiHash != null) {
-					args.logger?.info(
-						`Hot Api returned withdrawHash=${apiHash} for nearTxHash=${args.tx.hash} nonce=${nonce.toString()}`,
-					);
+					args.logger?.info("HOT API fallback found withdrawal hash", {
+						withdrawalHash: apiHash,
+						nearTxHash: args.tx.hash,
+						nonce: nonce.toString(),
+					});
 					return {
 						status: "completed",
 						txHash: formatTxHash(apiHash, args.landingChain),
