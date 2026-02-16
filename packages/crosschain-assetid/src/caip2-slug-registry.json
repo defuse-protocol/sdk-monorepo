@@ -25,5 +25,6 @@
 	"aptos:mainnet": "aptos",
 	"stellar:pubnet": "stellar",
 	"cip34:1-764824073": "cardano",
-	"aleo:0": "aleo"
+	"aleo:0": "aleo",
+	"dash:0": "dash"
 }

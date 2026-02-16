@@ -80,6 +80,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);
+		case Chains.Dash:
+			return validateAddressDashAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -526,7 +528,7 @@ function modSqrt(n: bigint): bigint | null {
 	let t = modPow(n, q, P);
 	let r = modPow(n, (q + 1n) / 2n, P);
 
-	for (;;) {
+	for (; ;) {
 		if (t === 1n) return r;
 		// Find least i such that t^(2^i) ≡ 1
 		let i = 1;
@@ -649,4 +651,8 @@ export function validateAleoAddress(address: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+export function validateAddressDashAddress(address: string): boolean {
+	return true
 }
