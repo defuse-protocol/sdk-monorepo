@@ -34,7 +34,7 @@ export const Chains = {
 	Plasma: "eip155:9745",
 	Scroll: "eip155:534352",
 	Aleo: "aleo:0",
-	Dash: "dash:0",
+	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];

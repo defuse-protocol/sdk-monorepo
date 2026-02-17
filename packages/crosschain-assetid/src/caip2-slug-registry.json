@@ -26,5 +26,5 @@
 	"stellar:pubnet": "stellar",
 	"cip34:1-764824073": "cardano",
 	"aleo:0": "aleo",
-	"dash:0": "dash"
+	"bip122:00000ffd590b1485b3caadc19b22e637": "dash"
 }

@@ -81,7 +81,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Aleo:
 			return validateAleoAddress(address);
 		case Chains.Dash:
-			return validateAddressDashAddress(address);
+			return validateDashAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -528,7 +528,7 @@ function modSqrt(n: bigint): bigint | null {
 	let t = modPow(n, q, P);
 	let r = modPow(n, (q + 1n) / 2n, P);
 
-	for (; ;) {
+	for (;;) {
 		if (t === 1n) return r;
 		// Find least i such that t^(2^i) ≡ 1
 		let i = 1;
@@ -653,6 +653,36 @@ export function validateAleoAddress(address: string): boolean {
 	}
 }
 
-export function validateAddressDashAddress(address: string): boolean {
-	return true
+export function validateDashAddress(address: string): boolean {
+	let decoded: Uint8Array;
+
+	try {
+		decoded = base58.decode(address);
+	} catch {
+		return false;
+	}
+
+	// version (1) + payload (20) + checksum (4)
+	if (decoded.length !== 25) return false;
+
+	const version = decoded[0];
+	if (
+		version !== 0x4c && // P2PKH
+		version !== 0x10 // P2SH
+	) {
+		return false;
+	}
+
+	const payload = decoded.subarray(0, 21);
+	const checksum = decoded.subarray(21, 25);
+
+	const hash1 = sha256(payload);
+	const hash2 = sha256(hash1);
+	const expectedChecksum = hash2.subarray(0, 4);
+
+	for (let i = 0; i < 4; i++) {
+		if (checksum[i] !== expectedChecksum[i]) return false;
+	}
+
+	return true;
 }
