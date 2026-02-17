@@ -5682,16 +5682,16 @@
 						},
 						"public_key": {
 							"type": "string",
-							"pattern": "^p256:",
+							"pattern": "^(ed25519:|p256:)",
 							"description": "Encoding: base58"
 						},
 						"signature": {
 							"type": "string",
-							"pattern": "^p256:",
+							"pattern": "^(ed25519:|p256:)",
 							"description": "Encoding: base58"
 						}
 					},
-					"description": "[COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256",
+					"description": "[COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve",
 					"additionalProperties": false
 				},
 				{
@@ -9422,16 +9422,16 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^p256:",
+					"pattern": "^(ed25519:|p256:)",
 					"description": "Encoding: base58"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^p256:",
+					"pattern": "^(ed25519:|p256:)",
 					"description": "Encoding: base58"
 				}
 			},
-			"description": "[COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256",
+			"description": "[COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve",
 			"additionalProperties": false
 		},
 		"MultiPayloadTonConnect": {
@@ -14992,16 +14992,16 @@
 				},
 				"public_key": {
 					"type": "string",
-					"pattern": "^p256:",
+					"pattern": "^(ed25519:|p256:)",
 					"description": "Encoding: base58"
 				},
 				"signature": {
 					"type": "string",
-					"pattern": "^p256:",
+					"pattern": "^(ed25519:|p256:)",
 					"description": "Encoding: base58"
 				}
 			},
-			"description": "[COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256",
+			"description": "[COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve",
 			"additionalProperties": false
 		},
 		"TonConnectPayloadSchema__Parsed": {
@@ -26585,16 +26585,16 @@
 						},
 						"public_key": {
 							"type": "string",
-							"pattern": "^p256:",
+							"pattern": "^(ed25519:|p256:)",
 							"description": "Encoding: base58"
 						},
 						"signature": {
 							"type": "string",
-							"pattern": "^p256:",
+							"pattern": "^(ed25519:|p256:)",
 							"description": "Encoding: base58"
 						}
 					},
-					"description": "[COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256",
+					"description": "[COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve",
 					"additionalProperties": false
 				},
 				{

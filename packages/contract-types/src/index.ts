@@ -1075,7 +1075,7 @@ export interface MultiPayloadRawEd25519 {
 	standard: "raw_ed25519";
 }
 /**
- * [COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256
+ * [COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve
  *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadWebauthn".
@@ -1509,7 +1509,7 @@ export interface MultiPayloadRawEd25519__Parsed {
 	standard: "raw_ed25519";
 }
 /**
- * [COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256
+ * [COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve
  *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
  * via the `definition` "MultiPayloadWebauthn__Parsed".

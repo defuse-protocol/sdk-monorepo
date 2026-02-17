@@ -655,6 +655,32 @@ function getDiscriminatorValue(
 	return getEnumStringValue(variant.properties?.[discriminatorProp]);
 }
 
+/**
+ * Merge property patterns from `source` into `target`.
+ * When both have a `pattern` on the same property, combines them with "|".
+ * E.g. "^ed25519:" + "^p256:" → "^(ed25519:|p256:)"
+ */
+function mergePropertyPatterns(target: JsonSchema, source: JsonSchema): void {
+	const targetProps = target.properties;
+	const sourceProps = source.properties;
+	if (!targetProps || !sourceProps) return;
+
+	for (const [propName, sourceProp] of Object.entries(sourceProps)) {
+		if (!isPlainObject(sourceProp)) continue;
+		const targetProp = targetProps[propName];
+		if (
+			isPlainObject(targetProp) &&
+			typeof targetProp.pattern === "string" &&
+			typeof sourceProp.pattern === "string" &&
+			targetProp.pattern !== sourceProp.pattern
+		) {
+			const p1 = targetProp.pattern.replace(/^\^/, "");
+			const p2 = sourceProp.pattern.replace(/^\^/, "");
+			targetProp.pattern = `^(${p1}|${p2})`;
+		}
+	}
+}
+
 export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 	const result = deepClone(schema);
 	const newDefinitions: Record<string, JsonSchema> = {};
@@ -721,6 +747,12 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 
 			const variantName = `${name}${toSchemaNameSuffix(discriminatorValue)}`;
 			const refPath = `#/definitions/${variantName}`;
+
+			if (variantName in newDefinitions) {
+				// Merge property patterns (e.g. ^ed25519: + ^p256: → ^(ed25519:|p256:))
+				mergePropertyPatterns(newDefinitions[variantName], variant);
+				continue;
+			}
 
 			newDefinitions[variantName] = variant;
 			mapping[discriminatorValue] = refPath;

@@ -3923,17 +3923,17 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 				standard: { type: "string", enum: ["webauthn"] },
 				public_key: {
 					type: "string",
-					pattern: "^p256:",
+					pattern: "^(ed25519:|p256:)",
 					description: "Encoding: base58",
 				},
 				signature: {
 					type: "string",
-					pattern: "^p256:",
+					pattern: "^(ed25519:|p256:)",
 					description: "Encoding: base58",
 				},
 			},
 			description:
-				"[COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256",
+				"[COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve",
 			additionalProperties: false,
 		},
 		{
@@ -6582,17 +6582,17 @@ export const MultiPayloadWebauthnSchema: JSONSchemaType<Types.MultiPayloadWebaut
 			standard: { type: "string", enum: ["webauthn"] },
 			public_key: {
 				type: "string",
-				pattern: "^p256:",
+				pattern: "^(ed25519:|p256:)",
 				description: "Encoding: base58",
 			},
 			signature: {
 				type: "string",
-				pattern: "^p256:",
+				pattern: "^(ed25519:|p256:)",
 				description: "Encoding: base58",
 			},
 		},
 		description:
-			"[COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256",
+			"[COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve",
 		additionalProperties: false,
 	};
 

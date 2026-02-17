@@ -255,6 +255,47 @@ describe("extractDiscriminatedUnions", () => {
 			},
 		});
 	});
+
+	it("merges property patterns for variants with the same discriminator value", () => {
+		const result = extractDiscriminatedUnions({
+			definitions: {
+				MultiPayload: {
+					oneOf: [
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^ed25519:" },
+								signature: { type: "string", pattern: "^ed25519:" },
+							},
+						},
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^p256:" },
+								signature: { type: "string", pattern: "^p256:" },
+							},
+						},
+					],
+				},
+			},
+		});
+
+		expect(result.definitions?.MultiPayload?.oneOf).toEqual([
+			{ $ref: "#/definitions/MultiPayloadWebauthn" },
+		]);
+		expect(
+			result.definitions?.MultiPayloadWebauthn?.properties?.public_key,
+		).toEqual(
+			expect.objectContaining({ pattern: "^(ed25519:|p256:)" }),
+		);
+		expect(
+			result.definitions?.MultiPayloadWebauthn?.properties?.signature,
+		).toEqual(
+			expect.objectContaining({ pattern: "^(ed25519:|p256:)" }),
+		);
+	});
 });
 
 describe("deduplicateOneOf", () => {
