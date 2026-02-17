@@ -654,35 +654,33 @@ export function validateAleoAddress(address: string): boolean {
 }
 
 export function validateDashAddress(address: string): boolean {
-	let decoded: Uint8Array;
-
 	try {
-		decoded = base58.decode(address);
+		const decoded: Uint8Array = base58.decode(address);
+
+		// version (1) + payload (20) + checksum (4)
+		if (decoded.length !== 25) return false;
+
+		const version = decoded[0];
+		if (
+			version !== 0x4c && // P2PKH
+			version !== 0x10 // P2SH
+		) {
+			return false;
+		}
+
+		const payload = decoded.subarray(0, 21);
+		const checksum = decoded.subarray(21, 25);
+
+		const hash1 = sha256(payload);
+		const hash2 = sha256(hash1);
+		const expectedChecksum = hash2.subarray(0, 4);
+
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+
+		return true;
 	} catch {
 		return false;
 	}
-
-	// version (1) + payload (20) + checksum (4)
-	if (decoded.length !== 25) return false;
-
-	const version = decoded[0];
-	if (
-		version !== 0x4c && // P2PKH
-		version !== 0x10 // P2SH
-	) {
-		return false;
-	}
-
-	const payload = decoded.subarray(0, 21);
-	const checksum = decoded.subarray(21, 25);
-
-	const hash1 = sha256(payload);
-	const hash2 = sha256(hash1);
-	const expectedChecksum = hash2.subarray(0, 4);
-
-	for (let i = 0; i < 4; i++) {
-		if (checksum[i] !== expectedChecksum[i]) return false;
-	}
-
-	return true;
 }
