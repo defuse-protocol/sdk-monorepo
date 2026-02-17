@@ -1073,6 +1073,24 @@ export const fixOneOfNullable = createSchemaTransformer(
  * The discriminator keyword was added for OpenAPI tooling but AJV's implementation
  * has strict requirements that don't match our schema. oneOf validation works without it.
  */
+export const deduplicateOneOf = createSchemaTransformer(
+	"deduplicateOneOf",
+	(entries, recurse) =>
+		entries.map(([key, value]) => {
+			if (key === "oneOf" && Array.isArray(value)) {
+				const seen = new Set<string>();
+				const unique = value.filter((item) => {
+					const serialized = JSON.stringify(item);
+					if (seen.has(serialized)) return false;
+					seen.add(serialized);
+					return true;
+				});
+				return [key, unique.map(recurse)];
+			}
+			return [key, recurse(value)];
+		}),
+);
+
 export const removeDiscriminator = createSchemaTransformer(
 	"removeDiscriminator",
 	(entries, recurse) =>
@@ -1798,6 +1816,7 @@ async function main() {
 
 	// Step 9: Dereference schema (inline all $refs) - this goes LAST for structural changes
 	validationSchema = dereferenceSchema(validationSchema);
+	validationSchema = deduplicateOneOf(validationSchema);
 	validationSchema = removeDiscriminator(validationSchema);
 
 	// Step 10: Apply AJV fixes for runtime validation

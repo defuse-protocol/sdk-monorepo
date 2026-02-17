@@ -16,6 +16,7 @@ import {
 	moveContentEncodingToDescription,
 	removeDefinitions,
 	removeDiscriminator,
+	deduplicateOneOf,
 	type JsonSchema,
 } from "./gen-defuse-types.js";
 
@@ -253,6 +254,40 @@ describe("extractDiscriminatedUnions", () => {
 				},
 			},
 		});
+	});
+});
+
+describe("deduplicateOneOf", () => {
+	it("removes duplicate entries from oneOf arrays", () => {
+		const variant = {
+			type: "object",
+			properties: {
+				standard: { type: "string", enum: ["webauthn"] },
+				public_key: { type: "string", pattern: "^p256:" },
+			},
+			additionalProperties: false,
+		};
+
+		const result = deduplicateOneOf({
+			definitions: {
+				MultiPayload: {
+					oneOf: [variant, variant],
+				},
+			},
+		});
+
+		expect(result.definitions?.MultiPayload?.oneOf).toEqual([variant]);
+	});
+
+	it("keeps distinct entries in oneOf", () => {
+		const v1 = { type: "object", properties: { a: { type: "string" } } };
+		const v2 = { type: "object", properties: { b: { type: "string" } } };
+
+		const result = deduplicateOneOf({
+			definitions: { Union: { oneOf: [v1, v2] } },
+		});
+
+		expect(result.definitions?.Union?.oneOf).toEqual([v1, v2]);
 	});
 });
 
