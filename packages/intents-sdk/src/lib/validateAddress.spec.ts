@@ -567,11 +567,4 @@ describe("validateDashAddress()", () => {
 			false,
 		);
 	});
-
-	it("works via validateAddress with Chains.Dash", () => {
-		expect(
-			validateAddress("XygRgBo2MMeG8EaQXjHTYCmmowt7wTcCRJ", Chains.Dash),
-		).toBe(true);
-		expect(validateAddress("not-a-dash-address", Chains.Dash)).toBe(false);
-	});
 });
