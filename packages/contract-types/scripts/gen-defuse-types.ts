@@ -1132,9 +1132,10 @@ export const fixOneOfNullable = createSchemaTransformer(
 );
 
 /**
- * Remove discriminator from dereferenced schema.
- * The discriminator keyword was added for OpenAPI tooling but AJV's implementation
- * has strict requirements that don't match our schema. oneOf validation works without it.
+ * Deduplicates identical entries within oneOf arrays.
+ * After dereferencing and addCustomDefinitions, some oneOf arrays may contain
+ * duplicate entries (e.g. narrowed webauthn variants that differ only in
+ * public_key/signature patterns produce identical standard+payload objects).
  */
 export const deduplicateOneOf = createSchemaTransformer(
 	"deduplicateOneOf",
@@ -1154,6 +1155,11 @@ export const deduplicateOneOf = createSchemaTransformer(
 		}),
 );
 
+/**
+ * Remove discriminator from dereferenced schema.
+ * The discriminator keyword was added for OpenAPI tooling but AJV's implementation
+ * has strict requirements that don't match our schema. oneOf validation works without it.
+ */
 export const removeDiscriminator = createSchemaTransformer(
 	"removeDiscriminator",
 	(entries, recurse) =>
