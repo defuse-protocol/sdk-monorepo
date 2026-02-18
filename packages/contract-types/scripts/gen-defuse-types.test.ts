@@ -256,7 +256,7 @@ describe("extractDiscriminatedUnions", () => {
 		});
 	});
 
-	it("merges property patterns for variants with the same discriminator value", () => {
+	it("keeps separate definitions for variants with the same discriminator value", () => {
 		const result = extractDiscriminatedUnions({
 			definitions: {
 				MultiPayload: {
@@ -283,28 +283,78 @@ describe("extractDiscriminatedUnions", () => {
 		});
 
 		expect(result.definitions?.MultiPayload?.oneOf).toEqual([
-			{ $ref: "#/definitions/MultiPayloadWebauthn" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnEd25519" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnP256" },
 		]);
 		expect(
-			result.definitions?.MultiPayloadWebauthn?.properties?.public_key,
-		).toEqual(
-			expect.objectContaining({ pattern: "^(ed25519:|p256:)" }),
-		);
+			result.definitions?.MultiPayloadWebauthnEd25519?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^ed25519:" }));
 		expect(
-			result.definitions?.MultiPayloadWebauthn?.properties?.signature,
-		).toEqual(
-			expect.objectContaining({ pattern: "^(ed25519:|p256:)" }),
-		);
+			result.definitions?.MultiPayloadWebauthnEd25519?.properties?.signature,
+		).toEqual(expect.objectContaining({ pattern: "^ed25519:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnP256?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^p256:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnP256?.properties?.signature,
+		).toEqual(expect.objectContaining({ pattern: "^p256:" }));
+	});
+
+	it("keeps separate definitions for 3+ variants with the same discriminator value", () => {
+		const result = extractDiscriminatedUnions({
+			definitions: {
+				MultiPayload: {
+					oneOf: [
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^ed25519:" },
+							},
+						},
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^p256:" },
+							},
+						},
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^secp256k1:" },
+							},
+						},
+					],
+				},
+			},
+		});
+
+		expect(result.definitions?.MultiPayload?.oneOf).toEqual([
+			{ $ref: "#/definitions/MultiPayloadWebauthnEd25519" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnP256" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnSecp256k1" },
+		]);
+		expect(
+			result.definitions?.MultiPayloadWebauthnEd25519?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^ed25519:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnP256?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^p256:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnSecp256k1?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^secp256k1:" }));
 	});
 });
 
 describe("deduplicateOneOf", () => {
 	it("removes duplicate entries from oneOf arrays", () => {
 		const variant = {
-			type: "object",
+			type: "object" as const,
 			properties: {
-				standard: { type: "string", enum: ["webauthn"] },
-				public_key: { type: "string", pattern: "^p256:" },
+				standard: { type: "string" as const, enum: ["webauthn"] },
+				public_key: { type: "string" as const, pattern: "^p256:" },
 			},
 			additionalProperties: false,
 		};
@@ -321,8 +371,14 @@ describe("deduplicateOneOf", () => {
 	});
 
 	it("keeps distinct entries in oneOf", () => {
-		const v1 = { type: "object", properties: { a: { type: "string" } } };
-		const v2 = { type: "object", properties: { b: { type: "string" } } };
+		const v1 = {
+			type: "object" as const,
+			properties: { a: { type: "string" as const } },
+		};
+		const v2 = {
+			type: "object" as const,
+			properties: { b: { type: "string" as const } },
+		};
 
 		const result = deduplicateOneOf({
 			definitions: { Union: { oneOf: [v1, v2] } },

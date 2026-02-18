@@ -656,29 +656,21 @@ function getDiscriminatorValue(
 }
 
 /**
- * Merge property patterns from `source` into `target`.
- * When both have a `pattern` on the same property, combines them with "|".
- * E.g. "^ed25519:" + "^p256:" → "^(ed25519:|p256:)"
+ * Extracts a pattern prefix from a variant's first property that has a pattern.
+ * Given a variant with `pattern: "^ed25519:"`, returns `"ed25519"`.
+ * Used to disambiguate definition names when multiple variants share the same discriminator value.
  */
-function mergePropertyPatterns(target: JsonSchema, source: JsonSchema): void {
-	const targetProps = target.properties;
-	const sourceProps = source.properties;
-	if (!targetProps || !sourceProps) return;
+function extractPatternPrefix(variant: JsonSchema): string | null {
+	const props = variant.properties;
+	if (!props) return null;
 
-	for (const [propName, sourceProp] of Object.entries(sourceProps)) {
-		if (!isPlainObject(sourceProp)) continue;
-		const targetProp = targetProps[propName];
-		if (
-			isPlainObject(targetProp) &&
-			typeof targetProp.pattern === "string" &&
-			typeof sourceProp.pattern === "string" &&
-			targetProp.pattern !== sourceProp.pattern
-		) {
-			const p1 = targetProp.pattern.replace(/^\^/, "");
-			const p2 = sourceProp.pattern.replace(/^\^/, "");
-			targetProp.pattern = `^(${p1}|${p2})`;
-		}
+	for (const prop of Object.values(props)) {
+		if (!isPlainObject(prop) || typeof prop.pattern !== "string") continue;
+		const match = prop.pattern.match(/^\^(\w+):/);
+		if (match?.[1]) return match[1];
 	}
+
+	return null;
 }
 
 export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
@@ -719,6 +711,8 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 
 		const newOneOf: JsonSchema[] = [];
 		const mapping: Record<string, string> = {};
+		// Track base names that have been renamed due to collisions
+		const renamedBases = new Set<string>();
 
 		for (const variant of definition.oneOf) {
 			if (variant.$ref) {
@@ -748,9 +742,46 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 			const variantName = `${name}${toSchemaNameSuffix(discriminatorValue)}`;
 			const refPath = `#/definitions/${variantName}`;
 
-			if (variantName in newDefinitions) {
-				// Merge property patterns (e.g. ^ed25519: + ^p256: → ^(ed25519:|p256:))
-				mergePropertyPatterns(newDefinitions[variantName], variant);
+			if (newDefinitions[variantName] && !renamedBases.has(variantName)) {
+				// First collision: rename existing definition with its pattern suffix
+				const existingDef = newDefinitions[variantName];
+				const existingPrefix = extractPatternPrefix(existingDef);
+				if (!existingPrefix) continue;
+
+				const renamedName = `${variantName}${toSchemaNameSuffix(existingPrefix)}`;
+				newDefinitions[renamedName] = existingDef;
+				delete newDefinitions[variantName];
+
+				// Update $ref in newOneOf that pointed to old name
+				const oldRef = `#/definitions/${variantName}`;
+				const renamedRef = `#/definitions/${renamedName}`;
+				for (let i = 0; i < newOneOf.length; i++) {
+					const entry = newOneOf[i];
+					if (entry && entry.$ref === oldRef) {
+						newOneOf[i] = { $ref: renamedRef };
+					}
+				}
+
+				// Update mapping
+				for (const [key, value] of Object.entries(mapping)) {
+					if (value === oldRef) {
+						mapping[key] = renamedRef;
+					}
+				}
+
+				renamedBases.add(variantName);
+			}
+
+			if (renamedBases.has(variantName)) {
+				// Collision (first or subsequent): add new variant with its own suffix
+				const newPrefix = extractPatternPrefix(variant);
+				if (!newPrefix) continue;
+				const suffixedName = `${variantName}${toSchemaNameSuffix(newPrefix)}`;
+				const suffixedRef = `#/definitions/${suffixedName}`;
+
+				newDefinitions[suffixedName] = variant;
+				mapping[discriminatorValue] = suffixedRef;
+				newOneOf.push({ $ref: suffixedRef });
 				continue;
 			}
 
