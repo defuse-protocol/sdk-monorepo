@@ -346,6 +346,33 @@ describe("extractDiscriminatedUnions", () => {
 			result.definitions?.MultiPayloadWebauthnSecp256k1?.properties?.public_key,
 		).toEqual(expect.objectContaining({ pattern: "^secp256k1:" }));
 	});
+
+	it("throws when colliding variants have no pattern to disambiguate", () => {
+		expect(() =>
+			extractDiscriminatedUnions({
+				definitions: {
+					MultiPayload: {
+						oneOf: [
+							{
+								type: "object",
+								properties: {
+									standard: { type: "string", enum: ["webauthn"] },
+									public_key: { type: "string" },
+								},
+							},
+							{
+								type: "object",
+								properties: {
+									standard: { type: "string", enum: ["webauthn"] },
+									public_key: { type: "string" },
+								},
+							},
+						],
+					},
+				},
+			}),
+		).toThrow(/definitions\.MultiPayload\.oneOf.*standard: "webauthn"/);
+	});
 });
 
 describe("deduplicateOneOf", () => {

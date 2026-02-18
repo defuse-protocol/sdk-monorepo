@@ -673,6 +673,25 @@ function extractPatternPrefix(variant: JsonSchema): string | null {
 	return null;
 }
 
+/**
+ * Formats a variant's properties for error messages.
+ * Shows each property name and its pattern (if any).
+ * Example output: `public_key (pattern: "^ed25519:"), signature (no pattern)`
+ */
+function formatVariantProperties(variant: JsonSchema): string {
+	const props = variant.properties;
+	if (!props) return "(no properties)";
+
+	return Object.entries(props)
+		.map(([propName, prop]) => {
+			if (isPlainObject(prop) && typeof prop.pattern === "string") {
+				return `${propName} (pattern: "${prop.pattern}")`;
+			}
+			return `${propName} (no pattern)`;
+		})
+		.join(", ");
+}
+
 export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 	const result = deepClone(schema);
 	const newDefinitions: Record<string, JsonSchema> = {};
@@ -746,7 +765,17 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 				// First collision: rename existing definition with its pattern suffix
 				const existingDef = newDefinitions[variantName];
 				const existingPrefix = extractPatternPrefix(existingDef);
-				if (!existingPrefix) continue;
+				if (!existingPrefix) {
+					const props = formatVariantProperties(existingDef);
+					throw new Error(
+						`definitions.${name}.oneOf has multiple variants with standard: "${discriminatorValue}". ` +
+							`To generate unique names (e.g. "${variantName}Ed25519"), each variant needs ` +
+							`a property with a pattern like "^ed25519:". ` +
+							`The first variant's properties are: ${props}. ` +
+							`Update extractPatternPrefix() or the collision handling in extractDiscriminatedUnions() ` +
+							`to support this case.`,
+					);
+				}
 
 				const renamedName = `${variantName}${toSchemaNameSuffix(existingPrefix)}`;
 				newDefinitions[renamedName] = existingDef;
@@ -775,7 +804,17 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 			if (renamedBases.has(variantName)) {
 				// Collision (first or subsequent): add new variant with its own suffix
 				const newPrefix = extractPatternPrefix(variant);
-				if (!newPrefix) continue;
+				if (!newPrefix) {
+					const props = formatVariantProperties(variant);
+					throw new Error(
+						`definitions.${name}.oneOf has multiple variants with standard: "${discriminatorValue}". ` +
+							`To generate unique names (e.g. "${variantName}Ed25519"), each variant needs ` +
+							`a property with a pattern like "^ed25519:". ` +
+							`A later variant's properties are: ${props}. ` +
+							`Update extractPatternPrefix() or the collision handling in extractDiscriminatedUnions() ` +
+							`to support this case.`,
+					);
+				}
 				const suffixedName = `${variantName}${toSchemaNameSuffix(newPrefix)}`;
 				const suffixedRef = `#/definitions/${suffixedName}`;
 
