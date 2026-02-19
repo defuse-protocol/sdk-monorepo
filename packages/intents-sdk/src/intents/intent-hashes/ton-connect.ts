@@ -8,12 +8,28 @@ export interface TonAddress {
 
 /**
  * Convert number to big-endian byte array
+ * Note: This function is limited to 32-bit values due to JavaScript's
+ * bit operation limitations. For larger values, use bigintToBigEndian.
  */
 function numberToBigEndian(num: number, bytes: number): Uint8Array {
 	const result = new Uint8Array(bytes);
 	for (let i = bytes - 1; i >= 0; i--) {
 		result[i] = num & 0xff;
 		num >>= 8;
+	}
+	return result;
+}
+
+/**
+ * Convert bigint to big-endian byte array
+ * This function handles values larger than 32 bits correctly,
+ * unlike numberToBigEndian which is limited by JavaScript's bit operations.
+ */
+function bigintToBigEndian(num: bigint, bytes: number): Uint8Array {
+	const result = new Uint8Array(bytes);
+	for (let i = bytes - 1; i >= 0; i--) {
+		result[i] = Number(num & 0xffn);
+		num >>= 8n;
 	}
 	return result;
 }
@@ -104,7 +120,8 @@ export function computeTonConnectHash(
 				parsedAddress.address,
 				numberToBigEndian(domain.length, 4),
 				new TextEncoder().encode(domain),
-				numberToBigEndian(Number(timestamp), 8),
+				// Use bigintToBigEndian for timestamp to handle values > 32 bits correctly
+				bigintToBigEndian(BigInt(timestamp), 8),
 				new TextEncoder().encode(payloadPrefix),
 				numberToBigEndian(payloadData.length, 4),
 				payloadData,
