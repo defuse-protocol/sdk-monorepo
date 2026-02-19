@@ -265,4 +265,49 @@ describe("MultiPayloadValidator", () => {
 		const result = MultiPayloadValidator.validate(input);
 		expect(result.issues).toBeDefined();
 	});
+
+	it("validates webauthn with p256 key algorithm", () => {
+		const input = {
+			standard: "webauthn",
+			payload: validDefusePayload,
+			public_key: "p256:base58encodedkey",
+			signature: "p256:base58encodedsig",
+			authenticator_data: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA",
+			client_data_json:
+				'{"type":"webauthn.get","challenge":"...","origin":"https://app.example.com"}',
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeUndefined();
+	});
+
+	it("validates webauthn with ed25519 key algorithm", () => {
+		const input = {
+			standard: "webauthn",
+			payload: validDefusePayload,
+			public_key: "ed25519:base58encodedkey",
+			signature: "ed25519:base58encodedsig",
+			authenticator_data: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA",
+			client_data_json:
+				'{"type":"webauthn.get","challenge":"...","origin":"https://app.example.com"}',
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeUndefined();
+	});
+
+	it("rejects webauthn with mixed key algorithms", () => {
+		const input = {
+			standard: "webauthn",
+			payload: validDefusePayload,
+			public_key: "ed25519:base58encodedkey",
+			signature: "p256:base58encodedsig",
+			authenticator_data: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA",
+			client_data_json:
+				'{"type":"webauthn.get","challenge":"...","origin":"https://app.example.com"}',
+		};
+
+		const result = MultiPayloadValidator.validate(input);
+		expect(result.issues).toBeDefined();
+	});
 });

@@ -655,6 +655,43 @@ function getDiscriminatorValue(
 	return getEnumStringValue(variant.properties?.[discriminatorProp]);
 }
 
+/**
+ * Extracts a pattern prefix from a variant's first property that has a pattern.
+ * Given a variant with `pattern: "^ed25519:"`, returns `"ed25519"`.
+ * Used to disambiguate definition names when multiple variants share the same discriminator value.
+ */
+function extractPatternPrefix(variant: JsonSchema): string | null {
+	const props = variant.properties;
+	if (!props) return null;
+
+	for (const prop of Object.values(props)) {
+		if (!isPlainObject(prop) || typeof prop.pattern !== "string") continue;
+		const match = prop.pattern.match(/^\^(\w+):/);
+		if (match?.[1]) return match[1];
+	}
+
+	return null;
+}
+
+/**
+ * Formats a variant's properties for error messages.
+ * Shows each property name and its pattern (if any).
+ * Example output: `public_key (pattern: "^ed25519:"), signature (no pattern)`
+ */
+function formatVariantProperties(variant: JsonSchema): string {
+	const props = variant.properties;
+	if (!props) return "(no properties)";
+
+	return Object.entries(props)
+		.map(([propName, prop]) => {
+			if (isPlainObject(prop) && typeof prop.pattern === "string") {
+				return `${propName} (pattern: "${prop.pattern}")`;
+			}
+			return `${propName} (no pattern)`;
+		})
+		.join(", ");
+}
+
 export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 	const result = deepClone(schema);
 	const newDefinitions: Record<string, JsonSchema> = {};
@@ -693,6 +730,8 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 
 		const newOneOf: JsonSchema[] = [];
 		const mapping: Record<string, string> = {};
+		// Track base names that have been renamed due to collisions
+		const renamedBases = new Set<string>();
 
 		for (const variant of definition.oneOf) {
 			if (variant.$ref) {
@@ -721,6 +760,69 @@ export function extractDiscriminatedUnions(schema: JsonSchema): JsonSchema {
 
 			const variantName = `${name}${toSchemaNameSuffix(discriminatorValue)}`;
 			const refPath = `#/definitions/${variantName}`;
+
+			if (newDefinitions[variantName] && !renamedBases.has(variantName)) {
+				// First collision: rename existing definition with its pattern suffix
+				const existingDef = newDefinitions[variantName];
+				const existingPrefix = extractPatternPrefix(existingDef);
+				if (!existingPrefix) {
+					const props = formatVariantProperties(existingDef);
+					throw new Error(
+						`definitions.${name}.oneOf has multiple variants with standard: "${discriminatorValue}". ` +
+							`To generate unique names (e.g. "${variantName}Ed25519"), each variant needs ` +
+							`a property with a pattern like "^ed25519:". ` +
+							`The first variant's properties are: ${props}. ` +
+							`Update extractPatternPrefix() or the collision handling in extractDiscriminatedUnions() ` +
+							`to support this case.`,
+					);
+				}
+
+				const renamedName = `${variantName}${toSchemaNameSuffix(existingPrefix)}`;
+				newDefinitions[renamedName] = existingDef;
+				delete newDefinitions[variantName];
+
+				// Update $ref in newOneOf that pointed to old name
+				const oldRef = `#/definitions/${variantName}`;
+				const renamedRef = `#/definitions/${renamedName}`;
+				for (let i = 0; i < newOneOf.length; i++) {
+					const entry = newOneOf[i];
+					if (entry && entry.$ref === oldRef) {
+						newOneOf[i] = { $ref: renamedRef };
+					}
+				}
+
+				// Update mapping
+				for (const [key, value] of Object.entries(mapping)) {
+					if (value === oldRef) {
+						mapping[key] = renamedRef;
+					}
+				}
+
+				renamedBases.add(variantName);
+			}
+
+			if (renamedBases.has(variantName)) {
+				// Collision (first or subsequent): add new variant with its own suffix
+				const newPrefix = extractPatternPrefix(variant);
+				if (!newPrefix) {
+					const props = formatVariantProperties(variant);
+					throw new Error(
+						`definitions.${name}.oneOf has multiple variants with standard: "${discriminatorValue}". ` +
+							`To generate unique names (e.g. "${variantName}Ed25519"), each variant needs ` +
+							`a property with a pattern like "^ed25519:". ` +
+							`A later variant's properties are: ${props}. ` +
+							`Update extractPatternPrefix() or the collision handling in extractDiscriminatedUnions() ` +
+							`to support this case.`,
+					);
+				}
+				const suffixedName = `${variantName}${toSchemaNameSuffix(newPrefix)}`;
+				const suffixedRef = `#/definitions/${suffixedName}`;
+
+				newDefinitions[suffixedName] = variant;
+				mapping[discriminatorValue] = suffixedRef;
+				newOneOf.push({ $ref: suffixedRef });
+				continue;
+			}
 
 			newDefinitions[variantName] = variant;
 			mapping[discriminatorValue] = refPath;
@@ -1066,6 +1168,30 @@ export const fixOneOfNullable = createSchemaTransformer(
 
 		return result;
 	},
+);
+
+/**
+ * Deduplicates identical entries within oneOf arrays.
+ * After dereferencing and addCustomDefinitions, some oneOf arrays may contain
+ * duplicate entries (e.g. narrowed webauthn variants that differ only in
+ * public_key/signature patterns produce identical standard+payload objects).
+ */
+export const deduplicateOneOf = createSchemaTransformer(
+	"deduplicateOneOf",
+	(entries, recurse) =>
+		entries.map(([key, value]) => {
+			if (key === "oneOf" && Array.isArray(value)) {
+				const seen = new Set<string>();
+				const unique = value.filter((item) => {
+					const serialized = JSON.stringify(item);
+					if (seen.has(serialized)) return false;
+					seen.add(serialized);
+					return true;
+				});
+				return [key, unique.map(recurse)];
+			}
+			return [key, recurse(value)];
+		}),
 );
 
 /**
@@ -1798,6 +1924,7 @@ async function main() {
 
 	// Step 9: Dereference schema (inline all $refs) - this goes LAST for structural changes
 	validationSchema = dereferenceSchema(validationSchema);
+	validationSchema = deduplicateOneOf(validationSchema);
 	validationSchema = removeDiscriminator(validationSchema);
 
 	// Step 10: Apply AJV fixes for runtime validation
