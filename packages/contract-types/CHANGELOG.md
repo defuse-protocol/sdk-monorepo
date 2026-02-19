@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.6.2
+
+### Patch Changes
+
+- 4520b4a: Fix WebAuthn oneOf duplicate and support both key algorithms
+
 ## 0.6.1
 
 ### Patch Changes
