@@ -91,7 +91,7 @@ export class OmniBridge implements Bridge {
 		fetchMethod: async () => {
 			const storageBalance = await getAccountOmniStorageBalance(
 				this.nearProvider,
-				configsByEnvironment[this.env].contractID,
+				this.envConfig.contractID,
 			);
 			return storageBalance === null ? 0n : BigInt(storageBalance.available);
 		},
