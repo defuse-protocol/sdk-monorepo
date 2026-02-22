@@ -144,8 +144,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-			params.routeConfig.route === RouteEnum.OmniBridge &&
-			params.routeConfig.chain === undefined,
+				params.routeConfig.route === RouteEnum.OmniBridge &&
+				params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -231,8 +231,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-			routeConfig.route === RouteEnum.OmniBridge &&
-			routeConfig.chain,
+				routeConfig.route === RouteEnum.OmniBridge &&
+				routeConfig.chain,
 		);
 	}
 
@@ -504,8 +504,8 @@ export class OmniBridge implements Bridge {
 
 			assert(
 				fee.min_amount !== null &&
-				fee.min_amount !== undefined &&
-				BigInt(fee.min_amount) > 0n,
+					fee.min_amount !== undefined &&
+					BigInt(fee.min_amount) > 0n,
 				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
 			);
 			const minAmount = BigInt(fee.min_amount);
@@ -638,8 +638,8 @@ export class OmniBridge implements Bridge {
 			);
 			assert(
 				fee.protocol_fee !== null &&
-				fee.protocol_fee !== undefined &&
-				fee.protocol_fee > 0n,
+					fee.protocol_fee !== undefined &&
+					fee.protocol_fee > 0n,
 				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${fee.protocol_fee}`,
 			);
 
@@ -672,8 +672,8 @@ export class OmniBridge implements Bridge {
 
 		const landingChain =
 			args.withdrawalParams.routeConfig != null &&
-				"chain" in args.withdrawalParams.routeConfig &&
-				args.withdrawalParams.routeConfig.chain !== undefined
+			"chain" in args.withdrawalParams.routeConfig &&
+			args.withdrawalParams.routeConfig.chain !== undefined
 				? args.withdrawalParams.routeConfig.chain
 				: assetInfo.blockchain;
 
