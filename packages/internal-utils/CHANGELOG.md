@@ -1,11 +1,108 @@
 # @defuse-protocol/internal-utils
 
+## 0.28.2
+
+### Patch Changes
+
+- Updated dependencies [4520b4a]
+  - @defuse-protocol/contract-types@0.6.2
+
+## 0.28.1
+
+### Patch Changes
+
+- Updated dependencies [be5c0fb]
+  - @defuse-protocol/contract-types@0.6.1
+
+## 0.28.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+## 0.27.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
+## 0.26.0
+
+### Minor Changes
+
+- 8fb6d4b: Add nonce customization and static salt support for private blockchains.
+  - `VersionedNonceBuilder.createTimestampedNonceBytes(startTime)` — embed start timestamp in nonce
+  - `EnvConfig.contractSalt` — static salt (hex) for private blockchains
+  - `IntentPayloadBuilder.setNonceRandomBytes(bytes)` — custom random bytes for nonce generation
+  - **Breaking:** nonce deadline now equals intent deadline (removed 5s offset)
+
+### Patch Changes
+
+- Updated dependencies [98c96ca]
+  - @defuse-protocol/contract-types@0.6.0
+
+## 0.25.0
+
+### Minor Changes
+
+- 7aff108: Add support for authenticated RPC URLs.
+  - URLs with embedded credentials (`http://user:pass@host:3030`) are now automatically parsed and converted to `Authorization: Basic` header
+  - New `RpcEndpoint` type allows passing either plain URL strings or config objects with custom headers
+  - New `extractRpcUrls()` and `normalizeRpcEndpoint()` utilities for RPC endpoint handling
+
+## 0.24.2
+
+### Patch Changes
+
+- 2663c94: Update default Near RPC list.
+
+## 0.24.1
+
+### Patch Changes
+
+- Updated dependencies [fecef80]
+  - @defuse-protocol/contract-types@0.5.0
+
+## 0.24.0
+
+### Minor Changes
+
+- 574fed3: feat: allow custom EnvConfig via SDK constructor
+
+  SDK now accepts custom `EnvConfig` objects for private environments:
+
+  ```typescript
+  new IntentsSDK({
+    env: {
+      contractID: "intents.private-shard",
+      solverRelayBaseURL: "https://private-relay.example.com",
+      // ... other URLs
+    },
+    referral: "...",
+  });
+  ```
+
+  Empty string in config means service unavailable (throws at use time).
+
+## 0.23.1
+
+### Patch Changes
+
+- 414bcbf: Upgrade build tooling (tsdown) from 0.15.5 to 0.19.0
+- Updated dependencies [414bcbf]
+  - @defuse-protocol/contract-types@0.4.4
+
+## 0.23.0
+
+### Minor Changes
+
+- dd7b27d: Add support for Plasma and Scroll network to Hot bridge
+
 ## 0.22.0
 
 ### Minor Changes
 
 - 5b1e80a: Add latency-optimized polling for intent settlement
-
   - New `poll()` utility with probability-based intervals that polls aggressively early and backs off for outliers
   - `waitForIntentSettlement()` now uses production timing stats (p50=2s, p90=10s, p99=356s)
 
@@ -14,7 +111,6 @@
 - f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
 
   BREAKING CHANGES:
-
   - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
   - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
 
@@ -135,7 +231,6 @@
 ### Patch Changes
 
 - 160a024: Enhance NEAR address validation with improved support for different account types
-
   - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
   - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
   - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
@@ -273,7 +368,6 @@
 ### Minor Changes
 
 - 468246c: Introduce app fee support.
-
   - Updated message factory to accept app fee parameters.
   - Exported app fee utilities from the package index.
 
@@ -295,16 +389,13 @@
 - 89554ed: Re-organize package exports.
 
   Renamed:
-
   - `CAIP2_NETWORK` -> `Chains` and `Chain` type
 
   Removed:
-
   - `HOT_BRIDGE_CHAINS_CAIP2`
   - Intent relayer
 
   Added:
-
   - `createPoaBridgeRoute()` and `createHotBridgeRoute()`
   - Types: `BridgeSDKConfig`, `WithdrawalIdentifier`, `NearWithdrawalRouteConfig`, `InternalTransferRouteConfig`, `VirtualChainRouteConfig`, `PoaBridgeRouteConfig`, `HotBridgeRouteConfig`, `NearTxInfo`, `TxInfo`, `TxNoInfo`, `ParsedAssetInfo`, `ILogger`, `RetryOptions`, `NearIntentsEnv`, `IntentPrimitive`, `IntentPayload`, `IntentPayloadFactory`, `IntentRelayParamsFactory`, `MultiPayload`
   - All error types
@@ -337,7 +428,6 @@
 - 61d00ec: Change name of network from CoinEasy to EasyChain
 - 6d588d6: Make `evmRpc` optional, fallback to public URLs.
 - fbe2b7c: Extended and fixed exports for @defuse-protocol/internal-utils:
-
   - Extended `poaBridge` exports: now includes `httpClient`, `waitForWithdrawalCompletion`, `constants/blockchains`, `getPendingDeposits`, and `createWithdrawMemo`.
   - Extended `solverRelay` exports: now includes `getQuote`, `publishIntents`, `waitForIntentSettlement`, `publishIntent`, `quote`, and types (`Quote`, `FailedQuote`, `IntentSettlementError`, `WaitForIntentSettlementReturnType`, `PublishIntentRequest`, `Params`).
   - Extended `utils` exports: now includes `authIdentity`, `prepareBroadcastRequest`, and `tokenUtils`.

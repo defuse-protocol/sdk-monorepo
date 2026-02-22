@@ -1,5 +1,8 @@
 import type { CompletionStats } from "@defuse-protocol/internal-utils";
 import type { Chain } from "../lib/caip2";
+import { RouteEnum, type RouteEnumValues } from "./route-enum";
+
+const HOT_EXTRA_TIMEOUT_MS = 12 * 60 * 1000; // 12 minutes
 
 /**
  * Withdrawal timing p99 values (in seconds) by CAIP-2 chain identifier.
@@ -33,26 +36,42 @@ const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
 
 /**
  * Default stats for chains without timing data.
- * Conservative 2-hour timeout with gradual phase transitions.
+ * Conservative 6-hour timeout (3x 2-hour p99) with gradual phase transitions.
  */
 const DEFAULT_WITHDRAWAL_STATS: CompletionStats = {
 	p50: 60_000, // 1 minute
 	p90: 600_000, // 10 minutes
-	p99: 7_200_000, // 2 hours
+	p99: 21_600_000, // 6 hours (3x 2-hour p99)
 };
 
+export interface GetWithdrawalStatsOptions {
+	chain: Chain;
+	bridgeRoute?: RouteEnumValues;
+}
+
 /**
- * Returns CompletionStats for the given chain.
+ * Returns CompletionStats for the given chain and bridge.
  * Derives p50/p90 from p99 using reasonable ratios with minimum floors.
+ * Timeout (p99 field) is set to 3x of the actual p99, with extra 12 minutes for HOT bridge.
  */
-export function getWithdrawalStatsForChain(caip2: Chain): CompletionStats {
-	const p99Seconds = WITHDRAWAL_P99_BY_CHAIN[caip2];
+export function getWithdrawalStatsForChain(
+	options: GetWithdrawalStatsOptions,
+): CompletionStats {
+	const p99Seconds = WITHDRAWAL_P99_BY_CHAIN[options.chain];
 
 	if (p99Seconds == null) {
-		return DEFAULT_WITHDRAWAL_STATS;
+		const extraTimeout =
+			options.bridgeRoute === RouteEnum.HotBridge ? HOT_EXTRA_TIMEOUT_MS : 0;
+		return {
+			...DEFAULT_WITHDRAWAL_STATS,
+			p99: DEFAULT_WITHDRAWAL_STATS.p99 + extraTimeout,
+		};
 	}
 
 	const p99 = p99Seconds * 1000;
+	const timeout = p99 * 3;
+	const extraTimeout =
+		options.bridgeRoute === RouteEnum.HotBridge ? HOT_EXTRA_TIMEOUT_MS : 0;
 
 	// Derive p50/p90 from p99 with minimum floors
 	// p50: 15% of p99, minimum 5s - aggressive polling phase
@@ -60,5 +79,5 @@ export function getWithdrawalStatsForChain(caip2: Chain): CompletionStats {
 	const p50 = Math.max(5_000, p99 * 0.15);
 	const p90 = Math.max(30_000, p99 * 0.5);
 
-	return { p50, p90, p99 };
+	return { p50, p90, p99: timeout + extraTimeout };
 }

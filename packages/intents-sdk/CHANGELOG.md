@@ -1,5 +1,180 @@
 # @defuse-protocol/intents-sdk
 
+## 0.53.3
+
+### Patch Changes
+
+- Updated dependencies [4520b4a]
+  - @defuse-protocol/contract-types@0.6.2
+  - @defuse-protocol/internal-utils@0.28.2
+
+## 0.53.2
+
+### Patch Changes
+
+- a570209: Improve logging for hot bridge destination hash fetching
+
+## 0.53.1
+
+### Patch Changes
+
+- Updated dependencies [be5c0fb]
+  - @defuse-protocol/contract-types@0.6.1
+  - @defuse-protocol/internal-utils@0.28.1
+
+## 0.53.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+### Patch Changes
+
+- Updated dependencies [feb1e30]
+  - @defuse-protocol/internal-utils@0.28.0
+
+## 0.52.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
+### Patch Changes
+
+- Updated dependencies [d4e0311]
+  - @defuse-protocol/internal-utils@0.27.0
+
+## 0.51.0
+
+### Minor Changes
+
+- 31c7736: Add `signRaw()` method to signers for signing arbitrary payloads (e.g. server-generated challenges)
+
+## 0.50.0
+
+### Minor Changes
+
+- 92a4ba7: Update omni sdk to use latest version
+
+## 0.49.0
+
+### Minor Changes
+
+- 8fb6d4b: Add nonce customization and static salt support for private blockchains.
+  - `VersionedNonceBuilder.createTimestampedNonceBytes(startTime)` — embed start timestamp in nonce
+  - `EnvConfig.contractSalt` — static salt (hex) for private blockchains
+  - `IntentPayloadBuilder.setNonceRandomBytes(bytes)` — custom random bytes for nonce generation
+  - **Breaking:** nonce deadline now equals intent deadline (removed 5s offset)
+
+### Patch Changes
+
+- 98c96ca: Remove unused binary/cell payload handling from TON Connect (only text payloads supported)
+- Updated dependencies [98c96ca]
+- Updated dependencies [8fb6d4b]
+  - @defuse-protocol/contract-types@0.6.0
+- Updated dependencies [8fb6d4b]
+  - @defuse-protocol/internal-utils@0.26.0
+
+## 0.48.0
+
+### Minor Changes
+
+- c9742de: Add `destinationMemo` support for internal transfers (intents route). The memo is now passed through to the transfer intent's `memo` field.
+- 7aff108: Add support for authenticated RPC URLs.
+  - URLs with embedded credentials (`http://user:pass@host:3030`) are now automatically parsed and converted to `Authorization: Basic` header
+  - New `RpcEndpoint` type allows passing either plain URL strings or config objects with custom headers
+  - New `extractRpcUrls()` and `normalizeRpcEndpoint()` utilities for RPC endpoint handling
+
+### Patch Changes
+
+- Updated dependencies [7aff108]
+  - @defuse-protocol/internal-utils@0.25.0
+
+## 0.47.0
+
+### Minor Changes
+
+- de39e32: Add dual-source polling for HOT withdrawals with API fallback when contract returns pending.
+
+### Patch Changes
+
+- 2663c94: Update default Near RPC list.
+- Updated dependencies [2663c94]
+  - @defuse-protocol/internal-utils@0.24.2
+
+## 0.46.1
+
+### Patch Changes
+
+- Updated dependencies [fecef80]
+  - @defuse-protocol/contract-types@0.5.0
+  - @defuse-protocol/internal-utils@0.24.1
+
+## 0.46.0
+
+### Minor Changes
+
+- 917e866: Add `sendSignedIntents()` method to send pre-signed `MultiPayload[]` directly to relay without creating/signing new intents
+- 574fed3: feat: allow custom EnvConfig via SDK constructor
+
+  SDK now accepts custom `EnvConfig` objects for private environments:
+
+  ```typescript
+  new IntentsSDK({
+    env: {
+      contractID: "intents.private-shard",
+      solverRelayBaseURL: "https://private-relay.example.com",
+      // ... other URLs
+    },
+    referral: "...",
+  });
+  ```
+
+  Empty string in config means service unavailable (throws at use time).
+
+### Patch Changes
+
+- Updated dependencies [574fed3]
+  - @defuse-protocol/internal-utils@0.24.0
+
+## 0.45.4
+
+### Patch Changes
+
+- 47057d1: Hot fix plasma withdrawals via increasing gasFee
+
+## 0.45.3
+
+### Patch Changes
+
+- 414bcbf: Upgrade build tooling (tsdown) from 0.15.5 to 0.19.0
+- Updated dependencies [414bcbf]
+  - @defuse-protocol/contract-types@0.4.4
+  - @defuse-protocol/internal-utils@0.23.1
+
+## 0.45.2
+
+### Patch Changes
+
+- dd5d36e: Add more details to 1.2x fallback failure warning including quote amounts and asset prices
+
+## 0.45.1
+
+### Patch Changes
+
+- 0dc36b1: Increase withdrawal polling timeout to 3x p99 with extra 12 minutes for HOT bridge
+
+## 0.45.0
+
+### Minor Changes
+
+- dd7b27d: Add support for Plasma and Scroll network to Hot bridge
+
+### Patch Changes
+
+- Updated dependencies [dd7b27d]
+  - @defuse-protocol/internal-utils@0.23.0
+
 ## 0.44.0
 
 ### Minor Changes
@@ -7,18 +182,15 @@
 - f6d10ea: Add `createWithdrawalCompletionPromises()` for granular control over batch withdrawals
 
   **New exports:**
-
   - `WithdrawalWatchError` - thrown when status polling fails (timeout or consecutive errors)
   - `WithdrawalFailedError` - thrown when the withdrawal fails on the destination chain
 
   **Breaking changes:**
-
   - Remove `retryOptions` parameter from `waitForWithdrawalCompletion()` and `processWithdrawal()`. Waiting continues until completion, failure, or chain-specific p99 timeout. Use `AbortSignal.timeout()` to set a shorter timeout.
 
 - f1befc2: Add chain-aware retry options for `waitForWithdrawalCompletion` based on per-chain p99 timing data.
 
   BREAKING CHANGES:
-
   - Removed `HotWithdrawalPendingError` and `HotWithdrawalCancelledError` exports
   - Removed `OmniTransferNotFoundError` and `OmniTransferDestinationChainHashNotFoundError` exports
 
@@ -339,7 +511,6 @@
 ### Patch Changes
 
 - 160a024: Enhance NEAR address validation with improved support for different account types
-
   - Rename `isLegitAccountId` to `validateNearAddress` for better clarity
   - Add specific validation for Ethereum-style implicit accounts (0x prefix, 42 chars)
   - Add validation for NEAR deterministic accounts (0s prefix, 42 chars)
@@ -613,18 +784,15 @@
   Introduce more methods for granular control over the execution, which support single and batch withdrawals.
 
   New intent-specific methods:
-
   - `signAndSendIntent()`
   - `waitForIntentSettlement()`
   - `getIntentStatus()`
 
   New withdraw-specific methods:
-
   - `signAndSendWithdrawalIntent()`
   - `processWithdrawal()` (replacement for deleted classes)
 
   Changed signatures:
-
   - `waitForWithdrawalCompletion()`
 
 ### Patch Changes
@@ -657,16 +825,13 @@
 - 89554ed: Re-organize package exports.
 
   Renamed:
-
   - `CAIP2_NETWORK` -> `Chains` and `Chain` type
 
   Removed:
-
   - `HOT_BRIDGE_CHAINS_CAIP2`
   - Intent relayer
 
   Added:
-
   - `createPoaBridgeRoute()` and `createHotBridgeRoute()`
   - Types: `BridgeSDKConfig`, `WithdrawalIdentifier`, `NearWithdrawalRouteConfig`, `InternalTransferRouteConfig`, `VirtualChainRouteConfig`, `PoaBridgeRouteConfig`, `HotBridgeRouteConfig`, `NearTxInfo`, `TxInfo`, `TxNoInfo`, `ParsedAssetInfo`, `ILogger`, `RetryOptions`, `NearIntentsEnv`, `IntentPrimitive`, `IntentPayload`, `IntentPayloadFactory`, `IntentRelayParamsFactory`, `MultiPayload`
   - All error types

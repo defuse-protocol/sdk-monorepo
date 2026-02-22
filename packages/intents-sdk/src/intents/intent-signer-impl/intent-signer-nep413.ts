@@ -1,7 +1,10 @@
+import type { MultiPayloadNep413 } from "@defuse-protocol/contract-types";
 import { base58, base64 } from "@scure/base";
 import { type NEP413Payload, hashNEP413Message } from "../../lib/nep413";
 import type { IIntentSigner } from "../interfaces/intent-signer";
-import type { IntentPayload, MultiPayload } from "../shared-types";
+import type { IntentPayload } from "../shared-types";
+
+export type Nep413RawPayload = Pick<MultiPayloadNep413, "payload">;
 
 type MaybePromise<T> = T | Promise<T>;
 
@@ -21,28 +24,27 @@ export interface IntentSignerNEP413Config {
 }
 
 export class IntentSignerNEP413 implements IIntentSigner {
-	private signMessage: SignMessageNEP413;
-	private accountId: string;
+	readonly standard = "nep413" as const;
+
+	private signMessageFn: SignMessageNEP413;
+	protected accountId: string;
 
 	constructor({ signMessage, accountId }: IntentSignerNEP413Config) {
-		this.signMessage = signMessage;
+		this.signMessageFn = signMessage;
 		this.accountId = accountId;
 	}
 
-	async signIntent(intent: IntentPayload): Promise<MultiPayload> {
+	async signRaw(input: Nep413RawPayload): Promise<MultiPayloadNep413> {
 		const nep413Payload: NEP413Payload = {
-			recipient: intent.verifying_contract,
-			nonce: Array.from(base64.decode(intent.nonce)),
-			message: JSON.stringify({
-				deadline: intent.deadline,
-				intents: intent.intents,
-				signer_id: intent.signer_id ?? this.accountId,
-			}),
+			message: input.payload.message,
+			nonce: Array.from(base64.decode(input.payload.nonce)),
+			recipient: input.payload.recipient,
+			callback_url: input.payload.callbackUrl,
 		};
 
 		const nep413Hash = await hashNEP413Message(nep413Payload);
 
-		const { publicKey, signature } = await this.signMessage(
+		const { publicKey, signature } = await this.signMessageFn(
 			nep413Payload,
 			nep413Hash,
 		);
@@ -53,12 +55,24 @@ export class IntentSignerNEP413 implements IIntentSigner {
 
 		return {
 			standard: "nep413",
-			payload: {
-				...nep413Payload,
-				nonce: intent.nonce,
-			},
+			payload: input.payload,
 			public_key: publicKey,
 			signature: signatureFormatted,
 		};
+	}
+
+	/** Builds payload from IntentPayload and signs it via signRaw() */
+	async signIntent(intent: IntentPayload): Promise<MultiPayloadNep413> {
+		return this.signRaw({
+			payload: {
+				message: JSON.stringify({
+					deadline: intent.deadline,
+					intents: intent.intents,
+					signer_id: intent.signer_id ?? this.accountId,
+				}),
+				nonce: intent.nonce,
+				recipient: intent.verifying_contract,
+			},
+		});
 	}
 }

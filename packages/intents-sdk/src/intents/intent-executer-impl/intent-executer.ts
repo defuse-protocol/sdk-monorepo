@@ -1,8 +1,4 @@
-import {
-	type ILogger,
-	type NearIntentsEnv,
-	configsByEnvironment,
-} from "@defuse-protocol/internal-utils";
+import type { ILogger, EnvConfig } from "@defuse-protocol/internal-utils";
 import type { SignedIntentsComposition, NearTxInfo } from "../../shared-types";
 import { computeIntentHash } from "../intent-hash";
 import { defaultIntentPayloadFactory } from "../intent-payload-factory";
@@ -36,7 +32,7 @@ export type OnBeforePublishIntentHook<
 }) => Promise<void> | void;
 
 export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected logger: ILogger | undefined;
 	protected intentPayloadFactory: IntentPayloadFactory | undefined;
 	protected intentSigner: IIntentSigner;
@@ -44,14 +40,14 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	protected onBeforePublishIntent: OnBeforePublishIntentHook | undefined;
 
 	constructor(args: {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		logger?: ILogger;
 		intentPayloadFactory?: IntentPayloadFactory;
 		intentRelayer: IIntentRelayer<Ticket>;
 		intentSigner: IIntentSigner;
 		onBeforePublishIntent?: OnBeforePublishIntentHook;
 	}) {
-		this.env = args.env;
+		this.envConfig = args.envConfig;
 		this.logger = args.logger;
 		this.intentPayloadFactory = args.intentPayloadFactory;
 		this.intentRelayer = args.intentRelayer;
@@ -71,7 +67,7 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 	} & Partial<Parameters<IntentPayloadFactory>[0]>): Promise<{
 		ticket: Ticket;
 	}> {
-		const verifyingContract = configsByEnvironment[this.env].contractID;
+		const verifyingContract = this.envConfig.contractID;
 
 		let intentPayload = defaultIntentPayloadFactory(salt, {
 			verifying_contract: verifyingContract,
@@ -147,6 +143,21 @@ export class IntentExecuter<Ticket> implements IIntentExecuter<Ticket> {
 			logger: this.logger,
 			signal: ctx?.signal,
 		});
+	}
+
+	async sendSignedIntents(params: {
+		multiPayloads: MultiPayload[];
+		quoteHashes?: string[];
+	}): Promise<{ tickets: Ticket[] }> {
+		const tickets = await this.intentRelayer.publishIntents(
+			{
+				multiPayloads: params.multiPayloads,
+				quoteHashes: params.quoteHashes ?? [],
+			},
+			{ logger: this.logger },
+		);
+
+		return { tickets };
 	}
 }
 

@@ -12,7 +12,7 @@ export async function getSupportedTokens(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -25,7 +25,7 @@ export async function getDepositAddress(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -38,7 +38,7 @@ export async function getDepositStatus(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -51,7 +51,7 @@ export async function getWithdrawalStatus(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -64,7 +64,7 @@ export async function hotOmniWithdraw(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -94,6 +94,6 @@ export async function getWithdrawalEstimate(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }

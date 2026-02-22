@@ -11,13 +11,38 @@
 - `pnpm lint:fix` to run linter and formatter (biomejs)
 - `pnpm build` to build packages
 
+# Verifying Changes
+
+Before finishing work on any file:
+
+1. **TypeScript**: Check if the file/directory has its own `tsconfig.json`. If so, run `npx tsc --noEmit -p <path-to-tsconfig>` directly. The root `pnpm typecheck` may not cover all files (e.g., scripts with separate tsconfig).
+2. **Lint**: Run `pnpm biome check <file>` on modified files.
+3. **Tests**: Run relevant tests with `pnpm vitest run <path>`.
+
+Example for `packages/contract-types/scripts/`:
+```bash
+cd packages/contract-types
+npx tsc --noEmit -p scripts/tsconfig.json  # scripts have their own tsconfig
+pnpm biome check scripts/gen-defuse-types.ts
+```
+
+# Architecture
+
+- Progressive disclosure - simple things simple, complex things possible. Give escape hatches when needed
+
 # Code Style
 
 - Do not use `any` type
+- Do not use `as` typecasting to silence TypeScript errors. If you encounter type errors:
+  - Fix the root cause (add proper type guards, narrow types correctly)
+  - Use destructuring and validation to build properly typed values
+  - Throw an error if the data is invalid
+  - Ask for help if stuck
 - Do not use `as never` cast
+- Do not use `as unknown as X` pattern - this is a double cast that hides type errors
+- The only acceptable use of `as` is `as const` for literal types
 - Do not use barrel files
 - Avoid arbitrary strings, use const enums (`as const`) instead.
-- In catch blocks error is `unknown`: `catch (err: unknown) { ... }`
 
 # Testing Guidelines
 
@@ -40,18 +65,7 @@ Write tests with these rules:
 - When asserting collaborator calls, use `expect.objectContaining` and focus on important fields instead of all properties.
 - Avoid using "should" in test descriptions, use present tense instead.
 
-# Commit Instructions
+# Plan Mode
 
-- Use conventional commit messages.
-- Use imperative tense in commit messages.
-- Prefer short still descriptive commit messages without long tail description.
-
-## Remove AI code slop before commiting
-
-Check the diff, and remove all AI generated slop introduced in this branch.
-
-This includes:
-- Extra comments that a human wouldn't add or is inconsistent with the rest of the file
-- Extra defensive checks or try/catch blocks that are abnormal for that area of the codebase (especially if called by trusted / validated codepaths)
-- Casts to any to get around type issues
-- Any other style that is inconsistent with the file
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.

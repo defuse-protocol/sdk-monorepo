@@ -1,11 +1,13 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
+	type EnvConfig,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
+import { LRUCache } from "lru-cache";
+import * as v from "valibot";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
@@ -44,21 +46,61 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
+import { bridgeIndexer } from "@defuse-protocol/internal-utils";
+
+const HotApiWithdrawalSchema = v.object({
+	hash: v.nullable(v.string()),
+	nonce: v.string(),
+	near_trx: v.string(),
+	verified_withdraw: v.boolean(),
+	chain_id: v.number(),
+});
+
+const HotApiWithdrawalResponseSchema = v.object({
+	hash: v.nullable(v.string()),
+	nonce: v.string(),
+	near_trx: v.string(),
+	withdrawals: v.array(HotApiWithdrawalSchema),
+});
 
 export class HotBridge implements Bridge {
+	private static readonly API_FALLBACK_TIMEOUT_MS = 5000;
+	private static readonly NEAR_RPC_TIMEOUT_MS = 10000;
+
 	readonly route = RouteEnum.HotBridge;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
 
+	// Nonces are immutable for a given tx, use LRU with fetchMethod for readthrough
+	private noncesCache: LRUCache<`${string}:${string}`, bigint[], NearTxInfo>;
+
 	constructor({
-		env,
+		envConfig,
 		hotSdk,
 		solverRelayApiKey,
-	}: { env: NearIntentsEnv; hotSdk: HotSdk; solverRelayApiKey?: string }) {
-		this.env = env;
+	}: { envConfig: EnvConfig; hotSdk: HotSdk; solverRelayApiKey?: string }) {
+		this.envConfig = envConfig;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.noncesCache = new LRUCache<
+			`${string}:${string}`,
+			bigint[],
+			NearTxInfo
+		>({
+			max: 50,
+			ttl: 60 * 60 * 1000, // 1 hour
+			fetchMethod: async (_key, _staleValue, { context: tx }) => {
+				return withTimeout(
+					() => this.hotSdk.near.parseWithdrawalNonces(tx.hash, tx.accountId),
+					{ timeout: HotBridge.NEAR_RPC_TIMEOUT_MS },
+				);
+			},
+		});
+	}
+
+	private getNoncesCacheKey(tx: NearTxInfo): `${string}:${string}` {
+		return `${tx.hash}:${tx.accountId}`;
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -257,20 +299,29 @@ export class HotBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 		hotBlockchainInvariant(assetInfo.blockchain);
+		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const { gasPrice: feeAmount, blockNumber } = await withTimeout(
-			() =>
-				this.hotSdk.getGaslessWithdrawFee({
+			async () => {
+				const result = await this.hotSdk.getGaslessWithdrawFee({
 					chain: toHotNetworkId(assetInfo.blockchain),
 					token: "native" in assetInfo ? "native" : assetInfo.address,
 					receiver: args.withdrawalParams.destinationAddress,
-				}),
+				});
+				if (
+					assetInfo.blockchain === Chains.Plasma &&
+					args.withdrawalParams.assetId !== feeAssetId
+				) {
+					// Plasma withdrawals require inflated gas price for solver to quote non-native tokens
+					result.gasPrice *= 20n;
+				}
+				return result;
+			},
 			{
 				errorInstance: new HotWithdrawalApiFeeRequestTimeoutError(),
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 			},
 		);
-		const feeAssetId = getFeeAssetIdForChain(assetInfo.blockchain);
 
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
@@ -280,7 +331,7 @@ export class HotBridge implements Bridge {
 						feeAssetId,
 						tokenAssetId: args.withdrawalParams.assetId,
 						logger: args.logger,
-						env: this.env,
+						envConfig: this.envConfig,
 						quoteOptions: args.quoteOptions,
 						solverRelayApiKey: this.solverRelayApiKey,
 					});
@@ -315,10 +366,11 @@ export class HotBridge implements Bridge {
 	async describeWithdrawal(
 		args: WithdrawalIdentifier & { logger?: ILogger },
 	): Promise<WithdrawalStatus> {
-		const nonces = await this.hotSdk.near.parseWithdrawalNonces(
-			args.tx.hash,
-			args.tx.accountId,
-		);
+		const cacheKey = this.getNoncesCacheKey(args.tx);
+		const nonces = await this.noncesCache.fetch(cacheKey, { context: args.tx });
+		if (nonces == null) {
+			throw new HotWithdrawalNotFoundError(args.tx.hash, args.index);
+		}
 
 		const nonce = nonces[args.index];
 		if (nonce == null) {
@@ -328,30 +380,184 @@ export class HotBridge implements Bridge {
 		const status: unknown = await this.hotSdk.getGaslessWithdrawStatus(
 			nonce.toString(),
 		);
-
+		// stop polling in case withdrawal is cancelled
 		if (status === HotWithdrawStatus.Canceled) {
 			return {
 				status: "failed",
 				reason: "Withdrawal was cancelled",
 			};
 		}
-		if (status === HotWithdrawStatus.Completed) {
-			return { status: "completed", txHash: null };
-		}
-		if (typeof status === "string") {
-			// HOT returns hexified raw bytes without 0x prefix, any other value should be ignored.
-			if (!isHex(status)) {
-				args.logger?.warn("HOT Bridge incorrect destination tx hash detected", {
-					value: status,
+
+		const isEvm = args.landingChain.startsWith("eip155:");
+		// For EVM networks, the bridge indexer is the source of truth for withdrawal hashes.
+		// The HOT API is only used as a fallback since the contract view method can return invalid hashes.
+		if (isEvm) {
+			try {
+				args.logger?.info("Fetching withdrawal hash from bridge indexer", {
+					nearTxHash: args.tx.hash,
+					nonce: nonce.toString(),
 				});
+				const bridgeIndexerHash = await this.fetchWithdrawalHashBridgeIndexer(
+					args.tx.hash,
+					nonce.toString(),
+					args.logger,
+				);
+				if (bridgeIndexerHash !== null) {
+					args.logger?.info("Bridge indexer found withdrawal hash", {
+						withdrawalHash: bridgeIndexerHash,
+						nearTxHash: args.tx.hash,
+						nonce: nonce.toString(),
+					});
+					return {
+						status: "completed",
+						txHash: bridgeIndexerHash,
+					};
+				}
+			} catch (error) {
+				// Bridge indexer failed, fallback to HOT API
+				args.logger?.error(
+					"Bridge indexer failed unexpectedly, trying HOT API fallback",
+					{
+						nearTxHash: args.tx.hash,
+						nonce: nonce.toString(),
+						error,
+					},
+				);
+				const apiHash = await this.fetchWithdrawalHashFromApi(
+					args.tx.hash,
+					nonce,
+					args.logger,
+				);
+				if (apiHash != null) {
+					args.logger?.info("HOT API fallback found withdrawal hash", {
+						withdrawalHash: apiHash,
+						nearTxHash: args.tx.hash,
+						nonce: nonce.toString(),
+					});
+					return {
+						status: "completed",
+						txHash: formatTxHash(apiHash, args.landingChain),
+					};
+				}
+			}
+		} else {
+			// Fallback for other non EVM networks
+			// Primary source: contract view method
+			if (status === HotWithdrawStatus.Completed) {
 				return { status: "completed", txHash: null };
 			}
-			return {
-				status: "completed",
-				txHash: formatTxHash(status, args.landingChain),
-			};
+			if (typeof status === "string") {
+				// HOT returns hexified raw bytes without 0x prefix, any other value should be ignored.
+				if (!isHex(status)) {
+					args.logger?.warn(
+						"HOT Bridge incorrect destination tx hash detected",
+						{
+							value: status,
+						},
+					);
+					return { status: "completed", txHash: null };
+				}
+				return {
+					status: "completed",
+					txHash: formatTxHash(status, args.landingChain),
+				};
+			}
+
+			// Fallback: API indexer (when contract returns null/pending)
+			const apiHash = await this.fetchWithdrawalHashFromApi(
+				args.tx.hash,
+				nonce,
+				args.logger,
+			);
+			if (apiHash != null) {
+				return {
+					status: "completed",
+					txHash: formatTxHash(apiHash, args.landingChain),
+				};
+			}
 		}
 
 		return { status: "pending" };
+	}
+
+	private async fetchWithdrawalHashBridgeIndexer(
+		nearTxHash: string,
+		nonce: string,
+		logger?: ILogger,
+	): Promise<string | null> {
+		const { withdrawals } =
+			await bridgeIndexer.httpClient.withdrawalsByNearTxHash(nearTxHash, {
+				timeout: typeof window !== "undefined" ? 10_000 : 3000,
+				logger,
+			});
+
+		const withdrawal = withdrawals.find((withdrawal) => {
+			return withdrawal.nonce === nonce;
+		});
+
+		if (withdrawal === undefined) {
+			logger?.info("HOT Bridge indexer withdrawal hash not found", {
+				nearTxHash,
+				nonce: nonce.toString(),
+			});
+			return null;
+		}
+
+		if (withdrawal.hash === null || withdrawal.hash === "") {
+			logger?.info(
+				`HOT Bridge returned invalid hash, expected a non empty string, got ${withdrawal.hash}`,
+				{
+					nearTxHash,
+					nonce: nonce.toString(),
+				},
+			);
+			return null;
+		}
+
+		return withdrawal.hash;
+	}
+	private async fetchWithdrawalHashFromApi(
+		nearTxHash: string,
+		nonce: bigint,
+		logger?: ILogger,
+	): Promise<string | null> {
+		try {
+			const response = await withTimeout(
+				() =>
+					this.hotSdk.api.requestApi(
+						`/api/v1/evm/bridge_withdrawal_hash?near_trx=${nearTxHash}`,
+						{ method: "GET" },
+					),
+				{ timeout: HotBridge.API_FALLBACK_TIMEOUT_MS },
+			);
+			const data: unknown = await response.json();
+
+			const parseResult = v.safeParse(HotApiWithdrawalResponseSchema, data);
+			if (!parseResult.success) {
+				logger?.debug("HOT API response parse failed", {
+					issues: parseResult.issues,
+				});
+				return null;
+			}
+
+			const withdrawal = parseResult.output.withdrawals.find(
+				(w) => w.nonce === nonce.toString(),
+			);
+
+			if (withdrawal?.hash) {
+				const hash = withdrawal.hash.replace(/^0x/, "");
+				if (isHex(hash)) {
+					logger?.info("HOT withdrawal hash found via API fallback", {
+						nearTxHash,
+						nonce: nonce.toString(),
+					});
+					return hash;
+				}
+			}
+			return null;
+		} catch (error) {
+			logger?.debug("HOT API fallback failed", { error, nearTxHash });
+			return null;
+		}
 	}
 }

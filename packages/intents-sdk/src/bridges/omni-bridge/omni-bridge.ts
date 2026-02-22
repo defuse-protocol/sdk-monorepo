@@ -1,8 +1,7 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
-	configsByEnvironment,
+	type EnvConfig,
 	getNearNep141MinStorageBalance,
 	getNearNep141StorageBalance,
 	withTimeout,
@@ -14,7 +13,7 @@ import type { providers } from "near-api-js";
 import {
 	ChainKind,
 	type OmniAddress,
-	OmniBridgeAPI,
+	BridgeAPI,
 	type TokenDecimals,
 	getChain,
 	getMinimumTransferableAmount,
@@ -22,7 +21,7 @@ import {
 	omniAddress,
 	parseOriginChain,
 	verifyTransferAmount,
-} from "omni-bridge-sdk";
+} from "@omni-bridge/core";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -79,9 +78,9 @@ type StorageDepositBalance = bigint;
 const INTENTS_STORAGE_BALANCE_KEY = "INTENTS_STORAGE_BALANCE";
 export class OmniBridge implements Bridge {
 	readonly route = RouteEnum.OmniBridge;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
-	protected omniBridgeAPI: OmniBridgeAPI;
+	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
 	protected intentsStorageBalanceCache = new ConditionalLRUCache<
 		typeof INTENTS_STORAGE_BALANCE_KEY,
@@ -113,19 +112,19 @@ export class OmniBridge implements Bridge {
 	});
 
 	constructor({
-		env,
+		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 	}) {
-		this.env = env;
+		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
-		this.omniBridgeAPI = new OmniBridgeAPI();
+		this.omniBridgeAPI = new BridgeAPI("mainnet");
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
@@ -145,8 +144,8 @@ export class OmniBridge implements Bridge {
 		const parsed = parseDefuseAssetId(params.assetId);
 		const omniBridgeSetWithNoChain = Boolean(
 			params.routeConfig &&
-				params.routeConfig.route === RouteEnum.OmniBridge &&
-				params.routeConfig.chain === undefined,
+			params.routeConfig.route === RouteEnum.OmniBridge &&
+			params.routeConfig.chain === undefined,
 		);
 		const targetChainSpecified = this.targetChainSpecified(params.routeConfig);
 		const nonValidStandard = parsed.standard !== "nep141";
@@ -232,8 +231,8 @@ export class OmniBridge implements Bridge {
 	): routeConfig is OmniBridgeRouteConfig & { chain: Chain } {
 		return Boolean(
 			routeConfig?.route &&
-				routeConfig.route === RouteEnum.OmniBridge &&
-				routeConfig.chain,
+			routeConfig.route === RouteEnum.OmniBridge &&
+			routeConfig.chain,
 		);
 	}
 
@@ -366,7 +365,7 @@ export class OmniBridge implements Bridge {
 				destinationAddress: args.withdrawalParams.destinationAddress,
 				amount,
 				omniChainKind,
-				intentsContract: configsByEnvironment[this.env].contractID,
+				intentsContract: this.envConfig.contractID,
 				nativeFee: relayerFee,
 				storageDepositAmount: getUnderlyingFee(
 					args.feeEstimation,
@@ -484,10 +483,7 @@ export class OmniBridge implements Bridge {
 			const fee = await withTimeout(
 				() =>
 					this.omniBridgeAPI.getFee(
-						omniAddress(
-							ChainKind.Near,
-							configsByEnvironment[this.env].contractID,
-						),
+						omniAddress(ChainKind.Near, this.envConfig.contractID),
 						omniAddress(omniChainKind, args.destinationAddress),
 						omniAddress(ChainKind.Near, assetInfo.contractId),
 						args.amount,
@@ -508,8 +504,8 @@ export class OmniBridge implements Bridge {
 
 			assert(
 				fee.min_amount !== null &&
-					fee.min_amount !== undefined &&
-					BigInt(fee.min_amount) > 0n,
+				fee.min_amount !== undefined &&
+				BigInt(fee.min_amount) > 0n,
 				`Invalid min amount value for a UTXO chain withdrawal: expected > 0, got ${fee.min_amount}`,
 			);
 			const minAmount = BigInt(fee.min_amount);
@@ -572,10 +568,7 @@ export class OmniBridge implements Bridge {
 		const fee = await withTimeout(
 			() =>
 				this.omniBridgeAPI.getFee(
-					omniAddress(
-						ChainKind.Near,
-						configsByEnvironment[this.env].contractID,
-					),
+					omniAddress(ChainKind.Near, this.envConfig.contractID),
 					omniAddress(omniChainKind, args.withdrawalParams.destinationAddress),
 					omniAddress(ChainKind.Near, assetInfo.contractId),
 					args.withdrawalParams.amount,
@@ -628,7 +621,7 @@ export class OmniBridge implements Bridge {
 				feeAssetId: NEAR_NATIVE_ASSET_ID,
 				tokenAssetId: args.withdrawalParams.assetId,
 				logger: args.logger,
-				env: this.env,
+				envConfig: this.envConfig,
 				quoteOptions: args.quoteOptions,
 				solverRelayApiKey: this.solverRelayApiKey,
 			});
@@ -645,8 +638,8 @@ export class OmniBridge implements Bridge {
 			);
 			assert(
 				fee.protocol_fee !== null &&
-					fee.protocol_fee !== undefined &&
-					fee.protocol_fee > 0n,
+				fee.protocol_fee !== undefined &&
+				fee.protocol_fee > 0n,
 				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${fee.protocol_fee}`,
 			);
 
@@ -679,8 +672,8 @@ export class OmniBridge implements Bridge {
 
 		const landingChain =
 			args.withdrawalParams.routeConfig != null &&
-			"chain" in args.withdrawalParams.routeConfig &&
-			args.withdrawalParams.routeConfig.chain !== undefined
+				"chain" in args.withdrawalParams.routeConfig &&
+				args.withdrawalParams.routeConfig.chain !== undefined
 				? args.withdrawalParams.routeConfig.chain
 				: assetInfo.blockchain;
 

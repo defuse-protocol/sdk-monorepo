@@ -31,6 +31,9 @@ export const Chains = {
 	Stellar: "stellar:pubnet",
 	Cardano: "cip34:1-764824073",
 	Starknet: "starknet:SN_MAIN",
+	Plasma: "eip155:9745",
+	Scroll: "eip155:534352",
+	Aleo: "aleo:0",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];

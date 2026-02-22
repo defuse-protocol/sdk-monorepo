@@ -1,3 +1,4 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
@@ -255,7 +256,9 @@ function setupMocks() {
 	});
 	vi.spyOn(intentSigner2, "signIntent");
 
-	const intentRelayer = new IntentRelayerPublic({ env: "production" });
+	const intentRelayer = new IntentRelayerPublic({
+		envConfig: configsByEnvironment.production,
+	});
 	vi.spyOn(intentRelayer, "publishIntent");
 	vi.spyOn(intentRelayer, "publishIntents");
 

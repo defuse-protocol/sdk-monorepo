@@ -1,4 +1,7 @@
-import { AssertionError } from "@defuse-protocol/internal-utils";
+import {
+	AssertionError,
+	configsByEnvironment,
+} from "@defuse-protocol/internal-utils";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
 import { RouteEnum } from "./constants/route-enum";
@@ -125,7 +128,9 @@ function setupMocks() {
 	});
 	vi.spyOn(intentSigner2, "signIntent");
 
-	const intentRelayer = new IntentRelayerPublic({ env: "production" });
+	const intentRelayer = new IntentRelayerPublic({
+		envConfig: configsByEnvironment.production,
+	});
 	vi.spyOn(intentRelayer, "publishIntent");
 
 	const saltManager = new MockSaltManager();

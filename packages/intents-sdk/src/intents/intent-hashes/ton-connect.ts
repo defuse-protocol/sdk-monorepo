@@ -34,16 +34,20 @@ export function parseTonAddress(addressString: string): TonAddress {
 		);
 	}
 
+	// biome-ignore lint/style/noNonNullAssertion: split by ":" guarantees two parts after length check
 	const workchainId = parseInt(parts[0]!, 10);
 	if (Number.isNaN(workchainId)) {
 		throw new Error(`Invalid workchain ID: ${parts[0]}`);
 	}
 
 	// Remove any 0x prefix if present
+	// biome-ignore lint/style/noNonNullAssertion: split by ":" guarantees two parts after length check
 	const addressHex = parts[1]!.startsWith("0x") ? parts[1]!.slice(2) : parts[1];
 
+	// biome-ignore lint/style/noNonNullAssertion: addressHex is assigned above
 	if (addressHex!.length !== 64) {
 		throw new Error(
+			// biome-ignore lint/style/noNonNullAssertion: addressHex is assigned above
 			`Invalid address length: expected 64 hex characters, got ${addressHex!.length}`,
 		);
 	}
@@ -51,6 +55,7 @@ export function parseTonAddress(addressString: string): TonAddress {
 	// Convert hex string to bytes
 	const address = new Uint8Array(32);
 	for (let i = 0; i < 32; i++) {
+		// biome-ignore lint/style/noNonNullAssertion: length validated above
 		address[i] = parseInt(addressHex!.slice(i * 2, i * 2 + 2), 16);
 	}
 
@@ -73,8 +78,6 @@ export function parseTonAddress(addressString: string): TonAddress {
  *   payload_len (4 bytes BE) +
  *   payload
  * )
- *
- * For cell payloads: Uses TON TLB message serialization (not fully implemented here)
  *
  * @param payload - The TON Connect payload to hash
  * @returns 32-byte hash as Uint8Array
@@ -118,13 +121,6 @@ export function computeTonConnectHash(
 
 			return sha256(message);
 		}
-		case "binary": {
-			throw new Error("Binary payload hashing is not yet supported");
-		}
-		case "cell": {
-			throw new Error("Cell payload hashing is not yet supported.");
-		}
-
 		default: {
 			schemaType satisfies never;
 			throw new Error(`Unknown TON Connect payload type: ${schemaType}`);

@@ -1,8 +1,7 @@
 import {
 	assert,
 	type ILogger,
-	type NearIntentsEnv,
-	configsByEnvironment,
+	type EnvConfig,
 	poaBridge,
 	RpcRequestError,
 	utils,
@@ -39,7 +38,7 @@ import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tok
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 
 	// TTL cache for supported tokens with 30-second TTL
@@ -49,15 +48,24 @@ export class PoaBridge implements Bridge {
 	>({ ttl: 30 * 1000 });
 
 	constructor({
-		env,
+		envConfig,
 		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 	}) {
-		this.env = env;
+		this.envConfig = envConfig;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
+	}
+
+	private getPoaBridgeBaseURL(): string {
+		if (!this.envConfig.poaBridgeBaseURL) {
+			throw new Error(
+				"POA Bridge is not available in this environment: poaBridgeBaseURL is not configured",
+			);
+		}
+		return this.envConfig.poaBridgeBaseURL;
 	}
 
 	private is(routeConfig: RouteConfig) {
@@ -97,9 +105,13 @@ export class PoaBridge implements Bridge {
 	}
 
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
+		if (!this.envConfig.poaTokenFactoryContractID) {
+			return null;
+		}
+
 		const parsed = parseDefuseAssetId(assetId);
 		const contractIdSatisfies = parsed.contractId.endsWith(
-			`.${configsByEnvironment[this.env].poaTokenFactoryContractID}`,
+			`.${this.envConfig.poaTokenFactoryContractID}`,
 		);
 
 		if (!contractIdSatisfies) {
@@ -202,11 +214,10 @@ export class PoaBridge implements Bridge {
 			{
 				token: utils.getTokenAccountId(args.withdrawalParams.assetId),
 				address: args.withdrawalParams.destinationAddress,
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-				chain: toPoaNetwork(assetInfo.blockchain) as any,
+				chain: toPoaNetwork(assetInfo.blockchain),
 			},
 			{
-				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				baseURL: this.getPoaBridgeBaseURL(),
 				logger: args.logger,
 			},
 		);
@@ -286,7 +297,7 @@ export class PoaBridge implements Bridge {
 				return await poaBridge.httpClient.getWithdrawalStatus(
 					{ withdrawal_hash: args.tx.hash },
 					{
-						baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+						baseURL: this.getPoaBridgeBaseURL(),
 						logger: args.logger,
 					},
 				);
@@ -325,7 +336,7 @@ export class PoaBridge implements Bridge {
 		const data = await poaBridge.httpClient.getSupportedTokens(
 			{ chains },
 			{
-				baseURL: configsByEnvironment[this.env].poaBridgeBaseURL,
+				baseURL: this.getPoaBridgeBaseURL(),
 				logger,
 			},
 		);

@@ -86,7 +86,7 @@ describe("stringify", () => {
 		});
 
 		it("should handle simple objects with a custom replacer", () => {
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: test requires matching JSON.stringify replacer signature
 			const replacer = (_key: string, value: any) =>
 				value && typeof value === "object" ? value : `primitive-${value}`;
 
@@ -146,7 +146,7 @@ describe("stringify", () => {
 		});
 
 		it("should handle complex objects with a custom replacer", () => {
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			// biome-ignore lint/suspicious/noExplicitAny: test requires matching JSON.stringify replacer signature
 			const replacer = (_key: string, value: any) =>
 				value && typeof value === "object" ? value : `primitive-${value}`;
 
@@ -164,7 +164,7 @@ describe("stringify", () => {
 				JSON.stringify(
 					circularObject,
 					(() => {
-						// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+						// biome-ignore lint/suspicious/noExplicitAny: generic cache for any object type
 						const cache: any[] = [];
 
 						return (_key, value) => {
@@ -189,10 +189,10 @@ describe("stringify", () => {
 				(_key: string, _value: string, referenceKey: string) => referenceKey,
 			);
 			const circularReplacer = (() => {
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				// biome-ignore lint/suspicious/noExplicitAny: generic cache for any object type
 				const cache: any[] = [];
 
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				// biome-ignore lint/suspicious/noExplicitAny: test requires matching JSON.stringify replacer signature
 				return (_key: string, value: any) => {
 					if (value && typeof value === "object" && ~cache.indexOf(value)) {
 						return ".";

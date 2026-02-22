@@ -1,5 +1,6 @@
 export * as poaBridge from "./poaBridge";
 export * as solverRelay from "./solverRelay";
+export * as bridgeIndexer from "./bridgeIndexer";
 export * as utils from "./utils";
 export * as errors from "./errors";
 export * as messageFactory from "./utils/messageFactory";
@@ -13,7 +14,9 @@ export {
 	configureSDK,
 	config,
 	configsByEnvironment,
+	resolveEnvConfig,
 	type NearIntentsEnv,
+	type EnvConfig,
 } from "./config";
 export {
 	type RetryOptions,
@@ -37,6 +40,12 @@ export {
 	nearFailoverRpcProvider,
 	unwrapNearFailoverRpcProvider,
 } from "./utils/failover";
+export {
+	extractRpcUrls,
+	normalizeRpcEndpoint,
+	type RpcEndpoint,
+	type RpcEndpointConfig,
+} from "./utils/rpc-endpoint";
 export { PUBLIC_NEAR_RPC_URLS } from "./nearClient";
 export { AuthMethod } from "./types/authHandle";
 

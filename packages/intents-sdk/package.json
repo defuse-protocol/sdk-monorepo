@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.44.0",
+	"version": "0.53.3",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -41,24 +41,22 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@defuse-protocol/internal-utils": "workspace:*",
-		"@hot-labs/omni-sdk": "2.24.3",
+		"@hot-labs/omni-sdk": "2.24.7",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
-		"@near-js/accounts": "^2.0.1",
-		"@near-js/client": "^2.0.1",
-		"@near-js/keystores": "^2.0.1",
+		"@omni-bridge/core": "0.2.3",
+		"@omni-bridge/near": "0.2.3",
 		"@noble/hashes": "^1.7.1",
 		"@scure/base": "^1.0.0",
 		"@solana/web3.js": "^1.0.0",
 		"borsher": "^4.0.0",
 		"lru-cache": "^11",
 		"near-api-js": "^4.0.0 || ^5.0.0",
-		"omni-bridge-sdk": "0.23.1",
 		"ripple-address-codec": "^5.0.0",
 		"valibot": "^1.0.0",
 		"viem": "^2.0.0"
 	},
 	"devDependencies": {
-		"tsdown": "0.15.5"
+		"tsdown": "0.19.0"
 	}
 }

@@ -1,4 +1,8 @@
-import type { ILogger, solverRelay } from "@defuse-protocol/internal-utils";
+import type {
+	ILogger,
+	RpcEndpoint,
+	solverRelay,
+} from "@defuse-protocol/internal-utils";
 import type { HotBridgeEVMChain } from "./bridges/hot-bridge/hot-bridge-chains";
 import type { BridgeNameEnumValues } from "./constants/bridge-name-enum";
 import { RouteEnum, type RouteEnumValues } from "./constants/route-enum";
@@ -131,6 +135,12 @@ export type ProcessWithdrawalArgs<
 export interface IIntentsSDK {
 	setIntentSigner(signer: IIntentSigner): void;
 
+	sendSignedIntents(args: {
+		multiPayloads: MultiPayload[];
+		quoteHashes?: string[];
+		logger?: ILogger;
+	}): Promise<{ tickets: IntentHash[] }>;
+
 	signAndSendIntent(args: SignAndSendArgs): Promise<IntentPublishResult>;
 
 	waitForIntentSettlement(args: {
@@ -238,7 +248,10 @@ export interface WithdrawalParams {
 	amount: bigint;
 	destinationAddress: string;
 	/**
-	 * XRP Leger chain specific. MEMO IS NOT SUPPORTED FOR STELLAR AND TON.
+	 * Optional memo attached to the withdrawal.
+	 * - XRP Ledger: included in the transaction memo field
+	 * - Internal transfers (intents): passed as memo in the transfer intent
+	 * - Stellar, TON: NOT SUPPORTED (will throw error)
 	 */
 	destinationMemo?: string | undefined;
 	feeInclusive: boolean;
@@ -449,21 +462,20 @@ export type ParsedAssetInfo = (
 
 export type RPCEndpointMap = Record<
 	typeof Chains.Near | HotBridgeEVMChain,
-	string[]
+	RpcEndpoint[]
 > & {
 	[K in typeof Chains.Stellar]: {
-		soroban: string[];
-		horizon: string[];
+		soroban: RpcEndpoint[];
+		horizon: RpcEndpoint[];
 	};
 };
 
-type DeepPartial<T> = T extends object
-	? T extends Array<infer U>
-		? Array<DeepPartial<U>>
-		: // biome-ignore lint/complexity/noBannedTypes: <explanation>
-			T extends Function
-			? T
-			: { [P in keyof T]?: DeepPartial<T[P]> }
-	: T;
-
-export type PartialRPCEndpointMap = DeepPartial<RPCEndpointMap>;
+/**
+ * Partial RPC endpoint map where each chain's URLs are optional,
+ * but individual RpcEndpoint items remain valid (not deeply partial).
+ */
+export type PartialRPCEndpointMap = {
+	[K in keyof RPCEndpointMap]?: K extends typeof Chains.Stellar
+		? { soroban?: RpcEndpoint[]; horizon?: RpcEndpoint[] }
+		: RpcEndpoint[];
+};

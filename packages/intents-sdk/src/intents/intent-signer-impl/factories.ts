@@ -1,4 +1,3 @@
-import type { IIntentSigner } from "../interfaces/intent-signer";
 import {
 	IntentSignerNearKeypair,
 	type IntentSignerNearKeypairConfig,
@@ -14,18 +13,18 @@ import {
 
 export function createIntentSignerNEP413(
 	config: IntentSignerNEP413Config,
-): IIntentSigner {
+): IntentSignerNEP413 {
 	return new IntentSignerNEP413(config);
 }
 
 export function createIntentSignerNearKeyPair(
 	config: IntentSignerNearKeypairConfig,
-): IIntentSigner {
+): IntentSignerNearKeypair {
 	return new IntentSignerNearKeypair(config);
 }
 
 export function createIntentSignerViem(
 	config: IntentSignerViemConfig,
-): IIntentSigner {
+): IntentSignerViem {
 	return new IntentSignerViem(config);
 }

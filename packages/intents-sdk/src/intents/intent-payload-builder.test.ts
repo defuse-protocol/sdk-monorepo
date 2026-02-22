@@ -1,19 +1,18 @@
+import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { IntentPayloadBuilder } from "./intent-payload-builder";
 import type { ISaltManager } from "./interfaces/salt-manager";
-import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "./shared-types";
 import {
 	VersionedNonceBuilder,
 	type SaltedNonceValue,
 } from "./expirable-nonce";
-import { DEFAULT_NONCE_DEADLINE_OFFSET_MS } from "./intent-payload-factory";
 
 describe("IntentPayloadBuilder", () => {
 	let mockSaltManager: ISaltManager;
 	let builder: IntentPayloadBuilder;
 	const testSalt = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
-	const testEnv: NearIntentsEnv = "production";
+	const testEnvConfig = configsByEnvironment.production;
 
 	beforeEach(() => {
 		mockSaltManager = {
@@ -22,7 +21,7 @@ describe("IntentPayloadBuilder", () => {
 		};
 
 		builder = new IntentPayloadBuilder({
-			env: testEnv,
+			envConfig: testEnvConfig,
 			saltManager: mockSaltManager,
 		});
 	});
@@ -36,7 +35,7 @@ describe("IntentPayloadBuilder", () => {
 	describe("basic builder operations", () => {
 		it("creates a builder with correct environment", () => {
 			const state = builder.getState();
-			expect(state.env).toBe("production");
+			expect(state.envConfig).toEqual(testEnvConfig);
 			expect(state.verifyingContract).toBe("intents.near");
 		});
 
@@ -258,24 +257,12 @@ describe("IntentPayloadBuilder", () => {
 			expect(payload.intents).toHaveLength(1);
 		});
 
-		it("extends nonce deadline beyond payload deadline", () => {
+		it("nonce deadline equals intent deadline", () => {
 			const deadline = new Date("2025-12-31T23:59:59Z");
 			const payload = builder.setDeadline(deadline).buildWithSalt(testSalt);
 
 			const nonceDeadlineMs = extractNonceDeadlineMs(payload.nonce);
-			expect(nonceDeadlineMs).toBe(
-				deadline.getTime() + DEFAULT_NONCE_DEADLINE_OFFSET_MS,
-			);
-		});
-
-		it("applies nonce buffer when using default deadline", () => {
-			const payload = builder.buildWithSalt(testSalt);
-			const payloadDeadlineMs = new Date(payload.deadline).getTime();
-			const nonceDeadlineMs = extractNonceDeadlineMs(payload.nonce);
-
-			expect(nonceDeadlineMs - payloadDeadlineMs).toBe(
-				DEFAULT_NONCE_DEADLINE_OFFSET_MS,
-			);
+			expect(nonceDeadlineMs).toBe(deadline.getTime());
 		});
 	});
 
@@ -412,7 +399,7 @@ describe("IntentPayloadBuilder", () => {
 	describe("environment configurations", () => {
 		it("uses production contract for production env", () => {
 			const productionBuilder = new IntentPayloadBuilder({
-				env: "production",
+				envConfig: configsByEnvironment.production,
 				saltManager: mockSaltManager,
 			});
 
@@ -422,12 +409,91 @@ describe("IntentPayloadBuilder", () => {
 
 		it("uses staging contract for stage env", () => {
 			const stageBuilder = new IntentPayloadBuilder({
-				env: "stage",
+				envConfig: configsByEnvironment.stage,
 				saltManager: mockSaltManager,
 			});
 
 			const state = stageBuilder.getState();
 			expect(state.verifyingContract).toBe("staging-intents.near");
+		});
+	});
+
+	describe("setNonceRandomBytes", () => {
+		it("uses custom random bytes in nonce generation", () => {
+			const customBytes = new Uint8Array(15).fill(0xab);
+			const deadline = new Date("2025-12-31T23:59:59Z");
+
+			const payload = builder
+				.setDeadline(deadline)
+				.setNonceRandomBytes(customBytes)
+				.buildWithSalt(testSalt);
+
+			const decoded = VersionedNonceBuilder.decodeNonce(payload.nonce);
+			const saltedNonce = decoded.value as SaltedNonceValue;
+
+			expect(saltedNonce.inner.nonce).toEqual(Array.from(customBytes));
+		});
+
+		it("works with createTimestampedNonceBytes", () => {
+			const startTime = new Date(1700000000000);
+			const deadline = new Date(startTime.getTime() + 30000);
+			const timestampedBytes =
+				VersionedNonceBuilder.createTimestampedNonceBytes(startTime);
+
+			const payload = builder
+				.setDeadline(deadline)
+				.setNonceRandomBytes(timestampedBytes)
+				.buildWithSalt(testSalt);
+
+			const decoded = VersionedNonceBuilder.decodeNonce(payload.nonce);
+			const saltedNonce = decoded.value as SaltedNonceValue;
+			const nonceBytes = new Uint8Array(saltedNonce.inner.nonce);
+			const view = new DataView(nonceBytes.buffer);
+			const embeddedNanos = view.getBigInt64(0, true);
+
+			expect(embeddedNanos).toBe(BigInt(startTime.getTime()) * 1_000_000n);
+		});
+
+		it("is preserved through clone", () => {
+			const customBytes = new Uint8Array(15).fill(0xcd);
+			builder.setNonceRandomBytes(customBytes);
+
+			const cloned = builder.clone();
+			const payload = cloned.buildWithSalt(testSalt);
+
+			const decoded = VersionedNonceBuilder.decodeNonce(payload.nonce);
+			const saltedNonce = decoded.value as SaltedNonceValue;
+
+			expect(saltedNonce.inner.nonce).toEqual(Array.from(customBytes));
+		});
+
+		it("is cleared by reset", () => {
+			const customBytes = new Uint8Array(15).fill(0xef);
+			builder.setNonceRandomBytes(customBytes);
+			builder.reset();
+
+			const payload = builder.buildWithSalt(testSalt);
+			const decoded = VersionedNonceBuilder.decodeNonce(payload.nonce);
+			const saltedNonce = decoded.value as SaltedNonceValue;
+
+			// Should not be all 0xef since random bytes were generated
+			expect(saltedNonce.inner.nonce).not.toEqual(Array.from(customBytes));
+		});
+
+		it("setNonce takes precedence over setNonceRandomBytes", () => {
+			const customBytes = new Uint8Array(15).fill(0xab);
+			const customNonce = VersionedNonceBuilder.encodeNonce(
+				testSalt,
+				new Date(),
+				new Uint8Array(15).fill(0xff),
+			);
+
+			const payload = builder
+				.setNonceRandomBytes(customBytes)
+				.setNonce(customNonce)
+				.buildWithSalt(testSalt);
+
+			expect(payload.nonce).toBe(customNonce);
 		});
 	});
 

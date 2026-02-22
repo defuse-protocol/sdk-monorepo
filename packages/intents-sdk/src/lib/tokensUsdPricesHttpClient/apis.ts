@@ -1,14 +1,11 @@
-import { request, configsByEnvironment } from "@defuse-protocol/internal-utils";
+import { request } from "@defuse-protocol/internal-utils";
 import type { RequestConfig, TokensUsdPricesPayload } from "./types";
 
 export async function tokens(
 	config: RequestConfig,
 ): Promise<TokensUsdPricesPayload> {
 	const response = await request({
-		url: new URL(
-			"tokens",
-			configsByEnvironment[config.env].managerConsoleBaseURL,
-		),
+		url: new URL("tokens", config.envConfig.managerConsoleBaseURL),
 		...config,
 		fetchOptions: {
 			...config.fetchOptions,

@@ -1,5 +1,23 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.2.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
+## 1.1.1
+
+### Patch Changes
+
+- 414bcbf: Upgrade build tooling (tsdown) from 0.15.5 to 0.19.0
+
+## 1.1.0
+
+### Minor Changes
+
+- dd7b27d: Add support for Plasma and Scroll network to Hot bridge
+
 ## 1.0.4
 
 ### Patch Changes

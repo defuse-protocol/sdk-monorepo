@@ -97,7 +97,6 @@ export function computeTotalBalanceDifferentDecimals(
 ): TokenValue | undefined {
 	// Case 1: Base token
 	if (!Array.isArray(token) && isBaseToken(token)) {
-		// biome-ignore lint/style/noParameterAssign: This is a valid use case
 		token = [token];
 	}
 

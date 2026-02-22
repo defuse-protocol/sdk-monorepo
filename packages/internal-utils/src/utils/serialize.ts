@@ -16,7 +16,7 @@ function getReferenceKey(keys: string[], cutoff: number) {
  * @param value the value to match
  * @returns the matching index, or -1
  */
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: generic cache for any object type
 function getCutoff(array: any[], value: any) {
 	const { length } = array;
 
@@ -28,9 +28,9 @@ function getCutoff(array: any[], value: any) {
 
 	return 0;
 }
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: matches JSON.stringify replacer signature
 type StandardReplacer = (key: string, value: any) => any;
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+// biome-ignore lint/suspicious/noExplicitAny: matches JSON.stringify replacer signature
 type CircularReplacer = (key: string, value: any, referenceKey: string) => any;
 
 /**
@@ -47,11 +47,11 @@ function createReplacer(
 	const hasReplacer = typeof replacer === "function";
 	const hasCircularReplacer = typeof circularReplacer === "function";
 
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: generic cache for any object type
 	const cache: any[] = [];
 	const keys: string[] = [];
 
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: matches JSON.stringify replacer signature
 	return function replace(this: any, key: string, value: any) {
 		if (typeof value === "object") {
 			if (cache.length) {
@@ -100,7 +100,7 @@ function createReplacer(
  * @returns the stringified output
  */
 export function serialize(
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: accepts any JSON-serializable value
 	value: any,
 	replacer?: StandardReplacer | null | undefined,
 	indent?: number | null | undefined,

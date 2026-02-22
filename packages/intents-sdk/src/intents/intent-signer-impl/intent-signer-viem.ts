@@ -1,7 +1,10 @@
+import type { MultiPayloadErc191 } from "@defuse-protocol/contract-types";
 import { utils } from "@defuse-protocol/internal-utils";
 import type { Account } from "viem";
 import type { IIntentSigner } from "../interfaces/intent-signer";
-import type { IntentPayload, MultiPayload } from "../shared-types";
+import type { IntentPayload } from "../shared-types";
+
+export type Erc191RawPayload = Pick<MultiPayloadErc191, "payload">;
 
 export type IntentSignerViemConfig = {
 	/**
@@ -17,25 +20,13 @@ export type IntentSignerViemConfig = {
 };
 
 export class IntentSignerViem implements IIntentSigner {
+	readonly standard = "erc191" as const;
+
 	constructor(private config: IntentSignerViemConfig) {}
 
-	async signIntent(intent: IntentPayload): Promise<MultiPayload> {
-		const payload = JSON.stringify({
-			signer_id:
-				intent.signer_id ??
-				this.config.accountId ??
-				utils.authHandleToIntentsUserId({
-					identifier: this.config.signer.address,
-					method: "evm",
-				}),
-			verifying_contract: intent.verifying_contract,
-			deadline: intent.deadline,
-			nonce: intent.nonce,
-			intents: intent.intents,
-		});
-
+	async signRaw(input: Erc191RawPayload): Promise<MultiPayloadErc191> {
 		const signature = await this.config.signer.signMessage?.({
-			message: payload,
+			message: input.payload,
 		});
 		if (signature == null) {
 			throw new Error("No signature is returned");
@@ -43,8 +34,27 @@ export class IntentSignerViem implements IIntentSigner {
 
 		return {
 			standard: "erc191",
-			payload,
+			payload: input.payload,
 			signature: utils.transformERC191Signature(signature),
 		};
+	}
+
+	/** Builds payload from IntentPayload and signs it via signRaw() */
+	async signIntent(intent: IntentPayload): Promise<MultiPayloadErc191> {
+		return this.signRaw({
+			payload: JSON.stringify({
+				signer_id:
+					intent.signer_id ??
+					this.config.accountId ??
+					utils.authHandleToIntentsUserId({
+						identifier: this.config.signer.address,
+						method: "evm",
+					}),
+				verifying_contract: intent.verifying_contract,
+				deadline: intent.deadline,
+				nonce: intent.nonce,
+				intents: intent.intents,
+			}),
+		});
 	}
 }

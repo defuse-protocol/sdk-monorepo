@@ -100,7 +100,7 @@ describe("computeIntentHash()", () => {
 
 async function sim(signedIntent: MultiPayload) {
 	const rpc = new providers.JsonRpcProvider({
-		url: "https://relmn.aurora.dev",
+		url: "https://near-rpc.defuse.org",
 	});
 
 	const result = await utils.queryContract({
@@ -121,5 +121,6 @@ async function sim(signedIntent: MultiPayload) {
 		}),
 	});
 
+	// biome-ignore lint/style/noNonNullAssertion: test expects exactly one result
 	return result.intents_executed[0]!.intent_hash;
 }

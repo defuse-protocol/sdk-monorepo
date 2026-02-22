@@ -2,11 +2,14 @@ import {
 	assert,
 	type ILogger,
 	type NearIntentsEnv,
+	type EnvConfig,
 	PUBLIC_NEAR_RPC_URLS,
-	configsByEnvironment,
+	resolveEnvConfig,
 	nearFailoverRpcProvider,
+	extractRpcUrls,
 	solverRelay,
 	RelayPublishError,
+	type RpcEndpoint,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
@@ -31,6 +34,7 @@ import type {
 	IntentHash,
 	IntentPrimitive,
 	IntentRelayParamsFactory,
+	MultiPayload,
 } from "./intents/shared-types";
 import { zip } from "./lib/array";
 import { type Chain, Chains } from "./lib/caip2";
@@ -64,7 +68,7 @@ import type {
 	WithdrawalResult,
 } from "./shared-types";
 import type { ISaltManager } from "./intents/interfaces/salt-manager";
-import { SaltManager } from "./intents/salt-manager";
+import { SaltManager, StaticSaltManager } from "./intents/salt-manager";
 import type { Salt } from "./intents/expirable-nonce";
 import {
 	VersionedNonceBuilder,
@@ -75,7 +79,31 @@ import { DEFAULT_DEADLINE_MS } from "./intents/intent-payload-factory";
 import * as v from "valibot";
 
 export interface IntentsSDKConfig {
-	env?: NearIntentsEnv;
+	/**
+	 * Environment configuration. Can be:
+	 * - "production" or "stage" to use preset configurations
+	 * - A custom EnvConfig object for private environments
+	 *
+	 * Defaults to "production" if not specified.
+	 *
+	 * @example
+	 * // Use preset
+	 * new IntentsSDK({ env: "production", referral: "..." });
+	 *
+	 * // Use custom config for private environment
+	 * new IntentsSDK({
+	 *   env: {
+	 *     contractID: "intents.private-shard",
+	 *     poaTokenFactoryContractID: "",
+	 *     poaBridgeBaseURL: "",
+	 *     solverRelayBaseURL: "https://private-relay.example.com",
+	 *     managerConsoleBaseURL: "",
+	 *     nearIntentsBaseURL: "",
+	 *   },
+	 *   referral: "...",
+	 * });
+	 */
+	env?: NearIntentsEnv | EnvConfig;
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
@@ -90,7 +118,7 @@ export interface IntentsSDKConfig {
 }
 
 export class IntentsSDK implements IIntentsSDK {
-	protected env: NearIntentsEnv;
+	protected envConfig: EnvConfig;
 	protected referral: string;
 	protected intentRelayer: IIntentRelayer<IntentHash>;
 	protected intentSigner?: IIntentSigner;
@@ -99,13 +127,16 @@ export class IntentsSDK implements IIntentsSDK {
 	protected saltManager: ISaltManager;
 
 	constructor(args: IntentsSDKConfig) {
-		this.env = args.env ?? "production";
+		this.envConfig = resolveEnvConfig(args.env);
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
 
-		const nearRpcUrls = args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
-		assert(nearRpcUrls.length > 0, "NEAR RPC URLs are not provided");
-		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcUrls });
+		const nearRpcEndpoints: RpcEndpoint[] =
+			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
+		assert(nearRpcEndpoints.length > 0, "NEAR RPC URLs are not provided");
+		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcEndpoints });
+		// Plain URLs for external SDKs that don't support config objects
+		const nearRpcUrls = extractRpcUrls(nearRpcEndpoints);
 
 		const stellarRpcUrls = configureStellarRpcUrls(
 			PUBLIC_STELLAR_RPC_URLS,
@@ -125,17 +156,17 @@ export class IntentsSDK implements IIntentsSDK {
 		this.bridges = [
 			new IntentsBridge(),
 			new AuroraEngineBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 			new PoaBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
 			new HotBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
 				hotSdk: new hotLabsOmniSdk_HotBridge({
 					logger: console,
@@ -151,30 +182,33 @@ export class IntentsSDK implements IIntentsSDK {
 				}),
 			}),
 			new OmniBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
 			new DirectBridge({
-				env: this.env,
+				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
 			}),
 		];
 
 		this.intentRelayer = new IntentRelayerPublic({
-			env: this.env,
+			envConfig: this.envConfig,
 			solverRelayApiKey: this.solverRelayApiKey,
 		});
 
 		this.intentSigner = args.intentSigner;
 
-		this.saltManager = new SaltManager({
-			env: this.env,
-			nearProvider,
-		});
+		this.saltManager =
+			this.envConfig.contractSalt != null
+				? new StaticSaltManager(this.envConfig.contractSalt)
+				: new SaltManager({
+						envConfig: this.envConfig,
+						nearProvider,
+					});
 	}
 
 	public setIntentSigner(signer: IIntentSigner) {
@@ -207,7 +241,7 @@ export class IntentsSDK implements IIntentsSDK {
 	 */
 	public intentBuilder(): IntentPayloadBuilder {
 		return new IntentPayloadBuilder({
-			env: this.env,
+			envConfig: this.envConfig,
 			saltManager: this.saltManager,
 		});
 	}
@@ -463,7 +497,7 @@ export class IntentsSDK implements IIntentsSDK {
 		}
 
 		assert(result.length === 1, "Unexpected result length");
-		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		// biome-ignore lint/style/noNonNullAssertion: length asserted above
 		return result[0]!;
 	}
 
@@ -566,6 +600,22 @@ export class IntentsSDK implements IIntentsSDK {
 		throw new Error(`Cannot determine bridge for assetId = ${assetId}`);
 	}
 
+	public async sendSignedIntents(args: {
+		multiPayloads: MultiPayload[];
+		quoteHashes?: string[];
+		logger?: ILogger;
+	}): Promise<{ tickets: IntentHash[] }> {
+		const tickets = await this.intentRelayer.publishIntents(
+			{
+				multiPayloads: args.multiPayloads,
+				quoteHashes: args.quoteHashes ?? [],
+			},
+			{ logger: args.logger },
+		);
+
+		return { tickets };
+	}
+
 	public async signAndSendIntent(
 		args: SignAndSendArgs,
 	): Promise<IntentPublishResult> {
@@ -573,7 +623,7 @@ export class IntentsSDK implements IIntentsSDK {
 		assert(intentSigner != null, "Intent signer is not provided");
 
 		const intentExecuter = new IntentExecuter({
-			env: this.env,
+			envConfig: this.envConfig,
 			logger: args.logger,
 			intentSigner,
 			intentRelayer: this.intentRelayer,
@@ -675,7 +725,7 @@ export class IntentsSDK implements IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<NearTxInfo> {
 		const intentExecuter = new IntentExecuter({
-			env: this.env,
+			envConfig: this.envConfig,
 			logger: args.logger,
 			intentSigner: noopIntentSigner,
 			intentRelayer: this.intentRelayer,
@@ -699,7 +749,7 @@ export class IntentsSDK implements IIntentsSDK {
 				intent_hash: intentHash,
 			},
 			{
-				baseURL: configsByEnvironment[this.env].solverRelayBaseURL,
+				baseURL: this.envConfig.solverRelayBaseURL,
 				logger,
 				solverRelayApiKey: this.solverRelayApiKey,
 			},
@@ -761,11 +811,11 @@ export class IntentsSDK implements IIntentsSDK {
 
 		if (!Array.isArray(args.withdrawalParams)) {
 			return {
-				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				// biome-ignore lint/style/noNonNullAssertion: single withdrawal returns single-element arrays
 				feeEstimation: feeEstimation[0]!,
 				intentHash,
 				intentTx,
-				// biome-ignore lint/style/noNonNullAssertion: <explanation>
+				// biome-ignore lint/style/noNonNullAssertion: single withdrawal returns single-element arrays
 				destinationTx: destinationTx[0]!,
 			};
 		}

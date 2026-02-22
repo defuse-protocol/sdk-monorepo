@@ -1,5 +1,5 @@
-import type { NearIntentsEnv } from "@defuse-protocol/internal-utils";
-import { configsByEnvironment, utils } from "@defuse-protocol/internal-utils";
+import type { EnvConfig } from "@defuse-protocol/internal-utils";
+import { utils } from "@defuse-protocol/internal-utils";
 import { VersionedNonceBuilder, type Salt } from "./expirable-nonce";
 import type { ISaltManager } from "./interfaces/salt-manager";
 import type {
@@ -8,13 +8,10 @@ import type {
 	MultiPayload,
 } from "./shared-types";
 import type { IIntentSigner } from "./interfaces/intent-signer";
-import {
-	DEFAULT_DEADLINE_MS,
-	DEFAULT_NONCE_DEADLINE_OFFSET_MS,
-} from "./intent-payload-factory";
+import { DEFAULT_DEADLINE_MS } from "./intent-payload-factory";
 
 export interface IntentPayloadBuilderConfig {
-	env: NearIntentsEnv;
+	envConfig: EnvConfig;
 	saltManager: ISaltManager;
 }
 
@@ -50,18 +47,19 @@ type IntentPayloadWithSigner<HasSigner extends boolean> = HasSigner extends true
  * ```
  */
 export class IntentPayloadBuilder<HasSigner extends boolean = false> {
-	private env: NearIntentsEnv;
+	private envConfig: EnvConfig;
 	private saltManager: ISaltManager;
 	private verifyingContract: string;
 	private signerId?: string;
 	private deadline?: Date;
 	private intents: IntentPrimitive[] = [];
 	private customNonce?: string;
+	private customRandomBytes?: Uint8Array<ArrayBufferLike>;
 
 	constructor(config: IntentPayloadBuilderConfig) {
-		this.env = config.env;
+		this.envConfig = config.envConfig;
 		this.saltManager = config.saltManager;
-		this.verifyingContract = configsByEnvironment[this.env].contractID;
+		this.verifyingContract = this.envConfig.contractID;
 	}
 
 	/**
@@ -130,14 +128,36 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	}
 
 	/**
-	 * Set a custom nonce. If not provided, a nonce will be automatically generated.
-	 * The nonce must be a valid versioned nonce format.
+	 * Set a pre-built nonce directly.
+	 * Use this when you have a complete nonce from an external source
+	 * or need to reuse/invalidate a specific nonce.
+	 *
+	 * For most cases where you need custom random bytes, use {@link setNonceRandomBytes} instead,
+	 * which handles salt fetching and nonce encoding automatically.
 	 *
 	 * @param nonce - Custom nonce string (base64 encoded)
 	 * @returns The builder instance for chaining
 	 */
 	setNonce(nonce: string): this {
 		this.customNonce = nonce;
+		return this;
+	}
+
+	/**
+	 * Set custom random bytes for nonce generation.
+	 * The nonce will be automatically created at build time using these bytes,
+	 * the deadline, and the contract salt.
+	 *
+	 * Use this when you need control over the random portion of the nonce
+	 * (e.g., embedding a start timestamp via {@link VersionedNonceBuilder.createTimestampedNonceBytes}).
+	 *
+	 * For pre-built nonces, use {@link setNonce} instead.
+	 *
+	 * @param randomBytes - 15 bytes to use as the random portion of the nonce
+	 * @returns The builder instance for chaining
+	 */
+	setNonceRandomBytes(randomBytes: Uint8Array<ArrayBufferLike>): this {
+		this.customRandomBytes = randomBytes;
 		return this;
 	}
 
@@ -162,7 +182,8 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 		this.deadline = undefined;
 		this.intents = [];
 		this.customNonce = undefined;
-		this.verifyingContract = configsByEnvironment[this.env].contractID;
+		this.customRandomBytes = undefined;
+		this.verifyingContract = this.envConfig.contractID;
 		return this as unknown as IntentPayloadBuilder<false>;
 	}
 
@@ -176,12 +197,9 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	buildWithSalt(salt: Salt): IntentPayloadWithSigner<HasSigner> {
 		const deadline =
 			this.deadline ?? new Date(Date.now() + DEFAULT_DEADLINE_MS);
-		const nonceDeadline = new Date(
-			deadline.getTime() + DEFAULT_NONCE_DEADLINE_OFFSET_MS,
-		);
 		const nonce =
 			this.customNonce ??
-			VersionedNonceBuilder.encodeNonce(salt, nonceDeadline);
+			VersionedNonceBuilder.encodeNonce(salt, deadline, this.customRandomBytes);
 
 		return {
 			verifying_contract: this.verifyingContract,
@@ -227,7 +245,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	 */
 	clone(): IntentPayloadBuilder<HasSigner> {
 		const builder = new IntentPayloadBuilder({
-			env: this.env,
+			envConfig: this.envConfig,
 			saltManager: this.saltManager,
 		}) as IntentPayloadBuilder<HasSigner>;
 
@@ -236,6 +254,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 		builder.deadline = this.deadline;
 		builder.intents = [...this.intents];
 		builder.customNonce = this.customNonce;
+		builder.customRandomBytes = this.customRandomBytes;
 
 		return builder;
 	}
@@ -247,7 +266,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 	 * @returns Object containing the current builder state
 	 */
 	getState(): {
-		env: NearIntentsEnv;
+		envConfig: EnvConfig;
 		verifyingContract: string;
 		signerId?: string;
 		deadline?: Date;
@@ -255,7 +274,7 @@ export class IntentPayloadBuilder<HasSigner extends boolean = false> {
 		customNonce?: string;
 	} {
 		return {
-			env: this.env,
+			envConfig: this.envConfig,
 			verifyingContract: this.verifyingContract,
 			signerId: this.signerId,
 			deadline: this.deadline,

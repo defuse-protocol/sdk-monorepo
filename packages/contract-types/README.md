@@ -8,6 +8,30 @@ This package provides TypeScript type definitions for Defuse Protocol contracts.
 npm install @defuse-protocol/contract-types
 ```
 
+## Standard Schema
+
+Validators are [Standard Schema](https://standardschema.dev/) compliant and work with any library that accepts the spec (TanStack Form, Hono, tRPC, etc.). See [standard-schema.test.ts](./src/standard-schema.test.ts) for usage examples.
+
+## Using with Schema Libraries
+
+### class-validator (NestJS)
+
+See [class-validator.test.ts](./src/class-validator.test.ts) for the `ValidateWithSchema` decorator that works with NestJS validation pipes.
+
+### Zod
+
+Two options available in [zod.test.ts](./src/zod.test.ts):
+- `z.fromJSONSchema()` - validates raw structure only, no JSON string parsing
+- `toZodSchema()` wrapper - validates and parses inner JSON strings
+
+### Valibot
+
+See [valibot.test.ts](./src/valibot.test.ts) for the wrapper function.
+
+### ArkType
+
+See [arktype.test.ts](./src/arktype.test.ts) for the wrapper function.
+
 ## Usage
 
 ```typescript
@@ -44,14 +68,14 @@ pnpm run build
 
 ### Generating Types
 
-The types are automatically generated from the Defuse Protocol contract ABI using the script at `scripts/gen-defuse-types.sh`. This script extracts the type definitions from the contract ABI and converts them to TypeScript interfaces.
+The types are automatically generated from the Defuse Protocol contract ABI using the script at `scripts/gen-defuse-types.ts`. This script extracts the type definitions from the contract ABI and converts them to TypeScript interfaces.
 
 To regenerate the types:
 
 ```bash
 # Run the type generation script
 cd packages/contract-types
-./scripts/gen-defuse-types.sh
+pnpm run gen-defuse-types
 ```
 
 ### Development Mode

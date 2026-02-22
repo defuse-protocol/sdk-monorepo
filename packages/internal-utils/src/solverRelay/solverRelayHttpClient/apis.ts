@@ -10,7 +10,7 @@ export async function quote(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -23,7 +23,7 @@ export async function publishIntent(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -36,7 +36,7 @@ export async function publishIntents(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
 
@@ -49,6 +49,6 @@ export async function getStatus(
 		params,
 		config,
 	);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	// biome-ignore lint/suspicious/noExplicitAny: JSON-RPC result type erasure
 	return result as any;
 }
