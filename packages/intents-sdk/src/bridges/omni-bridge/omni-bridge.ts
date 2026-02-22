@@ -9,6 +9,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
+import { ConditionalLRUCache } from "../../lib/conditional-lru-cache";
 import type { providers } from "near-api-js";
 import {
 	ChainKind,
@@ -75,18 +76,28 @@ import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tok
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
+const INTENTS_STORAGE_BALANCE_KEY = "INTENTS_STORAGE_BALANCE";
 export class OmniBridge implements Bridge {
 	readonly route = RouteEnum.OmniBridge;
 	protected env: NearIntentsEnv;
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: OmniBridgeAPI;
 	protected solverRelayApiKey: string | undefined;
-	protected intentsStorageBalanceCache = new TTLCache<
-		"INTENTS_STORAGE_BALANCE",
+	protected intentsStorageBalanceCache = new ConditionalLRUCache<
+		typeof INTENTS_STORAGE_BALANCE_KEY,
 		bigint
 	>({
 		max: 1,
 		ttl: 3000,
+		fetchMethod: async () => {
+			const storageBalance = await getAccountOmniStorageBalance(
+				this.nearProvider,
+				configsByEnvironment[this.env].contractID,
+			);
+			return storageBalance === null ? 0n : BigInt(storageBalance.available);
+		},
+		shouldCache: (value: bigint) =>
+			value > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	});
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
@@ -804,28 +815,9 @@ export class OmniBridge implements Bridge {
 	 * Gets cached storage_balance value of intents contract on Omni Bridge contract.
 	 */
 	private async getCachedIntentsStorageBalance(): Promise<bigint> {
-		const cached = this.intentsStorageBalanceCache.get(
-			"INTENTS_STORAGE_BALANCE",
+		return this.intentsStorageBalanceCache.forceFetch(
+			INTENTS_STORAGE_BALANCE_KEY,
 		);
-		if (cached !== undefined) {
-			return cached;
-		}
-
-		const storageBalance = await getAccountOmniStorageBalance(
-			this.nearProvider,
-			configsByEnvironment[this.env].contractID,
-		);
-		const intentsStorageBalance =
-			storageBalance === null ? 0n : BigInt(storageBalance.available);
-
-		if (intentsStorageBalance > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
-			this.intentsStorageBalanceCache.set(
-				"INTENTS_STORAGE_BALANCE",
-				intentsStorageBalance,
-			);
-		}
-
-		return intentsStorageBalance;
 	}
 
 	/**
