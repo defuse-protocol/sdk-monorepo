@@ -210,9 +210,9 @@ export class IntentsSDK implements IIntentsSDK {
 			this.envConfig.contractSalt != null
 				? new StaticSaltManager(this.envConfig.contractSalt)
 				: new SaltManager({
-					envConfig: this.envConfig,
-					nearProvider,
-				});
+						envConfig: this.envConfig,
+						nearProvider,
+					});
 	}
 
 	public setIntentSigner(signer: IIntentSigner) {
