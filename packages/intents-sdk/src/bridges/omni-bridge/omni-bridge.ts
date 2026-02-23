@@ -48,7 +48,7 @@ import {
 } from "./error";
 import {
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
-	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
+	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 } from "./omni-bridge-constants";
@@ -440,10 +440,10 @@ export class OmniBridge implements Bridge {
 
 		const intentsStorageBalance = await this.getCachedIntentsStorageBalance();
 
-		// Ensure available storage balance is > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.
+		// Ensure available storage balance is > MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents contract account instead of the original withdrawing account.
-		if (intentsStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
+		if (intentsStorageBalance <= MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError(
 				intentsStorageBalance.toString(),
 			);
@@ -812,7 +812,7 @@ export class OmniBridge implements Bridge {
 		const intentsStorageBalance =
 			storageBalance === null ? 0n : BigInt(storageBalance.available);
 
-		if (intentsStorageBalance > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
+		if (intentsStorageBalance > MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			this.intentsStorageBalanceCache.set(
 				INTENTS_STORAGE_BALANCE_CACHE_KEY,
 				intentsStorageBalance,

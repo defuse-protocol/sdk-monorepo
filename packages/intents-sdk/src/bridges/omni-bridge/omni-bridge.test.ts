@@ -24,7 +24,7 @@ import {
 } from "./error";
 import {
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
-	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
+	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 } from "./omni-bridge-constants";
 import { OmniBridge } from "./omni-bridge";
 
@@ -1213,8 +1213,8 @@ describe("OmniBridge", () => {
 	});
 
 	describe("getCachedIntentsStorageBalance()", () => {
-		it("cache balance when it is above MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR", async () => {
-			const lowBalance = MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n;
+		it("cache balance when it is above MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR", async () => {
+			const lowBalance = MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n;
 			const lowBalanceString = lowBalance.toString();
 
 			vi.spyOn(
@@ -1245,10 +1245,8 @@ describe("OmniBridge", () => {
 			).toBe(lowBalance);
 		});
 
-		it("does not cache balance when it is below MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR", async () => {
-			const lowBalance = (
-				MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR - 1n
-			).toString();
+		it("does not cache balance when it is below MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR", async () => {
+			const lowBalance = (MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR - 1n).toString();
 
 			vi.spyOn(
 				omniBridgeUtils,
@@ -1277,8 +1275,7 @@ describe("OmniBridge", () => {
 
 	describe("validateWithdrawal()", () => {
 		it("throws IntentsNearOmniAvailableBalanceTooLowError when storage balance is too low", async () => {
-			const lowBalance =
-				MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.toString();
+			const lowBalance = MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR.toString();
 
 			vi.spyOn(
 				omniBridgeUtils,
