@@ -8,7 +8,6 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import TTLCache from "@isaacs/ttlcache";
-import { ConditionalLRUCache } from "../../lib/conditional-lru-cache";
 import type { providers } from "near-api-js";
 import {
 	ChainKind,
@@ -82,21 +81,12 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
-	protected intentsStorageBalanceCache = new ConditionalLRUCache<
+	protected intentsStorageBalanceCache = new TTLCache<
 		typeof INTENTS_STORAGE_BALANCE_KEY,
 		bigint
 	>({
 		max: 1,
 		ttl: 3000,
-		fetchMethod: async () => {
-			const storageBalance = await getAccountOmniStorageBalance(
-				this.nearProvider,
-				this.envConfig.contractID,
-			);
-			return storageBalance === null ? 0n : BigInt(storageBalance.available);
-		},
-		shouldCache: (value: bigint) =>
-			value > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	});
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
@@ -808,9 +798,28 @@ export class OmniBridge implements Bridge {
 	 * Gets cached storage_balance value of intents contract on Omni Bridge contract.
 	 */
 	private async getCachedIntentsStorageBalance(): Promise<bigint> {
-		return this.intentsStorageBalanceCache.forceFetch(
+		const cached = this.intentsStorageBalanceCache.get(
 			INTENTS_STORAGE_BALANCE_KEY,
 		);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const storageBalance = await getAccountOmniStorageBalance(
+			this.nearProvider,
+			this.envConfig.contractID,
+		);
+		const intentsStorageBalance =
+			storageBalance === null ? 0n : BigInt(storageBalance.available);
+
+		if (intentsStorageBalance > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
+			this.intentsStorageBalanceCache.set(
+				INTENTS_STORAGE_BALANCE_KEY,
+				intentsStorageBalance,
+			);
+		}
+
+		return intentsStorageBalance;
 	}
 
 	/**
