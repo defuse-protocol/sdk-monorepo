@@ -47,6 +47,7 @@ import {
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
+	INTENTS_STORAGE_BALANCE_CACHE_KEY,
 	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
@@ -74,7 +75,6 @@ import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tok
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
-const INTENTS_STORAGE_BALANCE_KEY = "INTENTS_STORAGE_BALANCE";
 export class OmniBridge implements Bridge {
 	readonly route = RouteEnum.OmniBridge;
 	protected envConfig: EnvConfig;
@@ -82,7 +82,7 @@ export class OmniBridge implements Bridge {
 	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
 	protected intentsStorageBalanceCache = new TTLCache<
-		typeof INTENTS_STORAGE_BALANCE_KEY,
+		typeof INTENTS_STORAGE_BALANCE_CACHE_KEY,
 		bigint
 	>({
 		max: 1,
@@ -799,7 +799,7 @@ export class OmniBridge implements Bridge {
 	 */
 	private async getCachedIntentsStorageBalance(): Promise<bigint> {
 		const cached = this.intentsStorageBalanceCache.get(
-			INTENTS_STORAGE_BALANCE_KEY,
+			INTENTS_STORAGE_BALANCE_CACHE_KEY,
 		);
 		if (cached !== undefined) {
 			return cached;
@@ -814,7 +814,7 @@ export class OmniBridge implements Bridge {
 
 		if (intentsStorageBalance > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			this.intentsStorageBalanceCache.set(
-				INTENTS_STORAGE_BALANCE_KEY,
+				INTENTS_STORAGE_BALANCE_CACHE_KEY,
 				intentsStorageBalance,
 			);
 		}

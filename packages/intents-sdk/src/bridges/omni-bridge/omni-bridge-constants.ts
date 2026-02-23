@@ -5,3 +5,4 @@ export const MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR =
 
 // This was chosen empirically and may not be optimal, it includes 10% margin.
 export const MIN_GAS_AMOUNT = "37400000000000"; // 37.4 tgas
+export const INTENTS_STORAGE_BALANCE_CACHE_KEY = "INTENTS_STORAGE_BALANCE";
