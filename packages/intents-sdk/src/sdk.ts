@@ -108,6 +108,7 @@ export interface IntentsSDKConfig {
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
 	solverRelayApiKey?: string;
+	hotBridgeApiKey?: string;
 	features?: {
 		/**
 		 * Route migrated POA tokens (*.omft.near) through Omni Bridge.
@@ -124,12 +125,14 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 	protected solverRelayApiKey: string | undefined;
+	protected hotBridgeApiKey: string | undefined;
 	protected saltManager: ISaltManager;
 
 	constructor(args: IntentsSDKConfig) {
 		this.envConfig = resolveEnvConfig(args.env);
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
+		this.hotBridgeApiKey = args.hotBridgeApiKey;
 
 		const nearRpcEndpoints: RpcEndpoint[] =
 			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
@@ -169,6 +172,7 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
 				hotSdk: new hotLabsOmniSdk_HotBridge({
+					apiKey: this.hotBridgeApiKey,
 					logger: console,
 					evmRpc: evmRpcUrls,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
