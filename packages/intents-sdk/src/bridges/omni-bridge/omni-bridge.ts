@@ -47,7 +47,8 @@ import {
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
-	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
+	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 } from "./omni-bridge-constants";
@@ -80,6 +81,13 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
+	protected intentsStorageBalanceCache = new TTLCache<
+		typeof INTENTS_STORAGE_BALANCE_CACHE_KEY,
+		bigint
+	>({
+		max: 1,
+		ttl: 3000,
+	});
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
 		string,
@@ -430,21 +438,14 @@ export class OmniBridge implements Bridge {
 			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
 		}
 
-		const storageBalance = await getAccountOmniStorageBalance(
-			this.nearProvider,
-			this.envConfig.contractID,
-		);
+		const intentsStorageBalance = await this.getCachedIntentsStorageBalance();
 
-		const intentsNearStorageBalance =
-			storageBalance === null ? 0n : BigInt(storageBalance.available);
-		// Ensure available storage balance is > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.
+		// Ensure available storage balance is > MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents contract account instead of the original withdrawing account.
-		if (
-			intentsNearStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
-		) {
+		if (intentsStorageBalance <= MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError(
-				intentsNearStorageBalance.toString(),
+				intentsStorageBalance.toString(),
 			);
 		}
 
@@ -791,6 +792,34 @@ export class OmniBridge implements Bridge {
 		}
 
 		return tokenDecimals;
+	}
+
+	/**
+	 * Gets cached storage_balance value of intents contract on Omni Bridge contract.
+	 */
+	private async getCachedIntentsStorageBalance(): Promise<bigint> {
+		const cached = this.intentsStorageBalanceCache.get(
+			INTENTS_STORAGE_BALANCE_CACHE_KEY,
+		);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const storageBalance = await getAccountOmniStorageBalance(
+			this.nearProvider,
+			this.envConfig.contractID,
+		);
+		const intentsStorageBalance =
+			storageBalance === null ? 0n : BigInt(storageBalance.available);
+
+		if (intentsStorageBalance > MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
+			this.intentsStorageBalanceCache.set(
+				INTENTS_STORAGE_BALANCE_CACHE_KEY,
+				intentsStorageBalance,
+			);
+		}
+
+		return intentsStorageBalance;
 	}
 
 	/**
