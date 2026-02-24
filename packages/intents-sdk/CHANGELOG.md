@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.54.0
+
+### Minor Changes
+
+- c6c9aa4: Adds optional hot bridge api to sdk config
+
 ## 0.53.3
 
 ### Patch Changes
