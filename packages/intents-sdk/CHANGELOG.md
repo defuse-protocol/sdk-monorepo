@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.55.0
+
+### Minor Changes
+
+- f95e2dd: Adds cache to omni storage balance request in validate withdrawals of omni bridge
+
+### Patch Changes
+
+- Updated dependencies [2f5eea8]
+  - @defuse-protocol/internal-utils@0.28.3
+
 ## 0.54.0
 
 ### Minor Changes
