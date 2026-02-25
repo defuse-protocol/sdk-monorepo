@@ -1,6 +1,5 @@
 ---
-"@defuse-protocol/internal-utils": minor
-"@defuse-protocol/intents-sdk": minor
+"@defuse-protocol/internal-utils": patch
 ---
 
 Mark near addresses with uppercase as invalid
