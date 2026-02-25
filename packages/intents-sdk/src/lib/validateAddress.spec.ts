@@ -6,7 +6,67 @@ import {
 	validateCardanoAddress,
 } from "./validateAddress";
 import { Chains } from "./caip2";
+describe("validateNearAddress", () => {
+	it("accepts named accounts", () => {
+		expect(validateAddress("alice.near", Chains.Near)).toBe(true);
+		expect(validateAddress("bob.testnet", Chains.Near)).toBe(true);
+		expect(validateAddress("ab", Chains.Near)).toBe(true);
+	});
 
+	it("accepts sub-accounts", () => {
+		expect(validateAddress("app.alice.near", Chains.Near)).toBe(true);
+	});
+
+	it("accepts accounts with hyphens and underscores", () => {
+		expect(validateAddress("my-account.near", Chains.Near)).toBe(true);
+		expect(validateAddress("my_account.near", Chains.Near)).toBe(true);
+	});
+
+	it("accepts NEAR implicit accounts (64 hex chars)", () => {
+		expect(validateAddress("a".repeat(64), Chains.Near)).toBe(true);
+	});
+
+	it("accepts ETH implicit accounts (0x + 40 hex chars)", () => {
+		expect(validateAddress(`0x${"a".repeat(40)}`, Chains.Near)).toBe(true);
+	});
+
+	it("accepts NEAR deterministic accounts (0s + 40 hex chars)", () => {
+		expect(validateAddress(`0s${"a".repeat(40)}`, Chains.Near)).toBe(true);
+	});
+
+	it("rejects accounts shorter than 2 characters", () => {
+		expect(validateAddress("a", Chains.Near)).toBe(false);
+		expect(validateAddress("", Chains.Near)).toBe(false);
+	});
+
+	it("rejects accounts longer than 64 characters", () => {
+		expect(validateAddress("a".repeat(65), Chains.Near)).toBe(false);
+	});
+
+	it("rejects uppercase characters", () => {
+		expect(validateAddress("Alice.near", Chains.Near)).toBe(false);
+	});
+
+	it("rejects accounts with invalid characters", () => {
+		expect(validateAddress("alice@near", Chains.Near)).toBe(false);
+		expect(validateAddress("alice near", Chains.Near)).toBe(false);
+	});
+
+	it("rejects accounts starting or ending with separator", () => {
+		expect(validateAddress("-alice.near", Chains.Near)).toBe(false);
+		expect(validateAddress("alice-.near", Chains.Near)).toBe(false);
+		expect(validateAddress(".alice.near", Chains.Near)).toBe(false);
+	});
+
+	it("rejects checksummed ETH addresses", () => {
+		expect(
+			validateAddress(
+				"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+				Chains.Near,
+			),
+		).toBe(false);
+	});
+});
 describe("validateBtcAddress", () => {
 	it("accepts valid addresses", () => {
 		const valid = [

@@ -99,7 +99,7 @@ function isEthImplicitAccount(accountId: string): boolean {
 	return (
 		accountId.length === ETH_IMPLICIT_ACCOUNT_LENGTH &&
 		accountId.startsWith("0x") &&
-		/^[0-9a-f]+$/i.test(accountId.slice(2))
+		/^[0-9a-f]+$/.test(accountId.slice(2))
 	);
 }
 
@@ -107,14 +107,14 @@ function isNearDeterministic(accountId: string): boolean {
 	return (
 		accountId.length === ETH_IMPLICIT_ACCOUNT_LENGTH &&
 		accountId.startsWith("0s") &&
-		/^[0-9a-f]+$/i.test(accountId.slice(2))
+		/^[0-9a-f]+$/.test(accountId.slice(2))
 	);
 }
 
 function isNearImplicit(accountId: string): boolean {
 	return (
 		accountId.length === NEAR_IMPLICIT_ACCOUNT_LENGTH &&
-		/^[0-9a-f]+$/i.test(accountId)
+		/^[0-9a-f]+$/.test(accountId)
 	);
 }
 
