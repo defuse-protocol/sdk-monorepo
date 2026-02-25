@@ -89,6 +89,9 @@ export function validateNearAddress(accountId: string): boolean {
 	) {
 		return false;
 	}
+	if (accountId !== accountId.toLowerCase()) {
+		return false;
+	}
 	if (isImplicitAccount(accountId)) {
 		return true;
 	}
