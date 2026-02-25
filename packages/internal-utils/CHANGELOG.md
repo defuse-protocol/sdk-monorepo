@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.28.4
+
+### Patch Changes
+
+- 6c0ae0f: Mark near addresses with uppercase as invalid
+
 ## 0.28.3
 
 ### Patch Changes
