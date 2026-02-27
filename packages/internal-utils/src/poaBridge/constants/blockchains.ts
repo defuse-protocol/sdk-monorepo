@@ -30,6 +30,7 @@ export const PoaBridgeNetworkReference = {
 	LAYERX: "eth:196",
 	STARKNET: "starknet:mainnet",
 	ALEO: "aleo:mainnet",
+	DASH: "dash:mainnet",
 } as const;
 
 export const VirtualNetworkReference = {

@@ -80,6 +80,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);
+		case Chains.Dash:
+			return validateDashAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -646,6 +648,38 @@ export function validateAleoAddress(address: string): boolean {
 			if (isIdentity(scalarMul(pt, SUBGROUP_ORDER))) return true;
 		}
 		return false;
+	} catch {
+		return false;
+	}
+}
+
+export function validateDashAddress(address: string): boolean {
+	try {
+		const decoded: Uint8Array = base58.decode(address);
+
+		// version (1) + payload (20) + checksum (4)
+		if (decoded.length !== 25) return false;
+
+		const version = decoded[0];
+		if (
+			version !== 0x4c && // P2PKH
+			version !== 0x10 // P2SH
+		) {
+			return false;
+		}
+
+		const payload = decoded.subarray(0, 21);
+		const checksum = decoded.subarray(21, 25);
+
+		const hash1 = sha256(payload);
+		const hash2 = sha256(hash1);
+		const expectedChecksum = hash2.subarray(0, 4);
+
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+
+		return true;
 	} catch {
 		return false;
 	}
