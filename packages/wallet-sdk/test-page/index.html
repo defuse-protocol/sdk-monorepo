@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet SDK - Passkey E2E Test</title>
+    <style>
+        body { font-family: monospace; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        button { padding: 8px 16px; margin: 4px; cursor: pointer; font-family: monospace; }
+        pre { background: #f4f4f4; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+        .step { margin: 16px 0; padding: 12px; border: 1px solid #ddd; }
+        .step h3 { margin: 0 0 8px 0; }
+        #log { background: #1a1a1a; color: #0f0; padding: 12px; min-height: 200px; font-size: 13px; }
+        .error { color: #f44; }
+        .success { color: #4f4; }
+    </style>
+</head>
+<body>
+    <h1>Wallet SDK - Passkey E2E Test</h1>
+
+    <div class="step">
+        <h3>Step 1: Create Passkey</h3>
+        <p>Creates a passkey via WebAuthn. Your browser will prompt for biometrics.</p>
+        <button id="btn-create">Create Passkey</button>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Prepare Payload</h3>
+        <p>Builds a RequestMessage using the registered public key.</p>
+        <button id="btn-prepare" disabled>Prepare Payload</button>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Sign with Passkey</h3>
+        <p>Signs the payload with the registered passkey. Your browser will prompt again.</p>
+        <button id="btn-sign" disabled>Sign Payload</button>
+    </div>
+
+    <div class="step">
+        <h3>Step 4: Full Flow (Register + Prepare + Sign)</h3>
+        <p>Runs all steps in sequence.</p>
+        <button id="btn-full">Run Full Flow</button>
+    </div>
+
+    <h3>Output</h3>
+    <pre id="log"></pre>
+    <button id="btn-clear">Clear Log</button>
+
+    <script type="module">
+        import { WalletContract } from "../src/wallet.ts";
+        import { base58 } from "@scure/base";
+
+        const logEl = document.getElementById("log");
+        const log = (msg, cls = "") => {
+            const line = document.createElement("div");
+            if (cls) line.className = cls;
+            line.textContent = `[${new Date().toISOString().slice(11, 23)}] ${msg}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+
+        let storedCredentialId = null;
+        let storedPublicKey = null;
+        let storedPayload = null;
+        let storedChallenge = null;
+
+        // Step 1: Create passkey
+        document.getElementById("btn-create").addEventListener("click", async () => {
+            try {
+                log("Creating passkey...");
+                const userId = crypto.getRandomValues(new Uint8Array(16));
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        rp: { name: "Wallet SDK Test", id: window.location.hostname },
+                        user: { id: userId, name: "test-user", displayName: "Test User" },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                        authenticatorSelection: {
+                            residentKey: "preferred",
+                            userVerification: "preferred",
+                        },
+                    },
+                });
+
+                storedCredentialId = new Uint8Array(credential.rawId);
+
+                // Extract raw public key from SPKI format
+                // For P-256 (ES256), SPKI has 26-byte header, then 65-byte uncompressed key
+                const spki = new Uint8Array(credential.response.getPublicKey());
+                const rawKey = spki.slice(-65);
+                storedPublicKey = toHex(rawKey);
+
+                log(`credentialId: ${toHex(storedCredentialId)}`, "success");
+                log(`publicKey (${rawKey.length} bytes): ${storedPublicKey}`, "success");
+
+                document.getElementById("btn-prepare").disabled = false;
+                log("Passkey created!", "success");
+            } catch (e) {
+                log(`Create failed: ${e.message}`, "error");
+            }
+        });
+
+        // Step 2: Prepare
+        document.getElementById("btn-prepare").addEventListener("click", async () => {
+            try {
+                log("Preparing payload...");
+                const wallet = new WalletContract(storedPublicKey);
+                const { message, challenge } = await wallet.preparePayload(storedPublicKey, 0);
+
+                storedPayload = message;
+                storedChallenge = challenge;
+
+                log(`signer_id: ${storedPayload.signer_id}`, "success");
+                log(`valid_until: ${storedPayload.valid_until}`, "success");
+                log(`challenge: ${toHex(storedChallenge)}`, "success");
+                log(`payload: ${JSON.stringify(storedPayload, null, 2)}`, "success");
+
+                document.getElementById("btn-sign").disabled = false;
+                log("Payload prepared!", "success");
+            } catch (e) {
+                log(`Prepare failed: ${e.message}`, "error");
+            }
+        });
+
+        // Step 3: Sign
+        document.getElementById("btn-sign").addEventListener("click", async () => {
+            try {
+                log("Signing with passkey...");
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: storedChallenge,
+                        rpId: window.location.hostname,
+                        allowCredentials: [{
+                            id: storedCredentialId,
+                            type: "public-key",
+                        }],
+                        userVerification: "preferred",
+                    },
+                });
+
+                const signature = toHex(new Uint8Array(assertion.response.signature));
+                const authenticatorData = toHex(new Uint8Array(assertion.response.authenticatorData));
+                const clientDataJSON = new TextDecoder().decode(assertion.response.clientDataJSON);
+
+                log(`signature: ${signature}`, "success");
+                log(`authenticatorData: ${authenticatorData}`, "success");
+                log(`clientDataJSON: ${clientDataJSON}`, "success");
+                log("Signing complete!", "success");
+            } catch (e) {
+                log(`Signing failed: ${e.message}`, "error");
+            }
+        });
+
+        // Step 4: Full flow
+        document.getElementById("btn-full").addEventListener("click", async () => {
+            try {
+                log("=== FULL FLOW START ===");
+
+                log("1. Creating passkey...");
+                const userId = crypto.getRandomValues(new Uint8Array(16));
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        rp: { name: "Wallet SDK Test", id: window.location.hostname },
+                        user: { id: userId, name: "test-user", displayName: "Test User" },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                        authenticatorSelection: {
+                            residentKey: "preferred",
+                            userVerification: "preferred",
+                        },
+                    },
+                });
+                const credentialId = new Uint8Array(credential.rawId);
+                const spki = new Uint8Array(credential.response.getPublicKey());
+                const pubKeyHex = toHex(spki.slice(-65));
+                log(`credentialId: ${toHex(credentialId)}`, "success");
+                log(`publicKey: ${pubKeyHex}`, "success");
+
+                log("2. Preparing payload...");
+                const wallet = new WalletContract(pubKeyHex);
+                const { message, challenge } = await wallet.preparePayload(pubKeyHex, 0);
+                log(`signer_id: ${message.signer_id}`, "success");
+
+                log("3. Signing with passkey...");
+                const signAssertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge,
+                        rpId: window.location.hostname,
+                        allowCredentials: [{
+                            id: credentialId,
+                            type: "public-key",
+                        }],
+                        userVerification: "preferred",
+                    },
+                });
+                const signature = toHex(new Uint8Array(signAssertion.response.signature));
+                log(`signature: ${signature}`, "success");
+
+                log("=== FULL FLOW COMPLETE ===", "success");
+            } catch (e) {
+                log(`Full flow failed: ${e.message}`, "error");
+                console.error(e);
+            }
+        });
+
+        document.getElementById("btn-clear").addEventListener("click", () => {
+            logEl.innerHTML = "";
+        });
+
+        function toHex(bytes) {
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+        }
+
+        log("Wallet SDK test page loaded. Ready.");
+    </script>
+</body>
+</html>
