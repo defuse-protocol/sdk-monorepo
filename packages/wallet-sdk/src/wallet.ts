@@ -7,16 +7,18 @@ import {
     type WalletState,
     walletStateSchema,
 } from "./types/state";
-import {base58, hex} from "@scure/base";
+import {hex} from "@scure/base";
 import {p256} from "@noble/curves/p256";
 import type {RequestMessage} from "./types/wallet";
-import {PromiseSingle} from "./promise-single";
+import {Blockchain, PromiseSingle} from "./promise-single";
 import {borshSerialize} from "borsher";
 import {keccak_256} from "@noble/hashes/sha3";
 import {serializeRequestMessage} from "./borsh/serialize";
 import {sha256} from "@noble/hashes/sha2";
 
 export type ContractType = "P256" | "ED25519";
+
+
 export type StateInitSerialized = {
     codeHash?: string;
     accountId?: string;
@@ -72,6 +74,7 @@ export class WalletContract {
     async preparePayload(
         custom_payload: string,
         seqno: number,
+        blockchain: Blockchain,
         deadline_sec?: number,
     ): Promise<{
         message: RequestMessage;
@@ -82,7 +85,7 @@ export class WalletContract {
 
         const walletAccountId = this.deriveAccountId(this.globalContract);
 
-        const promiseThen = new PromiseSingle().eddsaPromise(custom_payload);
+        const promiseThen = new PromiseSingle(blockchain).build(custom_payload);
 
         const message: RequestMessage = {
             chain_id: "mainnet",
@@ -182,6 +185,7 @@ export class WalletContract {
         const walletState = this.createWalletState();
         const stateInit = this.stateInit(walletState);
 
+        // TODO maybe refactor
         const res = await fetch(`${opts.baseUrl}/v0/sign`, {
             method: "POST",
             headers: {
@@ -209,7 +213,6 @@ export class WalletContract {
         prefixed.set(borshBytes, contractPrefix.length);
         return sha256(prefixed);
     }
-
 }
 
 const WalletEd25519Global: WalletGlobalContractId = {
