@@ -1,23 +1,23 @@
 import {
     DEFAULT_WALLET_ID,
     getKeyLength,
+    sortedMap,
     STATE_KEY,
     stateInitSchema,
     type WalletGlobalContractId,
     type WalletState,
     walletStateSchema,
 } from "./types/state";
-import {hex} from "@scure/base";
+import {base58, base64, hex} from "@scure/base";
 import {p256} from "@noble/curves/p256";
-import type {RequestMessage} from "./types/wallet";
-import {Blockchain, PromiseSingle} from "./promise-single";
+import type {ProofParams, RequestMessage} from "./types/wallet";
+import {type Blockchain, PromiseSingle} from "./promise-single";
 import {borshSerialize} from "borsher";
 import {keccak_256} from "@noble/hashes/sha3";
 import {serializeRequestMessage} from "./borsh/serialize";
 import {sha256} from "@noble/hashes/sha2";
 
 export type ContractType = "P256" | "ED25519";
-
 
 export type StateInitSerialized = {
     codeHash?: string;
@@ -78,7 +78,7 @@ export class WalletContract {
         deadline_sec?: number,
     ): Promise<{
         message: RequestMessage;
-        challenge: Uint8Array;
+        challenge: string;
         accountId: string;
     }> {
         const deadline = this.deadline(deadline_sec);
@@ -177,7 +177,6 @@ export class WalletContract {
     async sendSign(opts: {
         message: RequestMessage;
         proof: string;
-        publicKey: string;
         baseUrl: string;
         authToken: string;
     }): Promise<{ status: number; body: string }> {
@@ -195,7 +194,6 @@ export class WalletContract {
             body: JSON.stringify({
                 msg: JSON.stringify(opts.message),
                 proof: opts.proof,
-                publicKey: opts.publicKey,
                 accountId,
                 stateInit: JSON.stringify(stateInit),
             }),
@@ -205,13 +203,38 @@ export class WalletContract {
         return {status: res.status, body};
     }
 
-    computeChallenge(msg: RequestMessage): Uint8Array {
+    computeChallenge(msg: RequestMessage): string {
         const contractPrefix = this.walletDomain();
         const borshBytes = serializeRequestMessage(msg);
         const prefixed = new Uint8Array(contractPrefix.length + borshBytes.length);
         prefixed.set(contractPrefix);
         prefixed.set(borshBytes, contractPrefix.length);
-        return sha256(prefixed);
+        return base64.encode(sha256(prefixed));
+    }
+
+    buildProof(proofParams: ProofParams) {
+        let signature: string;
+        switch (this.globalContractType) {
+            case "P256": {
+                // WebAuthn produces DER-encoded signatures; convert to raw (r, s) 64-byte format
+                const derBytes = hex.decode(proofParams.signature);
+                // Normalize to low-S: the on-chain contract rejects high-S signatures
+                const sig = p256.Signature.fromDER(derBytes).normalizeS();
+                signature = `p256:${base58.encode(sig.toCompactRawBytes())}`;
+                break;
+            }
+            case "ED25519":
+                signature = `ed25519:${base58.encode(hex.decode(proofParams.signature))}`;
+                break;
+            default:
+                throw new Error("Unsupported type");
+        }
+        return JSON.stringify({
+            authenticator_data: proofParams.authenticatorData,
+            client_data_json: new TextDecoder().decode(new Uint8Array(proofParams.clientDataJSON)),
+            signature: signature,
+            public_key: hex.encode(this.pubKeyBytes),
+        });
     }
 }
 

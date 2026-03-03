@@ -31,11 +31,27 @@ export const globalContractIdSchema = BorshSchema.Enum({
 
 export const stateInitV1Schema = BorshSchema.Struct({
 	code: globalContractIdSchema,
+	// Rust side uses BTreeMap. Borsher only has HashMap (same wire format),
+	// so entries must be sorted by key before serialization.
 	data: BorshSchema.HashMap(
 		BorshSchema.Vec(BorshSchema.u8),
 		BorshSchema.Vec(BorshSchema.u8),
 	),
 });
+
+/** Sort map entries by key (lexicographic byte order) for BTreeMap compatibility. */
+export function sortedMap(
+	map: Map<number[], number[]>,
+): Map<number[], number[]> {
+	const entries = [...map.entries()].sort(([a], [b]) => {
+		const len = Math.min(a.length, b.length);
+		for (let i = 0; i < len; i++) {
+			if (a[i] !== b[i]) return (a[i] ?? 0) - (b[i] ?? 0);
+		}
+		return a.length - b.length;
+	});
+	return new Map(entries);
+}
 
 export const stateInitSchema = BorshSchema.Enum({
 	V1: stateInitV1Schema,

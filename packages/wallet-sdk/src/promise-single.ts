@@ -7,6 +7,7 @@ export enum Blockchain {
     Solana,
 }
 
+// todo change ab
 export class PromiseSingle {
     private readonly networkId: Blockchain;
 
@@ -22,7 +23,7 @@ export class PromiseSingle {
     //   ├───────────┼───────────┼───────────────────────────────────────────────────────────────┤
     //   │ 2         │ Bls12381  │ BLS signing — for Confidential Key Derivation                 │
     //   └───────────┴───────────┴───────────────────────────────────────────────────────────────┘
-    private buildRequest(payload: string) {
+    private buildRequest(payload: string, path: string = "") {
         const secp256k1Domain = 0;
         const ed25519Domain = 1;
 
@@ -30,22 +31,25 @@ export class PromiseSingle {
             case Blockchain.Ethereum:
                 return {
                     request: {
-                        payload_v2: {Secp256k1: payload},
+                        payload_v2: {Ecdsa: payload},
                         domain_id: secp256k1Domain,
+                        path,
                     },
                 };
             case Blockchain.Solana:
                 return {
                     request: {
-                        payload_v2: {Ed25519: payload},
+                        payload_v2: {Eddsa: payload},
                         domain_id: ed25519Domain,
+                        path,
                     },
                 };
             default:
                 return {
                     request: {
-                        payload_v2: {Ed25519: payload},
+                        payload_v2: {Eddsa: payload},
                         domain_id: ed25519Domain,
+                        path,
                     },
                 };
 
@@ -64,7 +68,7 @@ export class PromiseSingle {
                         action: "function_call",
                         function_name: "sign",
                         args: argsBase64,
-                        deposit: "1000000000000000000000000",
+                        deposit: "1",
                     },
                 ],
             },
