@@ -1,7 +1,7 @@
 import {base64, hex} from "@scure/base";
-import type {RequestMessage} from "../src";
-import {WalletContract} from "../src";
-import {Blockchain} from "../src/promise-single";
+import type {RequestMessage} from "../src/types/wallet";
+import {WalletWebAuthnP256} from "../src/wallet-contract";
+import {DomainId, MpcContract} from "../src/mpc-contract";
 
 function getInput(id: string): HTMLInputElement {
     const element = document.getElementById(id);
@@ -48,8 +48,7 @@ const $createPasskey = getButton("createPasskey");
 const $setupOutput = getDiv("setupOutput");
 
 const $payload = getInput("payload");
-const $seqno = getInput("seqno");
-const $blockchain = getSelect("blockchain");
+const $domainId = getSelect("domainId");
 const $deadlineSec = getInput("deadlineSec");
 const $prepareBtn = getButton("prepareBtn");
 const $prepareOutput = getDiv("prepareOutput");
@@ -63,7 +62,7 @@ const $sendBtn = getButton("sendBtn");
 const $sendOutput = getDiv("sendOutput");
 
 let credentialId: ArrayBuffer | null = null;
-let wallet: WalletContract | null = null;
+let wallet: WalletWebAuthnP256 | null = null;
 let currentMessage: RequestMessage | null = null;
 let currentChallenge: string | null = null;
 let currentProof: string | null = null;
@@ -77,19 +76,6 @@ function showOutput(
     element.textContent = text;
     element.className = "output";
     element.classList.add(type);
-}
-
-function bufToHex(buf: ArrayBuffer): string {
-    return hex.encode(new Uint8Array(buf));
-}
-
-function bufToBase64Url(buf: ArrayBuffer): string {
-    const bytes = new Uint8Array(buf);
-    let binary = "";
-    for (const byte of bytes) {
-        binary += String.fromCharCode(byte);
-    }
-    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 function extractP256PublicKeyHex(spki: ArrayBuffer): string {
@@ -113,16 +99,14 @@ function extractP256PublicKeyHex(spki: ArrayBuffer): string {
     );
 }
 
-function parseBlockchain(value: string): Blockchain {
+function parseDomainId(value: string): DomainId {
     switch (value) {
-        case "Near":
-            return Blockchain.Near;
-        case "Ethereum":
-            return Blockchain.Ethereum;
-        case "Solana":
-            return Blockchain.Solana;
+        case "Secp256k1":
+            return DomainId.Secp256k1;
+        case "Ed25519":
+            return DomainId.Ed25519;
         default:
-            throw new Error(`Unsupported blockchain value: ${value}`);
+            throw new Error(`Unsupported domain ID value: ${value}`);
     }
 }
 
@@ -173,7 +157,7 @@ $createPasskey.addEventListener("click", async () => {
 
         showOutput(
             $setupOutput,
-            `Passkey created\nCredential ID: ${bufToHex(created.rawId)}\nPublic Key: ${publicKeyHex}`,
+            `Passkey created\nCredential ID: ${hex.encode(new Uint8Array(created.rawId))}\nPublic Key: ${publicKeyHex}`,
             "success",
         );
     } catch (error) {
@@ -193,27 +177,19 @@ $prepareBtn.addEventListener("click", async () => {
         }
 
         const payload = $payload.value;
-        const seqno = Number.parseInt($seqno.value, 10);
         const deadline = Number.parseInt($deadlineSec.value, 10);
-
-        if (Number.isNaN(seqno) || seqno < 0) {
-            throw new Error("Seqno must be a non-negative integer");
-        }
 
         if (Number.isNaN(deadline) || deadline <= 0) {
             throw new Error("Deadline must be a positive integer");
         }
 
-        wallet = new WalletContract(publicKey, "P256");
+        wallet = new WalletWebAuthnP256(publicKey);
 
-        const {message, challenge, accountId} = await wallet.preparePayload(
-            payload,
-            seqno,
-            parseBlockchain($blockchain.value),
-            deadline,
-        );
-
-        const walletState = wallet.createWalletState();
+        const mpcContract = new MpcContract();
+        const request = mpcContract.buildSignMpcRequest(parseDomainId($domainId.value), hex.decode(payload));
+        const message = await wallet.buildRequestMessage(request, deadline);
+        const challenge = wallet.challenge(message);
+        const accountId = wallet.deriveAccountId();
 
         currentMessage = message;
         currentChallenge = challenge;
@@ -236,7 +212,6 @@ $prepareBtn.addEventListener("click", async () => {
             [
                 `Account ID: ${accountId}`,
                 `Challenge (base64): ${challenge}`,
-                `Wallet State: ${JSON.stringify(walletState, null, 2)}`,
                 `Message: ${JSON.stringify(message, null, 2)}`,
             ].join("\n\n"),
             "success",
@@ -287,12 +262,7 @@ $signBtn.addEventListener("click", async () => {
             throw new Error("Unexpected assertion response type");
         }
 
-        const proof = wallet.buildProof({
-            authenticatorData: bufToBase64Url(response.authenticatorData),
-            clientDataJSON: response.clientDataJSON,
-            signature: bufToHex(response.signature),
-            publicKey: $publicKey.value.trim(),
-        });
+        const proof = wallet.buildProof(response);
 
         currentProof = proof;
         $sendBtn.disabled = false;
@@ -319,7 +289,6 @@ $sendBtn.addEventListener("click", async () => {
         if (!currentMessage || !currentProof) {
             throw new Error("Prepare and sign first");
         }
-
 
         const baseUrl = $baseUrl.value.trim();
         if (!baseUrl) {

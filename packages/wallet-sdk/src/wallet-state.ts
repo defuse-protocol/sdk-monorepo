@@ -1,7 +1,7 @@
 import {BorshSchema, borshSerialize} from "borsher";
 import {type GlobalContractId, globalContractIdSchema, stateInitSchema, stateInitV1Schema} from "./types/state";
 import {keccak_256} from "@noble/hashes/sha3";
-import {hex} from "@scure/base";
+import {base58, base64, hex} from "@scure/base";
 
 export type Storage = Map<Uint8Array, Uint8Array>;
 
@@ -53,6 +53,25 @@ export class StateInit {
     constructor(_code: GlobalContractId, _data: Storage) {
         this.data = _data;
         this.code = _code
+    }
+
+    toJSON() {
+        let code: { hash: string } | { account_id: string };
+        if ("hash" in this.code) {
+            code = {hash: base58.encode(new Uint8Array(this.code.hash))};
+        } else {
+            code = {account_id: this.code.account_id};
+        }
+        return {
+            version: "v1",
+            code,
+            data: Object.fromEntries(
+                this.sortedEntries(this.data).map(([k, v]) => [
+                    base64.encode(k),
+                    base64.encode(v),
+                ]),
+            ),
+        };
     }
 
     private sortedEntries(map: Map<Uint8Array, Uint8Array>): [Uint8Array, Uint8Array][] {

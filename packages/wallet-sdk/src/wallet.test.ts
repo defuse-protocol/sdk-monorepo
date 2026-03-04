@@ -1,8 +1,7 @@
-import {assert, describe, it} from "vitest";
+import {describe, it} from "vitest";
 import {WalletContract} from "./wallet";
-import {Blockchain} from "./promise-single";
-import type {RequestMessage, Request} from "./types/wallet";
 import {WalletWebAuthnP256} from "./wallet-contract";
+import {DomainId, MpcContract} from "./mpc-contract";
 import {hex} from "@scure/base";
 
 describe("WalletContract", () => {
@@ -11,17 +10,14 @@ describe("WalletContract", () => {
 
         const wallet = new WalletWebAuthnP256(publicKey);
         const derived = wallet.deriveAccountId();
-        const request: Request = {
-            ops: [], out: {
-                after: [],
-                then: []
-            }
-        }
+        const mpcContract = new MpcContract();
+        const request = mpcContract.buildSignMpcRequest(DomainId.Secp256k1, hex.decode("8059971b41bf105f57570ece5b214cdbee68e61ca2de6a3f1b33c3ef12384c2a"))
         const requestMessage = await wallet.buildRequestMessage(request);
         const challenge = wallet.challenge(requestMessage);
+        const public_key = await wallet.derivePublicKey("", DomainId.Secp256k1);
         // console.log(hex.encode(wallet.publicKeyBytes()))
-        // console.log(derived)
-        console.log(requestMessage)
-        console.log(challenge)
+        console.log(public_key)
+        // console.log(JSON.stringify(requestMessage))
+        // console.log(challenge)
     });
 });

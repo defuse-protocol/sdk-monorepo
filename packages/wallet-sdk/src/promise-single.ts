@@ -56,22 +56,4 @@ export class PromiseSingle {
         }
     }
 
-    build(payload: string): PromiseSingleType[] {
-        const argsJson = JSON.stringify(this.buildRequest(payload));
-        const argsBase64 = base64.encode(new TextEncoder().encode(argsJson));
-
-        return [
-            {
-                receiver_id: "v1.signer",
-                actions: [
-                    {
-                        action: "function_call",
-                        function_name: "sign",
-                        args: argsBase64,
-                        deposit: "1",
-                    },
-                ],
-            },
-        ];
-    }
 }

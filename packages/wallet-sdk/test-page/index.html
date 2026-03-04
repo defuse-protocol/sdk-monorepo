@@ -156,18 +156,13 @@
             <label for="payload">Payload</label>
             <input id="payload" placeholder="TO_DO_PAYLOAD"/>
         </div>
-        <div>
-            <label for="seqno">Seqno</label>
-            <input id="seqno" type="number" value="0" min="0"/>
-        </div>
     </div>
     <div class="row">
         <div>
-            <label for="blockchain">Blockchain</label>
-            <select id="blockchain">
-                <option value="Solana">Solana</option>
-                <option value="Ethereum">Ethereum</option>
-                <option value="Near">Near</option>
+            <label for="domainId">Domain ID</label>
+            <select id="domainId">
+                <option value="Secp256k1">Secp256k1 (EVM, Bitcoin)</option>
+                <option value="Ed25519">Ed25519 (Solana, NEAR)</option>
             </select>
         </div>
         <div>

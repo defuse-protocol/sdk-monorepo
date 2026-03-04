@@ -14,6 +14,17 @@ export type PromiseSingle = {
     /// Empty actions is no-op.
     actions: PromiseAction[];
 };
+export type Request = {
+    ops: WalletOp[];
+    out: PromiseDag;
+};
+/// DAG of promises to execute
+export type PromiseDag = {
+    /// `PromiseDAG`s to be executed before `promises`, if any.
+    after: PromiseDag[];
+    /// Promises to be executed concurrently after `after`, if any.
+    then: PromiseSingle[];
+};
 
 export type RequestMessage = {
     chain_id: "mainnet" | "testnet";
@@ -23,18 +34,6 @@ export type RequestMessage = {
     request: Request;
 };
 
-export type Request = {
-    ops: WalletOp[];
-    out: PromiseDag;
-};
-
-/// DAG of promises to execute
-export type PromiseDag = {
-    /// `PromiseDAG`s to be executed before `promises`, if any.
-    after: PromiseDag[];
-    /// Promises to be executed concurrently after `after`, if any.
-    then: PromiseSingle[];
-};
 
 export type WalletOp =
     | { op: "set_signature_mode"; enable: boolean }

@@ -6,8 +6,8 @@ import {StateInit, WalletState} from "./wallet-state";
 import {p256} from "@noble/curves/p256";
 import {serializeRequestMessage} from "./borsh/serialize";
 import {sha256} from "@noble/hashes/sha2";
-import type {RequestMessage, Request, ProofParams} from "./types/wallet";
-import {PromiseSingle} from "./promise-single";
+import type {RequestMessage, ProofParams, Request} from "./types/wallet";
+import {DomainId} from "./mpc-contract";
 
 
 abstract class WalletContract {
@@ -62,10 +62,9 @@ abstract class WalletContract {
         baseUrl: string;
         authToken?: string;
     }): Promise<{ status: number; body: string }> {
-        const accountId = this.deriveAccountId();
-        const stateInit = this.stateInit()
+        const stateInit = this.stateInit().toJSON();
 
-        // TODO maybe refactor
+        // TODO make a http client (1click)
         const res = await fetch(`${opts.baseUrl}/v0/sign`, {
             method: "POST",
             headers: {
@@ -73,10 +72,9 @@ abstract class WalletContract {
                 // Authorization: `Bearer ${opts.authToken}`,
             },
             body: JSON.stringify({
-                msg: JSON.stringify(opts.message),
+                msg: opts.message,
                 proof: opts.proof,
-                accountId,
-                stateInit: JSON.stringify(stateInit),
+                stateInit: stateInit,
             }),
         });
 
@@ -84,7 +82,34 @@ abstract class WalletContract {
         return {status: res.status, body};
     }
 
+    async derivePublicKey(path: string, domainId: DomainId): Promise<string> {
+        let domain_str: string;
+        switch (domainId) {
+            case DomainId.Secp256k1:
+                domain_str = "secp256k1"
+                break;
+            case DomainId.Ed25519:
+                domain_str = "ed25519"
+                break;
+            default:
+                throw new Error("Unknown domain id")
+        }
+        const res = await fetch(`http://localhost:3000/v0/derive-public-key`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // Authorization: `Bearer ${opts.authToken}`,
+            },
+            body: JSON.stringify({
+                path,
+                domainId: domain_str,
+                predecessor: this.deriveAccountId()
+            }),
+        });
+        // console.log("RESPONSE", await res.text())
 
+        return await res.text();
+    }
 }
 
 abstract class WalletWebAuthn extends WalletContract {
