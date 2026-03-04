@@ -4,6 +4,7 @@ import {
 	validateLitecoinAddress,
 	validateBchAddress,
 	validateCardanoAddress,
+	validateDashAddress,
 } from "./validateAddress";
 import { Chains } from "./caip2";
 describe("validateNearAddress", () => {
@@ -561,5 +562,69 @@ describe("validateBchAddress()", () => {
 		for (const address of list) {
 			expect(validateBchAddress(address)).toBe(false);
 		}
+	});
+});
+
+describe("validateDashAddress()", () => {
+	it("accepts valid P2PKH addresses", () => {
+		const list = [
+			"Xk1J41RT1znfZmzeHrFYrD8mDcLVu9DPrq",
+			"XygRgBo2MMeG8EaQXjHTYCmmowt7wTcCRJ",
+			"XmzJZQ5tib4NUwqXDH2fAg6jXUkYo4Gwmd",
+			"XnT33zjrFKjt3ymfyQZs2FPiKNer3WVj14",
+			"XeBi9qNEnHLyMNesvkDBbTPRJBKYQiMWdt",
+			"XagqqFetxiDb9wbartKDrXgnqLah6SqX2S",
+		];
+
+		for (const address of list) {
+			expect(validateDashAddress(address)).toBe(true);
+		}
+	});
+
+	it("accepts valid P2SH addresses", () => {
+		const list = [
+			"7cD5qePDe8PikPdWJS7aPfRbzvtnyTSiaM",
+			"7oGTTChaRZoo5t5jXMJskDrsqMiq6bZfn7",
+			"7Tr5zsk9axYPBHSxH4cf8WdGq8vwS56S5J",
+		];
+
+		for (const address of list) {
+			expect(validateDashAddress(address)).toBe(true);
+		}
+	});
+
+	it("rejects addresses with bad checksum", () => {
+		// Changed last character
+		expect(validateDashAddress("XygRgBo2MMeG8EaQXjHTYCmmowt7wTcCRK")).toBe(
+			false,
+		);
+		expect(validateDashAddress("7cD5qePDe8PikPdWJS7aPfRbzvtnyTSiaN")).toBe(
+			false,
+		);
+	});
+
+	it("rejects addresses with wrong version byte", () => {
+		// Bitcoin P2PKH (version 0x00)
+		expect(validateDashAddress("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2")).toBe(
+			false,
+		);
+		// Litecoin P2PKH (version 0x30)
+		expect(validateDashAddress("LUbHk3E8DHKuK93GxCEDebdekFhnNeA2f3")).toBe(
+			false,
+		);
+	});
+
+	it("rejects invalid strings", () => {
+		expect(validateDashAddress("")).toBe(false);
+		expect(validateDashAddress("not-a-dash-address")).toBe(false);
+		expect(validateDashAddress("X")).toBe(false);
+		expect(validateDashAddress("7")).toBe(false);
+	});
+
+	it("rejects testnet addresses", () => {
+		// Testnet P2PKH (version 0x8c, starts with y)
+		expect(validateDashAddress("yNPbcFfabtNmmxKhmGhv49pJEFByBEiYGN")).toBe(
+			false,
+		);
 	});
 });
