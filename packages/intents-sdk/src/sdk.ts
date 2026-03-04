@@ -800,11 +800,15 @@ export class IntentsSDK implements IIntentsSDK {
 			logger: args.logger,
 		});
 
+		args.logger?.info("Intent published", { intentHash });
+
 		// Step 3: Wait for intent settlement
 		const intentTx = await this.waitForIntentSettlement({
 			intentHash: intentHash,
 			logger: args.logger,
 		});
+
+		args.logger?.info("Intent settled", { txHash: intentTx.hash });
 
 		// Step 4: Wait for withdrawal completion
 		const destinationTx = await this.waitForWithdrawalCompletion({
