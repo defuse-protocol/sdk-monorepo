@@ -7,7 +7,7 @@ import type {
     StateInit,
     WalletOp,
 } from "../types/wallet";
-import type {WalletGlobalContractId} from "../types/state";
+import type {GlobalContractId} from "../types/state";
 
 // todo borsh write
 class BorshWriter {
@@ -175,16 +175,16 @@ function writeStateInit(w: BorshWriter, si: StateInit): void {
 
 function writeGlobalContractId(
     w: BorshWriter,
-    id: WalletGlobalContractId,
+    id: GlobalContractId,
 ): void {
-    if ("CodeHash" in id) {
+    if ("hash" in id) {
         w.writeU8(0);
         // Fixed-size array [u8; 32] — no length prefix
-        for (const b of id.CodeHash) {
+        for (const b of id.hash) {
             w.writeU8(b);
         }
     } else {
         w.writeU8(1);
-        w.writeString(id.AccountId);
+        w.writeString(id.account_id);
     }
 }

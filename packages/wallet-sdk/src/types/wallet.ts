@@ -1,4 +1,4 @@
-import type {WalletGlobalContractId} from "./state";
+import type {GlobalContractId} from "./state";
 
 /// A single outgoing receipt
 export type PromiseSingle = {
@@ -68,7 +68,7 @@ export type StateInitAction = {
 export type StateInit = { V1: StateInitV1 };
 
 type StateInitV1 = {
-    code: WalletGlobalContractId;
+    code: GlobalContractId;
     data: Map<number[], number[]>;
 };
 

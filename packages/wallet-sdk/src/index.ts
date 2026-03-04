@@ -12,5 +12,5 @@ export type {
     StateInit,
     WalletOp,
 } from "./types/wallet";
-export type {WalletState, WalletGlobalContractId} from "./types/state";
-export type {ContractType, StateInitSerialized} from "./wallet";
+export type {WalletState, GlobalContractId} from "./types/state";
+export type {WalletContractVariant, StateInitSerialized} from "./wallet";

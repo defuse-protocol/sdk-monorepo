@@ -4,7 +4,7 @@ import {
     sortedMap,
     STATE_KEY,
     stateInitSchema,
-    type WalletGlobalContractId,
+    type GlobalContractId,
     type WalletState,
     walletStateSchema,
 } from "./types/state";
@@ -17,7 +17,7 @@ import {keccak_256} from "@noble/hashes/sha3";
 import {serializeRequestMessage} from "./borsh/serialize";
 import {sha256} from "@noble/hashes/sha2";
 
-export type ContractType = "P256" | "ED25519";
+export type WalletContractVariant = "webauthn-p256" | "webauthn-ed25519";
 
 export type StateInitSerialized = {
     codeHash?: string;
@@ -27,10 +27,10 @@ export type StateInitSerialized = {
 
 export class WalletContract {
     private readonly pubKeyBytes: Uint8Array;
-    private readonly globalContract: WalletGlobalContractId;
-    private readonly globalContractType: ContractType;
+    private readonly globalContractId: GlobalContractId;
+    private readonly walletContractVariant: WalletContractVariant;
 
-    constructor(publicKey: string, contractType: ContractType) {
+    constructor(publicKey: string, contractType: WalletContractVariant) {
         if (!this.isHex(publicKey)) {
             throw new Error("Public key must be in hex format");
         }
@@ -40,19 +40,14 @@ export class WalletContract {
             : publicKey;
         const raw = hex.decode(normalized);
 
-        // For P-256 uncompressed keys (65 bytes), compress to 33 bytes
-        this.pubKeyBytes =
-            raw.length === 65
-                ? p256.ProjectivePoint.fromHex(raw).toRawBytes(true)
-                : raw;
 
-        this.globalContractType = contractType;
-        switch (this.globalContractType) {
+        this.walletContractVariant = contractType;
+        switch (this.walletContractVariant) {
             case "ED25519":
-                this.globalContract = WalletEd25519Global;
+                this.globalContractId = WalletEd25519Global;
                 break;
             case "P256":
-                this.globalContract = WalletP256Global;
+                this.globalContractId = WalletP256Global;
                 break;
             default:
                 throw new Error(`Not found contract type ${contractType}`);
@@ -83,7 +78,7 @@ export class WalletContract {
     }> {
         const deadline = this.deadline(deadline_sec);
 
-        const walletAccountId = this.deriveAccountId(this.globalContract);
+        const walletAccountId = this.deriveAccountId(this.globalContractId);
 
         const promiseThen = new PromiseSingle(blockchain).build(custom_payload);
 
@@ -119,12 +114,12 @@ export class WalletContract {
 
     stateInit(walletState: WalletState): StateInitSerialized {
         let code: { codeHash: string } | { accountId: string };
-        if ("CodeHash" in this.globalContract) {
+        if ("CodeHash" in this.globalContractId) {
             code = {
-                codeHash: hex.encode(new Uint8Array(this.globalContract.CodeHash)),
+                codeHash: hex.encode(new Uint8Array(this.globalContractId.codeHash)),
             };
         } else {
-            code = {accountId: this.globalContract.AccountId};
+            code = {accountId: this.globalContractId.AccountId};
         }
         return {
             ...code,
@@ -156,7 +151,7 @@ export class WalletContract {
      * `accountId = "0s" + hex(keccak256(borsh(stateInit))[12..32])`
      */
     deriveAccountId = (
-        walletGlobalId: WalletGlobalContractId,
+        walletGlobalId: GlobalContractId,
         options?: {
             walletId?: number;
             extensions?: string[];
@@ -178,9 +173,9 @@ export class WalletContract {
         message: RequestMessage;
         proof: string;
         baseUrl: string;
-        authToken: string;
+        authToken?: string;
     }): Promise<{ status: number; body: string }> {
-        const accountId = this.deriveAccountId(this.globalContract);
+        const accountId = this.deriveAccountId(this.globalContractId);
         const walletState = this.createWalletState();
         const stateInit = this.stateInit(walletState);
 
@@ -189,7 +184,7 @@ export class WalletContract {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${opts.authToken}`,
+                // Authorization: `Bearer ${opts.authToken}`,
             },
             body: JSON.stringify({
                 msg: JSON.stringify(opts.message),
@@ -214,8 +209,8 @@ export class WalletContract {
 
     buildProof(proofParams: ProofParams) {
         let signature: string;
-        switch (this.globalContractType) {
-            case "P256": {
+        switch (this.walletContractVariant) {
+            case "webauthn-p256": {
                 // WebAuthn produces DER-encoded signatures; convert to raw (r, s) 64-byte format
                 const derBytes = hex.decode(proofParams.signature);
                 // Normalize to low-S: the on-chain contract rejects high-S signatures
@@ -223,7 +218,7 @@ export class WalletContract {
                 signature = `p256:${base58.encode(sig.toCompactRawBytes())}`;
                 break;
             }
-            case "ED25519":
+            case "webauthn-ed25519":
                 signature = `ed25519:${base58.encode(hex.decode(proofParams.signature))}`;
                 break;
             default:
@@ -238,18 +233,11 @@ export class WalletContract {
     }
 }
 
-const WalletEd25519Global: WalletGlobalContractId = {
-    CodeHash: [
+const WalletEd25519Global: GlobalContractId = {
+    hash: [
         ...hex.decode(
             "05e4ee0759cae7440da854c60dc81b34d35561008b0b587333e08d2386c64d5c",
         ),
     ],
 };
 
-const WalletP256Global: WalletGlobalContractId = {
-    CodeHash: [
-        ...hex.decode(
-            "8f028370f5ac3da4aa123a986819fef9ed565eef9d3b03d6634ca94e28e5b476",
-        ),
-    ],
-};

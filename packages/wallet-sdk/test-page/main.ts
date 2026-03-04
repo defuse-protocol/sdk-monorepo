@@ -320,10 +320,6 @@ $sendBtn.addEventListener("click", async () => {
             throw new Error("Prepare and sign first");
         }
 
-        const authToken = $authToken.value.trim();
-        if (!authToken) {
-            throw new Error("Auth token is required");
-        }
 
         const baseUrl = $baseUrl.value.trim();
         if (!baseUrl) {
@@ -336,7 +332,6 @@ $sendBtn.addEventListener("click", async () => {
             message: currentMessage,
             proof: currentProof,
             baseUrl,
-            authToken,
         });
 
         const resultType = status >= 200 && status < 300 ? "success" : "error";

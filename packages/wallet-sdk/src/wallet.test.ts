@@ -1,55 +1,27 @@
 import {assert, describe, it} from "vitest";
 import {WalletContract} from "./wallet";
 import {Blockchain} from "./promise-single";
-import type {RequestMessage} from "./types/wallet";
+import type {RequestMessage, Request} from "./types/wallet";
+import {WalletWebAuthnP256} from "./wallet-contract";
+import {hex} from "@scure/base";
 
 describe("WalletContract", () => {
     it("posts sign request to localhost:3004", async () => {
-        const publicKey = "";
+        const publicKey = "0409c042c611202b078339d167e6c0a0f2325183eee744bc3973b9dd4bb2f89fe501f4088b3080b95316b0ca6c4bed02028040dfd3a487fcfb80d0f5f89bd85d35";
 
-        const wallet = new WalletContract(publicKey, "P256");
-        // const payload = "TO_DO_PAYLOAD";
-        //
-        // const {message, challenge, accountId} = await wallet.preparePayload(
-        //     payload,
-        //     0,
-        //     Blockchain.Solana,
-        // );
-        //
-        // const authData = {
-        //     id: "-",
-        //     rawId: "-",
-        //     type: "public-key",
-        //     authenticatorAttachment: "platform",
-        //     response: {
-        //         authenticatorData: "-",
-        //         clientDataJSON: "-",
-        //         signature: "-",
-        //         userHandle: "-",
-        //     },
-        // };
-        //
-        // const proof = wallet.buildProof({
-        //     clientDataJSON: authData.response.clientDataJSON, publicKey, signature: authData.response.signature,
-        //     authenticatorData: authData.response.authenticatorData
-        // })
-        //
-        // const walletState = wallet.createWalletState();
-
-        // console.log("Message:", JSON.stringify(message));
-        // console.log("Proof:", proof);
-        // console.log("Challenge:", bytesToHex(challenge));
-
-        // const {status, body} = await wallet.sendSign({
-        //     message: REQUEST,
-        //     proof: PROOF,
-        //     baseUrl: "http://localhost:3000",
-        //     authToken: JWT,
-        // });
-        //
-        // console.log(process.env.DEFUSE_AUTH)
-        // console.log(body)
-        // assert(status == 200);
-        // assert(body.length);
+        const wallet = new WalletWebAuthnP256(publicKey);
+        const derived = wallet.deriveAccountId();
+        const request: Request = {
+            ops: [], out: {
+                after: [],
+                then: []
+            }
+        }
+        const requestMessage = await wallet.buildRequestMessage(request);
+        const challenge = wallet.challenge(requestMessage);
+        // console.log(hex.encode(wallet.publicKeyBytes()))
+        // console.log(derived)
+        console.log(requestMessage)
+        console.log(challenge)
     });
 });
