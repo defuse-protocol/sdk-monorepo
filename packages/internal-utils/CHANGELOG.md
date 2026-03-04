@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.29.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
 ## 0.28.4
 
 ### Patch Changes

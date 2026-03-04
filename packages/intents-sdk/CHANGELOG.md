@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.56.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
+### Patch Changes
+
+- Updated dependencies [781fee2]
+  - @defuse-protocol/internal-utils@0.29.0
+
 ## 0.55.1
 
 ### Patch Changes
