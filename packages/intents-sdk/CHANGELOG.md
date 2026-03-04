@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.56.1
+
+### Patch Changes
+
+- fcc45e2: Log intentHash and nearTxHash in processWithdrawal for easier debugging
+
 ## 0.56.0
 
 ### Minor Changes
