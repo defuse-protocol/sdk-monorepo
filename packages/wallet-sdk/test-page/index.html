@@ -141,6 +141,16 @@
     prepare payload, sign challenge, build proof, send sign.</p>
 
 <section>
+    <h2>0. Connect to Relayer (<code>new OneClickClient({ baseUrl, authToken })</code>)</h2>
+    <label for="baseUrl">Base URL</label>
+    <input id="baseUrl" value="http://localhost:3000"/>
+    <label for="authToken">Auth Token (JWT, optional)</label>
+    <textarea id="authToken" placeholder="Paste token"></textarea>
+    <button id="connectBtn">Connect</button>
+    <div id="connectOutput" class="output" hidden></div>
+</section>
+
+<section>
     <h2>1. Setup Wallet (<code>new WalletContract(publicKey, "P256")</code>)</h2>
     <label for="publicKey">Public Key (hex)</label>
     <input id="publicKey" placeholder="Paste P-256 public key hex or create passkey"/>
@@ -189,10 +199,6 @@
 
 <section>
     <h2>4. Send Sign Request (<code>wallet.sendSign(...)</code>)</h2>
-    <label for="baseUrl">Base URL</label>
-    <input id="baseUrl" value="http://localhost:3000"/>
-    <label for="authToken">Auth Token (JWT)</label>
-    <textarea id="authToken" placeholder="Paste token"></textarea>
     <button id="sendBtn" disabled>Send</button>
     <div id="sendOutput" class="output" hidden></div>
 </section>

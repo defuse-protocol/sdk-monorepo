@@ -44,6 +44,11 @@ function getDiv(id: string): HTMLDivElement {
 	return element;
 }
 
+const $baseUrl = getInput("baseUrl");
+const $authToken = getTextarea("authToken");
+const $connectBtn = getButton("connectBtn");
+const $connectOutput = getDiv("connectOutput");
+
 const $publicKey = getInput("publicKey");
 const $createPasskey = getButton("createPasskey");
 const $setupOutput = getDiv("setupOutput");
@@ -60,13 +65,15 @@ const $prepareOutput = getDiv("prepareOutput");
 const $signBtn = getButton("signBtn");
 const $signOutput = getDiv("signOutput");
 
-const $baseUrl = getInput("baseUrl");
-const $authToken = getTextarea("authToken");
 const $sendBtn = getButton("sendBtn");
 const $sendOutput = getDiv("sendOutput");
 
+let client: OneClickClient | null = null;
 let credentialId: ArrayBuffer | null = null;
 let wallet!: WalletWebAuthnP256;
+
+// Disable all steps until connected
+$createPasskey.disabled = true;
 let currentMessage: RequestMessage | null = null;
 let currentChallenge: string | null = null;
 let currentProof: string | null = null;
@@ -114,6 +121,26 @@ function parseDomainId(value: string): DomainId {
 	}
 }
 
+$connectBtn.addEventListener("click", () => {
+	const baseUrl = $baseUrl.value.trim();
+	if (!baseUrl) {
+		showOutput($connectOutput, "Base URL is required", "error");
+		return;
+	}
+
+	client = new OneClickClient({
+		baseUrl,
+		authToken: $authToken.value.trim() || undefined,
+	});
+
+	$createPasskey.disabled = false;
+	$connectBtn.disabled = true;
+	$baseUrl.disabled = true;
+	$authToken.disabled = true;
+
+	showOutput($connectOutput, `Connected to ${baseUrl}`, "success");
+});
+
 $createPasskey.addEventListener("click", async () => {
 	try {
 		const created = await navigator.credentials.create({
@@ -159,10 +186,9 @@ $createPasskey.addEventListener("click", async () => {
 		const publicKeyHex = extractP256PublicKeyHex(spki);
 		$publicKey.value = publicKeyHex;
 
-		const client = new OneClickClient({
-			baseUrl: $baseUrl.value.trim(),
-			authToken: $authToken.value.trim() || undefined,
-		});
+		if (!client) {
+			throw new Error("Connect to relayer first");
+		}
 		wallet = new WalletWebAuthnP256(client, publicKeyHex);
 
 		showOutput(

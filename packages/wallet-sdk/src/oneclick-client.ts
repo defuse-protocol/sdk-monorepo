@@ -3,7 +3,11 @@ export class OneClickClient {
 	private readonly authToken: string | undefined;
 
 	constructor(opts: { baseUrl: string; authToken?: string }) {
-		this.baseUrl = opts.baseUrl;
+		const url = opts.baseUrl;
+		this.baseUrl =
+			url.startsWith("http://") || url.startsWith("https://")
+				? url
+				: `http://${url}`;
 		this.authToken = opts.authToken;
 	}
 
