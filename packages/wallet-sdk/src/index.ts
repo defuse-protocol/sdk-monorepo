@@ -1,4 +1,5 @@
 export { serializeRequestMessage } from "./borsh/serialize";
+export { OneClickClient } from "./oneclick-client";
 export type {
 	RequestMessage,
 	Request,

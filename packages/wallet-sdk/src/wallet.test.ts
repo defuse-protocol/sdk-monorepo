@@ -1,5 +1,6 @@
 import { describe, it } from "vitest";
 import { WalletWebAuthnP256 } from "./wallet-contract";
+import { OneClickClient } from "./oneclick-client";
 import { DomainId, MpcContract } from "./mpc-contract";
 import { hex } from "@scure/base";
 
@@ -8,7 +9,8 @@ describe("WalletContract", () => {
 		const publicKey =
 			"0409c042c611202b078339d167e6c0a0f2325183eee744bc3973b9dd4bb2f89fe501f4088b3080b95316b0ca6c4bed02028040dfd3a487fcfb80d0f5f89bd85d35";
 
-		const wallet = new WalletWebAuthnP256(publicKey);
+		const client = new OneClickClient({ baseUrl: "http://localhost:3000" });
+		const wallet = new WalletWebAuthnP256(client, publicKey);
 		const derived = wallet.deriveAccountId();
 		const mpcContract = new MpcContract();
 		const request = mpcContract.buildSignMpcRequest(

@@ -1,19 +1,26 @@
-import { type GlobalContractId, stateInitSchema } from "./types/state";
+import type { GlobalContractId } from "./types/state";
 import { base58, base64, base64url, hex } from "@scure/base";
 import { StateInit, WalletState } from "./wallet-state";
 import { p256 } from "@noble/curves/p256";
 import { serializeRequestMessage } from "./borsh/serialize";
 import { sha256 } from "@noble/hashes/sha2";
-import type { RequestMessage, ProofParams, Request } from "./types/wallet";
+import type { RequestMessage, Request } from "./types/wallet";
 import { DomainId } from "./mpc-contract";
+import type { OneClickClient } from "./oneclick-client";
 
 abstract class WalletContract {
 	// todo remove
 	public seqno: number = 0;
 	public readonly walletId: number;
 	public readonly extensions: string[];
+	protected readonly client: OneClickClient;
 
-	constructor(_walletId: number = 0, _extensions: string[] = []) {
+	constructor(
+		client: OneClickClient,
+		_walletId: number = 0,
+		_extensions: string[] = [],
+	) {
+		this.client = client;
 		this.walletId = _walletId;
 		this.extensions = _extensions;
 	}
@@ -61,30 +68,19 @@ abstract class WalletContract {
 	async sendSign(opts: {
 		message: RequestMessage;
 		proof: string;
-		baseUrl: string;
-		authToken?: string;
 	}): Promise<{ status: number; body: string }> {
 		const stateInit = this.stateInit().toJSON();
 
-		// TODO make a http client (1click)
-		const res = await fetch(`${opts.baseUrl}/v0/sign`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				// Authorization: `Bearer ${opts.authToken}`,
-			},
-			body: JSON.stringify({
-				msg: opts.message,
-				proof: opts.proof,
-				stateInit: stateInit,
-			}),
+		const result = await this.client.sign({
+			msg: opts.message,
+			proof: opts.proof,
+			stateInit,
 		});
 
 		// todo remove
 		this.seqno++;
 
-		const body = await res.text();
-		return { status: res.status, body };
+		return result;
 	}
 
 	async derivePublicKey(path: string, domainId: DomainId): Promise<string> {
@@ -100,23 +96,11 @@ abstract class WalletContract {
 				throw new Error("Unknown domain id");
 		}
 
-		// todo API KEY
-		// todo readme for setup front
-		const res = await fetch(`http://localhost:3000/v0/derive-public-key`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				// Authorization: `Bearer ${opts.authToken}`,
-			},
-			body: JSON.stringify({
-				path,
-				domainId: domain_str,
-				predecessor: this.deriveAccountId(),
-			}),
+		return this.client.derivePublicKey({
+			path,
+			domainId: domain_str,
+			predecessor: this.deriveAccountId(),
 		});
-		// console.log("RESPONSE", await res.text())
-
-		return await res.text();
 	}
 }
 
@@ -151,10 +135,11 @@ export class WalletWebAuthnP256 extends WalletWebAuthn {
 	private readonly _publicKeyBytes: Uint8Array;
 
 	/**
+	 * @param client - OneClickClient for HTTP calls.
 	 * @param _publicKeyBytes - Compressed SEC1 encoded coordinates.
 	 */
-	constructor(_publicKeyBytes: string) {
-		super();
+	constructor(client: OneClickClient, _publicKeyBytes: string) {
+		super(client);
 		// For P-256 uncompressed keys (65 bytes), compress to 33 bytes
 		this._publicKeyBytes =
 			p256.ProjectivePoint.fromHex(_publicKeyBytes).toRawBytes(true);

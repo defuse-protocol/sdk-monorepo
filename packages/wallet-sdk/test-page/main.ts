@@ -2,6 +2,7 @@ import { base64, hex } from "@scure/base";
 import type { RequestMessage } from "../src/types/wallet";
 import { WalletWebAuthnP256 } from "../src/wallet-contract";
 import { DomainId, MpcContract } from "../src/mpc-contract";
+import { OneClickClient } from "../src/oneclick-client";
 
 function getInput(id: string): HTMLInputElement {
 	const element = document.getElementById(id);
@@ -158,7 +159,11 @@ $createPasskey.addEventListener("click", async () => {
 		const publicKeyHex = extractP256PublicKeyHex(spki);
 		$publicKey.value = publicKeyHex;
 
-		wallet = new WalletWebAuthnP256(publicKeyHex);
+		const client = new OneClickClient({
+			baseUrl: $baseUrl.value.trim(),
+			authToken: $authToken.value.trim() || undefined,
+		});
+		wallet = new WalletWebAuthnP256(client, publicKeyHex);
 
 		showOutput(
 			$setupOutput,
@@ -310,18 +315,12 @@ $sendBtn.addEventListener("click", async () => {
 			throw new Error("Prepare and sign first");
 		}
 
-		const baseUrl = $baseUrl.value.trim();
-		if (!baseUrl) {
-			throw new Error("Base URL is required");
-		}
-
 		showOutput($sendOutput, "Sending request...", "info");
 
 		const start = performance.now();
 		const { status, body } = await wallet.sendSign({
 			message: currentMessage,
 			proof: currentProof,
-			baseUrl,
 		});
 		const duration = Math.round(performance.now() - start);
 
