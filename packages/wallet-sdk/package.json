@@ -1,0 +1,39 @@
+{
+  "name": "@defuse-protocol/wallet-sdk",
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "test:browser": "vite test-page --open"
+  },
+  "devDependencies": {
+    "tsdown": "^0.19.0",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "@defuse-protocol/contract-types": "0.6.1",
+    "@noble/hashes": "^1.8.0",
+    "@scure/base": "^1.2.6",
+    "borsher": "^4.0.0"
+  }
+}
