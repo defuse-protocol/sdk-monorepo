@@ -1,5 +1,54 @@
 # @defuse-protocol/intents-sdk
 
+## 0.56.1
+
+### Patch Changes
+
+- fcc45e2: Log intentHash and nearTxHash in processWithdrawal for easier debugging
+
+## 0.56.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
+### Patch Changes
+
+- Updated dependencies [781fee2]
+  - @defuse-protocol/internal-utils@0.29.0
+
+## 0.55.1
+
+### Patch Changes
+
+- Updated dependencies [6c0ae0f]
+  - @defuse-protocol/internal-utils@0.28.4
+
+## 0.55.0
+
+### Minor Changes
+
+- f95e2dd: Adds cache to omni storage balance request in validate withdrawals of omni bridge
+
+### Patch Changes
+
+- Updated dependencies [2f5eea8]
+  - @defuse-protocol/internal-utils@0.28.3
+
+## 0.54.0
+
+### Minor Changes
+
+- c6c9aa4: Adds optional hot bridge api to sdk config
+
+## 0.53.3
+
+### Patch Changes
+
+- Updated dependencies [4520b4a]
+  - @defuse-protocol/contract-types@0.6.2
+  - @defuse-protocol/internal-utils@0.28.2
+
 ## 0.53.2
 
 ### Patch Changes

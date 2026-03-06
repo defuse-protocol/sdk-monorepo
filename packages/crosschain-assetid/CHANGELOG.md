@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.3.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
 ## 1.2.0
 
 ### Minor Changes

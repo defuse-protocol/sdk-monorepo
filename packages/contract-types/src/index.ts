@@ -93,7 +93,8 @@ export type MultiPayload =
 	| MultiPayloadErc191
 	| MultiPayloadTip191
 	| MultiPayloadRawEd25519
-	| MultiPayloadWebauthn
+	| MultiPayloadWebauthnEd25519
+	| MultiPayloadWebauthnP256
 	| MultiPayloadTonConnect
 	| MultiPayloadSep53;
 /**
@@ -173,7 +174,8 @@ export type MultiPayload__Parsed =
 	| MultiPayloadErc191__Parsed
 	| MultiPayloadTip191__Parsed
 	| MultiPayloadRawEd25519__Parsed
-	| MultiPayloadWebauthn__Parsed
+	| MultiPayloadWebauthnEd25519__Parsed
+	| MultiPayloadWebauthnP256__Parsed
 	| MultiPayloadTonConnect__Parsed
 	| MultiPayloadSep53__Parsed;
 /**
@@ -1075,12 +1077,32 @@ export interface MultiPayloadRawEd25519 {
 	standard: "raw_ed25519";
 }
 /**
+ * [COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve
+ *
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
+ * via the `definition` "MultiPayloadWebauthnEd25519".
+ */
+export interface MultiPayloadWebauthnEd25519 {
+	/**
+	 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
+	 */
+	authenticator_data: string;
+	/**
+	 * Serialized [clientDataJSON](https://w3c.github.io/webauthn/#dom-authenticatorresponse-clientdatajson)
+	 */
+	client_data_json: string;
+	payload: string;
+	standard: "webauthn";
+	public_key: string;
+	signature: string;
+}
+/**
  * [COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256
  *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
- * via the `definition` "MultiPayloadWebauthn".
+ * via the `definition` "MultiPayloadWebauthnP256".
  */
-export interface MultiPayloadWebauthn {
+export interface MultiPayloadWebauthnP256 {
 	/**
 	 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
 	 */
@@ -1509,12 +1531,35 @@ export interface MultiPayloadRawEd25519__Parsed {
 	standard: "raw_ed25519";
 }
 /**
+ * [COSE EdDSA (-8) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): ed25519 curve
+ *
+ * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
+ * via the `definition` "MultiPayloadWebauthnEd25519__Parsed".
+ */
+export interface MultiPayloadWebauthnEd25519__Parsed {
+	/**
+	 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
+	 */
+	authenticator_data: string;
+	/**
+	 * Serialized [clientDataJSON](https://w3c.github.io/webauthn/#dom-authenticatorresponse-clientdatajson)
+	 */
+	client_data_json: string;
+	payload: {
+		original: string;
+		parsed: DefusePayloadFor_DefuseIntents;
+	};
+	standard: "webauthn";
+	public_key: string;
+	signature: string;
+}
+/**
  * [COSE ES256 (-7) algorithm](https://www.iana.org/assignments/cose/cose.xhtml#algorithms): NIST P-256 curve (a.k.a secp256r1) over SHA-256
  *
  * This interface was referenced by `NEARIntentsSchema`'s JSON-Schema
- * via the `definition` "MultiPayloadWebauthn__Parsed".
+ * via the `definition` "MultiPayloadWebauthnP256__Parsed".
  */
-export interface MultiPayloadWebauthn__Parsed {
+export interface MultiPayloadWebauthnP256__Parsed {
 	/**
 	 * Base64Url-encoded [authenticatorData](https://w3c.github.io/webauthn/#authenticator-data)
 	 */

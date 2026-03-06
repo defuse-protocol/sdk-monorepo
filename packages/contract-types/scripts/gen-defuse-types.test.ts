@@ -16,6 +16,7 @@ import {
 	moveContentEncodingToDescription,
 	removeDefinitions,
 	removeDiscriminator,
+	deduplicateOneOf,
 	type JsonSchema,
 } from "./gen-defuse-types.js";
 
@@ -253,6 +254,164 @@ describe("extractDiscriminatedUnions", () => {
 				},
 			},
 		});
+	});
+
+	it("keeps separate definitions for variants with the same discriminator value", () => {
+		const result = extractDiscriminatedUnions({
+			definitions: {
+				MultiPayload: {
+					oneOf: [
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^ed25519:" },
+								signature: { type: "string", pattern: "^ed25519:" },
+							},
+						},
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^p256:" },
+								signature: { type: "string", pattern: "^p256:" },
+							},
+						},
+					],
+				},
+			},
+		});
+
+		expect(result.definitions?.MultiPayload?.oneOf).toEqual([
+			{ $ref: "#/definitions/MultiPayloadWebauthnEd25519" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnP256" },
+		]);
+		expect(
+			result.definitions?.MultiPayloadWebauthnEd25519?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^ed25519:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnEd25519?.properties?.signature,
+		).toEqual(expect.objectContaining({ pattern: "^ed25519:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnP256?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^p256:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnP256?.properties?.signature,
+		).toEqual(expect.objectContaining({ pattern: "^p256:" }));
+	});
+
+	it("keeps separate definitions for 3+ variants with the same discriminator value", () => {
+		const result = extractDiscriminatedUnions({
+			definitions: {
+				MultiPayload: {
+					oneOf: [
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^ed25519:" },
+							},
+						},
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^p256:" },
+							},
+						},
+						{
+							type: "object",
+							properties: {
+								standard: { type: "string", enum: ["webauthn"] },
+								public_key: { type: "string", pattern: "^secp256k1:" },
+							},
+						},
+					],
+				},
+			},
+		});
+
+		expect(result.definitions?.MultiPayload?.oneOf).toEqual([
+			{ $ref: "#/definitions/MultiPayloadWebauthnEd25519" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnP256" },
+			{ $ref: "#/definitions/MultiPayloadWebauthnSecp256k1" },
+		]);
+		expect(
+			result.definitions?.MultiPayloadWebauthnEd25519?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^ed25519:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnP256?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^p256:" }));
+		expect(
+			result.definitions?.MultiPayloadWebauthnSecp256k1?.properties?.public_key,
+		).toEqual(expect.objectContaining({ pattern: "^secp256k1:" }));
+	});
+
+	it("throws when colliding variants have no pattern to disambiguate", () => {
+		expect(() =>
+			extractDiscriminatedUnions({
+				definitions: {
+					MultiPayload: {
+						oneOf: [
+							{
+								type: "object",
+								properties: {
+									standard: { type: "string", enum: ["webauthn"] },
+									public_key: { type: "string" },
+								},
+							},
+							{
+								type: "object",
+								properties: {
+									standard: { type: "string", enum: ["webauthn"] },
+									public_key: { type: "string" },
+								},
+							},
+						],
+					},
+				},
+			}),
+		).toThrow(/definitions\.MultiPayload\.oneOf.*standard: "webauthn"/);
+	});
+});
+
+describe("deduplicateOneOf", () => {
+	it("removes duplicate entries from oneOf arrays", () => {
+		const variant = {
+			type: "object" as const,
+			properties: {
+				standard: { type: "string" as const, enum: ["webauthn"] },
+				public_key: { type: "string" as const, pattern: "^p256:" },
+			},
+			additionalProperties: false,
+		};
+
+		const result = deduplicateOneOf({
+			definitions: {
+				MultiPayload: {
+					oneOf: [variant, variant],
+				},
+			},
+		});
+
+		expect(result.definitions?.MultiPayload?.oneOf).toEqual([variant]);
+	});
+
+	it("keeps distinct entries in oneOf", () => {
+		const v1 = {
+			type: "object" as const,
+			properties: { a: { type: "string" as const } },
+		};
+		const v2 = {
+			type: "object" as const,
+			properties: { b: { type: "string" as const } },
+		};
+
+		const result = deduplicateOneOf({
+			definitions: { Union: { oneOf: [v1, v2] } },
+		});
+
+		expect(result.definitions?.Union?.oneOf).toEqual([v1, v2]);
 	});
 });
 

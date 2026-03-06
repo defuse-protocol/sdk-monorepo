@@ -1,5 +1,34 @@
 # @defuse-protocol/internal-utils
 
+## 0.29.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
+## 0.28.4
+
+### Patch Changes
+
+- 6c0ae0f: Mark near addresses with uppercase as invalid
+
+## 0.28.3
+
+### Patch Changes
+
+- 2f5eea8: fix(internal-utils): left-pad P256 signature r,s to 32 bytes
+
+  DER encoding represents integers in minimal form, stripping leading zero bytes.
+  When r or s < 2^248 (~0.4% chance per component), the decoded value is 31 bytes
+  instead of 32, producing a 63-byte signature that the on-chain deserializer rejects.
+
+## 0.28.2
+
+### Patch Changes
+
+- Updated dependencies [4520b4a]
+  - @defuse-protocol/contract-types@0.6.2
+
 ## 0.28.1
 
 ### Patch Changes

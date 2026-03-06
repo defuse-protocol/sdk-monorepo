@@ -5,7 +5,8 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { BridgeAPI } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as omniBridgeUtils from "./omni-bridge-utils";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
@@ -17,10 +18,21 @@ import {
 	createOmniBridgeRoute,
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
-import { TokenNotFoundInDestinationChainError } from "./error";
+import {
+	IntentsNearOmniAvailableBalanceTooLowError,
+	TokenNotFoundInDestinationChainError,
+} from "./error";
+import {
+	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
+} from "./omni-bridge-constants";
 import { OmniBridge } from "./omni-bridge";
 
 describe("OmniBridge", () => {
+	beforeEach(() => {
+		vi.restoreAllMocks();
+	});
+
 	describe("without routeConfig", () => {
 		it("supports if assetId matches omni pattern (token created by specific factories)", async () => {
 			const nearProvider = nearFailoverRpcProvider({
@@ -1197,6 +1209,117 @@ describe("OmniBridge", () => {
 			const result = bridge.targetChainSpecified(createPoaBridgeRoute());
 
 			expect(result).toBe(false);
+		});
+	});
+
+	describe("getCachedIntentsStorageBalance()", () => {
+		it("cache balance when it is above MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR", async () => {
+			const lowBalance = MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n;
+			const lowBalanceString = lowBalance.toString();
+
+			vi.spyOn(
+				omniBridgeUtils,
+				"getAccountOmniStorageBalance",
+			).mockResolvedValue({
+				total: lowBalanceString,
+				available: lowBalanceString,
+			});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private method for testing
+			await bridge["getCachedIntentsStorageBalance"]();
+
+			expect(
+				// biome-ignore lint/complexity/useLiteralKeys: accessing protected property for testing
+				bridge["intentsStorageBalanceCache"].get(
+					INTENTS_STORAGE_BALANCE_CACHE_KEY,
+				),
+			).toBe(lowBalance);
+		});
+
+		it("does not cache balance when it is below MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR", async () => {
+			const lowBalance = (MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR - 1n).toString();
+
+			vi.spyOn(
+				omniBridgeUtils,
+				"getAccountOmniStorageBalance",
+			).mockResolvedValue({
+				total: lowBalance,
+				available: lowBalance,
+			});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private method for testing
+			await bridge["getCachedIntentsStorageBalance"]();
+
+			// biome-ignore lint/complexity/useLiteralKeys: accessing protected property for testing
+			expect(bridge["intentsStorageBalanceCache"].size).toBe(0);
+		});
+	});
+
+	describe("validateWithdrawal()", () => {
+		it("throws IntentsNearOmniAvailableBalanceTooLowError when storage balance is too low", async () => {
+			const lowBalance = MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR.toString();
+
+			vi.spyOn(
+				omniBridgeUtils,
+				"getAccountOmniStorageBalance",
+			).mockResolvedValue({
+				total: lowBalance,
+				available: lowBalance,
+			});
+
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"eth:0x0000000000000000000000000000000000000000",
+			);
+
+			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
+				decimals: 18,
+				origin_decimals: 18,
+			});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:eth.bridge.near",
+					amount: 1000000000000000000n,
+					destinationAddress: zeroAddress,
+					feeEstimation: {
+						amount: 25_000_000_000n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								relayerFee: 25_000_000_000n,
+								storageDepositFee: 0n,
+							},
+						},
+					},
+				}),
+			).rejects.toThrow(IntentsNearOmniAvailableBalanceTooLowError);
 		});
 	});
 });
