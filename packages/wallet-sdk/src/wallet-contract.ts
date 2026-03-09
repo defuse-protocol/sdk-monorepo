@@ -185,11 +185,7 @@ export class WalletWebAuthnP256 extends WalletWebAuthn {
 
     get globalContractId(): GlobalContractId {
         return {
-            hash: [
-                ...hex.decode(
-                    "1f658e8742989e9c3003df684f23484c9f78b599afc26601aabce830d06e9194",
-                ),
-            ],
+            account_id: "0sa8247564c6774a33b975a053fc4fbebbd869772d",
         };
     }
 

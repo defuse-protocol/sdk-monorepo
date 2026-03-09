@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wallet SDK Flow Test Page</title>
     <style>
         * {
@@ -53,7 +54,9 @@
             margin-top: 10px;
         }
 
-        input, select, textarea {
+        input,
+        select,
+        textarea {
             width: 100%;
             padding: 9px 10px;
             border: 1px solid #333;
@@ -95,7 +98,7 @@
             gap: 10px;
         }
 
-        .row > * {
+        .row>* {
             flex: 1;
         }
 
@@ -135,68 +138,72 @@
         }
     </style>
 </head>
+
 <body>
-<h1>Wallet SDK Real Flow Test</h1>
-<p class="subtitle">Runs real SDK flow from <code>wallet.wallet-contract-variant.ts</code> without hardcoded <code>REQUEST</code>/<code>PROOF</code>:
-    prepare payload, sign challenge, build proof, send sign.</p>
+    <h1>Wallet SDK Real Flow Test</h1>
+    <p class="subtitle">Runs real SDK flow from <code>wallet.wallet-contract-variant.ts</code> without hardcoded
+        <code>REQUEST</code>/<code>PROOF</code>:
+        prepare payload, sign challenge, build proof, send sign.
+    </p>
 
-<section>
-    <h2>0. Connect to Relayer (<code>new OneClickClient({ baseUrl, authToken })</code>)</h2>
-    <label for="baseUrl">Base URL</label>
-    <input id="baseUrl" value="http://localhost:3000"/>
-    <label for="authToken">Auth Token (JWT, optional)</label>
-    <textarea id="authToken" placeholder="Paste token"></textarea>
-    <button id="connectBtn">Connect</button>
-    <div id="connectOutput" class="output" hidden></div>
-</section>
+    <section>
+        <h2>0. Connect to Relayer (<code>new OneClickClient({ baseUrl, authToken })</code>)</h2>
+        <label for="baseUrl">Base URL</label>
+        <input id="baseUrl" value="http://localhost:3000" />
+        <label for="authToken">Auth Token (JWT, optional)</label>
+        <textarea id="authToken" placeholder="Paste token"></textarea>
+        <button id="connectBtn">Connect</button>
+        <div id="connectOutput" class="output" hidden></div>
+    </section>
 
-<section>
-    <h2>1. Setup Wallet (<code>new WalletContract(publicKey, "P256")</code>)</h2>
-    <label for="publicKey">Public Key (hex)</label>
-    <input id="publicKey" placeholder="Paste P-256 public key hex or create passkey"/>
-    <button id="createPasskey">Create Passkey</button>
-    <p class="hint">Use passkey to auto-fill public key and enable signing.</p>
-    <div id="setupOutput" class="output" hidden></div>
-    <label>Account ID (NEAR)</label>
-    <div id="accountIdOutput" class="output" hidden></div>
-    <label>Derived Public Key (Secp256k1, path="")</label>
-    <div id="secp256k1Output" class="output" hidden></div>
-    <label>Derived Public Key (Ed25519, path="")</label>
-    <div id="ed25519Output" class="output" hidden></div>
-</section>
+    <section>
+        <h2>1. Setup Wallet (<code>new WalletContract(publicKey, "P256")</code>)</h2>
+        <label for="publicKey">Public Key (hex)</label>
+        <input id="publicKey" placeholder="Paste P-256 public key hex or create passkey" />
+        <button id="createPasskey">Create Passkey</button>
+        <p class="hint">Use passkey to auto-fill public key and enable signing.</p>
+        <div id="setupOutput" class="output" hidden></div>
+        <label>Account ID (NEAR)</label>
+        <div id="accountIdOutput" class="output" hidden></div>
+        <label>Derived Public Key (Secp256k1, path="")</label>
+        <div id="secp256k1Output" class="output" hidden></div>
+        <label>Derived Public Key (Ed25519, path="")</label>
+        <div id="ed25519Output" class="output" hidden></div>
+    </section>
 
-<section>
-    <h2>2. Prepare Payload (<code>wallet.preparePayload(...)</code>)</h2>
-    <div class="row">
-        <div>
-            <label for="payload">Payload</label>
-            <input id="payload" placeholder="TO_DO_PAYLOAD"/>
+    <section>
+        <h2>2. Prepare Payload (<code>wallet.preparePayload(...)</code>)</h2>
+        <div class="row">
+            <div>
+                <label for="payload">Payload (hex)</label>
+                <input id="payload" value="0000000000000000000000000000000000000000000000000000000000000000" />
+            </div>
         </div>
-    </div>
-    <div>
-        <label for="domainId">Domain ID</label>
-        <select id="domainId">
-            <option value="Secp256k1">Secp256k1 (EVM, Bitcoin)</option>
-            <option value="Ed25519">Ed25519 (Solana, NEAR)</option>
-        </select>
-    </div>
-    <button id="prepareBtn">Prepare</button>
-    <div id="prepareOutput" class="output" hidden></div>
-</section>
+        <div>
+            <label for="domainId">Domain ID</label>
+            <select id="domainId">
+                <option value="Secp256k1">Secp256k1 (EVM, Bitcoin)</option>
+                <option value="Ed25519">Ed25519 (Solana, NEAR)</option>
+            </select>
+        </div>
+        <button id="prepareBtn">Prepare</button>
+        <div id="prepareOutput" class="output" hidden></div>
+    </section>
 
-<section>
-    <h2>3. WebAuthn Sign + Build Proof</h2>
-    <button id="signBtn" disabled>Sign Challenge</button>
-    <p class="hint">Calls <code>wallet.buildProof(...)</code> using authenticator response values.</p>
-    <div id="signOutput" class="output" hidden></div>
-</section>
+    <section>
+        <h2>3. WebAuthn Sign + Build Proof</h2>
+        <button id="signBtn" disabled>Sign Challenge</button>
+        <p class="hint">Calls <code>wallet.buildProof(...)</code> using authenticator response values.</p>
+        <div id="signOutput" class="output" hidden></div>
+    </section>
 
-<section>
-    <h2>4. Send Sign Request (<code>wallet.sendSign(...)</code>)</h2>
-    <button id="sendBtn" disabled>Send</button>
-    <div id="sendOutput" class="output" hidden></div>
-</section>
+    <section>
+        <h2>4. Send Sign Request (<code>wallet.sendSign(...)</code>)</h2>
+        <button id="sendBtn" disabled>Send</button>
+        <div id="sendOutput" class="output" hidden></div>
+    </section>
 
-<script type="module" src="./main.ts"></script>
+    <script type="module" src="./main.ts"></script>
 </body>
+
 </html>
