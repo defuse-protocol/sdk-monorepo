@@ -34,6 +34,7 @@
     "@defuse-protocol/contract-types": "0.6.1",
     "@noble/hashes": "^1.8.0",
     "@scure/base": "^1.2.6",
-    "borsher": "^4.0.0"
+    "borsher": "^4.0.0",
+    "@noble/curves": "1.9.6"
   }
 }

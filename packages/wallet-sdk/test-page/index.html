@@ -173,18 +173,12 @@
             <input id="payload" placeholder="TO_DO_PAYLOAD"/>
         </div>
     </div>
-    <div class="row">
-        <div>
-            <label for="domainId">Domain ID</label>
-            <select id="domainId">
-                <option value="Secp256k1">Secp256k1 (EVM, Bitcoin)</option>
-                <option value="Ed25519">Ed25519 (Solana, NEAR)</option>
-            </select>
-        </div>
-        <div>
-            <label for="deadlineSec">Deadline (sec)</label>
-            <input id="deadlineSec" type="number" value="30" min="1"/>
-        </div>
+    <div>
+        <label for="domainId">Domain ID</label>
+        <select id="domainId">
+            <option value="Secp256k1">Secp256k1 (EVM, Bitcoin)</option>
+            <option value="Ed25519">Ed25519 (Solana, NEAR)</option>
+        </select>
     </div>
     <button id="prepareBtn">Prepare</button>
     <div id="prepareOutput" class="output" hidden></div>

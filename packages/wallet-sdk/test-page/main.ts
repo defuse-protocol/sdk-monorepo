@@ -58,7 +58,6 @@ const $ed25519Output = getDiv("ed25519Output");
 
 const $payload = getInput("payload");
 const $domainId = getSelect("domainId");
-const $deadlineSec = getInput("deadlineSec");
 const $prepareBtn = getButton("prepareBtn");
 const $prepareOutput = getDiv("prepareOutput");
 
@@ -197,7 +196,7 @@ $createPasskey.addEventListener("click", async () => {
 			"success",
 		);
 
-		const accountId = wallet.deriveAccountId();
+		const accountId = wallet.accountId;
 		showOutput($accountIdOutput, accountId, "info");
 
 		showOutput($secp256k1Output, "Deriving...", "info");
@@ -227,20 +226,15 @@ $prepareBtn.addEventListener("click", async () => {
 		}
 
 		const payload = $payload.value;
-		const deadline = Number.parseInt($deadlineSec.value, 10);
-
-		if (Number.isNaN(deadline) || deadline <= 0) {
-			throw new Error("Deadline must be a positive integer");
-		}
 
 		const mpcContract = new MpcContract();
 		const request = mpcContract.buildSignMpcRequest(
 			parseDomainId($domainId.value),
 			hex.decode(payload),
 		);
-		const message = await wallet.buildRequestMessage(request, deadline);
+		const message = wallet.buildRequestMessage(request);
 		const challenge = wallet.challenge(message);
-		const accountId = wallet.deriveAccountId();
+		const accountId = wallet.accountId;
 
 		currentMessage = message;
 		currentChallenge = challenge;
