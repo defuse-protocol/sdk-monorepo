@@ -1,20 +1,23 @@
 import { xrplRequest } from "./runtime";
-import type {
-	AccountInfoResponse,
-	AccountLinesResponse,
-	RequestConfig,
-	TrustLine,
+import {
+	AccountInfoResponseSchema,
+	AccountLinesResponseSchema,
+	type AccountInfoResponse,
+	type AccountLinesResponse,
+	type RequestConfig,
+	type TrustLine,
 } from "./types";
 
 export async function getAccountInfo(
 	account: string,
 	config: RequestConfig,
 ): Promise<AccountInfoResponse["result"]> {
-	const data = (await xrplRequest(
+	const data = await xrplRequest(
 		"account_info",
 		{ account, ledger_index: "validated" },
 		config,
-	)) as AccountInfoResponse;
+		AccountInfoResponseSchema,
+	);
 	return data.result;
 }
 
@@ -26,11 +29,12 @@ export async function getAccountLines(
 	let marker: unknown;
 
 	do {
-		const response = (await xrplRequest(
+		const response = await xrplRequest(
 			"account_lines",
 			{ account, ledger_index: "validated", marker },
 			config,
-		)) as AccountLinesResponse;
+			AccountLinesResponseSchema,
+		);
 
 		lines.push(...response.result.lines);
 		marker = response.result.marker;
