@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.57.0
+
+### Minor Changes
+
+- c5b7578: estimateWithdrawalFee executes validateWithdrawal after fee estimation
+
 ## 0.56.1
 
 ### Patch Changes
