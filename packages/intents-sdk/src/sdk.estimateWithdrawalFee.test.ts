@@ -221,7 +221,7 @@ function setupMocks() {
 		}
 
 		validateWithdrawal(): Promise<void> {
-			throw new Error("Not implemented.");
+			return Promise.resolve(undefined);
 		}
 
 		createWithdrawalIdentifier(args: {

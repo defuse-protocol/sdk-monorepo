@@ -34,7 +34,7 @@ describe.concurrent("poa_bridge", () => {
 		const fee = sdk.estimateWithdrawalFee({
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
-				amount: 1n,
+				amount: 2000n,
 				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
 				feeInclusive: false,
 			},
@@ -805,7 +805,7 @@ describe("omni_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep141:zec.omft.near",
 				amount: 10000n,
-				destinationAddress: "1nc1nerator11111111111111111111111111111111",
+				destinationAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				feeInclusive: false,
 				routeConfig: createOmniBridgeRoute(Chains.Solana),
 			},

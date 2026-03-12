@@ -425,6 +425,18 @@ export class IntentsSDK implements IIntentsSDK {
 						throw new FeeExceedsAmountError(fee, args.withdrawalParams.amount);
 					}
 				}
+				const actualAmount = args.withdrawalParams.feeInclusive
+					? args.withdrawalParams.amount - fee.amount
+					: args.withdrawalParams.amount;
+
+				await bridge.validateWithdrawal({
+					assetId: args.withdrawalParams.assetId,
+					amount: actualAmount,
+					destinationAddress: args.withdrawalParams.destinationAddress,
+					feeEstimation: fee,
+					routeConfig: args.withdrawalParams.routeConfig,
+					logger: args.logger,
+				});
 
 				return fee;
 			}
