@@ -53,11 +53,11 @@ describe("sdk.estimateWithdrawalFee()", () => {
 	it("calls validate withdrawal after fee estimation with correct amount when feeInclusive=false", async () => {
 		const { sdk, mockBridge } = setupMocks();
 		const mockLogger = {
-			error() { },
+			error() {},
 			warn: vi.fn(),
-			info() { },
-			debug() { },
-			trace() { },
+			info() {},
+			debug() {},
+			trace() {},
 		};
 		vi.mocked(mockBridge.estimateWithdrawalFee).mockResolvedValueOnce(
 			feeEstimation,
@@ -65,14 +65,14 @@ describe("sdk.estimateWithdrawalFee()", () => {
 
 		const result = await sdk.estimateWithdrawalFee({
 			withdrawalParams: withdrawalParams,
-			logger: mockLogger
+			logger: mockLogger,
 		});
 
 		expect(result).toEqual(feeEstimation);
 		expect(mockBridge.estimateWithdrawalFee).toHaveBeenCalledWith(
 			expect.objectContaining({
 				withdrawalParams: withdrawalParams,
-				logger: mockLogger
+				logger: mockLogger,
 			}),
 		);
 
@@ -83,20 +83,23 @@ describe("sdk.estimateWithdrawalFee()", () => {
 				destinationAddress: withdrawalParams.destinationAddress,
 				feeEstimation: result,
 				routeConfig: withdrawalParams.routeConfig,
-				logger: mockLogger
-			})
+				logger: mockLogger,
+			}),
 		);
 	});
 
 	it("calls validate withdrawal after fee estimation with correct amount when feeInclusive=true", async () => {
 		const { sdk, mockBridge } = setupMocks();
-		const withdrawalParamsFeeInclusive = { ...withdrawalParams, feeInclusive: true }
+		const withdrawalParamsFeeInclusive = {
+			...withdrawalParams,
+			feeInclusive: true,
+		};
 		const mockLogger = {
-			error() { },
+			error() {},
 			warn: vi.fn(),
-			info() { },
-			debug() { },
-			trace() { },
+			info() {},
+			debug() {},
+			trace() {},
 		};
 		vi.mocked(mockBridge.estimateWithdrawalFee).mockResolvedValueOnce(
 			feeEstimation,
@@ -104,14 +107,14 @@ describe("sdk.estimateWithdrawalFee()", () => {
 
 		const result = await sdk.estimateWithdrawalFee({
 			withdrawalParams: withdrawalParamsFeeInclusive,
-			logger: mockLogger
+			logger: mockLogger,
 		});
 
 		expect(result).toEqual(feeEstimation);
 		expect(mockBridge.estimateWithdrawalFee).toHaveBeenCalledWith(
 			expect.objectContaining({
 				withdrawalParams: withdrawalParamsFeeInclusive,
-				logger: mockLogger
+				logger: mockLogger,
 			}),
 		);
 
@@ -122,8 +125,8 @@ describe("sdk.estimateWithdrawalFee()", () => {
 				destinationAddress: withdrawalParams.destinationAddress,
 				feeEstimation: result,
 				routeConfig: withdrawalParams.routeConfig,
-				logger: mockLogger
-			})
+				logger: mockLogger,
+			}),
 		);
 	});
 
