@@ -30,6 +30,106 @@ describe("sdk.estimateWithdrawalFee()", () => {
 		underlyingFees: { [RouteEnum.InternalTransfer]: null },
 	};
 
+	it("calls validate withdrawal after fee estimation", async () => {
+		const { sdk, mockBridge } = setupMocks();
+
+		vi.mocked(mockBridge.estimateWithdrawalFee).mockResolvedValueOnce(
+			feeEstimation,
+		);
+
+		const result = await sdk.estimateWithdrawalFee({
+			withdrawalParams: withdrawalParams,
+		});
+
+		expect(result).toEqual(feeEstimation);
+		expect(mockBridge.estimateWithdrawalFee).toHaveBeenCalledWith(
+			expect.objectContaining({
+				withdrawalParams: withdrawalParams,
+			}),
+		);
+		expect(mockBridge.validateWithdrawal).toHaveBeenCalledOnce();
+	});
+
+	it("calls validate withdrawal after fee estimation with correct amount when feeInclusive=false", async () => {
+		const { sdk, mockBridge } = setupMocks();
+		const mockLogger = {
+			error() {},
+			warn: vi.fn(),
+			info() {},
+			debug() {},
+			trace() {},
+		};
+		vi.mocked(mockBridge.estimateWithdrawalFee).mockResolvedValueOnce(
+			feeEstimation,
+		);
+
+		const result = await sdk.estimateWithdrawalFee({
+			withdrawalParams: withdrawalParams,
+			logger: mockLogger,
+		});
+
+		expect(result).toEqual(feeEstimation);
+		expect(mockBridge.estimateWithdrawalFee).toHaveBeenCalledWith(
+			expect.objectContaining({
+				withdrawalParams: withdrawalParams,
+				logger: mockLogger,
+			}),
+		);
+
+		expect(mockBridge.validateWithdrawal).toHaveBeenCalledWith(
+			expect.objectContaining({
+				assetId: withdrawalParams.assetId,
+				amount: withdrawalParams.amount,
+				destinationAddress: withdrawalParams.destinationAddress,
+				feeEstimation: result,
+				routeConfig: withdrawalParams.routeConfig,
+				logger: mockLogger,
+			}),
+		);
+	});
+
+	it("calls validate withdrawal after fee estimation with correct amount when feeInclusive=true", async () => {
+		const { sdk, mockBridge } = setupMocks();
+		const withdrawalParamsFeeInclusive = {
+			...withdrawalParams,
+			feeInclusive: true,
+		};
+		const mockLogger = {
+			error() {},
+			warn: vi.fn(),
+			info() {},
+			debug() {},
+			trace() {},
+		};
+		vi.mocked(mockBridge.estimateWithdrawalFee).mockResolvedValueOnce(
+			feeEstimation,
+		);
+
+		const result = await sdk.estimateWithdrawalFee({
+			withdrawalParams: withdrawalParamsFeeInclusive,
+			logger: mockLogger,
+		});
+
+		expect(result).toEqual(feeEstimation);
+		expect(mockBridge.estimateWithdrawalFee).toHaveBeenCalledWith(
+			expect.objectContaining({
+				withdrawalParams: withdrawalParamsFeeInclusive,
+				logger: mockLogger,
+			}),
+		);
+
+		expect(mockBridge.validateWithdrawal).toHaveBeenCalledWith(
+			expect.objectContaining({
+				assetId: withdrawalParams.assetId,
+				amount: withdrawalParamsFeeInclusive.amount - result.amount,
+				destinationAddress: withdrawalParams.destinationAddress,
+				feeEstimation: result,
+				routeConfig: withdrawalParams.routeConfig,
+				logger: mockLogger,
+			}),
+		);
+	});
+
 	it("supports single withdrawal", async () => {
 		const { sdk, mockBridge } = setupMocks();
 
@@ -221,7 +321,7 @@ function setupMocks() {
 		}
 
 		validateWithdrawal(): Promise<void> {
-			throw new Error("Not implemented.");
+			return Promise.resolve(undefined);
 		}
 
 		createWithdrawalIdentifier(args: {
@@ -249,6 +349,7 @@ function setupMocks() {
 	vi.spyOn(mockBridge, "parseAssetId");
 	vi.spyOn(mockBridge, "estimateWithdrawalFee");
 	vi.spyOn(mockBridge, "supports");
+	vi.spyOn(mockBridge, "validateWithdrawal");
 
 	class MockSDK extends IntentsSDK {
 		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {

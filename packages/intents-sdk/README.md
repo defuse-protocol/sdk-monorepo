@@ -340,6 +340,8 @@ const batchFees = await sdk.estimateWithdrawalFee({
 console.log('Batch fees:', batchFees); // Array of FeeEstimation objects
 ```
 
+> **Note:** `estimateWithdrawalFee` also runs `validateWithdrawal` internally. If the withdrawal parameters are invalid (e.g. invalid destination address, amount below minimum, insufficient UTXOs), the bridge's `validateWithdrawal` will throw and the error will propagate from `estimateWithdrawalFee`.
+
 ## Advanced Usage
 
 ### Custom RPC URLs
