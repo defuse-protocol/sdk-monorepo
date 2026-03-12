@@ -20,7 +20,6 @@ export const AccountInfoResponseSchema = v.object({
 	result: v.object({
 		account_data: v.object({
 			Account: v.string(),
-			Flags: v.optional(v.number()),
 		}),
 		/**
 		 * A map of account flags parsed out.
@@ -42,11 +41,11 @@ export const TrustLineSchema = v.object({
 	account: v.string(),
 	/** A Currency Code identifying what currency this trust line can hold. */
 	currency: v.string(),
-	/** The maximum amount of currency this account is willing to owe the peer. */
+	/** The maximum amount of currency this account is willing to owe the peer. The limit field is a string-encoded decimal number in human-readable units (not drops/smallest units). */
 	limit: v.string(),
-	/** The maximum amount of currency the peer is willing to owe this account. */
+	/** The maximum amount of currency the peer is willing to owe this account. The limit_peer field is a string-encoded decimal number in human-readable units (not drops/smallest units). */
 	limit_peer: v.string(),
-	/** Current balance held against this line. Positive = account holds value, negative = account owes value. */
+	/** Current balance held against this line. Positive = account holds value, negative = account owes value.  The balance field is a string-encoded decimal number in human-readable units (not drops/smallest units). */
 	balance: v.string(),
 });
 

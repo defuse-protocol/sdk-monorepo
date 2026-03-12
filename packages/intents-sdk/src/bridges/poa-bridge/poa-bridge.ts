@@ -40,6 +40,7 @@ import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
+import { parseUnits } from "viem/utils";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
@@ -228,9 +229,11 @@ export class PoaBridge implements Bridge {
 				args.destinationAddress,
 				xrplConfig,
 			);
-			const requiresDestTag =
-				accountInfo.account_flags?.requireDestinationTag ??
-				(accountInfo.account_data.Flags & 0x00020000) !== 0;
+			const requiresDestTag = accountInfo.account_flags?.requireDestinationTag;
+			assert(
+				requiresDestTag !== undefined,
+				"Invalid requiresDestTag expected boolean got undefined",
+			);
 			if (requiresDestTag)
 				throw new XrplDestinationTagRequiredError(args.destinationAddress);
 
@@ -248,13 +251,27 @@ export class PoaBridge implements Bridge {
 			const match = accountLines.lines.find(
 				(line) => line.currency === currency && line.account === issuer,
 			);
-			if (match === undefined || BigInt(match.limit) < args.amount) {
+			if (match === undefined) {
 				throw new XrplInsufficientTrustlineError(
 					args.destinationAddress,
 					currency,
 					issuer,
 					args.amount,
-					match !== undefined ? BigInt(match.limit) : undefined,
+					undefined,
+				);
+			}
+			// match.limit is stringified human readable number , not in smallest units
+			const limitBigInt = parseUnits(
+				Number(match.limit).toFixed(tokenInfo.decimals),
+				tokenInfo.decimals,
+			);
+			if (limitBigInt < args.amount) {
+				throw new XrplInsufficientTrustlineError(
+					args.destinationAddress,
+					currency,
+					issuer,
+					args.amount,
+					limitBigInt,
 				);
 			}
 		}
