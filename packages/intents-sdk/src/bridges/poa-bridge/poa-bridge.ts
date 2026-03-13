@@ -225,16 +225,16 @@ export class PoaBridge implements Bridge {
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
 
-			const accountInfo = await xrpl.httpClient.getAccountInfo(
-				args.destinationAddress,
-				xrplConfig,
-			);
-			const requiresDestTag = accountInfo.account_flags?.requireDestinationTag;
+			const requireDestinationTag =
+				await xrpl.httpClient.getRequireDestinationTag(
+					args.destinationAddress,
+					xrplConfig,
+				);
 			assert(
-				requiresDestTag !== undefined,
-				"Invalid requiresDestTag expected boolean got undefined",
+				requireDestinationTag !== undefined,
+				"Invalid requireDestinationTag expected boolean got undefined",
 			);
-			if (requiresDestTag)
+			if (requireDestinationTag)
 				throw new XrplDestinationTagRequiredError(args.destinationAddress);
 
 			const [, , currency, issuer] =

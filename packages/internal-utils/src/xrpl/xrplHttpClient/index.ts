@@ -1,4 +1,4 @@
-export { getAccountInfo, getAccountLines } from "./apis";
+export { getRequireDestinationTag, getAccountLines } from "./apis";
 export type {
 	RequestConfig,
 	AccountInfoResponse,
