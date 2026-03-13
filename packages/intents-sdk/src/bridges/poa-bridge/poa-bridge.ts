@@ -3,6 +3,7 @@ import {
 	type ILogger,
 	type EnvConfig,
 	poaBridge,
+	xrpl,
 	RpcRequestError,
 	utils,
 } from "@defuse-protocol/internal-utils";
@@ -12,6 +13,7 @@ import {
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
+import { XrplDestinationTagRequiredError, XrplTrustlineError } from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -31,15 +33,17 @@ import {
 	createWithdrawIntentPrimitive,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
+import { parseUnits } from "viem/utils";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected envConfig: EnvConfig;
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
+	protected xrplRpcUrls: string[];
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -49,12 +53,15 @@ export class PoaBridge implements Bridge {
 
 	constructor({
 		envConfig,
+		xrplRpcUrls,
 		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
 		envConfig: EnvConfig;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+		xrplRpcUrls: string[];
 	}) {
 		this.envConfig = envConfig;
+		this.xrplRpcUrls = xrplRpcUrls;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
@@ -190,14 +197,78 @@ export class PoaBridge implements Bridge {
 			(token) => token.intents_token_id === args.assetId,
 		);
 
-		if (tokenInfo != null) {
-			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+		if (tokenInfo === undefined) {
+			throw new UnsupportedAssetIdError(
+				args.assetId,
+				"`assetId` is not supported in PoA bridge.",
+			);
+		}
 
-			if (args.amount < minWithdrawalAmount) {
-				throw new MinWithdrawalAmountError(
-					minWithdrawalAmount,
+		const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+
+		if (args.amount < minWithdrawalAmount) {
+			throw new MinWithdrawalAmountError(
+				minWithdrawalAmount,
+				args.amount,
+				args.assetId,
+			);
+		}
+
+		if (
+			assetInfo.blockchain === Chains.XRPL &&
+			assetInfo.contractId !== `xrp.${this.envConfig.poaTokenFactoryContractID}`
+		) {
+			const xrplRpcUrl = this.xrplRpcUrls[0];
+			assert(xrplRpcUrl, "No XRPL RPC URL configured");
+			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
+
+			const requireDestinationTag =
+				await xrpl.httpClient.getRequireDestinationTag(
+					args.destinationAddress,
+					xrplConfig,
+				);
+			assert(
+				requireDestinationTag !== undefined,
+				"Invalid requireDestinationTag expected boolean got undefined",
+			);
+			if (requireDestinationTag)
+				throw new XrplDestinationTagRequiredError(args.destinationAddress);
+
+			const [, , currency, issuer] =
+				tokenInfo.defuse_asset_identifier.split(":");
+			assert(
+				currency !== undefined && issuer !== undefined,
+				`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
+			);
+
+			const accountLines = await xrpl.httpClient.getAccountLines(
+				args.destinationAddress,
+				xrplConfig,
+			);
+			const match = accountLines.lines.find(
+				(line) => line.currency === currency && line.account === issuer,
+			);
+			if (match === undefined) {
+				throw new XrplTrustlineError(
+					args.destinationAddress,
+					currency,
+					issuer,
 					args.amount,
-					args.assetId,
+					undefined,
+				);
+			}
+			// match.limit is stringified human readable number , not in smallest units
+			const limitBigInt = parseUnits(
+				Number(match.limit).toFixed(tokenInfo.decimals),
+				tokenInfo.decimals,
+			);
+			if (limitBigInt < args.amount) {
+				throw new XrplTrustlineError(
+					args.destinationAddress,
+					currency,
+					issuer,
+					args.amount,
+					limitBigInt,
 				);
 			}
 		}

@@ -468,6 +468,8 @@ export type RPCEndpointMap = Record<
 		soroban: RpcEndpoint[];
 		horizon: RpcEndpoint[];
 	};
+} & {
+	[K in typeof Chains.XRPL]: RpcEndpoint[];
 };
 
 /**

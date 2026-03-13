@@ -22,3 +22,7 @@ export const PUBLIC_STELLAR_RPC_URLS: RPCEndpointMap[typeof Chains.Stellar] = {
 	soroban: ["https://mainnet.sorobanrpc.com"],
 	horizon: ["https://horizon.stellar.org"],
 };
+
+export const PUBLIC_XRPL_RPC_URLS: RPCEndpointMap[typeof Chains.XRPL] = [
+	"https://xrplcluster.com/",
+];

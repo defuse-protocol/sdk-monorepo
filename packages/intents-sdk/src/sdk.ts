@@ -24,6 +24,7 @@ import { FeeExceedsAmountError } from "./classes/errors";
 import {
 	PUBLIC_EVM_RPC_URLS,
 	PUBLIC_STELLAR_RPC_URLS,
+	PUBLIC_XRPL_RPC_URLS,
 } from "./constants/public-rpc-urls";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
@@ -42,6 +43,7 @@ import { RouteEnum } from "./constants/route-enum";
 import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
+	configureXrplRpcUrls,
 } from "./lib/configure-rpc-config";
 import {
 	createWithdrawalIdentifiers,
@@ -152,6 +154,8 @@ export class IntentsSDK implements IIntentsSDK {
 			HotBridgeEVMChains,
 		);
 
+		const xrplRpcUrls = configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, args.rpc);
+
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
 		 * More specific bridges should be placed before more generic ones.
@@ -165,6 +169,7 @@ export class IntentsSDK implements IIntentsSDK {
 			}),
 			new PoaBridge({
 				envConfig: this.envConfig,
+				xrplRpcUrls,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
