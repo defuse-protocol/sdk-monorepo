@@ -1,11 +1,10 @@
 import { BaseError } from "@defuse-protocol/internal-utils";
 
-export type XrplInsufficientTrustlineErrorType =
-	XrplInsufficientTrustlineError & {
-		name: "XrplInsufficientTrustlineError";
-	};
+export type XrplTrustlineErrorType = XrplTrustlineError & {
+	name: "XrplTrustlineError";
+};
 
-export class XrplInsufficientTrustlineError extends BaseError {
+export class XrplTrustlineError extends BaseError {
 	constructor(
 		public destinationAddress: string,
 		public currency: string,
@@ -24,7 +23,7 @@ export class XrplInsufficientTrustlineError extends BaseError {
 		}
 		super("Trustline not found or limit is below the withdrawal amount.", {
 			metaMessages,
-			name: "XrplInsufficientTrustlineError",
+			name: "XrplTrustlineError",
 			details:
 				trustlineLimit !== undefined
 					? `Address ${destinationAddress} trustline limit ${trustlineLimit} for ${currency}/${issuer} is below the withdrawal amount ${amount}.`

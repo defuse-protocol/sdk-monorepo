@@ -2,6 +2,7 @@ import {
 	configsByEnvironment,
 	poaBridge,
 	RpcRequestError,
+	xrpl,
 } from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,6 +19,7 @@ import {
 import { PoaBridge } from "./poa-bridge";
 import { PUBLIC_XRPL_RPC_URLS } from "../../constants/public-rpc-urls";
 import { configureXrplRpcUrls } from "../../lib/configure-rpc-config";
+import { XrplDestinationTagRequiredError, XrplTrustlineError } from "./errors";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 	const original =
@@ -30,6 +32,14 @@ vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 				...original.poaBridge.httpClient,
 				getWithdrawalStatus: vi.fn(),
 				getSupportedTokens: vi.fn(),
+			},
+		},
+		xrpl: {
+			...original.xrpl,
+			httpClient: {
+				...original.xrpl.httpClient,
+				getRequireDestinationTag: vi.fn(),
+				getAccountLines: vi.fn(),
 			},
 		},
 	};
@@ -509,6 +519,241 @@ describe("PoaBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+
+		it("throws UnsupportedAssetIdError if token not found in PoA token cached list", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [],
+			});
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+		it("throws for XRPL withdrawal if passed xrpRpcUrls are invalid", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: [""],
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow();
+		});
+		it("throws if requireDestinationTag is undefined", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
+				undefined,
+			);
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow();
+		});
+		it("throws XrplDestinationTagRequiredError if destination tag is required", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
+				true,
+			);
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplDestinationTagRequiredError);
+		});
+		it("throws if defuse_asset_identifier is malformed", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
+				false,
+			);
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow();
+		});
+		it("throws XrplTrustlineError if no trustline found", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:test:test",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
+				false,
+			);
+			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
+				lines: [],
+			});
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplTrustlineError);
+		});
+		it("throws XrplTrustlineError sent amount is bigger than the trustline limit", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 15,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:currency:issuer",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
+				false,
+			);
+			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
+				lines: [
+					{
+						account: "issuer",
+						limit_peer: "1000",
+						limit: "1.1",
+						balance: "1",
+						currency: "currency",
+					},
+				],
+			});
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000000000000000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplTrustlineError);
+		});
 	});
 
 	describe("createWithdrawalIdentifier()", () => {

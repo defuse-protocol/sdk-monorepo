@@ -13,10 +13,7 @@ import {
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import {
-	XrplDestinationTagRequiredError,
-	XrplInsufficientTrustlineError,
-} from "./errors";
+import { XrplDestinationTagRequiredError, XrplTrustlineError } from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -252,7 +249,7 @@ export class PoaBridge implements Bridge {
 				(line) => line.currency === currency && line.account === issuer,
 			);
 			if (match === undefined) {
-				throw new XrplInsufficientTrustlineError(
+				throw new XrplTrustlineError(
 					args.destinationAddress,
 					currency,
 					issuer,
@@ -266,7 +263,7 @@ export class PoaBridge implements Bridge {
 				tokenInfo.decimals,
 			);
 			if (limitBigInt < args.amount) {
-				throw new XrplInsufficientTrustlineError(
+				throw new XrplTrustlineError(
 					args.destinationAddress,
 					currency,
 					issuer,
