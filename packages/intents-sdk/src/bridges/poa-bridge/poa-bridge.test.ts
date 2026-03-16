@@ -19,7 +19,11 @@ import {
 import { PoaBridge } from "./poa-bridge";
 import { PUBLIC_XRPL_RPC_URLS } from "../../constants/public-rpc-urls";
 import { configureXrplRpcUrls } from "../../lib/configure-rpc-config";
-import { XrplDestinationTagRequiredError, XrplTrustlineError } from "./errors";
+import {
+	XrplDepositAuthEnabledError,
+	XrplDestinationTagRequiredError,
+	XrplTrustlineError,
+} from "./errors";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 	const original =
@@ -38,7 +42,7 @@ vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 			...original.xrpl,
 			httpClient: {
 				...original.xrpl.httpClient,
-				getRequireDestinationTag: vi.fn(),
+				getAccountInfo: vi.fn(),
 				getAccountLines: vi.fn(),
 			},
 		},
@@ -591,9 +595,10 @@ describe("PoaBridge", () => {
 					},
 				],
 			});
-			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
-				undefined,
-			);
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: undefined,
+			});
 
 			// Call validateWithdrawal twice with the same asset
 			await expect(
@@ -625,9 +630,25 @@ describe("PoaBridge", () => {
 					},
 				],
 			});
-			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
-				true,
-			);
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: true,
+					defaultRipple: false,
+					depositAuth: false,
+					disableMasterKey: false,
+					disallowIncomingCheck: false,
+					disallowIncomingNFTokenOffer: false,
+					disallowIncomingPayChan: false,
+					disallowIncomingTrustline: false,
+					disallowIncomingXRP: false,
+					globalFreeze: false,
+					noFreeze: false,
+					passwordSpent: false,
+					requireAuthorization: false,
+					allowTrustLineClawback: false,
+				},
+			});
 
 			// Call validateWithdrawal twice with the same asset
 			await expect(
@@ -637,6 +658,92 @@ describe("PoaBridge", () => {
 					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
 				}),
 			).rejects.toThrow(XrplDestinationTagRequiredError);
+		});
+
+		it("throws if depositAuthEnabled is undefined", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: undefined,
+			});
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow();
+		});
+		it("throws XrplDepositAuthEnabledError if depositAuth is enabled", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					defaultRipple: false,
+					depositAuth: true,
+					disableMasterKey: false,
+					disallowIncomingCheck: false,
+					disallowIncomingNFTokenOffer: false,
+					disallowIncomingPayChan: false,
+					disallowIncomingTrustline: false,
+					disallowIncomingXRP: false,
+					globalFreeze: false,
+					noFreeze: false,
+					passwordSpent: false,
+					requireAuthorization: false,
+					allowTrustLineClawback: false,
+				},
+			});
+
+			// Call validateWithdrawal twice with the same asset
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplDepositAuthEnabledError);
 		});
 		it("throws if defuse_asset_identifier is malformed", async () => {
 			const bridge = new PoaBridge({
@@ -659,9 +766,25 @@ describe("PoaBridge", () => {
 					},
 				],
 			});
-			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
-				false,
-			);
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					defaultRipple: false,
+					depositAuth: false,
+					disableMasterKey: false,
+					disallowIncomingCheck: false,
+					disallowIncomingNFTokenOffer: false,
+					disallowIncomingPayChan: false,
+					disallowIncomingTrustline: false,
+					disallowIncomingXRP: false,
+					globalFreeze: false,
+					noFreeze: false,
+					passwordSpent: false,
+					requireAuthorization: false,
+					allowTrustLineClawback: false,
+				},
+			});
 
 			// Call validateWithdrawal twice with the same asset
 			await expect(
@@ -693,9 +816,25 @@ describe("PoaBridge", () => {
 					},
 				],
 			});
-			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
-				false,
-			);
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					defaultRipple: false,
+					depositAuth: false,
+					disableMasterKey: false,
+					disallowIncomingCheck: false,
+					disallowIncomingNFTokenOffer: false,
+					disallowIncomingPayChan: false,
+					disallowIncomingTrustline: false,
+					disallowIncomingXRP: false,
+					globalFreeze: false,
+					noFreeze: false,
+					passwordSpent: false,
+					requireAuthorization: false,
+					allowTrustLineClawback: false,
+				},
+			});
 			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
 				lines: [],
 			});
@@ -730,9 +869,25 @@ describe("PoaBridge", () => {
 					},
 				],
 			});
-			vi.mocked(xrpl.httpClient.getRequireDestinationTag).mockResolvedValueOnce(
-				false,
-			);
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					defaultRipple: false,
+					depositAuth: false,
+					disableMasterKey: false,
+					disallowIncomingCheck: false,
+					disallowIncomingNFTokenOffer: false,
+					disallowIncomingPayChan: false,
+					disallowIncomingTrustline: false,
+					disallowIncomingXRP: false,
+					globalFreeze: false,
+					noFreeze: false,
+					passwordSpent: false,
+					requireAuthorization: false,
+					allowTrustLineClawback: false,
+				},
+			});
 			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
 				lines: [
 					{
