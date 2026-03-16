@@ -2,22 +2,24 @@ import { xrplRequest } from "./runtime";
 import {
 	AccountInfoResponseSchema,
 	AccountLinesResponseSchema,
+	type AccountInfoResponse,
 	type AccountLinesResponse,
 	type RequestConfig,
 	type TrustLine,
 } from "./types";
 
-export async function getRequireDestinationTag(
+export async function getAccountInfo(
 	account: string,
 	config: RequestConfig,
-): Promise<boolean | undefined> {
+): Promise<AccountInfoResponse["result"]> {
 	const data = await xrplRequest(
 		"account_info",
 		{ account, ledger_index: "validated" },
 		config,
 		AccountInfoResponseSchema,
 	);
-	return data.result.account_flags?.requireDestinationTag;
+
+	return data.result;
 }
 
 export async function getAccountLines(

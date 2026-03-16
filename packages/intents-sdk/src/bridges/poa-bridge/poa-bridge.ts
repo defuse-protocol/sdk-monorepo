@@ -13,7 +13,11 @@ import {
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import { XrplDestinationTagRequiredError, XrplTrustlineError } from "./errors";
+import {
+	XrplDepositAuthEnabledError,
+	XrplDestinationTagRequiredError,
+	XrplTrustlineError,
+} from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -222,17 +226,28 @@ export class PoaBridge implements Bridge {
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
 
+			const accountInfo = await xrpl.httpClient.getAccountInfo(
+				args.destinationAddress,
+				xrplConfig,
+			);
 			const requireDestinationTag =
-				await xrpl.httpClient.getRequireDestinationTag(
-					args.destinationAddress,
-					xrplConfig,
-				);
+				accountInfo.account_flags?.requireDestinationTag;
 			assert(
 				requireDestinationTag !== undefined,
 				"Invalid requireDestinationTag expected boolean got undefined",
 			);
 			if (requireDestinationTag)
 				throw new XrplDestinationTagRequiredError(args.destinationAddress);
+
+			const depositAuthEnabled = accountInfo.account_flags?.depositAuth;
+
+			assert(
+				depositAuthEnabled !== undefined,
+				"Invalid depositAuthEnabled expected boolean got undefined",
+			);
+
+			if (depositAuthEnabled)
+				throw new XrplDepositAuthEnabledError(args.destinationAddress);
 
 			const [, , currency, issuer] =
 				tokenInfo.defuse_asset_identifier.split(":");

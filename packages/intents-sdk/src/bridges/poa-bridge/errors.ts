@@ -49,3 +49,20 @@ export class XrplDestinationTagRequiredError extends BaseError {
 		);
 	}
 }
+
+export type XrplDepositAuthEnabledErrorType = XrplDepositAuthEnabledError & {
+	name: "XrplDepositAuthEnabledError";
+};
+
+export class XrplDepositAuthEnabledError extends BaseError {
+	constructor(public destinationAddress: string) {
+		super(
+			"Destination address has deposit authorization enabled and cannot receive payments from unauthorized senders.",
+			{
+				metaMessages: [`Destination address: ${destinationAddress}`],
+				name: "XrplDepositAuthEnabledError",
+				details: `Address ${destinationAddress} has the DepositAuth flag set and only accepts payments from preauthorized senders.`,
+			},
+		);
+	}
+}
