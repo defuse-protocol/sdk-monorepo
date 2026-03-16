@@ -143,8 +143,6 @@ export {
 	type PoaWithdrawalPendingErrorType,
 } from "@defuse-protocol/internal-utils";
 export {
-	XrplTrustlineError,
-	type XrplTrustlineErrorType,
 	XrplDestinationTagRequiredError,
 	type XrplDestinationTagRequiredErrorType,
 	XrplDepositAuthEnabledError,

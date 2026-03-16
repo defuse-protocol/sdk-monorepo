@@ -16,7 +16,6 @@ import {
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
-	XrplTrustlineError,
 } from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
@@ -41,7 +40,6 @@ import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
-import { parseUnits } from "viem/utils";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
@@ -245,50 +243,6 @@ export class PoaBridge implements Bridge {
 
 			if (depositAuthEnabled)
 				throw new XrplDepositAuthEnabledError(args.destinationAddress);
-
-			// checks for tokens trustline
-			if (
-				assetInfo.contractId !==
-				`xrp.${this.envConfig.poaTokenFactoryContractID}`
-			) {
-				const [, , currency, issuer] =
-					tokenInfo.defuse_asset_identifier.split(":");
-				assert(
-					currency !== undefined && issuer !== undefined,
-					`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
-				);
-
-				const accountLines = await xrpl.httpClient.getAccountLines(
-					args.destinationAddress,
-					xrplConfig,
-				);
-				const match = accountLines.lines.find(
-					(line) => line.currency === currency && line.account === issuer,
-				);
-				if (match === undefined) {
-					throw new XrplTrustlineError(
-						args.destinationAddress,
-						currency,
-						issuer,
-						args.amount,
-						undefined,
-					);
-				}
-				// match.limit is stringified human readable number , not in smallest units like wei
-				const limitBigInt = parseUnits(
-					Number(match.limit).toFixed(tokenInfo.decimals),
-					tokenInfo.decimals,
-				);
-				if (limitBigInt < args.amount) {
-					throw new XrplTrustlineError(
-						args.destinationAddress,
-						currency,
-						issuer,
-						args.amount,
-						limitBigInt,
-					);
-				}
-			}
 		}
 	}
 

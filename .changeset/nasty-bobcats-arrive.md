@@ -3,4 +3,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Add trustline check and destination tag check for XRPL token withdrawals via PoA bridge
+Add more validation checks for XRP withdrawals
