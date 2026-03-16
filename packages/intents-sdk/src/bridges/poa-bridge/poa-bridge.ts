@@ -218,10 +218,7 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
-		if (
-			assetInfo.blockchain === Chains.XRPL &&
-			assetInfo.contractId !== `xrp.${this.envConfig.poaTokenFactoryContractID}`
-		) {
+		if (assetInfo.blockchain === Chains.XRPL) {
 			const xrplRpcUrl = this.xrplRpcUrls[0];
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
@@ -249,42 +246,48 @@ export class PoaBridge implements Bridge {
 			if (depositAuthEnabled)
 				throw new XrplDepositAuthEnabledError(args.destinationAddress);
 
-			const [, , currency, issuer] =
-				tokenInfo.defuse_asset_identifier.split(":");
-			assert(
-				currency !== undefined && issuer !== undefined,
-				`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
-			);
+			// checks for tokens trustline
+			if (
+				assetInfo.contractId !==
+				`xrp.${this.envConfig.poaTokenFactoryContractID}`
+			) {
+				const [, , currency, issuer] =
+					tokenInfo.defuse_asset_identifier.split(":");
+				assert(
+					currency !== undefined && issuer !== undefined,
+					`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
+				);
 
-			const accountLines = await xrpl.httpClient.getAccountLines(
-				args.destinationAddress,
-				xrplConfig,
-			);
-			const match = accountLines.lines.find(
-				(line) => line.currency === currency && line.account === issuer,
-			);
-			if (match === undefined) {
-				throw new XrplTrustlineError(
+				const accountLines = await xrpl.httpClient.getAccountLines(
 					args.destinationAddress,
-					currency,
-					issuer,
-					args.amount,
-					undefined,
+					xrplConfig,
 				);
-			}
-			// match.limit is stringified human readable number , not in smallest units
-			const limitBigInt = parseUnits(
-				Number(match.limit).toFixed(tokenInfo.decimals),
-				tokenInfo.decimals,
-			);
-			if (limitBigInt < args.amount) {
-				throw new XrplTrustlineError(
-					args.destinationAddress,
-					currency,
-					issuer,
-					args.amount,
-					limitBigInt,
+				const match = accountLines.lines.find(
+					(line) => line.currency === currency && line.account === issuer,
 				);
+				if (match === undefined) {
+					throw new XrplTrustlineError(
+						args.destinationAddress,
+						currency,
+						issuer,
+						args.amount,
+						undefined,
+					);
+				}
+				// match.limit is stringified human readable number , not in smallest units like wei
+				const limitBigInt = parseUnits(
+					Number(match.limit).toFixed(tokenInfo.decimals),
+					tokenInfo.decimals,
+				);
+				if (limitBigInt < args.amount) {
+					throw new XrplTrustlineError(
+						args.destinationAddress,
+						currency,
+						issuer,
+						args.amount,
+						limitBigInt,
+					);
+				}
 			}
 		}
 	}
