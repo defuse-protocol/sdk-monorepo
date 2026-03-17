@@ -13,33 +13,33 @@ export type RequestConfig = {
 // --- AccountInfo ---
 const AccountFlagsSchema = v.object({
 	/** Enables rippling on this account's trust lines by default. */
-	defaultRipple: v.boolean(),
+	defaultRipple: v.optional(v.boolean()),
 	/** Requires deposit authorization for incoming payments. */
-	depositAuth: v.boolean(),
+	depositAuth: v.optional(v.boolean()),
 	/** Disables the master key for this account. */
-	disableMasterKey: v.boolean(),
+	disableMasterKey: v.optional(v.boolean()),
 	/** Blocks incoming Checks from other accounts. */
-	disallowIncomingCheck: v.boolean(),
+	disallowIncomingCheck: v.optional(v.boolean()),
 	/** Blocks incoming NFToken offers from other accounts. */
-	disallowIncomingNFTokenOffer: v.boolean(),
+	disallowIncomingNFTokenOffer: v.optional(v.boolean()),
 	/** Blocks incoming Payment Channels from other accounts. */
-	disallowIncomingPayChan: v.boolean(),
+	disallowIncomingPayChan: v.optional(v.boolean()),
 	/** Blocks incoming trust lines from other accounts. */
-	disallowIncomingTrustline: v.boolean(),
+	disallowIncomingTrustline: v.optional(v.boolean()),
 	/** Discourages incoming XRP payments to this account. */
-	disallowIncomingXRP: v.boolean(),
+	disallowIncomingXRP: v.optional(v.boolean()),
 	/** Freezes all tokens issued by this account. */
-	globalFreeze: v.boolean(),
+	globalFreeze: v.optional(v.boolean()),
 	/** Permanently gives up the ability to freeze tokens. */
-	noFreeze: v.boolean(),
+	noFreeze: v.optional(v.boolean()),
 	/** The account has used its free SetRegularKey transaction. */
-	passwordSpent: v.boolean(),
+	passwordSpent: v.optional(v.boolean()),
 	/** Requires authorization for other accounts to hold tokens issued by this account. */
-	requireAuthorization: v.boolean(),
+	requireAuthorization: v.optional(v.boolean()),
 	/** Requires incoming payments to specify a Destination Tag. */
-	requireDestinationTag: v.boolean(),
+	requireDestinationTag: v.optional(v.boolean()),
 	/** Allows clawback of tokens issued by this account. */
-	allowTrustLineClawback: v.boolean(),
+	allowTrustLineClawback: v.optional(v.boolean()),
 });
 
 export const AccountInfoResponseSchema = v.object({
