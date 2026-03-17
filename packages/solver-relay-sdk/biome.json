@@ -1,0 +1,13 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+	"root": false,
+	"extends": "//",
+	"linter": {
+		"rules": {
+			"style": {
+				"noRestrictedGlobals": "off",
+				"noRestrictedImports": "off"
+			}
+		}
+	}
+}

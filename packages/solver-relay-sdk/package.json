@@ -1,0 +1,62 @@
+{
+	"name": "@defuse-protocol/solver-relay-sdk",
+	"version": "0.2.0",
+	"private": false,
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/defuse-protocol/sdk-monorepo.git",
+		"directory": "packages/solver-relay-sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/defuse-protocol/sdk-monorepo/issues"
+	},
+	"homepage": "https://github.com/defuse-protocol/sdk-monorepo/tree/main/packages/solver-relay-sdk#readme",
+	"sideEffects": false,
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.cts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs",
+			"default": "./dist/index.mjs"
+		},
+		"./utils": {
+			"types": "./dist/utils/index.d.mts",
+			"import": "./dist/utils/index.mjs",
+			"require": "./dist/utils/index.cjs",
+			"default": "./dist/utils/index.mjs"
+		},
+		"./telemetry": {
+			"types": "./dist/telemetry/types.d.mts",
+			"import": "./dist/telemetry/types.mjs",
+			"require": "./dist/telemetry/types.cjs",
+			"default": "./dist/telemetry/types.mjs"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"dev": "tsdown --watch",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"typecheck": "npx tsc --noEmit"
+	},
+	"dependencies": {
+		"@defuse-protocol/intents-sdk": "workspace:*",
+		"modern-errors": "^7.0.0",
+		"neverthrow": "^8.2.0",
+		"valibot": "^1.0.0",
+		"ws": "^8.0.0"
+	},
+	"devDependencies": {
+		"@types/ws": "^8.5.13",
+		"typescript": "^5",
+		"tsdown": "0.19.0"
+	}
+}

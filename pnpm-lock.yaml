@@ -189,6 +189,34 @@ importers:
         specifier: ^5.4.2
         version: 5.8.3
 
+  packages/solver-relay-sdk:
+    dependencies:
+      '@defuse-protocol/intents-sdk':
+        specifier: workspace:*
+        version: link:../intents-sdk
+      modern-errors:
+        specifier: ^7.0.0
+        version: 7.1.4
+      neverthrow:
+        specifier: ^8.2.0
+        version: 8.2.0
+      valibot:
+        specifier: ^1.0.0
+        version: 1.1.0(typescript@5.8.3)
+      ws:
+        specifier: ^8.0.0
+        version: 8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    devDependencies:
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.18.1
+      tsdown:
+        specifier: 0.19.0
+        version: 0.19.0(typescript@5.8.3)
+      typescript:
+        specifier: ^5
+        version: 5.8.3
+
 packages:
 
   '@0no-co/graphql.web@1.2.0':
@@ -2505,6 +2533,14 @@ packages:
     resolution: {integrity: sha512-rRqJg/6gd538VHvR3PSrdRBb/1Vy2YfzHqzvbhGIQpDRKIa4FgV/54b5Q1xYSxOOwKvjXweS26E0Q+nAMwp2pQ==}
     engines: {node: '>=8.6'}
 
+  error-class-utils@4.0.1:
+    resolution: {integrity: sha512-0IWumkSpGaaQAyViomL6Dew8F+GqS/kz+rny9krYHxki/irnYIZUZlPvI68HwDzBdZVGHFQA/1OTLl02F9WwuQ==}
+    engines: {node: '>=18.18.0'}
+
+  error-custom-class@10.0.1:
+    resolution: {integrity: sha512-z+z+23zR3+fDkbHB4cEwuMJdLAmE3P+qqMEAHzz03dMxz+92iY+FaahHEDEuUOoa/z1xVIIZoFD+VAd1XpAV2A==}
+    engines: {node: '>=18.18.0'}
+
   es-define-property@1.0.1:
     resolution: {integrity: sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==}
     engines: {node: '>= 0.4'}
@@ -2641,6 +2677,10 @@ packages:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
 
+  filter-obj@6.1.0:
+    resolution: {integrity: sha512-xdMtCAODmPloU9qtmPcdBV9Kd27NtMse+4ayThxqIHUES5Z2S6bGpap5PpdmNM56ub7y3i1eyr+vJJIIgWGKmA==}
+    engines: {node: '>=18'}
+
   find-up@4.1.0:
     resolution: {integrity: sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw==}
     engines: {node: '>=8'}
@@ -2720,7 +2760,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+    deprecated: Glob versions prior to v9 are no longer supported
 
   globalthis@1.0.4:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
@@ -2872,6 +2912,10 @@ packages:
     resolution: {integrity: sha512-UfoeMA6fIJ8wTYFEUjelnaGI67v6+N7qXJEvQuIGa99l4xsCruSYOVSQ0uPANn4dAzm8lkYPaKLrrijLq7x23w==}
     engines: {node: '>= 0.4'}
 
+  is-error-instance@3.0.1:
+    resolution: {integrity: sha512-nEw1ptjtbmXRkHOFrLvpHywsv+jMUZdtqI2BAC/XxMd24vUY5gXhvOprH0Bh4xA2gqQCQsEkr7aaxsgvxYRjnQ==}
+    engines: {node: '>=18.18.0'}
+
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
     engines: {node: '>=0.10.0'}
@@ -2896,6 +2940,10 @@ packages:
   is-number@7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
+
+  is-plain-obj@4.1.0:
+    resolution: {integrity: sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==}
+    engines: {node: '>=12'}
 
   is-property@1.0.2:
     resolution: {integrity: sha512-Ks/IoX00TtClbGQr4TWXemAnktAQvYB7HzcCxDGqEZU6oCmb2INHuOoKxbtR+HFkmYWBKv/dOZtGRiAjDhj92g==}
@@ -3121,6 +3169,10 @@ packages:
   md5.js@1.3.5:
     resolution: {integrity: sha512-xitP+WxNPcTTOgnTJcrhM0xvdPepipPSf3I8EIpGKeFLjt3PlJLIDG3u8EX53ZIubkb+5U2+3rELYpEhHhzdkg==}
 
+  merge-error-cause@5.0.2:
+    resolution: {integrity: sha512-pToOGIivcb/Vz4lJ3faWGbS92+41YW9QOESpuValOci1xP5hT6bQMiw/Pse7PHYsKSPusNT7zMFwDgqzt2lHXw==}
+    engines: {node: '>=18.18.0'}
+
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
@@ -3172,6 +3224,10 @@ packages:
     resolution: {integrity: sha512-KZxYo1BUkWD2TVFLr0MQoM8vUUigWD3LlD83a/75BqC+4qE0Hb1Vo5v1FgcfaNXvfXzr+5EhQ6ing/CaBijTlw==}
     engines: {node: '>= 18'}
 
+  modern-errors@7.1.4:
+    resolution: {integrity: sha512-FdC4DgT6ewjJN1TqsC8GQ3vmnbbaPiYpZ4BHk6eNigFm5btQMBIKZcNVbH8/nbzVlf+qnARa5l0OqhzP5q2MUA==}
+    engines: {node: '>=18.18.0'}
+
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
     engines: {node: '>=4'}
@@ -3220,6 +3276,10 @@ packages:
       '@near-wallet-selector/core':
         optional: true
 
+  neverthrow@8.2.0:
+    resolution: {integrity: sha512-kOCT/1MCPAxY5iUV3wytNFUMUolzuwd/VF/1KCx7kf6CutrOsTie+84zTGTpgQycjvfLdBBdvBvFLqFD2c0wkQ==}
+    engines: {node: '>=18'}
+
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
 
@@ -3250,6 +3310,10 @@ packages:
   node-gyp-build@4.8.4:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
+
+  normalize-exception@4.0.1:
+    resolution: {integrity: sha512-2fUwKMZLYvHIHZN4a6Bt2FYEea6mDwQcTVCffRvQ1bJHndQRRrNhq8+WQiLolOzJ7bJl59SCURGSwCLvQv/X7w==}
+    engines: {node: '>=18.18.0'}
 
   normalize-url@6.1.0:
     resolution: {integrity: sha512-DlL+XwOy3NxAQ8xuC0okPgK46iuVNAK01YN7RueYBqqFeGsBjV9XmCAzAdgt+667bCl5kPh9EqKKDwnaPG1I7A==}
@@ -3465,6 +3529,10 @@ packages:
     resolution: {integrity: sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw==}
     engines: {node: '>= 0.10'}
 
+  redefine-property@3.0.1:
+    resolution: {integrity: sha512-/YYmIi0V+vlg2B/QwwOr/SAirVKYdI9iF+KFRPMK5y2QqGq7Ky6PgxNBVXcuVq9E2o0clC4j2EyC1eigpbW8bA==}
+    engines: {node: '>=18.18.0'}
+
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
@@ -3602,6 +3670,22 @@ packages:
     resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
     engines: {node: '>=10'}
     hasBin: true
+
+  set-error-class@3.0.1:
+    resolution: {integrity: sha512-VEsI0yEUMEnXmSkhfj+EwzNC1om7zGy2IdymNyi4FfGzmoxvXXIB1Nv09+DfRgsd7fS+u+FwTqCTSRhhNMcx8w==}
+    engines: {node: '>=18.18.0'}
+
+  set-error-message@3.0.1:
+    resolution: {integrity: sha512-5+TX4opc5Hus1nu5UDQq0y5SuOCvDqQFh+yGcKgzJDKvohVcU51iE2XtTxw/V7VsZ7xA142tei+KSq3ZIB/dNw==}
+    engines: {node: '>=18.18.0'}
+
+  set-error-props@6.0.1:
+    resolution: {integrity: sha512-P27Piv/xn8Iy+F+xLdY3Qk3Ne63bHFeXgFYc6HAxsKqbzZD3RXrqlLZ+97ObdCn1+o8Pc0qlw6qFbHVnOmKjtA==}
+    engines: {node: '>=18.18.0'}
+
+  set-error-stack@3.0.1:
+    resolution: {integrity: sha512-fMe1RawtS1IuX0xtdRWbMOOqvyMLLv46KKEHUcI6MAPj6EmEMMihrGpm5eu4RpCrIL05fjvtH+KxNV7NwStpLw==}
+    engines: {node: '>=18.18.0'}
 
   set-function-length@1.2.2:
     resolution: {integrity: sha512-pgRc4hJ4/sNjWCSS9AmnS40x3bNMDTknHgL5UaMBTMyJnU90EgWh1Rz+MC9eFu4BuN/UwZjKQuY/1v3rM7HMfg==}
@@ -4100,6 +4184,10 @@ packages:
   wrap-ansi@8.1.0:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
+
+  wrap-error-message@3.0.1:
+    resolution: {integrity: sha512-TjLYwoDEMdPs0h6LfPukMZn2R7tmywbWyRETDosqsE1Gs0mayuSiDQm1MzeDPc8VMTvS4yhLPgICkSXvTeo9ng==}
+    engines: {node: '>=18.18.0'}
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
@@ -7285,6 +7373,12 @@ snapshots:
       ansi-colors: 4.1.3
       strip-ansi: 6.0.1
 
+  error-class-utils@4.0.1: {}
+
+  error-custom-class@10.0.1:
+    dependencies:
+      error-class-utils: 4.0.1
+
   es-define-property@1.0.1: {}
 
   es-errors@1.3.0: {}
@@ -7461,6 +7555,8 @@ snapshots:
   fill-range@7.1.1:
     dependencies:
       to-regex-range: 5.0.1
+
+  filter-obj@6.1.0: {}
 
   find-up@4.1.0:
     dependencies:
@@ -7720,6 +7816,8 @@ snapshots:
     dependencies:
       hasown: 2.0.2
 
+  is-error-instance@3.0.1: {}
+
   is-extglob@2.1.1: {}
 
   is-fullwidth-code-point@3.0.0: {}
@@ -7741,6 +7839,8 @@ snapshots:
   is-node-process@1.2.0: {}
 
   is-number@7.0.0: {}
+
+  is-plain-obj@4.1.0: {}
 
   is-property@1.0.2: {}
 
@@ -7977,6 +8077,13 @@ snapshots:
       inherits: 2.0.4
       safe-buffer: 5.2.1
 
+  merge-error-cause@5.0.2:
+    dependencies:
+      normalize-exception: 4.0.1
+      set-error-class: 3.0.1
+      set-error-props: 6.0.1
+      wrap-error-message: 3.0.1
+
   merge2@1.4.1: {}
 
   micro-ftch@0.3.1: {}
@@ -8015,6 +8122,19 @@ snapshots:
   minizlib@3.1.0:
     dependencies:
       minipass: 7.1.2
+
+  modern-errors@7.1.4:
+    dependencies:
+      error-class-utils: 4.0.1
+      error-custom-class: 10.0.1
+      filter-obj: 6.1.0
+      is-error-instance: 3.0.1
+      is-plain-obj: 4.1.0
+      merge-error-cause: 5.0.2
+      normalize-exception: 4.0.1
+      set-error-message: 3.0.1
+      set-error-props: 6.0.1
+      set-error-stack: 3.0.1
 
   mri@1.2.0: {}
 
@@ -8092,6 +8212,10 @@ snapshots:
     optionalDependencies:
       '@near-wallet-selector/core': 10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5))
 
+  neverthrow@8.2.0:
+    optionalDependencies:
+      '@rollup/rollup-linux-x64-gnu': 4.43.0
+
   no-case@3.0.4:
     dependencies:
       lower-case: 2.0.2
@@ -8110,6 +8234,11 @@ snapshots:
       whatwg-url: 5.0.0
 
   node-gyp-build@4.8.4: {}
+
+  normalize-exception@4.0.1:
+    dependencies:
+      is-error-instance: 3.0.1
+      is-plain-obj: 4.1.0
 
   normalize-url@6.1.0: {}
 
@@ -8321,6 +8450,10 @@ snapshots:
     dependencies:
       resolve: 1.22.10
 
+  redefine-property@3.0.1:
+    dependencies:
+      is-plain-obj: 4.1.0
+
   reflect-metadata@0.2.2: {}
 
   rehackt@0.1.0(@types/react@19.1.8)(react@18.3.1):
@@ -8507,6 +8640,24 @@ snapshots:
   semver@7.7.2: {}
 
   semver@7.7.3: {}
+
+  set-error-class@3.0.1:
+    dependencies:
+      normalize-exception: 4.0.1
+
+  set-error-message@3.0.1:
+    dependencies:
+      normalize-exception: 4.0.1
+
+  set-error-props@6.0.1:
+    dependencies:
+      is-error-instance: 3.0.1
+      is-plain-obj: 4.1.0
+      redefine-property: 3.0.1
+
+  set-error-stack@3.0.1:
+    dependencies:
+      normalize-exception: 4.0.1
 
   set-function-length@1.2.2:
     dependencies:
@@ -8969,6 +9120,11 @@ snapshots:
       ansi-styles: 6.2.3
       string-width: 5.1.2
       strip-ansi: 7.1.2
+
+  wrap-error-message@3.0.1:
+    dependencies:
+      normalize-exception: 4.0.1
+      set-error-message: 3.0.1
 
   wrappy@1.0.2: {}
 
