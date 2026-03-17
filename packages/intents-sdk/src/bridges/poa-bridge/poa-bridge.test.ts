@@ -401,7 +401,6 @@ describe("PoaBridge", () => {
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
-			// Call validateWithdrawal twice with the same asset
 			await bridge.validateWithdrawal({
 				assetId: "nep141:btc.omft.near",
 				amount: 5000n,
@@ -552,7 +551,6 @@ describe("PoaBridge", () => {
 				tokens: [],
 			});
 
-			// Call validateWithdrawal twice with the same asset
 			await expect(
 				bridge.validateWithdrawal({
 					assetId: "nep141:xrp.omft.near",
@@ -583,7 +581,6 @@ describe("PoaBridge", () => {
 				],
 			});
 
-			// Call validateWithdrawal twice with the same asset
 			await expect(
 				bridge.validateWithdrawal({
 					assetId: "nep141:xrp.omft.near",
@@ -621,7 +618,6 @@ describe("PoaBridge", () => {
 				},
 			});
 
-			// Call validateWithdrawal twice with the same asset
 			await expect(
 				bridge.validateWithdrawal({
 					assetId: "nep141:xrp.omft.near",
@@ -660,7 +656,6 @@ describe("PoaBridge", () => {
 				},
 			});
 
-			// Call validateWithdrawal twice with the same asset
 			await expect(
 				bridge.validateWithdrawal({
 					assetId: "nep141:xrp.omft.near",
@@ -668,6 +663,79 @@ describe("PoaBridge", () => {
 					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
 				}),
 			).rejects.toThrow(XrplDepositAuthEnabledError);
+		});
+
+		it("allows to deposit XRP to non funded account", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:b:c:d",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplAccountNotFundedError(
+					"rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).resolves.toBeUndefined();
+		});
+		it("throws on XrpApiError", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:b:c:d",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplApiError({
+					error: "test",
+					error_code: 1,
+					error_message: "test",
+				}),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(xrpl.httpClient.XrplApiError);
 		});
 	});
 

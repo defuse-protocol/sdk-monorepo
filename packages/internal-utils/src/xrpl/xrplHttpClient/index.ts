@@ -5,3 +5,9 @@ export type {
 	AccountLinesResponse,
 	TrustLine,
 } from "./types";
+export {
+	XrplApiError,
+	type XrplApiErrorType,
+	XrplAccountNotFundedError,
+	type XrplAccountNotFundedErrorType,
+} from "./errors";

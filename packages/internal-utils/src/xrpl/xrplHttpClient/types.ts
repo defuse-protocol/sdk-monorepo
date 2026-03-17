@@ -62,3 +62,17 @@ export type TrustLine = v.InferOutput<typeof TrustLineSchema>;
 export type AccountLinesResponse = v.InferOutput<
 	typeof AccountLinesResponseSchema
 >;
+
+export const XrplErrorResponseSchema = v.object({
+	result: v.object({
+		status: v.literal("error"),
+		account: v.optional(v.string()),
+		error: v.string(),
+		error_code: v.number(),
+		error_message: v.string(),
+		request: v.optional(v.record(v.string(), v.unknown())),
+		validated: v.optional(v.boolean()),
+	}),
+});
+
+export type XrplErrorResponse = v.InferOutput<typeof XrplErrorResponseSchema>;

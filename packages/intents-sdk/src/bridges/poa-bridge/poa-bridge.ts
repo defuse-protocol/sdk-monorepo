@@ -221,20 +221,30 @@ export class PoaBridge implements Bridge {
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
 
-			const accountInfo = await xrpl.httpClient.getAccountInfo(
-				args.destinationAddress,
-				xrplConfig,
-			);
-			const requireDestinationTag =
-				accountInfo.account_flags.requireDestinationTag;
+			try {
+				const accountInfo = await xrpl.httpClient.getAccountInfo(
+					args.destinationAddress,
+					xrplConfig,
+				);
+				const requireDestinationTag =
+					accountInfo.account_flags.requireDestinationTag;
 
-			if (requireDestinationTag)
-				throw new XrplDestinationTagRequiredError(args.destinationAddress);
+				if (requireDestinationTag)
+					throw new XrplDestinationTagRequiredError(args.destinationAddress);
 
-			const depositAuthEnabled = accountInfo.account_flags.depositAuth;
+				const depositAuthEnabled = accountInfo.account_flags.depositAuth;
 
-			if (depositAuthEnabled)
-				throw new XrplDepositAuthEnabledError(args.destinationAddress);
+				if (depositAuthEnabled)
+					throw new XrplDepositAuthEnabledError(args.destinationAddress);
+			} catch (error) {
+				if (error instanceof xrpl.httpClient.XrplAccountNotFundedError) {
+					args.logger?.info(
+						`Account ${args.destinationAddress} is not funded.`,
+					);
+				} else {
+					throw error;
+				}
+			}
 		}
 	}
 
