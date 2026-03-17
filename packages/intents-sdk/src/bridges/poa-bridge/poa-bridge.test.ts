@@ -324,10 +324,6 @@ describe("PoaBridge", () => {
 				destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			}, // BTC
 			{
-				assetId: "nep141:xrp.omft.near",
-				destinationAddress: "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv",
-			}, // XRP
-			{
 				assetId: "nep141:doge.omft.near",
 				destinationAddress: "D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
 			}, // Doge
@@ -351,21 +347,34 @@ describe("PoaBridge", () => {
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
-			if (assetId === "nep141:xrp.omft.near") {
-				vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
-					account_data: { Account: "Account" },
-					account_flags: {
-						requireDestinationTag: false,
-						depositAuth: false,
-					},
-				});
-			}
-
 			await expect(
 				bridge.validateWithdrawal({
 					amount: 50000000000n,
 					assetId,
 					destinationAddress,
+				}),
+			).resolves.toBeUndefined();
+		});
+
+		it("allows correct XRPL address", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					amount: 50000000000n,
+					assetId: "nep141:xrp.omft.near",
+					destinationAddress: "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv",
 				}),
 			).resolves.toBeUndefined();
 		});
