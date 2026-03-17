@@ -665,7 +665,7 @@ describe("PoaBridge", () => {
 			).rejects.toThrow(XrplDepositAuthEnabledError);
 		});
 
-		it("allows to deposit XRP to non funded account", async () => {
+		it("allows to withdraw XRP to non a funded account", async () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
@@ -699,6 +699,42 @@ describe("PoaBridge", () => {
 					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
 				}),
 			).resolves.toBeUndefined();
+		});
+
+		it("blocks withdrawals of XRPL tokens to a non funded account", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:b:c:d",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplAccountNotFundedError(
+					"rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(xrpl.httpClient.XrplAccountNotFundedError);
 		});
 		it("throws on XrpApiError", async () => {
 			const bridge = new PoaBridge({
