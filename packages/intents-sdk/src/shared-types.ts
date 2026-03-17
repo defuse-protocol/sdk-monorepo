@@ -461,15 +461,13 @@ export type ParsedAssetInfo = (
 	({ native: true } | { address: string });
 
 export type RPCEndpointMap = Record<
-	typeof Chains.Near | HotBridgeEVMChain,
+	typeof Chains.Near | HotBridgeEVMChain | typeof Chains.XRPL,
 	RpcEndpoint[]
 > & {
 	[K in typeof Chains.Stellar]: {
 		soroban: RpcEndpoint[];
 		horizon: RpcEndpoint[];
 	};
-} & {
-	[K in typeof Chains.XRPL]: RpcEndpoint[];
 };
 
 /**
