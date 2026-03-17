@@ -199,7 +199,7 @@ export class PoaBridge implements Bridge {
 			(token) => token.intents_token_id === args.assetId,
 		);
 
-		if (tokenInfo === undefined) {
+		if (tokenInfo == null) {
 			throw new UnsupportedAssetIdError(
 				args.assetId,
 				"`assetId` is not supported in PoA bridge.",
@@ -226,20 +226,12 @@ export class PoaBridge implements Bridge {
 				xrplConfig,
 			);
 			const requireDestinationTag =
-				accountInfo.account_flags?.requireDestinationTag;
-			assert(
-				requireDestinationTag !== undefined,
-				"Invalid requireDestinationTag expected boolean got undefined",
-			);
+				accountInfo.account_flags.requireDestinationTag;
+
 			if (requireDestinationTag)
 				throw new XrplDestinationTagRequiredError(args.destinationAddress);
 
-			const depositAuthEnabled = accountInfo.account_flags?.depositAuth;
-
-			assert(
-				depositAuthEnabled !== undefined,
-				"Invalid depositAuthEnabled expected boolean got undefined",
-			);
+			const depositAuthEnabled = accountInfo.account_flags.depositAuth;
 
 			if (depositAuthEnabled)
 				throw new XrplDepositAuthEnabledError(args.destinationAddress);

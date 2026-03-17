@@ -12,34 +12,10 @@ export type RequestConfig = {
 
 // --- AccountInfo ---
 const AccountFlagsSchema = v.object({
-	/** Enables rippling on this account's trust lines by default. */
-	defaultRipple: v.optional(v.boolean()),
 	/** Requires deposit authorization for incoming payments. */
-	depositAuth: v.optional(v.boolean()),
-	/** Disables the master key for this account. */
-	disableMasterKey: v.optional(v.boolean()),
-	/** Blocks incoming Checks from other accounts. */
-	disallowIncomingCheck: v.optional(v.boolean()),
-	/** Blocks incoming NFToken offers from other accounts. */
-	disallowIncomingNFTokenOffer: v.optional(v.boolean()),
-	/** Blocks incoming Payment Channels from other accounts. */
-	disallowIncomingPayChan: v.optional(v.boolean()),
-	/** Blocks incoming trust lines from other accounts. */
-	disallowIncomingTrustline: v.optional(v.boolean()),
-	/** Discourages incoming XRP payments to this account. */
-	disallowIncomingXRP: v.optional(v.boolean()),
-	/** Freezes all tokens issued by this account. */
-	globalFreeze: v.optional(v.boolean()),
-	/** Permanently gives up the ability to freeze tokens. */
-	noFreeze: v.optional(v.boolean()),
-	/** The account has used its free SetRegularKey transaction. */
-	passwordSpent: v.optional(v.boolean()),
-	/** Requires authorization for other accounts to hold tokens issued by this account. */
-	requireAuthorization: v.optional(v.boolean()),
+	depositAuth: v.boolean(),
 	/** Requires incoming payments to specify a Destination Tag. */
-	requireDestinationTag: v.optional(v.boolean()),
-	/** Allows clawback of tokens issued by this account. */
-	allowTrustLineClawback: v.optional(v.boolean()),
+	requireDestinationTag: v.boolean(),
 });
 
 export const AccountInfoResponseSchema = v.object({
@@ -51,7 +27,7 @@ export const AccountInfoResponseSchema = v.object({
 		 * A map of account flags parsed out.
 		 * Only available for rippled nodes 1.11.0 and higher.
 		 */
-		account_flags: v.optional(AccountFlagsSchema),
+		account_flags: AccountFlagsSchema,
 		validated: v.optional(v.boolean()),
 	}),
 });
