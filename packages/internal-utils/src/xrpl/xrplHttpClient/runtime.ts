@@ -14,6 +14,7 @@ export async function xrplRequest<
 	config: RequestConfig,
 	schema: TSchema,
 ): Promise<v.InferOutput<TSchema>> {
+	params.api_version = 2;
 	const body = {
 		method,
 		params: [params],
