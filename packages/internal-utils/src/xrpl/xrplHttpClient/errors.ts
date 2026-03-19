@@ -28,11 +28,13 @@ export type XrplAccountNotFundedErrorType = XrplAccountNotFundedError & {
 };
 
 export class XrplAccountNotFundedError extends BaseError {
-	constructor(public account: string) {
+	constructor(public account?: string) {
 		super("XRPL account is not funded.", {
-			metaMessages: [`Account: ${account}`],
+			metaMessages: account ? [`Account: ${account}`] : undefined,
 			name: "XrplAccountNotFundedError",
-			details: `Account ${account} was not found on the XRPL ledger. The account must be funded with the minimum reserve before it can receive tokens.`,
+			details: account
+				? `Account ${account} was not found on the XRPL ledger. The account must be funded with the minimum reserve before it can receive tokens.`
+				: "Account was not found on the XRPL ledger. The account must be funded with the minimum reserve before it can receive tokens.",
 		});
 	}
 }

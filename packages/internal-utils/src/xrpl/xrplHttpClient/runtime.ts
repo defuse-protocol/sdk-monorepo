@@ -47,7 +47,7 @@ export async function xrplRequest<
 	const parsedError = v.safeParse(XrplErrorResponseSchema, json);
 	if (parsedError.success) {
 		const output = parsedError.output.result;
-		if (output.error_code === 19 && output.account) {
+		if (output.error_code === 19) {
 			throw new XrplAccountNotFundedError(output.account);
 		}
 		throw new XrplApiError(output);
