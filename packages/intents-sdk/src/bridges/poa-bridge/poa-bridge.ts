@@ -239,7 +239,8 @@ export class PoaBridge implements Bridge {
 			} catch (error) {
 				// do not throw error for a XRP withdrawal to a non funded account
 				if (
-					!(isXrp && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
+					!isXrp ||
+					error instanceof xrpl.httpClient.XrplAccountNotFundedError === false
 				)
 					throw error;
 			}
