@@ -147,6 +147,8 @@ export {
 	type XrplDestinationTagRequiredErrorType,
 	XrplDepositAuthEnabledError,
 	type XrplDepositAuthEnabledErrorType,
+	XrplTrustlineError,
+	type XrplTrustlineErrorType,
 } from "./src/bridges/poa-bridge/errors";
 
 // HTTP & Network Errors
