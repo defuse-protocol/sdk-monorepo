@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.58.0
+
+### Minor Changes
+
+- 6eb198d: Add more validation checks for XRP withdrawals
+
+### Patch Changes
+
+- Updated dependencies [6eb198d]
+  - @defuse-protocol/internal-utils@0.30.0
+
 ## 0.57.0
 
 ### Minor Changes

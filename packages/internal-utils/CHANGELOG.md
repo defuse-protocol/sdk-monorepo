@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.30.0
+
+### Minor Changes
+
+- 6eb198d: Add more validation checks for XRP withdrawals
+
 ## 0.29.0
 
 ### Minor Changes
