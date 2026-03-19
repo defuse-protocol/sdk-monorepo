@@ -142,6 +142,12 @@ export {
 	PoaWithdrawalPendingError,
 	type PoaWithdrawalPendingErrorType,
 } from "@defuse-protocol/internal-utils";
+export {
+	XrplDestinationTagRequiredError,
+	type XrplDestinationTagRequiredErrorType,
+	XrplDepositAuthEnabledError,
+	type XrplDepositAuthEnabledErrorType,
+} from "./src/bridges/poa-bridge/errors";
 
 // HTTP & Network Errors
 export {

@@ -69,3 +69,16 @@ export function configureStellarRpcUrls(
 
 	return stellarRpcUrls;
 }
+
+/**
+ * Configures XRPL RPC URLs by merging defaults with user-provided URLs.
+ */
+export function configureXrplRpcUrls(
+	defaultRpcUrls: RPCEndpointMap[typeof Chains.XRPL],
+	userRpcUrls: PartialRPCEndpointMap | undefined,
+): string[] {
+	const endpoints = userRpcUrls?.[Chains.XRPL] ?? defaultRpcUrls;
+	const urls = extractRpcUrls(endpoints);
+	assert(urls.length > 0, "XRPL RPC URL is not provided");
+	return urls;
+}

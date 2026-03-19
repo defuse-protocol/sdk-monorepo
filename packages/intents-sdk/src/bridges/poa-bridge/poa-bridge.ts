@@ -3,6 +3,7 @@ import {
 	type ILogger,
 	type EnvConfig,
 	poaBridge,
+	xrpl,
 	RpcRequestError,
 	utils,
 } from "@defuse-protocol/internal-utils";
@@ -12,6 +13,10 @@ import {
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
+import {
+	XrplDepositAuthEnabledError,
+	XrplDestinationTagRequiredError,
+} from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -31,7 +36,7 @@ import {
 	createWithdrawIntentPrimitive,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
@@ -40,6 +45,7 @@ export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected envConfig: EnvConfig;
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
+	protected xrplRpcUrls: string[];
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -49,12 +55,15 @@ export class PoaBridge implements Bridge {
 
 	constructor({
 		envConfig,
+		xrplRpcUrls,
 		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
 		envConfig: EnvConfig;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+		xrplRpcUrls: string[];
 	}) {
 		this.envConfig = envConfig;
+		this.xrplRpcUrls = xrplRpcUrls;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
@@ -190,15 +199,49 @@ export class PoaBridge implements Bridge {
 			(token) => token.intents_token_id === args.assetId,
 		);
 
-		if (tokenInfo != null) {
-			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+		if (tokenInfo == null) {
+			throw new UnsupportedAssetIdError(
+				args.assetId,
+				"`assetId` is not supported in PoA bridge.",
+			);
+		}
 
-			if (args.amount < minWithdrawalAmount) {
-				throw new MinWithdrawalAmountError(
-					minWithdrawalAmount,
-					args.amount,
-					args.assetId,
+		const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+
+		if (args.amount < minWithdrawalAmount) {
+			throw new MinWithdrawalAmountError(
+				minWithdrawalAmount,
+				args.amount,
+				args.assetId,
+			);
+		}
+
+		if (assetInfo.blockchain === Chains.XRPL) {
+			const xrplRpcUrl = this.xrplRpcUrls[0];
+			assert(xrplRpcUrl, "No XRPL RPC URL configured");
+			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
+			const isXrp = assetInfo.contractId === "xrp.omft.near";
+			try {
+				const accountInfo = await xrpl.httpClient.getAccountInfo(
+					args.destinationAddress,
+					xrplConfig,
 				);
+				const requireDestinationTag =
+					accountInfo.account_flags.requireDestinationTag;
+
+				if (requireDestinationTag)
+					throw new XrplDestinationTagRequiredError(args.destinationAddress);
+
+				const depositAuthEnabled = accountInfo.account_flags.depositAuth;
+
+				if (depositAuthEnabled)
+					throw new XrplDepositAuthEnabledError(args.destinationAddress);
+			} catch (error) {
+				// do not throw error for a XRP withdrawal to a non funded account
+				if (
+					!(isXrp && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
+				)
+					throw error;
 			}
 		}
 	}

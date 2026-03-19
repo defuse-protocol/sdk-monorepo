@@ -2,6 +2,7 @@ import {
 	configsByEnvironment,
 	poaBridge,
 	RpcRequestError,
+	xrpl,
 } from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,6 +17,12 @@ import {
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
 import { PoaBridge } from "./poa-bridge";
+import { PUBLIC_XRPL_RPC_URLS } from "../../constants/public-rpc-urls";
+import { configureXrplRpcUrls } from "../../lib/configure-rpc-config";
+import {
+	XrplDepositAuthEnabledError,
+	XrplDestinationTagRequiredError,
+} from "./errors";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 	const original =
@@ -30,6 +37,14 @@ vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 				getSupportedTokens: vi.fn(),
 			},
 		},
+		xrpl: {
+			...original.xrpl,
+			httpClient: {
+				...original.xrpl.httpClient,
+				getAccountInfo: vi.fn(),
+				getAccountLines: vi.fn(),
+			},
+		},
 	};
 });
 
@@ -38,7 +53,119 @@ describe("PoaBridge", () => {
 		vi.clearAllMocks();
 		// Default mock for getSupportedTokens
 		vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
-			tokens: [],
+			tokens: [
+				{
+					defuse_asset_identifier:
+						"eth:1:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+					decimals: 6,
+					asset_name: "USDC",
+					near_token_id:
+						"eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "300000",
+					standard: "nep141",
+					intents_token_id:
+						"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+				},
+				{
+					defuse_asset_identifier:
+						"sol:mainnet:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+					decimals: 6,
+					asset_name: "USDC",
+					near_token_id:
+						"sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "30000",
+					standard: "nep141",
+					intents_token_id:
+						"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
+				},
+				{
+					defuse_asset_identifier:
+						"sui:mainnet:0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC",
+					decimals: 6,
+					asset_name: "USDC",
+					near_token_id:
+						"sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "20000",
+					standard: "nep141",
+					intents_token_id:
+						"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
+				},
+				{
+					defuse_asset_identifier: "zec:mainnet:native",
+					decimals: 8,
+					asset_name: "ZEC",
+					near_token_id: "zec.omft.near",
+					min_deposit_amount: "10000",
+					min_withdrawal_amount: "5000",
+					withdrawal_fee: "47000",
+					standard: "nep141",
+					intents_token_id: "nep141:zec.omft.near",
+				},
+				{
+					defuse_asset_identifier:
+						"tron:mainnet:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+					decimals: 6,
+					asset_name: "USDT",
+					near_token_id:
+						"tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
+					min_deposit_amount: "1000000",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "1000000",
+					standard: "nep141",
+					intents_token_id:
+						"nep141:tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
+				},
+				{
+					defuse_asset_identifier: "btc:mainnet:native",
+					decimals: 8,
+					asset_name: "BTC",
+					near_token_id: "btc.omft.near",
+					min_deposit_amount: "10000",
+					min_withdrawal_amount: "700",
+					withdrawal_fee: "1500",
+					standard: "nep141",
+					intents_token_id: "nep141:btc.omft.near",
+				},
+				{
+					defuse_asset_identifier: "xrp:mainnet:native",
+					decimals: 6,
+					asset_name: "XRP",
+					near_token_id: "xrp.omft.near",
+					min_deposit_amount: "2000000",
+					min_withdrawal_amount: "1000000",
+					withdrawal_fee: "10",
+					standard: "nep141",
+					intents_token_id: "nep141:xrp.omft.near",
+				},
+				{
+					defuse_asset_identifier: "doge:mainnet:native",
+					decimals: 8,
+					asset_name: "DOGE",
+					near_token_id: "doge.omft.near",
+					min_deposit_amount: "1000000",
+					min_withdrawal_amount: "1000000",
+					withdrawal_fee: "45000000",
+					standard: "nep141",
+					intents_token_id: "nep141:doge.omft.near",
+				},
+				{
+					defuse_asset_identifier: "cardano:mainnet:native",
+					decimals: 6,
+					asset_name: "ADA",
+					near_token_id: "cardano.omft.near",
+					min_deposit_amount: "1200000",
+					min_withdrawal_amount: "1000000",
+					withdrawal_fee: "200000",
+					standard: "nep141",
+					intents_token_id: "nep141:cardano.omft.near",
+				},
+			],
 		});
 	});
 
@@ -50,6 +177,7 @@ describe("PoaBridge", () => {
 		])("supports `omft.near` tokens", async (tokenId) => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(true);
@@ -67,6 +195,7 @@ describe("PoaBridge", () => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					routeMigratedPoaTokensThroughOmniBridge: true,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(
@@ -81,6 +210,7 @@ describe("PoaBridge", () => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					routeMigratedPoaTokensThroughOmniBridge: true,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(
@@ -98,6 +228,7 @@ describe("PoaBridge", () => {
 		])("doesn't support not `omft.near` tokens", async (tokenId) => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(false);
@@ -108,6 +239,7 @@ describe("PoaBridge", () => {
 			async (assetId) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(bridge.supports({ assetId })).rejects.toThrow(
@@ -133,6 +265,7 @@ describe("PoaBridge", () => {
 			async (assetId) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(
@@ -147,6 +280,7 @@ describe("PoaBridge", () => {
 		it("returns false when routeConfig is for different bridge", async () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.supports({
@@ -190,10 +324,6 @@ describe("PoaBridge", () => {
 				destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			}, // BTC
 			{
-				assetId: "nep141:xrp.omft.near",
-				destinationAddress: "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv",
-			}, // XRP
-			{
 				assetId: "nep141:doge.omft.near",
 				destinationAddress: "D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
 			}, // Doge
@@ -214,6 +344,7 @@ describe("PoaBridge", () => {
 		])("allows correct addresses", async ({ assetId, destinationAddress }) => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			await expect(
@@ -225,8 +356,31 @@ describe("PoaBridge", () => {
 			).resolves.toBeUndefined();
 		});
 
+		it("allows correct XRPL address", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					amount: 50000000000n,
+					assetId: "nep141:xrp.omft.near",
+					destinationAddress: "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv",
+				}),
+			).resolves.toBeUndefined();
+		});
+
 		it("caches getSupportedTokens responses", async () => {
-			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
 				tokens: [
 					{
 						intents_token_id: "nep141:btc.omft.near",
@@ -244,9 +398,9 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
-			// Call validateWithdrawal twice with the same asset
 			await bridge.validateWithdrawal({
 				assetId: "nep141:btc.omft.near",
 				amount: 5000n,
@@ -264,7 +418,7 @@ describe("PoaBridge", () => {
 		});
 
 		it("throws MinWithdrawalAmountError when amount is below minimum", async () => {
-			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
 				tokens: [
 					{
 						intents_token_id: "nep141:btc.omft.near",
@@ -282,6 +436,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			await expect(
@@ -294,7 +449,7 @@ describe("PoaBridge", () => {
 		});
 
 		it("passes validation when amount meets minimum", async () => {
-			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValue({
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
 				tokens: [
 					{
 						intents_token_id: "nep141:btc.omft.near",
@@ -312,6 +467,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			await expect(
@@ -372,6 +528,7 @@ describe("PoaBridge", () => {
 			async ({ assetId, destinationAddress }) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(
@@ -383,12 +540,246 @@ describe("PoaBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+
+		it("throws UnsupportedAssetIdError if token not found in PoA token cached list", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [],
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(UnsupportedAssetIdError);
+		});
+		it("throws for XRPL withdrawal if passed xrpRpcUrls are invalid", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: [""],
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow();
+		});
+		it("throws XrplDestinationTagRequiredError if destination tag is required", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: true,
+					depositAuth: false,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplDestinationTagRequiredError);
+		});
+
+		it("throws XrplDepositAuthEnabledError if depositAuth is enabled", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: true,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplDepositAuthEnabledError);
+		});
+
+		it("allows to withdraw XRP to non a funded account", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:b:c:d",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplAccountNotFundedError(
+					"rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).resolves.toBeUndefined();
+		});
+
+		it("blocks withdrawals of XRPL tokens to a non funded account", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:b:c:d",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplAccountNotFundedError(
+					"rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(xrpl.httpClient.XrplAccountNotFundedError);
+		});
+		it("throws on XrpApiError", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:b:c:d",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplApiError({
+					error: "test",
+					error_code: 1,
+					error_message: "test",
+				}),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(xrpl.httpClient.XrplApiError);
+		});
 	});
 
 	describe("createWithdrawalIdentifier()", () => {
 		it("derives landing chain from asset", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const wid = bridge.createWithdrawalIdentifier({
@@ -431,6 +822,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -458,6 +850,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -498,6 +891,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -539,6 +933,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -597,6 +992,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -643,6 +1039,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -695,6 +1092,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -731,6 +1129,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			const resultPromise = bridge.describeWithdrawal({
@@ -769,6 +1168,7 @@ describe("PoaBridge", () => {
 
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 			});
 
 			await expect(
