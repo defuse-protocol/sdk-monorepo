@@ -16,6 +16,8 @@ const AccountFlagsSchema = v.object({
 	depositAuth: v.boolean(),
 	/** Requires incoming payments to specify a Destination Tag. */
 	requireDestinationTag: v.boolean(),
+	/** The issuer has enabled Global Freeze, freezing all trust lines issued by this account. */
+	globalFreeze: v.boolean(),
 });
 
 export const AccountInfoResponseSchema = v.object({

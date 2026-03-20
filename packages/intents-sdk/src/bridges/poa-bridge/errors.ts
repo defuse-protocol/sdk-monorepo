@@ -35,6 +35,23 @@ export class XrplDepositAuthEnabledError extends BaseError {
 	}
 }
 
+export type XrplIssuerGlobalFreezeErrorType = XrplIssuerGlobalFreezeError & {
+	name: "XrplIssuerGlobalFreezeError";
+};
+
+export class XrplIssuerGlobalFreezeError extends BaseError {
+	constructor(
+		public issuer: string,
+		public currency: string,
+	) {
+		super("Issuer has enabled Global Freeze for all trust lines.", {
+			metaMessages: [`Issuer: ${issuer}`, `Currency: ${currency}`],
+			name: "XrplIssuerGlobalFreezeError",
+			details: `Issuer ${issuer} has enabled Global Freeze, suspending all transfers of ${currency}.`,
+		});
+	}
+}
+
 export type XrplTrustlineErrorType = XrplTrustlineError & {
 	name: "XrplTrustlineError";
 };

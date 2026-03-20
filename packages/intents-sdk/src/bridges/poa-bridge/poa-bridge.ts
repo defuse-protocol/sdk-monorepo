@@ -16,6 +16,7 @@ import {
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
+	XrplIssuerGlobalFreezeError,
 	XrplTrustlineError,
 } from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
@@ -254,6 +255,15 @@ export class PoaBridge implements Bridge {
 					currency !== undefined && issuer !== undefined,
 					`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
 				);
+
+				const accountInfo = await xrpl.httpClient.getAccountInfo(
+					issuer,
+					xrplConfig,
+				);
+
+				if (accountInfo.account_flags.globalFreeze) {
+					throw new XrplIssuerGlobalFreezeError(issuer, currency);
+				}
 
 				const accountLines = await xrpl.httpClient.getAccountLines(
 					args.destinationAddress,
