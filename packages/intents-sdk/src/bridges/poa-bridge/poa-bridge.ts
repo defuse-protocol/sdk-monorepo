@@ -56,6 +56,12 @@ export class PoaBridge implements Bridge {
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
 
+	// TTL cache for XRPL account info with 10-second TTL
+	private xrplAccountInfoCache = new TTLCache<
+		string,
+		Awaited<ReturnType<typeof xrpl.httpClient.getAccountInfo>>
+	>({ ttl: 10 * 1000 });
+
 	constructor({
 		envConfig,
 		xrplRpcUrls,
@@ -256,10 +262,7 @@ export class PoaBridge implements Bridge {
 					`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
 				);
 
-				const accountInfo = await xrpl.httpClient.getAccountInfo(
-					issuer,
-					xrplConfig,
-				);
+				const accountInfo = await this.getCachedAccountInfo(issuer, xrplConfig);
 
 				if (accountInfo.account_flags.globalFreeze) {
 					throw new XrplIssuerGlobalFreezeError(issuer, currency);
@@ -448,6 +451,20 @@ export class PoaBridge implements Bridge {
 
 		this.supportedTokensCache.set(cacheKey, data);
 
+		return data;
+	}
+
+	private async getCachedAccountInfo(
+		account: string,
+		xrplConfig: Parameters<typeof xrpl.httpClient.getAccountInfo>[1],
+	): Promise<Awaited<ReturnType<typeof xrpl.httpClient.getAccountInfo>>> {
+		const cached = this.xrplAccountInfoCache.get(account);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const data = await xrpl.httpClient.getAccountInfo(account, xrplConfig);
+		this.xrplAccountInfoCache.set(account, data);
 		return data;
 	}
 }
