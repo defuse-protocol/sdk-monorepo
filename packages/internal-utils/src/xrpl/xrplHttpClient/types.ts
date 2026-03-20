@@ -49,6 +49,10 @@ export const TrustLineSchema = v.object({
 	limit_peer: v.string(),
 	/** Current balance held against this line. Positive = account holds value, negative = account owes value.  The balance field is a string-encoded decimal number in human-readable units (not drops/smallest units). */
 	balance: v.string(),
+	/** Whether this account has frozen the trust line (individual freeze by the destination). */
+	freeze: v.optional(v.boolean()),
+	/** Whether the peer (issuer) has frozen the trust line (individual freeze by the issuer). */
+	freeze_peer: v.optional(v.boolean()),
 });
 
 export const AccountLinesResponseSchema = v.object({

@@ -263,13 +263,12 @@ export class PoaBridge implements Bridge {
 					(line) => line.currency === currency && line.account === issuer,
 				);
 				if (match === undefined) {
-					throw new XrplTrustlineError(
-						args.destinationAddress,
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
 						currency,
 						issuer,
-						args.amount,
-						undefined,
-					);
+						amount: args.amount,
+					});
 				}
 				// match.limit is stringified human readable number , not in smallest units like wei
 				const limitBigInt = parseUnits(
@@ -277,13 +276,23 @@ export class PoaBridge implements Bridge {
 					tokenInfo.decimals,
 				);
 				if (limitBigInt < args.amount) {
-					throw new XrplTrustlineError(
-						args.destinationAddress,
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
 						currency,
 						issuer,
-						args.amount,
-						limitBigInt,
-					);
+						amount: args.amount,
+						trustlineLimit: limitBigInt,
+					});
+				}
+				if (match.freeze || match.freeze_peer) {
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
+						currency,
+						issuer,
+						amount: args.amount,
+						isFrozen: match.freeze,
+						isPeerFrozen: match.freeze_peer,
+					});
 				}
 			}
 		}
