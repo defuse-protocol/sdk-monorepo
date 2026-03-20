@@ -283,6 +283,16 @@ export class PoaBridge implements Bridge {
 						amount: args.amount,
 					});
 				}
+				if (match.freeze || match.freeze_peer) {
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
+						currency,
+						issuer,
+						amount: args.amount,
+						isFrozen: match.freeze,
+						isPeerFrozen: match.freeze_peer,
+					});
+				}
 				// match.limit is stringified human readable number , not in smallest units like wei
 				const limitBigInt = parseUnits(
 					Number(match.limit).toFixed(tokenInfo.decimals),
@@ -295,16 +305,6 @@ export class PoaBridge implements Bridge {
 						issuer,
 						amount: args.amount,
 						trustlineLimit: limitBigInt,
-					});
-				}
-				if (match.freeze || match.freeze_peer) {
-					throw new XrplTrustlineError({
-						destinationAddress: args.destinationAddress,
-						currency,
-						issuer,
-						amount: args.amount,
-						isFrozen: match.freeze,
-						isPeerFrozen: match.freeze_peer,
 					});
 				}
 			}
