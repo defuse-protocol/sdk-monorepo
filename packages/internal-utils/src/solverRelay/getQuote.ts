@@ -1,3 +1,4 @@
+import { assert } from "../utils/assert";
 import { QuoteError } from "./errors/quote";
 import type { quote } from "./solverRelayHttpClient";
 import type {
@@ -48,8 +49,13 @@ function handleQuoteResult(
 		}
 	}
 
-	const quoteKind =
-		quoteParams.exact_amount_in !== null ? "exact_in" : "exact_out";
+	const hasExactIn = quoteParams.exact_amount_in != null;
+	const hasExactOut = quoteParams.exact_amount_out != null;
+	assert(
+		hasExactIn !== hasExactOut,
+		"Invalid quoteParams: must have either exact_amount_in or exact_amount_out, not both.",
+	);
+	const quoteKind = hasExactIn ? "exact_in" : "exact_out";
 	const bestQuote = sortQuotes(validQuotes, quoteKind)[0];
 	if (bestQuote != null) {
 		return bestQuote;
