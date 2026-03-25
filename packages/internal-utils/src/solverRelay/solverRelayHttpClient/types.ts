@@ -39,17 +39,17 @@ type QuoteParamsBase = {
 	trusted_metadata?: unknown;
 };
 
-export type QuoteParamsExactIn = QuoteParamsBase & {
+type QuoteParamsExactIn = QuoteParamsBase & {
 	exact_amount_in: string;
 	exact_amount_out?: never;
 };
 
-export type QuoteParamsExactOut = QuoteParamsBase & {
+type QuoteParamsExactOut = QuoteParamsBase & {
 	exact_amount_out: string;
 	exact_amount_in?: never;
 };
 
-export type QuoteParams = QuoteParamsExactIn | QuoteParamsExactOut;
+type QuoteParams = QuoteParamsExactIn | QuoteParamsExactOut;
 
 export type QuoteRequest = JSONRPCRequest<"quote", QuoteParams>;
 
