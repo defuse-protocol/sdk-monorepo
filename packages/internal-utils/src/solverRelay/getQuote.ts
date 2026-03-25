@@ -53,7 +53,7 @@ function handleQuoteResult(
 	const hasExactOut = quoteParams.exact_amount_out != null;
 	assert(
 		hasExactIn !== hasExactOut,
-		"Invalid quoteParams: must have either exact_amount_in or exact_amount_out, not both.",
+		`Invalid quoteParams: exactly one of exact_amount_in or exact_amount_out must be set (got exact_amount_in=${quoteParams.exact_amount_in}, exact_amount_out=${quoteParams.exact_amount_out}).`,
 	);
 	const quoteKind = hasExactIn ? "exact_in" : "exact_out";
 	const bestQuote = sortQuotes(validQuotes, quoteKind)[0];
