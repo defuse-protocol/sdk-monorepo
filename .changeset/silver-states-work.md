@@ -3,4 +3,4 @@
 "@defuse-protocol/intents-sdk": patch
 ---
 
-Fix quote kind detection in get quote
+Fix wrong quote kind detection in get quote (EXACT_OUT quote treated as EXACT_IN)
