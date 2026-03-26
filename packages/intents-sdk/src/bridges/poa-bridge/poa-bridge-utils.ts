@@ -140,3 +140,15 @@ export function contractIdToCaip2(contractId: string): Chain {
 
 	throw new Error(`Unsupported POA Bridge contractId = ${contractId}`);
 }
+
+export function parseXrpToken(token: string): {
+	currency: string;
+	issuer: string;
+} {
+	const [currency, issuer] = token.split(".", 2);
+	assert(
+		currency !== undefined && issuer !== undefined,
+		`Invalid XRP token: ${token}`,
+	);
+	return { currency, issuer };
+}

@@ -39,6 +39,7 @@ import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
 	parseDefuseAssetIdentifier,
+	parseXrpToken,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import { Chains, type Chain } from "../../lib/caip2";
@@ -264,11 +265,7 @@ export class PoaBridge implements Bridge {
 				const { token } = parseDefuseAssetIdentifier(
 					tokenInfo.defuse_asset_identifier,
 				);
-				const [currency, issuer] = token.split(".", 2);
-				assert(
-					currency !== undefined && issuer !== undefined,
-					`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
-				);
+				const { currency, issuer } = parseXrpToken(token);
 				const accountInfo = await this.getCachedAccountInfo(issuer, xrplConfig);
 
 				if (accountInfo.account_flags.globalFreeze) {
