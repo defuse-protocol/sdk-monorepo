@@ -835,7 +835,7 @@ describe("PoaBridge", () => {
 						decimals: 0,
 						min_deposit_amount: "",
 						withdrawal_fee: "",
-						defuse_asset_identifier: "xrp:mainnet:test:test",
+						defuse_asset_identifier: "xrp:mainnet:test.test",
 					},
 				],
 			});
@@ -876,7 +876,7 @@ describe("PoaBridge", () => {
 						decimals: 15,
 						min_deposit_amount: "",
 						withdrawal_fee: "",
-						defuse_asset_identifier: "xrp:mainnet:currency:issuer",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
 					},
 				],
 			});
@@ -925,7 +925,7 @@ describe("PoaBridge", () => {
 						decimals: 15,
 						min_deposit_amount: "",
 						withdrawal_fee: "",
-						defuse_asset_identifier: "xrp:mainnet:currency:issuer",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
 					},
 				],
 			});
@@ -975,7 +975,7 @@ describe("PoaBridge", () => {
 						decimals: 15,
 						min_deposit_amount: "",
 						withdrawal_fee: "",
-						defuse_asset_identifier: "xrp:mainnet:currency:issuer",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
 					},
 				],
 			});
@@ -1026,7 +1026,7 @@ describe("PoaBridge", () => {
 						decimals: 0,
 						min_deposit_amount: "",
 						withdrawal_fee: "",
-						defuse_asset_identifier: "xrp:mainnet:test:test",
+						defuse_asset_identifier: "xrp:mainnet:test.test",
 					},
 				],
 			});
@@ -1061,7 +1061,7 @@ describe("PoaBridge", () => {
 						decimals: 0,
 						min_deposit_amount: "",
 						withdrawal_fee: "",
-						defuse_asset_identifier: "xrp:mainnet:currency:issuer",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
 					},
 				],
 			});
