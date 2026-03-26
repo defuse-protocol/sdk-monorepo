@@ -6,6 +6,7 @@ import {
 	xrpl,
 	RpcRequestError,
 	utils,
+	parseUnits,
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import {
@@ -42,7 +43,6 @@ import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
-import { parseUnits } from "viem/utils";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
@@ -113,7 +113,7 @@ export class PoaBridge implements Bridge {
 			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
 			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[assetInfo.contractId] !==
-				undefined &&
+			undefined &&
 			params.routeConfig === undefined
 		) {
 			return false;
