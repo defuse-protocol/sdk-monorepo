@@ -298,14 +298,8 @@ export class PoaBridge implements Bridge {
 					});
 				}
 				// match.limit and match.balance are stringified human-readable numbers, not in smallest units like wei
-				const limitBigInt = parseUnits(
-					Number(match.limit).toFixed(tokenInfo.decimals),
-					tokenInfo.decimals,
-				);
-				const balanceBigInt = parseUnits(
-					Number(match.balance).toFixed(tokenInfo.decimals),
-					tokenInfo.decimals,
-				);
+				const limitBigInt = parseUnits(match.limit, tokenInfo.decimals);
+				const balanceBigInt = parseUnits(match.balance, tokenInfo.decimals);
 				const headroom = limitBigInt - balanceBigInt;
 				if (headroom < args.amount) {
 					throw new XrplTrustlineError({
