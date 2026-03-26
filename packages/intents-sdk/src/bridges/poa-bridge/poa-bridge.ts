@@ -229,7 +229,7 @@ export class PoaBridge implements Bridge {
 			const xrplRpcUrl = this.xrplRpcUrls[0];
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
-			const isXrp = assetInfo.contractId === "xrp.omft.near";
+			const isNativeToken = assetInfo.contractId === "xrp.omft.near";
 			try {
 				const accountInfo = await xrpl.httpClient.getAccountInfo(
 					args.destinationAddress,
@@ -248,13 +248,13 @@ export class PoaBridge implements Bridge {
 			} catch (error) {
 				// do not throw error for a XRP withdrawal to a non funded account
 				if (
-					!(isXrp && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
+					!(isNativeToken && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
 				)
 					throw error;
 			}
 
 			// checks for tokens trustline
-			if (!isXrp) {
+			if (!isNativeToken) {
 				const [, , currency, issuer] =
 					tokenInfo.defuse_asset_identifier.split(":");
 				assert(
