@@ -114,7 +114,7 @@ export class PoaBridge implements Bridge {
 			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
 			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[assetInfo.contractId] !==
-			undefined &&
+				undefined &&
 			params.routeConfig === undefined
 		) {
 			return false;
@@ -249,7 +249,10 @@ export class PoaBridge implements Bridge {
 			} catch (error) {
 				// do not throw error for a XRP withdrawal to a non funded account
 				if (
-					!(isNativeToken && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
+					!(
+						isNativeToken &&
+						error instanceof xrpl.httpClient.XrplAccountNotFundedError
+					)
 				)
 					throw error;
 			}

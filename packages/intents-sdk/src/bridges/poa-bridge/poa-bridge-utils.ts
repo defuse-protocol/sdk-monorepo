@@ -106,18 +106,18 @@ const tokenPrefixMapping = {
 };
 
 /**
- * 
+ *
  * @param id - defuse asset identifier from PoA bridge
  * @deprecated PoA bridge should have it preparsed, should move to it as soon as possible.
- * @returns 
+ * @returns
  */
 export function parseDefuseAssetIdentifier(id: string): {
 	chain: string;
 	network: string;
 	token: string;
 } {
-	const [chain, network, token] = id.split(":", 3)
-	assert(chain && network && token, `Malformed defuse_asset_identifier: ${id}`)
+	const [chain, network, token] = id.split(":", 3);
+	assert(chain && network && token, `Malformed defuse_asset_identifier: ${id}`);
 	return { chain, network, token };
 }
 

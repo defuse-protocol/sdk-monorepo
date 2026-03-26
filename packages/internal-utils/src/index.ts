@@ -99,4 +99,4 @@ export {
 
 // Top-level utils
 export { assert } from "./utils/assert";
-export { parseUnits } from "./utils/parseUnits"
+export { parseUnits } from "./utils/parseUnits";
