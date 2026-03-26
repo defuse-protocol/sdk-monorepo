@@ -275,7 +275,7 @@ export class PoaBridge implements Bridge {
 				const match = accountLines.lines.find(
 					(line) => line.currency === currency && line.account === issuer,
 				);
-				if (match === undefined) {
+				if (match == null) {
 					throw new XrplTrustlineError({
 						destinationAddress: args.destinationAddress,
 						currency,
