@@ -297,18 +297,24 @@ export class PoaBridge implements Bridge {
 						isPeerFrozen: match.freeze_peer,
 					});
 				}
-				// match.limit is stringified human readable number , not in smallest units like wei
+				// match.limit and match.balance are stringified human-readable numbers, not in smallest units like wei
 				const limitBigInt = parseUnits(
 					Number(match.limit).toFixed(tokenInfo.decimals),
 					tokenInfo.decimals,
 				);
-				if (limitBigInt < args.amount) {
+				const balanceBigInt = parseUnits(
+					Number(match.balance).toFixed(tokenInfo.decimals),
+					tokenInfo.decimals,
+				);
+				const headroom = limitBigInt - balanceBigInt;
+				if (headroom < args.amount) {
 					throw new XrplTrustlineError({
 						destinationAddress: args.destinationAddress,
 						currency,
 						issuer,
 						amount: args.amount,
 						trustlineLimit: limitBigInt,
+						trustlineHeadroom: headroom,
 					});
 				}
 			}

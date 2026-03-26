@@ -62,6 +62,7 @@ export class XrplTrustlineError extends BaseError {
 	public issuer: string;
 	public amount: bigint;
 	public trustlineLimit?: bigint;
+	public trustlineHeadroom?: bigint;
 	public isFrozen?: boolean;
 	public isPeerFrozen?: boolean;
 
@@ -71,6 +72,7 @@ export class XrplTrustlineError extends BaseError {
 		issuer,
 		amount,
 		trustlineLimit,
+		trustlineHeadroom,
 		isFrozen,
 		isPeerFrozen,
 	}: {
@@ -79,6 +81,7 @@ export class XrplTrustlineError extends BaseError {
 		issuer: string;
 		amount: bigint;
 		trustlineLimit?: bigint;
+		trustlineHeadroom?: bigint;
 		isFrozen?: boolean;
 		isPeerFrozen?: boolean;
 	}) {
@@ -90,6 +93,9 @@ export class XrplTrustlineError extends BaseError {
 		];
 		if (trustlineLimit !== undefined) {
 			metaMessages.push(`Trustline limit: ${trustlineLimit}`);
+		}
+		if (trustlineHeadroom !== undefined) {
+			metaMessages.push(`Trustline headroom: ${trustlineHeadroom}`);
 		}
 		if (isFrozen) {
 			metaMessages.push("Frozen by destination: true");
@@ -103,8 +109,8 @@ export class XrplTrustlineError extends BaseError {
 			details = `Address ${destinationAddress} has frozen the trustline for ${currency}/${issuer}.`;
 		} else if (isPeerFrozen) {
 			details = `Issuer ${issuer} has frozen the trustline for ${currency} on address ${destinationAddress}.`;
-		} else if (trustlineLimit !== undefined) {
-			details = `Address ${destinationAddress} trustline limit ${trustlineLimit} for ${currency}/${issuer} is below the withdrawal amount ${amount}.`;
+		} else if (trustlineHeadroom !== undefined) {
+			details = `Address ${destinationAddress} trustline has ${trustlineHeadroom} remaining capacity for ${currency}/${issuer}, which is below the withdrawal amount ${amount}.`;
 		} else {
 			details = `Address ${destinationAddress} has no trustline for ${currency}/${issuer}.`;
 		}
@@ -112,7 +118,7 @@ export class XrplTrustlineError extends BaseError {
 		super(
 			isFrozen || isPeerFrozen
 				? "Trustline is frozen."
-				: "Trustline not found or limit is below the withdrawal amount.",
+				: "Trustline not found or remaining capacity is below the withdrawal amount.",
 			{ metaMessages, name: "XrplTrustlineError", details },
 		);
 		this.destinationAddress = destinationAddress;
@@ -120,6 +126,7 @@ export class XrplTrustlineError extends BaseError {
 		this.issuer = issuer;
 		this.amount = amount;
 		this.trustlineLimit = trustlineLimit;
+		this.trustlineHeadroom = trustlineHeadroom;
 		this.isFrozen = isFrozen;
 		this.isPeerFrozen = isPeerFrozen;
 	}
