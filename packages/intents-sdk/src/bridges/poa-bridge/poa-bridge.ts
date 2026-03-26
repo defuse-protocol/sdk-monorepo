@@ -254,7 +254,7 @@ export class PoaBridge implements Bridge {
 			}
 
 			// checks for tokens trustline
-			if (isXrp === false) {
+			if (!isXrp) {
 				const [, , currency, issuer] =
 					tokenInfo.defuse_asset_identifier.split(":");
 				assert(
