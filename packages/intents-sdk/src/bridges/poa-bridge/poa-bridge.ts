@@ -37,6 +37,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
+	parseDefuseAssetIdentifier,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import { Chains, type Chain } from "../../lib/caip2";
@@ -255,13 +256,14 @@ export class PoaBridge implements Bridge {
 
 			// checks for tokens trustline
 			if (!isNativeToken) {
-				const [, , currency, issuer] =
-					tokenInfo.defuse_asset_identifier.split(":");
+				const { token } = parseDefuseAssetIdentifier(
+					tokenInfo.defuse_asset_identifier,
+				);
+				const [currency, issuer] = token.split(".", 2);
 				assert(
 					currency !== undefined && issuer !== undefined,
 					`Malformed defuse_asset_identifier: ${tokenInfo.defuse_asset_identifier}`,
 				);
-
 				const accountInfo = await this.getCachedAccountInfo(issuer, xrplConfig);
 
 				if (accountInfo.account_flags.globalFreeze) {

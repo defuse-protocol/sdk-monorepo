@@ -1,4 +1,4 @@
-import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
+import { assert, type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT } from "./poa-constants";
@@ -104,6 +104,22 @@ const tokenPrefixMapping = {
 	aleo: Chains.Aleo,
 	dash: Chains.Dash,
 };
+
+/**
+ * 
+ * @param id - defuse asset identifier from PoA bridge
+ * @deprecated PoA bridge should have it preparsed, should move to it as soon as possible.
+ * @returns 
+ */
+export function parseDefuseAssetIdentifier(id: string): {
+	chain: string;
+	network: string;
+	token: string;
+} {
+	const [chain, network, token] = id.split(":", 3)
+	assert(chain && network && token, `Malformed defuse_asset_identifier: ${id}`)
+	return { chain, network, token };
+}
 
 export function contractIdToCaip2(contractId: string): Chain {
 	for (const [prefix, caip2] of Object.entries(tokenPrefixMapping)) {
