@@ -35,6 +35,7 @@ import type {
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
+	caip2ToTokenPrefix,
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
 	parseDefuseAssetIdentifier,
@@ -230,7 +231,8 @@ export class PoaBridge implements Bridge {
 			const xrplRpcUrl = this.xrplRpcUrls[0];
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
-			const isNativeToken = assetInfo.contractId === "xrp.omft.near";
+			const isNativeToken =
+				assetInfo.contractId === this.getNativeToken(Chains.XRPL);
 			try {
 				const accountInfo = await xrpl.httpClient.getAccountInfo(
 					args.destinationAddress,
@@ -471,6 +473,10 @@ export class PoaBridge implements Bridge {
 		const data = await xrpl.httpClient.getAccountInfo(account, xrplConfig);
 		this.xrplAccountInfoCache.set(account, data);
 		return data;
+	}
+
+	private getNativeToken(chain: Chain): string {
+		return `${caip2ToTokenPrefix(chain)}.${this.envConfig.poaTokenFactoryContractID}`;
 	}
 }
 

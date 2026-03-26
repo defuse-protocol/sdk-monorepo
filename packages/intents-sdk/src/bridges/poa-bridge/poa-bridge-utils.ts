@@ -121,6 +121,13 @@ export function parseDefuseAssetIdentifier(id: string): {
 	return { chain, network, token };
 }
 
+export function caip2ToTokenPrefix(caip2: Chain): string {
+	for (const [prefix, chain] of Object.entries(tokenPrefixMapping)) {
+		if (chain === caip2) return prefix;
+	}
+	throw new Error(`No token prefix found for chain = ${caip2}`);
+}
+
 export function contractIdToCaip2(contractId: string): Chain {
 	for (const [prefix, caip2] of Object.entries(tokenPrefixMapping)) {
 		if (
