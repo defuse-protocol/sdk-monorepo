@@ -74,13 +74,22 @@ describe("validateBtcAddress", () => {
 			// P2PKH (1...)
 			"18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+			"17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem",
 			// P2SH (3...)
 			"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 			// Bech32 SegWit v0 (bc1q...)
 			"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
 			"bc1q34aq5drpuwy3wgl9lhup9892qp6svr8ldzyy7c",
+			"bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+			"bc1q973xrrgje6etkkn9q9azzsgpxeddats8ckvp5s",
+			"BC1Q973XRRGJE6ETKKN9Q9AZZSGPXEDDATS8CKVP5S",
+			"BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
 			// Bech32m Taproot (bc1p...)
 			"bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297",
+			// Mainnet Bech32 P2TR
+			"bc1ptxs597p3fnpd8gwut5p467ulsydae3rp9z75hd99w8k3ljr9g9rqx6ynaw",
+			// Mainnet Bech32 P2WSH
+			"bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3",
 		];
 
 		for (const address of valid) {
@@ -88,18 +97,47 @@ describe("validateBtcAddress", () => {
 		}
 	});
 
-	it("rejects invalid addresses", () => {
+	it("rejects invalid or not supported addresses", () => {
 		const invalid = [
 			// Extra characters at start (not base58)
 			"018HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			// Invalid characters (0, O, I, l are not in base58)
 			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNON2",
+			// INVALID Bitcoin - last char changed (bad checksum)
+			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3",
+			// INVALID Bitcoin - middle char changed (bad checksum)
+			"1BvBMSEYstWetqTFn5Au4m4GFg7xJbNVN2",
 			// Invalid first character
 			"28HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			// Too short
 			"1BvBMSEYstWetqTFn5Au",
+			"x",
 			// Invalid bech32 prefix
 			"tc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+			// Testnet P2PKH
+			"mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn",
+			// Invalid P2PKH
+			"17VZNX1SN5NtKa8UFFxwQbFeFc3iqRYhem",
+			// Testnet P2SH
+			"2MzQwSSnBHWHqSAqtTVQ6v47XtaisrJa1Vc",
+			// invalid P2SH
+			"17VZNX1SN5NtKa8UFFxwQbFFFc3iqRYhem",
+			// Testnet Bech32 P2WPKH
+			"tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+			// Regtest Bech32 P2WPKH
+			"bcrt1q6z64a43mjgkcq0ul2znwneq3spghrlau9slefp",
+			// Testnet Bech32 P2TR
+			"tb1p84x2ryuyfevgnlpnxt9f39gm7r68gwtvllxqe5w2n5ru00s9aquslzggwq",
+			// Regtest Bech32 P2TR
+			"bcrt1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqc8gma6",
+			// Testnet Bech32 P2WSH
+			"tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
+			// Regtest Bech32 P2WSH
+			"bcrt1q5n2k3frgpxces3dsw4qfpqk4kksv0cz96pldxdwxrrw0d5ud5hcqzzx7zt",
+			// Signet Bech32 P2WKH
+			"bcrt1qc7evl8kdgp69h7qmm8cndaq07xkhj6ulyck0x5",
+			// Invalid Bech32
+			"bc1qw508d6qejxtdg4y5r3zrrvary0c5xw7kv8f3t4",
 		];
 
 		for (const address of invalid) {
