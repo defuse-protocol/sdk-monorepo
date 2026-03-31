@@ -92,13 +92,94 @@ function validateEthAddress(address: string) {
 	return isAddress(address, { strict: true });
 }
 
-function validateBtcAddress(address: string) {
-	return (
-		/^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address) ||
-		/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)
-	);
+/**
+ * Validates Bitcoin mainnet addresses. Supported types:
+ *
+ * Base58Check (legacy):
+ *   - P2PKH  starts with 1   version 0x00  e.g. 1A1zP1eP...
+ *   - P2SH   starts with 3   version 0x05  e.g. 3J98t1Wp...
+ *
+ * Bech32 (native SegWit v0):
+ *   - P2WPKH  bc1q  42 chars  20-byte witness program
+ *   - P2WSH   bc1q  62 chars  32-byte witness program
+ *
+ * Bech32m (native SegWit v1+):
+ *   - P2TR    bc1p  62 chars  32-byte witness program (Taproot)
+ */
+function validateBtcAddress(address: string): boolean {
+	if (address.toLowerCase().startsWith("bc1")) {
+		return validateBtcBech32Address(address);
+	}
+	return validateBtcBase58Address(address);
+}
+
+function validateBtcBase58Address(address: string): boolean {
+	let decoded: Uint8Array;
+	try {
+		decoded = base58.decode(address);
+	} catch {
+		return false;
+	}
+
+	// version (1) + hash160 (20) + checksum (4) = 25 bytes
+	if (decoded.length !== 25) return false;
+
+	const version = decoded[0];
+	// 0x00 = P2PKH mainnet, 0x05 = P2SH mainnet
+	if (version !== 0x00 && version !== 0x05) return false;
+
+	const payload = decoded.subarray(0, 21);
+	const checksum = decoded.subarray(21, 25);
+	const expectedChecksum = sha256(sha256(payload)).subarray(0, 4);
+
+	for (let i = 0; i < 4; i++) {
+		if (checksum[i] !== expectedChecksum[i]) return false;
+	}
+	return true;
+}
+
+function validateBtcBech32Address(address: string): boolean {
+	let decoded: { prefix: string; words: number[] };
+	let isBech32m = false;
+
+	try {
+		decoded = bech32.decode(address as `${string}1${string}`);
+	} catch {
+		try {
+			decoded = bech32m.decode(address as `${string}1${string}`);
+			isBech32m = true;
+		} catch {
+			return false;
+		}
+	}
+
+	if (decoded.prefix.toLowerCase() !== "bc") return false;
+
+	const { words } = decoded;
+	if (!words || words.length < 1) return false;
+
+	const witnessVersion = words[0];
+	if (witnessVersion === undefined || witnessVersion < 0 || witnessVersion > 16)
+		return false;
+
+	const program = bech32.fromWords(words.slice(1));
+	const progLen = program.length;
+
+	if (progLen < 2 || progLen > 40) return false;
+
+	// v0: Bech32 only — 20 bytes (P2WPKH) or 32 bytes (P2WSH)
+	if (witnessVersion === 0) {
+		if (isBech32m) return false;
+		return progLen === 20 || progLen === 32;
+	}
+
+	// v1: Bech32m only — 32 bytes (P2TR / Taproot)
+	if (witnessVersion === 1) {
+		if (!isBech32m) return false;
+		return progLen === 32;
+	}
+
+	return false;
 }
 
 /**
