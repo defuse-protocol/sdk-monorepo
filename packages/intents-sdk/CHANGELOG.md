@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.58.1
+
+### Patch Changes
+
+- a5c1b6b: Improve bitcoin address validation
+
 ## 0.58.0
 
 ### Minor Changes
