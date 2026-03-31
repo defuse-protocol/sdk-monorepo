@@ -107,19 +107,18 @@ function validateEthAddress(address: string) {
  *   - P2TR    bc1p  62 chars  32-byte witness program (Taproot)
  */
 function validateBtcAddress(address: string): boolean {
-	if (address.toLowerCase().startsWith("bc1")) {
-		return validateBtcBech32Address(address);
-	}
-	return validateBtcBase58Address(address);
-}
-
-function validateBtcBase58Address(address: string): boolean {
-	let decoded: Uint8Array;
 	try {
-		decoded = base58.decode(address);
+		if (address.toLowerCase().startsWith("bc1")) {
+			return validateBtcBech32Address(address);
+		}
+		return validateBtcBase58Address(address);
 	} catch {
 		return false;
 	}
+}
+
+function validateBtcBase58Address(address: string): boolean {
+	const decoded: Uint8Array = base58.decode(address);
 
 	// version (1) + hash160 (20) + checksum (4) = 25 bytes
 	if (decoded.length !== 25) return false;
