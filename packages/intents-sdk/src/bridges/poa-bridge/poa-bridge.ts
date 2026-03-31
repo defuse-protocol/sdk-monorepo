@@ -6,6 +6,7 @@ import {
 	xrpl,
 	RpcRequestError,
 	utils,
+	parseUnits,
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import {
@@ -16,6 +17,8 @@ import {
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
+	XrplIssuerGlobalFreezeError,
+	XrplTrustlineError,
 } from "./errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
@@ -32,8 +35,11 @@ import type {
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
+	caip2ToTokenPrefix,
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
+	parseDefuseAssetIdentifier,
+	parseXrpToken,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import { Chains, type Chain } from "../../lib/caip2";
@@ -52,6 +58,12 @@ export class PoaBridge implements Bridge {
 		string,
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
+
+	// TTL cache for XRPL account info with 10-second TTL
+	private xrplAccountInfoCache = new TTLCache<
+		string,
+		Awaited<ReturnType<typeof xrpl.httpClient.getAccountInfo>>
+	>({ ttl: 10 * 1000 });
 
 	constructor({
 		envConfig,
@@ -220,7 +232,8 @@ export class PoaBridge implements Bridge {
 			const xrplRpcUrl = this.xrplRpcUrls[0];
 			assert(xrplRpcUrl, "No XRPL RPC URL configured");
 			const xrplConfig = { baseURL: xrplRpcUrl, logger: args.logger };
-			const isXrp = assetInfo.contractId === "xrp.omft.near";
+			const isNativeToken =
+				assetInfo.contractId === this.getNativeToken(Chains.XRPL);
 			try {
 				const accountInfo = await xrpl.httpClient.getAccountInfo(
 					args.destinationAddress,
@@ -239,9 +252,65 @@ export class PoaBridge implements Bridge {
 			} catch (error) {
 				// do not throw error for a XRP withdrawal to a non funded account
 				if (
-					!(isXrp && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
+					!(
+						isNativeToken &&
+						error instanceof xrpl.httpClient.XrplAccountNotFundedError
+					)
 				)
 					throw error;
+			}
+
+			// checks for tokens trustline
+			if (!isNativeToken) {
+				const { token } = parseDefuseAssetIdentifier(
+					tokenInfo.defuse_asset_identifier,
+				);
+				const { currency, issuer } = parseXrpToken(token);
+				const accountInfo = await this.getCachedAccountInfo(issuer, xrplConfig);
+
+				if (accountInfo.account_flags.globalFreeze) {
+					throw new XrplIssuerGlobalFreezeError(issuer, currency);
+				}
+
+				const accountLines = await xrpl.httpClient.getAccountLines(
+					args.destinationAddress,
+					xrplConfig,
+				);
+				const match = accountLines.lines.find(
+					(line) => line.currency === currency && line.account === issuer,
+				);
+				if (match == null) {
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
+						currency,
+						issuer,
+						amount: args.amount,
+					});
+				}
+				if (match.freeze || match.freeze_peer) {
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
+						currency,
+						issuer,
+						amount: args.amount,
+						isFrozen: match.freeze,
+						isPeerFrozen: match.freeze_peer,
+					});
+				}
+				// match.limit and match.balance are stringified human-readable numbers, not in smallest units like wei
+				const limitBigInt = parseUnits(match.limit, tokenInfo.decimals);
+				const balanceBigInt = parseUnits(match.balance, tokenInfo.decimals);
+				const headroom = limitBigInt - balanceBigInt;
+				if (headroom < args.amount) {
+					throw new XrplTrustlineError({
+						destinationAddress: args.destinationAddress,
+						currency,
+						issuer,
+						amount: args.amount,
+						trustlineLimit: limitBigInt,
+						trustlineHeadroom: headroom,
+					});
+				}
 			}
 		}
 	}
@@ -387,6 +456,24 @@ export class PoaBridge implements Bridge {
 		this.supportedTokensCache.set(cacheKey, data);
 
 		return data;
+	}
+
+	private async getCachedAccountInfo(
+		account: string,
+		xrplConfig: Parameters<typeof xrpl.httpClient.getAccountInfo>[1],
+	): Promise<Awaited<ReturnType<typeof xrpl.httpClient.getAccountInfo>>> {
+		const cached = this.xrplAccountInfoCache.get(account);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const data = await xrpl.httpClient.getAccountInfo(account, xrplConfig);
+		this.xrplAccountInfoCache.set(account, data);
+		return data;
+	}
+
+	private getNativeToken(chain: Chain): string {
+		return `${caip2ToTokenPrefix(chain)}.${this.envConfig.poaTokenFactoryContractID}`;
 	}
 }
 

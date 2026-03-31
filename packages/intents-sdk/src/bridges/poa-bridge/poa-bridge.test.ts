@@ -22,6 +22,8 @@ import { configureXrplRpcUrls } from "../../lib/configure-rpc-config";
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
+	XrplIssuerGlobalFreezeError,
+	XrplTrustlineError,
 } from "./errors";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
@@ -367,6 +369,7 @@ describe("PoaBridge", () => {
 				account_flags: {
 					requireDestinationTag: false,
 					depositAuth: false,
+					globalFreeze: false,
 				},
 			});
 
@@ -615,6 +618,7 @@ describe("PoaBridge", () => {
 				account_flags: {
 					requireDestinationTag: true,
 					depositAuth: false,
+					globalFreeze: false,
 				},
 			});
 
@@ -653,6 +657,7 @@ describe("PoaBridge", () => {
 				account_flags: {
 					requireDestinationTag: false,
 					depositAuth: true,
+					globalFreeze: false,
 				},
 			});
 
@@ -772,6 +777,321 @@ describe("PoaBridge", () => {
 					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
 				}),
 			).rejects.toThrow(xrpl.httpClient.XrplApiError);
+		});
+
+		it("throws if defuse_asset_identifier is malformed", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: false,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow();
+		});
+
+		it("throws XrplTrustlineError if no trustline found", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:test.test",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValue({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: false,
+				},
+			});
+			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
+				lines: [],
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplTrustlineError);
+		});
+		it("throws XrplTrustlineError sent amount is bigger than the trustline limit", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 15,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValue({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: false,
+				},
+			});
+			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
+				lines: [
+					{
+						account: "issuer",
+						limit_peer: "1000",
+						limit: "1.1",
+						balance: "1",
+						currency: "currency",
+					},
+				],
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000000000000000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplTrustlineError);
+		});
+		it("throws XrplTrustlineError trustline is frozen", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 15,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValue({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: false,
+				},
+			});
+			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
+				lines: [
+					{
+						account: "issuer",
+						limit_peer: "1000",
+						limit: "1000000",
+						balance: "1",
+						currency: "currency",
+						freeze: true,
+					},
+				],
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplTrustlineError);
+		});
+		it("throws XrplTrustlineError trustline is peer frozen", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 15,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValue({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: false,
+				},
+			});
+
+			vi.mocked(xrpl.httpClient.getAccountLines).mockResolvedValueOnce({
+				lines: [
+					{
+						account: "issuer",
+						limit_peer: "1000",
+						limit: "1000000",
+						balance: "1",
+						currency: "currency",
+						freeze_peer: true,
+					},
+				],
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplTrustlineError);
+		});
+		it("throws when in attempt to transfer XRPL tokens to a non funded account", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:test.test",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockRejectedValueOnce(
+				new xrpl.httpClient.XrplAccountNotFundedError(
+					"rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				),
+			);
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(xrpl.httpClient.XrplAccountNotFundedError);
+		});
+		it("throws XrplIssuerGlobalFreezeError token issuer set a global freeze", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp-rlusd.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "xrp:mainnet:currency.issuer",
+					},
+				],
+			});
+			// mock for destination address
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: false,
+				},
+			});
+
+			// mock for issuer address
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: false,
+					depositAuth: false,
+					globalFreeze: true,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp-rlusd.omft.near",
+					amount: 5000n,
+					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
+				}),
+			).rejects.toThrow(XrplIssuerGlobalFreezeError);
 		});
 	});
 

@@ -1,4 +1,4 @@
-import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
+import { assert, type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT } from "./poa-constants";
@@ -105,6 +105,29 @@ const tokenPrefixMapping = {
 	dash: Chains.Dash,
 };
 
+/**
+ *
+ * @param id - defuse asset identifier from PoA bridge
+ * @deprecated PoA bridge should have it preparsed, should move to it as soon as possible.
+ * @returns
+ */
+export function parseDefuseAssetIdentifier(id: string): {
+	chain: string;
+	network: string;
+	token: string;
+} {
+	const [chain, network, token] = id.split(":", 3);
+	assert(chain && network && token, `Malformed defuse_asset_identifier: ${id}`);
+	return { chain, network, token };
+}
+
+export function caip2ToTokenPrefix(caip2: Chain): string {
+	for (const [prefix, chain] of Object.entries(tokenPrefixMapping)) {
+		if (chain === caip2) return prefix;
+	}
+	throw new Error(`No token prefix found for chain = ${caip2}`);
+}
+
 export function contractIdToCaip2(contractId: string): Chain {
 	for (const [prefix, caip2] of Object.entries(tokenPrefixMapping)) {
 		if (
@@ -116,4 +139,16 @@ export function contractIdToCaip2(contractId: string): Chain {
 	}
 
 	throw new Error(`Unsupported POA Bridge contractId = ${contractId}`);
+}
+
+export function parseXrpToken(token: string): {
+	currency: string;
+	issuer: string;
+} {
+	const [currency, issuer] = token.split(".", 2);
+	assert(
+		currency !== undefined && issuer !== undefined,
+		`Invalid XRP token: ${token}`,
+	);
+	return { currency, issuer };
 }
