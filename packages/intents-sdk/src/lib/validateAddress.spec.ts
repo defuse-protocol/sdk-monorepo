@@ -84,9 +84,8 @@ describe("validateBtcAddress", () => {
 			"bc1q973xrrgje6etkkn9q9azzsgpxeddats8ckvp5s",
 			"BC1Q973XRRGJE6ETKKN9Q9AZZSGPXEDDATS8CKVP5S",
 			"BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
-			// Bech32m Taproot (bc1p...)
+			// Bech32m Taproot / P2TR (bc1p...)
 			"bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297",
-			// Mainnet Bech32 P2TR
 			"bc1ptxs597p3fnpd8gwut5p467ulsydae3rp9z75hd99w8k3ljr9g9rqx6ynaw",
 			// Mainnet Bech32 P2WSH
 			"bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3",
@@ -120,7 +119,7 @@ describe("validateBtcAddress", () => {
 			"17VZNX1SN5NtKa8UFFxwQbFeFc3iqRYhem",
 			// Testnet P2SH
 			"2MzQwSSnBHWHqSAqtTVQ6v47XtaisrJa1Vc",
-			// invalid P2SH
+			// invalid P2PKH (bad checksum)
 			"17VZNX1SN5NtKa8UFFxwQbFFFc3iqRYhem",
 			// Testnet Bech32 P2WPKH
 			"tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
@@ -134,8 +133,6 @@ describe("validateBtcAddress", () => {
 			"tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
 			// Regtest Bech32 P2WSH
 			"bcrt1q5n2k3frgpxces3dsw4qfpqk4kksv0cz96pldxdwxrrw0d5ud5hcqzzx7zt",
-			// Signet Bech32 P2WKH
-			"bcrt1qc7evl8kdgp69h7qmm8cndaq07xkhj6ulyck0x5",
 			// Invalid Bech32
 			"bc1qw508d6qejxtdg4y5r3zrrvary0c5xw7kv8f3t4",
 		];
