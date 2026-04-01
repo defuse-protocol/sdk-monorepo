@@ -1,5 +1,13 @@
 # @defuse-protocol/intents-sdk
 
+## 0.58.2
+
+### Patch Changes
+
+- 22d37b4: Fix wrong quote kind detection in get quote (EXACT_OUT quote treated as EXACT_IN)
+- Updated dependencies [22d37b4]
+  - @defuse-protocol/internal-utils@0.30.1
+
 ## 0.58.1
 
 ### Patch Changes
