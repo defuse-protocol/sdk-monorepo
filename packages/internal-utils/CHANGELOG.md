@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.30.1
+
+### Patch Changes
+
+- 22d37b4: Fix wrong quote kind detection in get quote (EXACT_OUT quote treated as EXACT_IN)
+
 ## 0.30.0
 
 ### Minor Changes
