@@ -7,23 +7,29 @@ export type PendingDeposit =
 
 export type GetPendingDepositsErrorType = types.JSONRPCErrorType;
 
+const MAX_PAGES = 100;
+
 export async function getPendingDeposits(
 	accountId: IntentsUserId,
 ): Promise<PendingDeposit[]> {
 	const pendingDeposits: PendingDeposit[] = [];
 	const limit = 20;
 	let offset = 0;
-	let hasMore = true;
-	while (hasMore) {
+	let page = 0;
+
+	while (page < MAX_PAGES) {
 		const result = await getDepositStatus({
 			account_id: accountId,
 			limit,
 			offset,
 			status: "PENDING",
 		});
-		pendingDeposits.push(...result.deposits);
+		for (const deposit of result.deposits) {
+			pendingDeposits.push(deposit);
+		}
 		offset += result.deposits.length;
-		if (result.deposits.length < limit) hasMore = false;
+		page++;
+		if (offset >= result.total || result.deposits.length < limit) break;
 	}
 
 	return pendingDeposits;
