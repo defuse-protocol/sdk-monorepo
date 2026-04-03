@@ -9,6 +9,11 @@ export type GetPendingDepositsErrorType = types.JSONRPCErrorType;
 
 const MAX_PAGES = 100;
 
+/**
+ * @description Fetches all pending deposits for the given account, paginating through results (20 per page). Capped at 100 pages as a safeguard against infinite loops from a misbehaving API.
+ * @param accountId
+ * @returns
+ */
 export async function getPendingDeposits(
 	accountId: IntentsUserId,
 ): Promise<PendingDeposit[]> {
