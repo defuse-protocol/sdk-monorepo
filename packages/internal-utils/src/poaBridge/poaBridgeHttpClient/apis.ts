@@ -29,9 +29,7 @@ export async function getDepositAddress(
 	return result as any;
 }
 
-export async function getDepositStatus<
-	S extends types.DepositStatus["status"],
->(
+export async function getDepositStatus<S extends types.DepositStatus["status"]>(
 	params: types.GetDepositStatusParams<S>,
 	config: types.RequestConfig = {},
 ): Promise<types.GetDepositStatusResponse<S>["result"]> {

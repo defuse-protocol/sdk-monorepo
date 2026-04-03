@@ -13,7 +13,8 @@ export async function getPendingDeposits(
 	const pendingDeposits: PendingDeposit[] = [];
 	const limit = 20;
 	let offset = 0;
-	do {
+	let hasMore = true;
+	while (hasMore) {
 		const result = await getDepositStatus({
 			account_id: accountId,
 			limit,
@@ -22,8 +23,8 @@ export async function getPendingDeposits(
 		});
 		pendingDeposits.concat(result.deposits);
 		offset += result.deposits.length;
-		if (result.deposits.length < limit) break;
-	} while (true);
+		if (result.deposits.length < limit) hasMore = false;
+	}
 
 	return pendingDeposits;
 }

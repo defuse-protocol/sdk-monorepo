@@ -121,19 +121,19 @@ export type GetDepositStatusRequest = JSONRPCRequest<
 	}
 >;
 
-export type GetDepositStatusParams<
-	S extends DepositStatus["status"]
-> = Omit<GetDepositStatusRequest["params"][0], "status"> & { status?: S };
+export type GetDepositStatusParams<S extends DepositStatus["status"]> = Omit<
+	GetDepositStatusRequest["params"][0],
+	"status"
+> & { status?: S };
 
-export type GetDepositStatusResponse<
-	S extends DepositStatus["status"],
-> = JSONRPCResponse<{
-	deposits: (Omit<DepositStatus, "status"> & { status: S })[];
-	total: number;
-	limit: number;
-	offset: number;
-	error?: string;
-}>;
+export type GetDepositStatusResponse<S extends DepositStatus["status"]> =
+	JSONRPCResponse<{
+		deposits: (Omit<DepositStatus, "status"> & { status: S })[];
+		total: number;
+		limit: number;
+		offset: number;
+		error?: string;
+	}>;
 
 export type WithdrawalStatusRequest = JSONRPCRequest<
 	"withdrawal_status",
