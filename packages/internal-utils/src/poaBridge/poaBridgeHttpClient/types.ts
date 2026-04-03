@@ -123,9 +123,9 @@ export type GetDepositStatusRequest = JSONRPCRequest<
 export type GetDepositStatusResponse = JSONRPCResponse<{
 	deposits: DepositStatus[];
 	total?: number;
-  limit?: number;
-  offset?: number;
-  error?: string;
+	limit?: number;
+	offset?: number;
+	error?: string;
 }>;
 
 export type WithdrawalStatusRequest = JSONRPCRequest<
