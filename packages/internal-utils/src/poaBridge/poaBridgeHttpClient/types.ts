@@ -132,7 +132,6 @@ export type GetDepositStatusResponse<S extends DepositStatus["status"]> =
 		total: number;
 		limit: number;
 		offset: number;
-		error?: string;
 	}>;
 
 export type WithdrawalStatusRequest = JSONRPCRequest<
