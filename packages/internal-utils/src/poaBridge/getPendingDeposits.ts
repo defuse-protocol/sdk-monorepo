@@ -2,22 +2,14 @@ import type { IntentsUserId } from "../types/intentsUserId";
 import { getDepositStatus } from "./poaBridgeHttpClient";
 import type * as types from "./poaBridgeHttpClient";
 
-type DepositStatus =
-	types.GetDepositStatusResponse["result"]["deposits"][number];
-
-type PendingDeposit = DepositStatus & { status: "PENDING" };
-
-export type GetPendingDepositsOkType = PendingDeposit[];
+export type PendingDeposit =
+	types.GetDepositStatusResponse<"PENDING">["result"]["deposits"][number];
 
 export type GetPendingDepositsErrorType = types.JSONRPCErrorType;
 
-function isPending(deposit: DepositStatus): deposit is PendingDeposit {
-	return deposit.status === "PENDING";
-}
-
 export async function getPendingDeposits(
 	accountId: IntentsUserId,
-): Promise<GetPendingDepositsOkType> {
+): Promise<PendingDeposit[]> {
 	const pendingDeposits: PendingDeposit[] = [];
 	const limit = 20;
 	let offset = 0;
@@ -26,10 +18,9 @@ export async function getPendingDeposits(
 			account_id: accountId,
 			limit,
 			offset,
+			status: "PENDING",
 		});
-		result.deposits.forEach((deposit) => {
-			if (isPending(deposit)) pendingDeposits.push(deposit);
-		});
+		pendingDeposits.concat(result.deposits);
 		offset += result.deposits.length;
 		if (result.deposits.length < limit) break;
 	} while (true);
