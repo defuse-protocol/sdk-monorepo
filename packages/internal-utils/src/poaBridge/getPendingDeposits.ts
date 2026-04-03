@@ -21,7 +21,7 @@ export async function getPendingDeposits(
 			offset,
 			status: "PENDING",
 		});
-		pendingDeposits.concat(result.deposits);
+		pendingDeposits.push(...result.deposits);
 		offset += result.deposits.length;
 		if (result.deposits.length < limit) hasMore = false;
 	}
