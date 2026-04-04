@@ -107,7 +107,7 @@ export type DepositStatus = {
 	amount: number;
 	account_id: string;
 	address: string;
-	status: "COMPLETED" | "PENDING" | "FAILED";
+	status: "COMPLETED" | "PENDING" | "FAILED" | "CREDITED";
 };
 
 export type GetDepositStatusRequest = JSONRPCRequest<
@@ -115,12 +115,25 @@ export type GetDepositStatusRequest = JSONRPCRequest<
 	{
 		account_id: string;
 		chain?: string;
+		status?: DepositStatus["status"];
+		limit?: number;
+		offset?: number;
 	}
 >;
 
-export type GetDepositStatusResponse = JSONRPCResponse<{
-	deposits: DepositStatus[];
-}>;
+export type GetDepositStatusParams<S extends DepositStatus["status"]> = Omit<
+	GetDepositStatusRequest["params"][0],
+	"status"
+> &
+	(DepositStatus["status"] extends S ? { status?: S } : { status: S });
+
+export type GetDepositStatusResponse<S extends DepositStatus["status"]> =
+	JSONRPCResponse<{
+		deposits: (Omit<DepositStatus, "status"> & { status: S })[];
+		total: number;
+		limit: number;
+		offset: number;
+	}>;
 
 export type WithdrawalStatusRequest = JSONRPCRequest<
 	"withdrawal_status",
