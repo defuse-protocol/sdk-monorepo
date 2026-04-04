@@ -125,7 +125,7 @@ export type GetDepositStatusParams<S extends DepositStatus["status"]> = Omit<
 	GetDepositStatusRequest["params"][0],
 	"status"
 > &
-	([DepositStatus["status"]] extends [S] ? { status?: S } : { status: S });
+	(DepositStatus["status"] extends S ? { status?: S } : { status: S });
 
 export type GetDepositStatusResponse<S extends DepositStatus["status"]> =
 	JSONRPCResponse<{
