@@ -29,10 +29,10 @@ export async function getDepositAddress(
 	return result as any;
 }
 
-export async function getDepositStatus(
-	params: types.GetDepositStatusRequest["params"][0],
+export async function getDepositStatus<S extends types.DepositStatus["status"]>(
+	params: types.GetDepositStatusParams<S>,
 	config: types.RequestConfig = {},
-): Promise<types.GetDepositStatusResponse["result"]> {
+): Promise<types.GetDepositStatusResponse<S>["result"]> {
 	const result = await jsonRPCRequest<types.GetDepositStatusRequest>(
 		"recent_deposits",
 		params,
