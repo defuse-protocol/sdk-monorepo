@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.31.0
+
+### Minor Changes
+
+- bbff053: Add pagination and status filtering for recent_deposits method in poa and adjust get recent deposits function to support pagination
+
 ## 0.30.1
 
 ### Patch Changes
