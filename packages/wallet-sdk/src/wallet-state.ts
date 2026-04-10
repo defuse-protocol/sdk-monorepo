@@ -67,14 +67,15 @@ export class StateInit {
 			code = { account_id: this.code.account_id };
 		}
 		return {
-			version: "v1",
-			code,
-			data: Object.fromEntries(
-				this.sortedEntries(this.data).map(([k, v]) => [
-					base64.encode(k),
-					base64.encode(v),
-				]),
-			),
+			"V1": {
+				code,
+				data: Object.fromEntries(
+					this.sortedEntries(this.data).map(([k, v]) => [
+						base64.encode(k),
+						base64.encode(v),
+					]),
+				),
+			}
 		};
 	}
 
