@@ -1321,5 +1321,93 @@ describe("OmniBridge", () => {
 				}),
 			).rejects.toThrow(IntentsNearOmniAvailableBalanceTooLowError);
 		});
+
+		it("accepts zero fee for subsidized tokens", async () => {
+			const highBalance = (
+				MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n
+			).toString();
+
+			vi.spyOn(
+				omniBridgeUtils,
+				"getAccountOmniStorageBalance",
+			).mockResolvedValue({
+				total: highBalance,
+				available: highBalance,
+			});
+
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"eth:0x0000000000000000000000000000000000000000",
+			);
+
+			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
+				decimals: 6,
+				origin_decimals: 6,
+			});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:lsd-usdt.rhealab.near",
+					amount: 1_000_000n,
+					destinationAddress: zeroAddress,
+					feeEstimation: {
+						amount: 0n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								relayerFee: 0n,
+								storageDepositFee: 0n,
+							},
+						},
+					},
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).resolves.toBeUndefined();
+		});
+	});
+
+	describe("estimateWithdrawalFee()", () => {
+		it("returns zero relayer fee for subsidized tokens even when API returns non-zero", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 50_000_000_000n,
+				usd_fee: 0.5,
+				insufficient_utxo: false,
+			});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("lsd-usdt.rhealab.near", [0n, 0n]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:lsd-usdt.rhealab.near",
+					destinationAddress: zeroAddress,
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+					amount: 1_000_000n,
+				},
+			});
+
+			expect(result.amount).toBe(0n);
+			expect(result.quote).toBeNull();
+
+			const omniFees = result.underlyingFees[RouteEnum.OmniBridge];
+			expect(omniFees?.relayerFee).toBe(0n);
+		});
 	});
 });
