@@ -1,5 +1,15 @@
 # @defuse-protocol/intents-sdk
 
+## 0.59.0
+
+### Minor Changes
+
+- 24bd626: Make `lsd-usdt.rhealab.near` token free to bridge.
+
+### Patch Changes
+
+- 24bd626: Increase error tolerance during withdrawal status polling to 5 consecutive errors.
+
 ## 0.58.3
 
 ### Patch Changes
