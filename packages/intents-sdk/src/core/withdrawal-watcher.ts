@@ -15,7 +15,7 @@ import type {
 } from "../shared-types";
 import { getWithdrawalStatsForChain } from "../constants/withdrawal-timing";
 
-const MAX_CONSECUTIVE_ERRORS = 3;
+const MAX_CONSECUTIVE_ERRORS = 5;
 
 export async function watchWithdrawal(args: {
 	bridge: Bridge;

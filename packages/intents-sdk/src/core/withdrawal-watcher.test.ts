@@ -111,19 +111,21 @@ describe("watchWithdrawal", () => {
 		expect(logger.warn).toHaveBeenCalledTimes(2);
 	});
 
-	it("throws WithdrawalWatchError after 3 consecutive errors", async () => {
+	it("throws WithdrawalWatchError after 5 consecutive errors", async () => {
 		const bridge = createMockBridge();
 		vi.spyOn(bridge, "describeWithdrawal")
 			.mockRejectedValueOnce(new Error("Error 1"))
 			.mockRejectedValueOnce(new Error("Error 2"))
-			.mockRejectedValueOnce(new Error("Error 3"));
+			.mockRejectedValueOnce(new Error("Error 3"))
+			.mockRejectedValueOnce(new Error("Error 4"))
+			.mockRejectedValueOnce(new Error("Error 5"));
 
 		const wid = createWithdrawalIdentifier();
 
 		await expect(watchWithdrawal({ bridge, wid })).rejects.toThrow(
 			WithdrawalWatchError,
 		);
-		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(3);
+		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(5);
 	});
 
 	it("resets error counter after successful status check", async () => {
