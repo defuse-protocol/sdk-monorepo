@@ -47,6 +47,7 @@ import {
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
+	FEE_SUBSIDIZED_TOKENS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
@@ -377,10 +378,13 @@ export class OmniBridge implements Bridge {
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
 	}): Promise<void> {
-		assert(
-			args.feeEstimation.amount > 0n,
-			`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
-		);
+		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
+		if (!isFeeSubsidized) {
+			assert(
+				args.feeEstimation.amount > 0n,
+				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
+			);
+		}
 
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
 
@@ -450,7 +454,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const utxoChainWithdrawal = isUtxoChain(omniChainKind);
-		if (utxoChainWithdrawal === false) {
+		if (!utxoChainWithdrawal && !isFeeSubsidized) {
 			const relayerFee = getUnderlyingFee(
 				args.feeEstimation,
 				RouteEnum.OmniBridge,
@@ -575,6 +579,12 @@ export class OmniBridge implements Bridge {
 				fee.native_token_fee,
 			);
 		}
+
+		// Omni API returns non-zero fee for subsidized tokens, so we enforce 0 fee for specific tokens.
+		if (FEE_SUBSIDIZED_TOKENS.includes(args.withdrawalParams.assetId)) {
+			fee.native_token_fee = 0n;
+		}
+
 		const underlyingFees: RouteFeeStructures[RouteEnum["OmniBridge"]] = {
 			relayerFee: fee.native_token_fee,
 			storageDepositFee: 0n,
