@@ -264,6 +264,7 @@ describe.concurrent("hot_bridge", () => {
 	describe.concurrent("stellar", () => {
 		beforeEach(() => {
 			vi.resetModules();
+			vi.resetAllMocks();
 		});
 
 		const stellarAddress =
