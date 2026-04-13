@@ -254,6 +254,7 @@ export class HotBridge implements Bridge {
 	 * Hot bridge validates trustlines for Stellar addresses.
 	 * For Stellar chains, checks if the destination address has the required trustline.
 	 * @throws {TrustlineNotFoundError} If Stellar destination address lacks required trustline
+	 * @throws {StellarAccountNotActivatedError} If Stellar destination account is not activated
 	 */
 	async validateWithdrawal(args: {
 		assetId: string;

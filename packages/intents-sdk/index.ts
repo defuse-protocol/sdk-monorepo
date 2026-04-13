@@ -99,6 +99,8 @@ export {
 	type MinWithdrawalAmountErrorType,
 	TrustlineNotFoundError,
 	type TrustlineNotFoundErrorType,
+	StellarAccountNotActivatedError,
+	type StellarAccountNotActivatedErrorType,
 	UnsupportedDestinationMemoError,
 	type UnsupportedDestinationMemoErrorType,
 	UnsupportedAssetIdError,
