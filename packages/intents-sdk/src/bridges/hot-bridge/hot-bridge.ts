@@ -10,7 +10,6 @@ import { LRUCache } from "lru-cache";
 import * as v from "valibot";
 import {
 	InvalidDestinationAddressForWithdrawalError,
-	StellarAccountNotActivatedError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
 	UnsupportedDestinationMemoError,
@@ -34,6 +33,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalNotFoundError,
+	StellarAccountNotActivatedError,
 } from "./error";
 import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
@@ -296,7 +296,6 @@ export class HotBridge implements Bridge {
 					throw new StellarAccountNotActivatedError(
 						args.destinationAddress,
 						args.assetId,
-						assetInfo.blockchain,
 					);
 				}
 				throw error;

@@ -84,30 +84,6 @@ export class TrustlineNotFoundError extends BaseError {
 	}
 }
 
-export type StellarAccountNotActivatedErrorType =
-	StellarAccountNotActivatedError & {
-		name: "StellarAccountNotActivatedError";
-	};
-
-export class StellarAccountNotActivatedError extends BaseError {
-	constructor(
-		public destinationAddress: string,
-		public assetId: string,
-		public blockchain: string,
-	) {
-		super("Destination Stellar account is not activated.", {
-			details:
-				"The destination address must be activated (funded with XLM) before receiving this asset.",
-			metaMessages: [
-				`Blockchain: ${blockchain}`,
-				`Asset ID: ${assetId}`,
-				`Destination address: ${destinationAddress}`,
-			],
-			name: "StellarAccountNotActivatedError",
-		});
-	}
-}
-
 export type UnsupportedAssetIdErrorType = UnsupportedAssetIdError & {
 	name: "UnsupportedAssetIdError";
 };

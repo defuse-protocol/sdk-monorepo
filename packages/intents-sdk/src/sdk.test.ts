@@ -5,7 +5,6 @@ import { OMNI_BRIDGE_CONTRACT } from "./bridges/omni-bridge/omni-bridge-constant
 import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
-	StellarAccountNotActivatedError,
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
@@ -263,6 +262,10 @@ describe.concurrent("hot_bridge", () => {
 	});
 
 	describe.concurrent("stellar", () => {
+		beforeEach(() => {
+			vi.resetModules();
+		});
+
 		const stellarAddress =
 			"GAUA7XL5K54CC2DDGP77FJ2YBHRJLT36CPZDXWPM6MP7MANOGG77PNJU";
 		const stellarAddressWithoutTrustline =
@@ -338,7 +341,27 @@ describe.concurrent("hot_bridge", () => {
 		});
 
 		it("estimateWithdrawalFee(): rejects when account not activated", async () => {
+			using solverRelay = await useMockedSolverRelay();
+
+			// Need to dynamically import because of runtime mocking above
+			const { IntentsSDK } = await import("./sdk");
 			const sdk = new IntentsSDK({ referral: "", intentSigner });
+			const { StellarAccountNotActivatedError } = await import(
+				"./bridges/hot-bridge/error"
+			);
+
+			const quote = {
+				amount_in: "1",
+				amount_out: "1",
+				defuse_asset_identifier_in:
+					"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+				defuse_asset_identifier_out:
+					"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+				expiration_time: "",
+				quote_hash: "",
+			};
+
+			solverRelay.getQuote.mockResolvedValue(quote);
 
 			const fee = sdk.estimateWithdrawalFee({
 				withdrawalParams: {
