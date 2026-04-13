@@ -10,6 +10,7 @@ import { LRUCache } from "lru-cache";
 import * as v from "valibot";
 import {
 	InvalidDestinationAddressForWithdrawalError,
+	StellarAccountNotActivatedError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
 	UnsupportedDestinationMemoError,
@@ -47,6 +48,7 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
 import { bridgeIndexer } from "@defuse-protocol/internal-utils";
+import { NotFoundError } from "@stellar/stellar-sdk";
 
 const HotApiWithdrawalSchema = v.object({
 	hash: v.nullable(v.string()),
@@ -273,20 +275,33 @@ export class HotBridge implements Bridge {
 		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
-			const token = "native" in assetInfo ? "native" : assetInfo.address;
-
-			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
-				args.destinationAddress,
-				token,
-			);
-
-			if (!hasTrustline) {
-				throw new TrustlineNotFoundError(
+			const isXlm = "native" in assetInfo;
+			const token = isXlm ? "native" : assetInfo.address;
+			try {
+				const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
 					args.destinationAddress,
-					args.assetId,
-					assetInfo.blockchain,
 					token,
 				);
+
+				if (!hasTrustline) {
+					throw new TrustlineNotFoundError(
+						args.destinationAddress,
+						args.assetId,
+						assetInfo.blockchain,
+						token,
+					);
+				}
+			} catch (error) {
+				if (error instanceof NotFoundError) {
+					// Allow sending XLM to activate an account
+					if (isXlm) return;
+					throw new StellarAccountNotActivatedError(
+						args.destinationAddress,
+						args.assetId,
+						assetInfo.blockchain,
+					);
+				}
+				throw error;
 			}
 		}
 	}

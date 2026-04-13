@@ -5,6 +5,7 @@ import { OMNI_BRIDGE_CONTRACT } from "./bridges/omni-bridge/omni-bridge-constant
 import {
 	FeeExceedsAmountError,
 	MinWithdrawalAmountError,
+	StellarAccountNotActivatedError,
 	TrustlineNotFoundError,
 	UnsupportedDestinationMemoError,
 } from "./classes/errors";
@@ -266,6 +267,8 @@ describe.concurrent("hot_bridge", () => {
 			"GAUA7XL5K54CC2DDGP77FJ2YBHRJLT36CPZDXWPM6MP7MANOGG77PNJU";
 		const stellarAddressWithoutTrustline =
 			"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU";
+		const nonActivatedStellarAddress =
+			"GA3RIDQDYSZUVKWX4RGD7RI36YASAHZ7W6W7EHW2F73EQYDF6CLPFGUO";
 
 		// todo: unskip when HOT fixes the issue
 		it.skip("estimateWithdrawalFee(): returns fee", async () => {
@@ -332,6 +335,47 @@ describe.concurrent("hot_bridge", () => {
 			});
 
 			await expect(fee).rejects.toThrow(TrustlineNotFoundError);
+		});
+
+		it("estimateWithdrawalFee(): rejects when account not activated", async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+					amount: 1000000n,
+					destinationAddress: nonActivatedStellarAddress,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).rejects.toThrow(StellarAccountNotActivatedError);
+		});
+
+		it("estimateWithdrawalFee(): allows sending XLM when account not activated", async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1000000n,
+					destinationAddress: nonActivatedStellarAddress,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: expect.any(BigInt),
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						blockNumber: expect.any(BigInt),
+						relayerFee: expect.any(BigInt),
+					},
+				},
+			});
 		});
 
 		it("createWithdrawalIntents(): returns intents array", async () => {

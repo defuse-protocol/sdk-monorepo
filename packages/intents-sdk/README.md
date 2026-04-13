@@ -922,15 +922,38 @@ try {
 Note: Other routes (Near Withdrawal, Virtual Chain, Internal Transfer) don't have minimum withdrawal restrictions, so
 validation passes through for those routes.
 
-#### Hot Bridge Stellar Trustline Validation
+#### Hot Bridge Stellar Account Validation
 
-Hot Bridge validates that destination addresses have the required trustlines when withdrawing to Stellar blockchain.
-This prevents failed transactions due to missing trustlines.
+Hot Bridge validates two Stellar-specific requirements when withdrawing to Stellar blockchain.
+
+**Account activation check** (`StellarAccountNotActivatedError`):
 
 ```typescript
-import {TrustlineNotFoundError} from '@defuse-protocol/intents-sdk';
+import { StellarAccountNotActivatedError } from '@defuse-protocol/intents-sdk';
 
-// Validation happens automatically during withdrawal processing:
+try {
+    const result = await sdk.processWithdrawal({
+        withdrawalParams: {
+            assetId: 'nep245:v2_1.omni.hot.tg:stellar_1_USD_GBDMM6LG7YX7YGF6JFAEWX3KFUSBXGAEPZ2IHDLWH:1100', // Stellar USD token
+            amount: BigInt('1000000'), // 1 USD (in smallest units)
+            destinationAddress: 'GCKFBEIYTKP6RYVDYGMVVMJ6J6XKCRZL74JPWTFGD2NQNMPBQC2LGTVZ', // Stellar address
+            feeInclusive: false
+        }
+    });
+} catch (error) {
+    if (error instanceof StellarAccountNotActivatedError) {
+        console.log(`Stellar account not activated: ${error.destinationAddress}`);
+        console.log('The destination account must be funded with XLM before receiving this asset');
+        // User needs to activate (fund) the Stellar account with XLM first
+    }
+}
+```
+
+**Trustline check** (`TrustlineNotFoundError`):
+
+```typescript
+import { TrustlineNotFoundError } from '@defuse-protocol/intents-sdk';
+
 try {
     const result = await sdk.processWithdrawal({
         withdrawalParams: {
@@ -950,6 +973,10 @@ try {
 }
 ```
 
+**What is a Stellar account activation?**
+On Stellar, an account must be funded with a minimum XLM balance before it can exist on the ledger and hold any assets.
+A non-activated (unfunded) account cannot receive non-native tokens.
+
 **What is a trustline?**
 On Stellar, accounts must explicitly create "trustlines" to hold non-native assets. Before receiving any token (except
 XLM), the destination address must:
@@ -959,12 +986,12 @@ XLM), the destination address must:
 
 **Why this validation matters:**
 
-- Prevents failed withdrawals due to missing trustlines
+- Prevents failed withdrawals due to non-activated accounts or missing trustlines
 - Saves gas fees and reduces user frustration
 - Provides clear error messages for troubleshooting
 
-Note: This validation only applies to Stellar destinations via Hot Bridge. Other blockchains and routes don't require
-trustline validation.
+Note: These validations only apply to Stellar destinations via Hot Bridge. Other blockchains and routes don't require
+this validation.
 
 #### Omni Bridge Withdrawal Validation
 
