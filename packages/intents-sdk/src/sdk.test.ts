@@ -340,7 +340,7 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).rejects.toThrow(TrustlineNotFoundError);
 		});
 
-		it("estimateWithdrawalFee(): rejects when account not activated", async () => {
+		it("estimateWithdrawalFee(): rejects for token withdrawal to not activated account", async () => {
 			using solverRelay = await useMockedSolverRelay();
 
 			// Need to dynamically import because of runtime mocking above
@@ -374,6 +374,31 @@ describe.concurrent("hot_bridge", () => {
 			});
 
 			await expect(fee).rejects.toThrow(StellarAccountNotActivatedError);
+		});
+
+		it("estimateWithdrawalFee(): allows XLM withdrawal to not activated account", async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1000000n,
+					destinationAddress: nonActivatedStellarAddress,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: expect.any(BigInt),
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						blockNumber: expect.any(BigInt),
+						relayerFee: expect.any(BigInt),
+					},
+				},
+			});
 		});
 
 		it("createWithdrawalIntents(): returns intents array", async () => {

@@ -275,30 +275,30 @@ export class HotBridge implements Bridge {
 		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
-			const accountActivated = await this.hotSdk.stellar.isAccountExists(
-				args.destinationAddress,
-			);
-			if (!accountActivated) {
+			const isXlm = "native" in assetInfo;
+			if (
+				!isXlm &&
+				!(await this.hotSdk.stellar.isAccountExists(args.destinationAddress))
+			) {
 				throw new StellarAccountNotActivatedError(
 					args.destinationAddress,
 					args.assetId,
 				);
 			}
 
-			const token = "native" in assetInfo ? "native" : assetInfo.address;
-			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
-				args.destinationAddress,
-				token,
-			);
-
-			if (!hasTrustline) {
+			if (
+				!isXlm &&
+				!(await this.hotSdk.stellar.isTrustlineExists(
+					args.destinationAddress,
+					assetInfo.address,
+				))
+			)
 				throw new TrustlineNotFoundError(
 					args.destinationAddress,
 					args.assetId,
 					assetInfo.blockchain,
-					token,
+					assetInfo.address,
 				);
-			}
 		}
 	}
 
