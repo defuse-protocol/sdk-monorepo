@@ -1,5 +1,11 @@
 # @defuse-protocol/contract-types
 
+## 0.6.3
+
+### Patch Changes
+
+- aabbd1a: Allow extra fields in external wallet input schemas (TON, NEP-413, EVM) during runtime validation. Wallets can include fields outside the Defuse schema without failing validation.
+
 ## 0.6.2
 
 ### Patch Changes
