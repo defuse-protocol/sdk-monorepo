@@ -48,7 +48,6 @@ import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
 import isHex from "../../lib/hex";
 import { bridgeIndexer } from "@defuse-protocol/internal-utils";
-import { NotFoundError } from "@stellar/stellar-sdk";
 
 const HotApiWithdrawalSchema = v.object({
 	hash: v.nullable(v.string()),
@@ -276,29 +275,29 @@ export class HotBridge implements Bridge {
 		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
-			try {
-				const token = "native" in assetInfo ? "native" : assetInfo.address;
-				const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
+			const accountActivated = await this.hotSdk.stellar.isAccountExists(
+				args.destinationAddress,
+			);
+			if (!accountActivated) {
+				throw new StellarAccountNotActivatedError(
 					args.destinationAddress,
+					args.assetId,
+				);
+			}
+
+			const token = "native" in assetInfo ? "native" : assetInfo.address;
+			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
+				args.destinationAddress,
+				token,
+			);
+
+			if (!hasTrustline) {
+				throw new TrustlineNotFoundError(
+					args.destinationAddress,
+					args.assetId,
+					assetInfo.blockchain,
 					token,
 				);
-
-				if (!hasTrustline) {
-					throw new TrustlineNotFoundError(
-						args.destinationAddress,
-						args.assetId,
-						assetInfo.blockchain,
-						token,
-					);
-				}
-			} catch (error) {
-				if (error instanceof NotFoundError) {
-					throw new StellarAccountNotActivatedError(
-						args.destinationAddress,
-						args.assetId,
-					);
-				}
-				throw error;
 			}
 		}
 	}
