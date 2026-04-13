@@ -658,7 +658,6 @@ export const DefusePayloadFor_DefuseIntentsSchema: JSONSchemaType<Types.DefusePa
 				type: "string",
 			},
 		},
-		additionalProperties: false,
 	};
 
 export const Erc191PayloadSchema: JSONSchemaType<Types.Erc191Payload> = {
@@ -1821,7 +1820,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 										nullable: true,
 									},
 								},
-								additionalProperties: false,
 							},
 						},
 						nonce: { type: "string", description: "Encoding: base64" },
@@ -2348,7 +2346,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "string",
 							},
 						},
-						additionalProperties: false,
 					},
 				},
 				signature: {
@@ -2866,7 +2863,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "string",
 							},
 						},
-						additionalProperties: false,
 					},
 				},
 				signature: {
@@ -3382,7 +3378,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "string",
 							},
 						},
-						additionalProperties: false,
 					},
 				},
 				public_key: {
@@ -3917,7 +3912,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "string",
 							},
 						},
-						additionalProperties: false,
 					},
 				},
 				standard: { type: "string", enum: ["webauthn"] },
@@ -4454,7 +4448,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "string",
 							},
 						},
-						additionalProperties: false,
 					},
 				},
 				standard: { type: "string", enum: ["webauthn"] },
@@ -5053,12 +5046,10 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 												type: "string",
 											},
 										},
-										additionalProperties: false,
 									},
 								},
 								type: { type: "string", enum: ["text"] },
 							},
-							additionalProperties: false,
 						},
 					],
 				},
@@ -5587,7 +5578,6 @@ const _MultiPayloadSchemaCheck: JSONSchemaType<Types.MultiPayload> = {
 								type: "string",
 							},
 						},
-						additionalProperties: false,
 					},
 				},
 				public_key: {
@@ -6493,7 +6483,6 @@ export const TonConnectPayloadSchemaSchema: JSONSchemaType<Types.TonConnectPaylo
 					text: { type: "string" },
 					type: { type: "string", enum: ["text"] },
 				},
-				additionalProperties: false,
 			},
 		],
 	};
@@ -7205,7 +7194,6 @@ export const MultiPayloadTonConnectSchema: JSONSchemaType<Types.MultiPayloadTonC
 							text: { type: "string" },
 							type: { type: "string", enum: ["text"] },
 						},
-						additionalProperties: false,
 					},
 				],
 			},
@@ -7299,7 +7287,6 @@ export const TonConnectPayloadSchemaTextSchema: JSONSchemaType<Types.TonConnectP
 			text: { type: "string" },
 			type: { type: "string", enum: ["text"] },
 		},
-		additionalProperties: false,
 	};
 
 export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload> =
@@ -7788,7 +7775,6 @@ export const Nep413DefusePayloadSchema: JSONSchemaType<Types.Nep413DefusePayload
 				nullable: true,
 			},
 		},
-		additionalProperties: false,
 	};
 
 // MultiPayloadNarrowedSchema is type-checked against the unparsed type, then exported as the Parsed type.
@@ -8335,7 +8321,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 											nullable: true,
 										},
 									},
-									additionalProperties: false,
 								},
 							},
 							nonce: { type: "string", description: "Encoding: base64" },
@@ -8866,7 +8851,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 									type: "string",
 								},
 							},
-							additionalProperties: false,
 						},
 					},
 				},
@@ -9392,7 +9376,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 									type: "string",
 								},
 							},
-							additionalProperties: false,
 						},
 					},
 				},
@@ -9916,7 +9899,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 									type: "string",
 								},
 							},
-							additionalProperties: false,
 						},
 					},
 				},
@@ -10440,7 +10422,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 									type: "string",
 								},
 							},
-							additionalProperties: false,
 						},
 					},
 				},
@@ -11030,12 +11011,10 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 													type: "string",
 												},
 											},
-											additionalProperties: false,
 										},
 									},
 									type: { type: "string", enum: ["text"] },
 								},
-								additionalProperties: false,
 							},
 						],
 					},
@@ -11560,7 +11539,6 @@ const _MultiPayloadNarrowedSchemaCheck: JSONSchemaType<Types.MultiPayloadNarrowe
 									type: "string",
 								},
 							},
-							additionalProperties: false,
 						},
 					},
 				},
