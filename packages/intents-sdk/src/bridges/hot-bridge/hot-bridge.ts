@@ -276,9 +276,8 @@ export class HotBridge implements Bridge {
 		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
-			const isXlm = "native" in assetInfo;
-			const token = isXlm ? "native" : assetInfo.address;
 			try {
+				const token = "native" in assetInfo ? "native" : assetInfo.address;
 				const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
 					args.destinationAddress,
 					token,
@@ -294,8 +293,6 @@ export class HotBridge implements Bridge {
 				}
 			} catch (error) {
 				if (error instanceof NotFoundError) {
-					// Allow sending XLM to activate an account
-					if (isXlm) return;
 					throw new StellarAccountNotActivatedError(
 						args.destinationAddress,
 						args.assetId,

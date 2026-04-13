@@ -353,31 +353,6 @@ describe.concurrent("hot_bridge", () => {
 			await expect(fee).rejects.toThrow(StellarAccountNotActivatedError);
 		});
 
-		it("estimateWithdrawalFee(): allows sending XLM when account not activated", async () => {
-			const sdk = new IntentsSDK({ referral: "", intentSigner });
-
-			const fee = sdk.estimateWithdrawalFee({
-				withdrawalParams: {
-					assetId:
-						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
-					amount: 1000000n,
-					destinationAddress: nonActivatedStellarAddress,
-					feeInclusive: false,
-				},
-			});
-
-			await expect(fee).resolves.toEqual({
-				amount: expect.any(BigInt),
-				quote: null,
-				underlyingFees: {
-					[RouteEnum.HotBridge]: {
-						blockNumber: expect.any(BigInt),
-						relayerFee: expect.any(BigInt),
-					},
-				},
-			});
-		});
-
 		it("createWithdrawalIntents(): returns intents array", async () => {
 			const sdk = new IntentsSDK({ referral: "", intentSigner });
 
