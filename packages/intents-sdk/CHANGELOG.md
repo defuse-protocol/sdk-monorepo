@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.60.0
+
+### Minor Changes
+
+- 25a3768: Allows 0n amount for feeEstimation when feeInclusive is false (bypassed min amount validation)
+
 ## 0.59.1
 
 ### Patch Changes
