@@ -342,6 +342,8 @@ console.log('Batch fees:', batchFees); // Array of FeeEstimation objects
 
 > **Note:** `estimateWithdrawalFee` also runs `validateWithdrawal` internally. If the withdrawal parameters are invalid (e.g. invalid destination address, amount below minimum, insufficient UTXOs), the bridge's `validateWithdrawal` will throw and the error will propagate from `estimateWithdrawalFee`.
 
+> **Note:** When `amount` is `0n` and `feeInclusive` is `false`, minimum amount validation is skipped. This is useful when the exact withdrawal amount is not yet known and you only need a fee estimate.
+
 ## Advanced Usage
 
 ### Custom RPC URLs

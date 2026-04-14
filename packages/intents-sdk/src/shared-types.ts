@@ -381,6 +381,7 @@ export interface Bridge {
 		feeEstimation: FeeEstimation;
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
+		skipMinAmountValidation?: boolean;
 	}): Promise<void>;
 
 	estimateWithdrawalFee<

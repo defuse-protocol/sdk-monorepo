@@ -176,6 +176,7 @@ export class PoaBridge implements Bridge {
 		amount: bigint;
 		destinationAddress: string;
 		logger?: ILogger;
+		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
@@ -205,15 +206,15 @@ export class PoaBridge implements Bridge {
 				"`assetId` is not supported in PoA bridge.",
 			);
 		}
-
-		const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
-
-		if (args.amount < minWithdrawalAmount) {
-			throw new MinWithdrawalAmountError(
-				minWithdrawalAmount,
-				args.amount,
-				args.assetId,
-			);
+		if (!args.skipMinAmountValidation) {
+			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+			if (args.amount < minWithdrawalAmount) {
+				throw new MinWithdrawalAmountError(
+					minWithdrawalAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
 		}
 
 		if (assetInfo.blockchain === Chains.XRPL) {

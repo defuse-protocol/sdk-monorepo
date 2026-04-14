@@ -448,6 +448,38 @@ describe("PoaBridge", () => {
 			).rejects.toThrow(MinWithdrawalAmountError);
 		});
 
+		it("Not throw MinWithdrawalAmountError when skipMinAmountValidation is true", async () => {
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:btc.omft.near",
+						min_withdrawal_amount: "10000",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:btc.omft.near",
+					amount: 0n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+					skipMinAmountValidation: true,
+				}),
+			).resolves.toBeUndefined();
+		});
+
 		it("passes validation when amount meets minimum", async () => {
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
 				tokens: [

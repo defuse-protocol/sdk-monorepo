@@ -377,6 +377,7 @@ export class OmniBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
+		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
 		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
 		if (!isFeeSubsidized) {
@@ -425,21 +426,28 @@ export class OmniBridge implements Bridge {
 			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
-		// verifyTransferAmount ensures (amount - fee) > 0 after normalisation.
-		// We pass the actual amount and a zero fee to avoid fee-handling differences
-		// between different withdrawal types (UTXO transfers vs regular transfers where the fee is paid in wrap.near).
-		const normalisationCheckSucceeded = verifyTransferAmount(
-			args.amount, // total amount without fee
-			0n, // fee
-			decimals.origin_decimals,
-			decimals.decimals,
-		);
-		if (normalisationCheckSucceeded === false) {
-			const minAmount = getMinimumTransferableAmount(
+
+		if (!args.skipMinAmountValidation) {
+			// verifyTransferAmount ensures (amount - fee) > 0 after normalisation.
+			// We pass the actual amount and a zero fee to avoid fee-handling differences
+			// between different withdrawal types (UTXO transfers vs regular transfers where the fee is paid in wrap.near).
+			const normalisationCheckSucceeded = verifyTransferAmount(
+				args.amount, // total amount without fee
+				0n, // fee
 				decimals.origin_decimals,
 				decimals.decimals,
 			);
-			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
+			if (normalisationCheckSucceeded === false) {
+				const minAmount = getMinimumTransferableAmount(
+					decimals.origin_decimals,
+					decimals.decimals,
+				);
+				throw new MinWithdrawalAmountError(
+					minAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
 		}
 
 		const intentsStorageBalance = await this.getCachedIntentsStorageBalance();
@@ -522,14 +530,17 @@ export class OmniBridge implements Bridge {
 				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
 			);
 
-			// args.amount is without fee, we need to pass an amount with fee
-			const actualAmountWithFee = args.amount + utxoMaxGasFee + utxoProtocolFee;
-			if (actualAmountWithFee < minAmount) {
-				throw new MinWithdrawalAmountError(
-					minAmount,
-					actualAmountWithFee,
-					args.assetId,
-				);
+			if (!args.skipMinAmountValidation) {
+				// args.amount is without fee, we need to pass an amount with fee
+				const actualAmountWithFee =
+					args.amount + utxoMaxGasFee + utxoProtocolFee;
+				if (actualAmountWithFee < minAmount) {
+					throw new MinWithdrawalAmountError(
+						minAmount,
+						actualAmountWithFee,
+						args.assetId,
+					);
+				}
 			}
 		}
 
