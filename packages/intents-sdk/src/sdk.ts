@@ -441,6 +441,10 @@ export class IntentsSDK implements IIntentsSDK {
 					feeEstimation: fee,
 					routeConfig: args.withdrawalParams.routeConfig,
 					logger: args.logger,
+					// When estimating fees before the exact amount is known, skip minimum amount validation while keeping all other validation intact.
+					skipMinAmountValidation:
+						args.withdrawalParams.amount === 0n &&
+						args.withdrawalParams.feeInclusive === false,
 				});
 
 				return fee;

@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
 import {
 	InvalidDestinationAddressForWithdrawalError,
+	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
@@ -1371,6 +1372,114 @@ describe("OmniBridge", () => {
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 				}),
 			).resolves.toBeUndefined();
+		});
+
+		it("Throws MinWithdrawalAmountError when amount fails to pass normalization check ", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			const result = bridge.validateWithdrawal({
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 0n,
+				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+				feeEstimation: {
+					amount: 5n,
+					quote: null,
+					underlyingFees: {
+						[RouteEnum.OmniBridge]: {
+							relayerFee: expect.any(BigInt),
+							storageDepositFee: 0n,
+						},
+					},
+				},
+			});
+
+			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
+		});
+
+		it("Throws MinWithdrawalAmountError when amount fails to pass min withdrawal amount for btc", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 0n,
+				transferred_token_fee: "0",
+				gas_fee: 700n,
+				protocol_fee: 400n,
+				min_amount: "6400",
+				usd_fee: 0.58,
+				insufficient_utxo: true, // flag that contains the check for available utxo amount
+			});
+
+			const result = bridge.validateWithdrawal({
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 6300n,
+				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+				feeEstimation: {
+					amount: 5n,
+					quote: null,
+					underlyingFees: {
+						[RouteEnum.OmniBridge]: {
+							relayerFee: expect.any(BigInt),
+							storageDepositFee: 0n,
+						},
+					},
+				},
+			});
+
+			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
+		});
+
+		it("Skips all min amount checks when skipMinAmountValidation is true", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 0n,
+				transferred_token_fee: "0",
+				gas_fee: 700n,
+				protocol_fee: 400n,
+				min_amount: "6400",
+				usd_fee: 0.58,
+				insufficient_utxo: false, // flag that contains the check for available utxo amount
+			});
+
+			const result = bridge.validateWithdrawal({
+				assetId: "nep141:nbtc.bridge.near",
+				amount: 0n,
+				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+				skipMinAmountValidation: true,
+				feeEstimation: {
+					amount: 5n,
+					quote: null,
+					underlyingFees: {
+						[RouteEnum.OmniBridge]: {
+							relayerFee: expect.any(BigInt),
+							storageDepositFee: 0n,
+						},
+					},
+				},
+			});
+
+			await expect(result).resolves.toBeUndefined();
 		});
 	});
 

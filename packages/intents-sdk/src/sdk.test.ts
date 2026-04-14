@@ -66,6 +66,29 @@ describe.concurrent("poa_bridge", () => {
 		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
 	});
 
+	it("estimateWithdrawalFee(): allows to pass 0n amount when feeInclusive is false", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:btc.omft.near",
+				amount: 0n,
+				destinationAddress: "bc1qsfq3eat543rzzwargvnjeqjzgl4tatse3mr3lu",
+				feeInclusive: false,
+			},
+		});
+
+		await expect(fee).resolves.toEqual({
+			amount: 1500n,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.PoaBridge]: {
+					relayerFee: expect.any(BigInt),
+				},
+			},
+		});
+	});
+
 	it("createWithdrawalIntents(): returns intents array", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
@@ -865,6 +888,37 @@ describe("omni_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep141:nbtc.bridge.near",
 					amount: 6700n,
+					destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+					feeInclusive: false,
+					routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: expect.any(BigInt),
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: {
+						relayerFee: 0n,
+						storageDepositFee: 0n,
+						utxoMaxGasFee: expect.any(BigInt),
+						utxoProtocolFee: expect.any(BigInt),
+					},
+				},
+			});
+		},
+	);
+
+	it(
+		"estimateWithdrawalFee(): allows 0n amount for fee estimation when feeInclusive is false",
+		{ timeout: 20_000 },
+		async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:nbtc.bridge.near",
+					amount: 0n,
 					destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
 					feeInclusive: false,
 					routeConfig: createOmniBridgeRoute(Chains.Bitcoin),
