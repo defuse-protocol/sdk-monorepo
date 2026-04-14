@@ -13,6 +13,7 @@ import {
 	createInternalTransferRoute,
 	createNearWithdrawalRoute,
 	createOmniBridgeRoute,
+	createVirtualChainRoute,
 } from "./lib/route-config-factory";
 import { IntentsSDK } from "./sdk";
 import { Chains } from "./lib/caip2";
@@ -177,51 +178,137 @@ describe.concurrent("poa_bridge", () => {
 });
 
 describe.concurrent("hot_bridge", () => {
-	it.skip("estimateWithdrawalFee(): returns fee", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
-
-		const fee = sdk.estimateWithdrawalFee({
-			withdrawalParams: {
-				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
-				amount: 1n,
-				destinationAddress: zeroAddress,
-				feeInclusive: false,
-			},
+	describe.sequential("estimateWithdrawalFee", () => {
+		beforeEach(() => {
+			vi.resetModules();
 		});
 
-		await expect(fee).resolves.toEqual({
-			amount: expect.any(BigInt),
-			quote: {
-				amount_in: expect.any(String),
-				amount_out: expect.any(String),
+		it("returns fee", async () => {
+			using hotSdk = await useMockedHotSdk();
+			using solverRelayMock = await useMockedSolverRelay();
+
+			// Need to dynamically import because of runtime mocking above
+			const { IntentsSDK } = await import("./sdk");
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const gasPrice = 1000n;
+			const blockNumber = 42n;
+			hotSdk.getGaslessWithdrawFee.mockResolvedValue({ gasPrice, blockNumber });
+
+			const quote = {
+				amount_in: "1000",
+				amount_out: "5000000000000000",
 				defuse_asset_identifier_in:
 					"nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				defuse_asset_identifier_out:
 					"nep245:v2_1.omni.hot.tg:137_11111111111111111111",
-				expiration_time: expect.any(String),
-				quote_hash: expect.any(String),
-			},
-			underlyingFees: {
-				[RouteEnum.HotBridge]: {
-					relayerFee: expect.any(BigInt),
+				expiration_time: "2025-07-22T03:52:23.747Z",
+				quote_hash: "someHash",
+			};
+			solverRelayMock.getQuote.mockResolvedValue(quote);
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+					amount: 1n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
 				},
-			},
-		});
-	});
+			});
 
-	it.skip("estimateWithdrawalFee(): rejects when fee is higher than amount", async () => {
-		const sdk = new IntentsSDK({ referral: "", intentSigner });
-
-		const fee = sdk.estimateWithdrawalFee({
-			withdrawalParams: {
-				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
-				amount: 1n,
-				destinationAddress: zeroAddress,
-				feeInclusive: true,
-			},
+			await expect(fee).resolves.toEqual({
+				amount: BigInt(quote.amount_in),
+				quote,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: gasPrice,
+						blockNumber,
+					},
+				},
+			});
 		});
 
-		await expect(fee).rejects.toThrow(FeeExceedsAmountError);
+		it("rejects when fee is higher than amount", async () => {
+			using hotSdk = await useMockedHotSdk();
+			using solverRelayMock = await useMockedSolverRelay();
+
+			// Need to dynamically import because of runtime mocking above
+			const { IntentsSDK } = await import("./sdk");
+			const { FeeExceedsAmountError: FeeExceedsAmountErrorFresh } =
+				await import("./classes/errors");
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			hotSdk.getGaslessWithdrawFee.mockResolvedValue({
+				gasPrice: 1000n,
+				blockNumber: 42n,
+			});
+			solverRelayMock.getQuote.mockResolvedValue({
+				amount_in: "1000",
+				amount_out: "5000000000000000",
+				defuse_asset_identifier_in:
+					"nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+				defuse_asset_identifier_out:
+					"nep245:v2_1.omni.hot.tg:137_11111111111111111111",
+				expiration_time: "2025-07-22T03:52:23.747Z",
+				quote_hash: "someHash",
+			});
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+					amount: 1n,
+					destinationAddress: zeroAddress,
+					feeInclusive: true,
+				},
+			});
+
+			await expect(fee).rejects.toThrow(FeeExceedsAmountErrorFresh);
+		});
+
+		it("estimateWithdrawalFee(): allows 0n amount for fee estimation when feeInclusive is false", async () => {
+			using hotSdk = await useMockedHotSdk();
+			using solverRelayMock = await useMockedSolverRelay();
+
+			// Need to dynamically import because of runtime mocking above
+			const { IntentsSDK } = await import("./sdk");
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const gasPrice = 1000n;
+			const blockNumber = 42n;
+			hotSdk.getGaslessWithdrawFee.mockResolvedValue({ gasPrice, blockNumber });
+
+			const quote = {
+				amount_in: "1000",
+				amount_out: "5000000000000000",
+				defuse_asset_identifier_in:
+					"nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+				defuse_asset_identifier_out:
+					"nep245:v2_1.omni.hot.tg:137_11111111111111111111",
+				expiration_time: "2025-07-22T03:52:23.747Z",
+				quote_hash: "someHash",
+			};
+			solverRelayMock.getQuote.mockResolvedValue(quote);
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+					amount: 0n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: BigInt(quote.amount_in),
+				quote,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: gasPrice,
+						blockNumber,
+					},
+				},
+			});
+		});
 	});
 
 	it("createWithdrawalIntents(): returns intents array", async () => {
@@ -488,6 +575,28 @@ describe.concurrent.each([
 		});
 	});
 
+	it("estimateWithdrawalFee(): returns fee when amount is 0n and fee inclusive is false", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const fee = sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId,
+				amount: 0n,
+				destinationAddress: zeroAddress,
+				feeInclusive: false,
+				routeConfig: createInternalTransferRoute(),
+			},
+		});
+
+		await expect(fee).resolves.toEqual({
+			amount: 0n,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.InternalTransfer]: null,
+			},
+		});
+	});
+
 	it("createWithdrawalIntents(): returns intents array", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
@@ -545,6 +654,51 @@ describe("near_withdrawal", () => {
 			withdrawalParams: {
 				assetId: "nep141:btc.omft.near",
 				amount: 1n,
+				destinationAddress: zeroAddress,
+				feeInclusive: false,
+				routeConfig: createNearWithdrawalRoute(),
+			},
+		});
+
+		expect(fee).toEqual({
+			amount: expect.any(BigInt),
+			quote: {
+				amount_in: "1000",
+				amount_out: "1250000000000000000000",
+				defuse_asset_identifier_in: "nep141:btc.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				expiration_time: "",
+				quote_hash: "",
+			},
+			underlyingFees: {
+				[RouteEnum.NearWithdrawal]: {
+					storageDepositFee: 1250000000000000000000n,
+				},
+			},
+		});
+	});
+	it("estimateWithdrawalFee(): allows 0n amount for fee estimation when feeInclusive is false", async () => {
+		using solverRelay = await useMockedSolverRelay();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const quote = {
+			amount_in: "1000",
+			amount_out: "1250000000000000000000",
+			defuse_asset_identifier_in: "nep141:btc.omft.near",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			expiration_time: "",
+			quote_hash: "",
+		};
+		solverRelay.getQuote.mockResolvedValue(quote);
+
+		const fee = await sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:btc.omft.near",
+				amount: 0n,
 				destinationAddress: zeroAddress,
 				feeInclusive: false,
 				routeConfig: createNearWithdrawalRoute(),
@@ -796,6 +950,58 @@ describe("near_withdrawal", () => {
 				msg: undefined,
 			},
 		]);
+	});
+});
+
+describe("virtual_chain", () => {
+	beforeEach(() => {
+		vi.resetModules();
+	});
+
+	it("estimateWithdrawalFee(): allows 0n amount for fee estimation when feeInclusive is false", async () => {
+		using auroraMock = await useMockedAuroraBridge();
+
+		// Need to dynamically import because of runtime mocking above
+		const { IntentsSDK } = await import("./sdk");
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const storageDepositFee = 1250000000000000000000n;
+		auroraMock.getNearNep141MinStorageBalance.mockResolvedValue(
+			storageDepositFee,
+		);
+		auroraMock.getNearNep141StorageBalance.mockResolvedValue(0n);
+
+		const quote = {
+			amount_in: "1000",
+			amount_out: "1250000000000000000000",
+			defuse_asset_identifier_in:
+				"nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+			defuse_asset_identifier_out: "nep141:wrap.near",
+			expiration_time: "",
+			quote_hash: "",
+		};
+		auroraMock.getQuote.mockResolvedValue(quote);
+
+		const fee = await sdk.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId:
+					"nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+				amount: 0n,
+				destinationAddress: zeroAddress,
+				feeInclusive: false,
+				routeConfig: createVirtualChainRoute("aurora", null),
+			},
+		});
+
+		expect(fee).toEqual({
+			amount: BigInt(quote.amount_in),
+			quote,
+			underlyingFees: {
+				[RouteEnum.VirtualChain]: {
+					storageDepositFee,
+				},
+			},
+		});
 	});
 });
 
@@ -1729,6 +1935,62 @@ describe("sdk.parseAssetId()", () => {
 		);
 	});
 });
+
+/**
+ * Use it for easy mocking of aurora bridge NEAR storage balance calls and `solverRelay.getQuote()`
+ */
+async function useMockedAuroraBridge() {
+	const getNearNep141MinStorageBalance = vi.fn();
+	const getNearNep141StorageBalance = vi.fn();
+	const getQuote = vi.fn();
+
+	vi.doMock("@defuse-protocol/internal-utils", async (importOriginal) => {
+		const actual =
+			await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+		return {
+			...actual,
+			getNearNep141MinStorageBalance,
+			getNearNep141StorageBalance,
+			solverRelay: {
+				...actual.solverRelay,
+				getQuote,
+			},
+		};
+	});
+
+	return {
+		getNearNep141MinStorageBalance,
+		getNearNep141StorageBalance,
+		getQuote,
+		[Symbol.dispose]() {
+			vi.doUnmock("@defuse-protocol/internal-utils");
+		},
+	};
+}
+
+/**
+ * Use it for easy mocking of `hotSdk.getGaslessWithdrawFee()`
+ */
+async function useMockedHotSdk() {
+	const getGaslessWithdrawFee = vi.fn();
+
+	vi.doMock("@hot-labs/omni-sdk", async (importOriginal) => {
+		const actual = await importOriginal<typeof import("@hot-labs/omni-sdk")>();
+		return {
+			...actual,
+			HotBridge: vi.fn().mockImplementation(() => ({
+				getGaslessWithdrawFee,
+			})),
+		};
+	});
+
+	return {
+		getGaslessWithdrawFee,
+		[Symbol.dispose]() {
+			vi.doUnmock("@hot-labs/omni-sdk");
+		},
+	};
+}
 
 /**
  * Use it for easy mocking of `solverRelay.getQuote()`
