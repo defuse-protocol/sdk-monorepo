@@ -1428,7 +1428,7 @@ describe("OmniBridge", () => {
 				amount: 3000n,
 				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
 				feeEstimation: {
-					amount: 5n,
+					amount: 1100n,
 					quote: null,
 					underlyingFees: {
 						[RouteEnum.OmniBridge]: {
@@ -1470,7 +1470,7 @@ describe("OmniBridge", () => {
 				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
 				skipMinAmountValidation: true,
 				feeEstimation: {
-					amount: 5n,
+					amount: 1100n,
 					quote: null,
 					underlyingFees: {
 						[RouteEnum.OmniBridge]: {
