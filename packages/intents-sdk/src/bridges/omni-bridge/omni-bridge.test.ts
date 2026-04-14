@@ -1420,18 +1420,20 @@ describe("OmniBridge", () => {
 				protocol_fee: 400n,
 				min_amount: "6400",
 				usd_fee: 0.58,
-				insufficient_utxo: true, // flag that contains the check for available utxo amount
+				insufficient_utxo: false, // flag that contains the check for available utxo amount
 			});
 
 			const result = bridge.validateWithdrawal({
 				assetId: "nep141:nbtc.bridge.near",
-				amount: 6300n,
+				amount: 3000n,
 				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
 				feeEstimation: {
 					amount: 5n,
 					quote: null,
 					underlyingFees: {
 						[RouteEnum.OmniBridge]: {
+							utxoMaxGasFee: 700n,
+							utxoProtocolFee: 400n,
 							relayerFee: expect.any(BigInt),
 							storageDepositFee: 0n,
 						},
@@ -1472,6 +1474,8 @@ describe("OmniBridge", () => {
 					quote: null,
 					underlyingFees: {
 						[RouteEnum.OmniBridge]: {
+							utxoMaxGasFee: 700n,
+							utxoProtocolFee: 400n,
 							relayerFee: expect.any(BigInt),
 							storageDepositFee: 0n,
 						},
