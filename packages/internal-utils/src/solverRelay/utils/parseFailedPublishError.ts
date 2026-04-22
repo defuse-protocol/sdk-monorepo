@@ -12,6 +12,7 @@ type PublishErrorCode =
 	| "PUBLIC_KEY_NOT_EXIST"
 	| "UNKNOWN_ERROR"
 	| "NETWORK_ERROR"
+	| "AUTH_CONFIG_ERROR"
 	| "INVALID_SALT";
 
 export type RelayPublishErrorType = RelayPublishError & {

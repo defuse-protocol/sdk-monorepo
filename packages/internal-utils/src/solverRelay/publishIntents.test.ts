@@ -14,7 +14,8 @@ describe("publishIntents()", () => {
 
 		const err = result.unwrapErr();
 		expect(err).toBeInstanceOf(RelayPublishError);
-		expect(err).toHaveProperty("code", "NETWORK_ERROR");
+		expect(err).toHaveProperty("code", "AUTH_CONFIG_ERROR");
+		expect(err.details).toContain("solverRelayApiKey or Authorization header");
 	});
 
 	it("should return UNKNOWN_ERROR", async () => {
