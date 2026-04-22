@@ -18,7 +18,7 @@ export function publishIntent(
 	userInfo: { userAddress: string; userChainType: AuthMethod },
 	quoteHashes: string[],
 	config: solverRelay.httpClient.RequestConfig = {},
-): Promise<Result<PublishIntentReturnType, PublishIntentErrorType>> {
+) {
 	return publishIntents(
 		{
 			signed_datas: [prepareSwapSignedData(signatureData, userInfo)],
@@ -30,7 +30,6 @@ export function publishIntent(
 			const intentHash = intentHashes[0];
 			assert(intentHash != null, "Should include at least one intent hash");
 			return intentHash;
-		})
-		;
+		});
 	});
 }
