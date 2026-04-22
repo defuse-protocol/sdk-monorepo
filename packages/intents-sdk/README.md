@@ -54,19 +54,13 @@ npm install @defuse-protocol/intents-sdk --save-exact
 
 First, initialize the SDK with your referral code and intent signer:
 
-> **Security note:** Treat `solverRelayApiKey` as a secret when it has privileged access. Do not hardcode or bundle it in client-side code. For browser apps, fetch a short-lived user-scoped token from your backend (or route requests through your backend proxy).
-
 ```typescript
 import {IntentsSDK, createIntentSignerNearKeyPair} from '@defuse-protocol/intents-sdk';
 import {KeyPair} from 'near-api-js';
 
-// Frontend-safe example: fetch a short-lived token from your backend
-const solverRelayApiKey = await getSolverRelayApiKeyFromBackend();
-
 // Initialize the SDK
 const sdk = new IntentsSDK({
-    referral: 'your-referral-code',
-    solverRelayApiKey,
+    referral: 'your-referral-code', // Only referral is required
     intentSigner: createIntentSignerNearKeyPair({
         signer: KeyPair.fromString('your-private-key'),
         accountId: 'your-account.near'
@@ -359,11 +353,8 @@ Set NEAR and EVM chains RPC URLs in the constructor:
 ```typescript
 import {Chains} from '@defuse-protocol/intents-sdk'
 
-const solverRelayApiKey = await getSolverRelayApiKeyFromBackend();
-
 const sdk = new IntentsSDK({
     ...,
-    solverRelayApiKey,
     rpc: {
         [Chains.Near]: ['https://rpc.mainnet.near.org'],
         [Chains.Polygon]: ['https://polygon-rpc.com'],
@@ -381,11 +372,8 @@ Configure optional SDK features through the `features` configuration:
 Will route migrated PoA tokens (ending with `*.omft.near`) through Omni Bridge instead of the legacy PoA Bridge, unless explicitly set to route them through PoA bridge with routeConfig. Enable this when working with POA tokens that have been migrated to the Omni infrastructure:
 
 ```typescript
-const solverRelayApiKey = await getSolverRelayApiKeyFromBackend();
-
 const sdk = new IntentsSDK({
     referral: 'your-referral-code',
-    solverRelayApiKey,
     features: {
         routeMigratedPoaTokensThroughOmniBridge: true
     }
