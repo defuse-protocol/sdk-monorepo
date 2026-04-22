@@ -46,7 +46,7 @@ export async function publishIntents(
 					reason: errorReason,
 					code: authRejected ? "AUTH_CONFIG_ERROR" : "NETWORK_ERROR",
 					publishParams: params,
-					cause: authRejected ? undefined : err,
+					cause: err,
 				});
 				return Err<PublishIntentsReturnType, PublishIntentsErrorType>(
 					publishError,
