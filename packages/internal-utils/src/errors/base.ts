@@ -15,7 +15,6 @@ export class BaseError extends Error {
 
 	constructor(shortMessage: string, args: BaseErrorParameters = {}) {
 		const details = (() => {
-			if (args.details !== undefined) return args.details;
 			if (args.cause instanceof BaseError) return args.cause.details;
 			if (
 				args.cause != null &&
@@ -25,7 +24,7 @@ export class BaseError extends Error {
 			) {
 				return args.cause.message;
 			}
-			return "";
+			return args.details ?? "";
 		})();
 
 		const message = [
