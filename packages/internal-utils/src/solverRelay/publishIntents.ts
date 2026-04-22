@@ -1,13 +1,15 @@
 import { Err, Ok, type Result } from "@thames/monads";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
+	DEFAULT_REQUEST_FAIL_ERROR_MESAAGE,
+	SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE,
+	SolverRelayAuthConfigError,
+} from "./solverRelayHttpClient/runtime";
+import {
 	RelayPublishError,
 	type RelayPublishErrorType,
 	toRelayPublishError,
 } from "./utils/parseFailedPublishError";
-
-const MISSING_SOLVER_RELAY_AUTH_MSG =
-	"solverRelayApiKey or Authorization header is required for solver-relay JSON-RPC requests";
 
 export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
@@ -30,13 +32,14 @@ export async function publishIntents(
 				return parsePublishIntentsResponse(params, response);
 			},
 			(err) => {
-				const authConfigMissing =
-					err instanceof Error &&
-					err.message.includes(MISSING_SOLVER_RELAY_AUTH_MSG);
+				const authConfigMissing = err instanceof SolverRelayAuthConfigError;
+				
+				const errorReason = authConfigMissing
+				? SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE
+				: DEFAULT_REQUEST_FAIL_ERROR_MESAAGE
+
 				const publishError = new RelayPublishError({
-					reason: authConfigMissing
-						? MISSING_SOLVER_RELAY_AUTH_MSG
-						: "Error occurred during sending a request",
+					reason: errorReason,
 					code: authConfigMissing ? "AUTH_CONFIG_ERROR" : "NETWORK_ERROR",
 					publishParams: params,
 					cause: err,

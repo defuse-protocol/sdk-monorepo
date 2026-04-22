@@ -5,6 +5,18 @@ import { request } from "../../utils/request";
 import { RETRY_CONFIGS } from "../../utils/retry";
 import type * as types from "./types";
 
+export const DEFAULT_REQUEST_FAIL_ERROR_MESAAGE = "Error occurred during sending a request"
+export const SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE =
+	"solverRelayApiKey or Authorization header is required for solver-relay JSON-RPC requests";
+
+export class SolverRelayAuthConfigError extends Error {
+	name = "SolverRelayAuthConfigError" as const;
+
+	constructor() {
+		super(SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE);
+	}
+}
+
 const rpcResponseSchema = v.union([
 	// success
 	v.object({
@@ -70,9 +82,7 @@ export async function jsonRPCRequest<
 
 	const hasAuthorizationHeader = fetchOptions.headers.has("Authorization");
 	if (!hasAuthorizationHeader && !config?.solverRelayApiKey) {
-		throw new Error(
-			"solverRelayApiKey or Authorization header is required for solver-relay JSON-RPC requests",
-		);
+		throw new SolverRelayAuthConfigError();
 	}
 
 	if (!hasAuthorizationHeader && config?.solverRelayApiKey) {
