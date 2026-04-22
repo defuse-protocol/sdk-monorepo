@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { HttpRequestError, RpcRequestError } from "../errors/request";
+import { RpcRequestError } from "../errors/request";
 import { publishIntents } from "./publishIntents";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import { RelayPublishError } from "./utils/parseFailedPublishError";
@@ -16,29 +16,6 @@ describe("publishIntents()", () => {
 				},
 				error: { code: -32001, message: "Unauthorized" },
 				url: "https://solver-relay-v2.chaindefuser.com/rpc",
-			}),
-		);
-
-		const result = await publishIntents(
-			{
-				quote_hashes: [],
-				signed_datas: [],
-			},
-			{},
-		);
-
-		const err = result.unwrapErr();
-		expect(err).toBeInstanceOf(RelayPublishError);
-		expect(err).toHaveProperty("code", "AUTH_CONFIG_ERROR");
-		expect(err.details).toContain("x-api-key");
-	});
-
-	it("returns auth error when relay responds with HTTP 403", async () => {
-		vi.spyOn(solverRelayClient, "publishIntents").mockRejectedValueOnce(
-			new HttpRequestError({
-				status: 403,
-				url: "https://solver-relay-v2.chaindefuser.com/rpc",
-				details: "Forbidden",
 			}),
 		);
 

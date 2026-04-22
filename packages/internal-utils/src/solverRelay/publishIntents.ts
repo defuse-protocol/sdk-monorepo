@@ -1,5 +1,5 @@
 import { Err, Ok, type Result } from "@thames/monads";
-import { HttpRequestError, RpcRequestError } from "../errors/request";
+import { RpcRequestError } from "../errors/request";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
 	RelayPublishError,
@@ -35,10 +35,8 @@ export async function publishIntents(
 			},
 			(err) => {
 				const authRejected =
-					(err instanceof RpcRequestError &&
-						err.code === SOLVER_RELAY_UNAUTHORIZED_RPC_CODE) ||
-					(err instanceof HttpRequestError &&
-						(err.status === 401 || err.status === 403));
+					err instanceof RpcRequestError &&
+					err.code === SOLVER_RELAY_UNAUTHORIZED_RPC_CODE;
 
 				const errorReason = authRejected
 					? SOLVER_RELAY_AUTH_ERROR_MESSAGE
@@ -48,7 +46,6 @@ export async function publishIntents(
 					reason: errorReason,
 					code: authRejected ? "AUTH_CONFIG_ERROR" : "NETWORK_ERROR",
 					publishParams: params,
-					// Preserve a user-friendly auth/config details message for 401/403.
 					cause: authRejected ? undefined : err,
 				});
 				return Err<PublishIntentsReturnType, PublishIntentsErrorType>(
