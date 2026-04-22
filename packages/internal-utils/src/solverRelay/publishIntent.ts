@@ -1,4 +1,3 @@
-import type { Result } from "@thames/monads";
 import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "../utils/assert";
