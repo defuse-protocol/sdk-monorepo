@@ -1,15 +1,17 @@
 import { Err, Ok, type Result } from "@thames/monads";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
-	DEFAULT_REQUEST_FAIL_ERROR_MESAAGE,
 	SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE,
 	SolverRelayAuthConfigError,
-} from "./solverRelayHttpClient/runtime";
+} from "./errors/authConfig";
 import {
 	RelayPublishError,
 	type RelayPublishErrorType,
 	toRelayPublishError,
 } from "./utils/parseFailedPublishError";
+
+const DEFAULT_REQUEST_FAIL_ERROR_MESSAGE =
+	"Error occurred during sending a request";
 
 export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
@@ -33,10 +35,10 @@ export async function publishIntents(
 			},
 			(err) => {
 				const authConfigMissing = err instanceof SolverRelayAuthConfigError;
-				
+
 				const errorReason = authConfigMissing
-				? SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE
-				: DEFAULT_REQUEST_FAIL_ERROR_MESAAGE
+					? SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE
+					: DEFAULT_REQUEST_FAIL_ERROR_MESSAGE;
 
 				const publishError = new RelayPublishError({
 					reason: errorReason,

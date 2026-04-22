@@ -3,19 +3,8 @@ import { config as globalConfig } from "../../config";
 import { handleRPCResponse } from "../../utils/handleRPCResponse";
 import { request } from "../../utils/request";
 import { RETRY_CONFIGS } from "../../utils/retry";
+import { SolverRelayAuthConfigError } from "../errors/authConfig";
 import type * as types from "./types";
-
-export const DEFAULT_REQUEST_FAIL_ERROR_MESAAGE = "Error occurred during sending a request"
-export const SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE =
-	"solverRelayApiKey or Authorization header is required for solver-relay JSON-RPC requests";
-
-export class SolverRelayAuthConfigError extends Error {
-	name = "SolverRelayAuthConfigError" as const;
-
-	constructor() {
-		super(SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE);
-	}
-}
 
 const rpcResponseSchema = v.union([
 	// success
