@@ -1,9 +1,6 @@
 import { Err, Ok, type Result } from "@thames/monads";
+import { HttpRequestError } from "../errors/request";
 import * as solverRelayClient from "./solverRelayHttpClient";
-import {
-	SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE,
-	SolverRelayAuthConfigError,
-} from "./errors/authConfig";
 import {
 	RelayPublishError,
 	type RelayPublishErrorType,
@@ -12,6 +9,8 @@ import {
 
 const DEFAULT_REQUEST_FAIL_ERROR_MESSAGE =
 	"Error occurred during sending a request";
+const SOLVER_RELAY_AUTH_ERROR_MESSAGE =
+	"Solver relay rejected request. Pass solverRelayApiKey via x-api-key header.";
 
 export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
@@ -34,15 +33,17 @@ export async function publishIntents(
 				return parsePublishIntentsResponse(params, response);
 			},
 			(err) => {
-				const authConfigMissing = err instanceof SolverRelayAuthConfigError;
+				const authRejected =
+					err instanceof HttpRequestError &&
+					(err.status === 401 || err.status === 403);
 
-				const errorReason = authConfigMissing
-					? SOLVER_RELAY_AUTH_CONFIG_ERROR_MESSAGE
+				const errorReason = authRejected
+					? SOLVER_RELAY_AUTH_ERROR_MESSAGE
 					: DEFAULT_REQUEST_FAIL_ERROR_MESSAGE;
 
 				const publishError = new RelayPublishError({
 					reason: errorReason,
-					code: authConfigMissing ? "AUTH_CONFIG_ERROR" : "NETWORK_ERROR",
+					code: authRejected ? "AUTH_CONFIG_ERROR" : "NETWORK_ERROR",
 					publishParams: params,
 					cause: err,
 				});

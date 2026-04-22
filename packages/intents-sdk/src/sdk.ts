@@ -90,13 +90,7 @@ export interface IntentsSDKConfig {
 	 *
 	 * @example
 	 * // Use preset
-	 * // IMPORTANT: never bundle privileged JWTs into frontend code.
-	 * // In browser apps, fetch a short-lived token from your backend.
-	 * new IntentsSDK({
-	 *   env: "production",
-	 *   referral: "...",
-	 *   solverRelayApiKey: "your-jwt",
-	 * });
+	 * new IntentsSDK({ env: "production", referral: "..." });
 	 *
 	 * // Use custom config for private environment
 	 * new IntentsSDK({
@@ -109,20 +103,12 @@ export interface IntentsSDKConfig {
 	 *     nearIntentsBaseURL: "",
 	 *   },
 	 *   referral: "...",
-	 *   solverRelayApiKey: "your-jwt",
 	 * });
 	 */
 	env?: NearIntentsEnv | EnvConfig;
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
-	/**
-	 * JWT/API key for solver-relay HTTP JSON-RPC.
-	 * Required for quote, publish, and status operations.
-	 *
-	 * Security: do not hardcode or bundle privileged keys in browser builds.
-	 * Use a backend proxy or short-lived user-scoped tokens.
-	 */
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
 	features?: {

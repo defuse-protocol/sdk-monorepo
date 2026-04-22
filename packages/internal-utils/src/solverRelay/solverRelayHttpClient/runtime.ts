@@ -3,7 +3,6 @@ import { config as globalConfig } from "../../config";
 import { handleRPCResponse } from "../../utils/handleRPCResponse";
 import { request } from "../../utils/request";
 import { RETRY_CONFIGS } from "../../utils/retry";
-import { SolverRelayAuthConfigError } from "../errors/authConfig";
 import type * as types from "./types";
 
 const rpcResponseSchema = v.union([
@@ -69,16 +68,9 @@ export async function jsonRPCRequest<
 		headers: new Headers(config?.fetchOptions?.headers),
 	};
 
-	const hasAuthorizationHeader = fetchOptions.headers.has("Authorization");
-	if (!hasAuthorizationHeader && !config?.solverRelayApiKey) {
-		throw new SolverRelayAuthConfigError();
-	}
-
-	if (!hasAuthorizationHeader && config?.solverRelayApiKey) {
-		fetchOptions.headers.append(
-			"Authorization",
-			`Bearer ${config.solverRelayApiKey}`,
-		);
+	const hasApiKeyHeader = fetchOptions.headers.has("x-api-key");
+	if (!hasApiKeyHeader && config?.solverRelayApiKey) {
+		fetchOptions.headers.append("x-api-key", config.solverRelayApiKey);
 	}
 
 	const response = await request({

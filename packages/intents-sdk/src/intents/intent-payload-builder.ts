@@ -28,13 +28,7 @@ type IntentPayloadWithSigner<HasSigner extends boolean> = HasSigner extends true
  *
  * @example
  * ```typescript
- * const solverRelayApiKey = await getSolverRelayApiKeyFromBackend();
- *
- * const sdk = new IntentsSDK({
- *   env: 'production',
- *   referral: 'my-app',
- *   solverRelayApiKey,
- * });
+ * const sdk = new IntentsSDK({ env: 'production', referral: 'my-app' });
  *
  * // Build an intent payload
  * const payload = await sdk.intentBuilder()
