@@ -17,7 +17,7 @@ export function publishIntent(
 	signatureData: WalletSignatureResult,
 	userInfo: { userAddress: string; userChainType: AuthMethod },
 	quoteHashes: string[],
-	config: solverRelay.httpClient.RequestConfig = {},
+	config: solverRelay.httpClient.RequestConfig,
 ): Promise<Result<PublishIntentReturnType, PublishIntentErrorType>> {
 	return publishIntents(
 		{

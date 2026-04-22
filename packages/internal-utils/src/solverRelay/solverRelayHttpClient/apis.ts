@@ -3,7 +3,7 @@ import type * as types from "./types";
 
 export async function quote(
 	params: types.QuoteRequest["params"][0],
-	config: types.RequestConfig = {},
+	config: types.RequestConfig,
 ): Promise<types.QuoteResponse["result"]> {
 	const result = await jsonRPCRequest<types.QuoteRequest>(
 		"quote",
@@ -16,7 +16,7 @@ export async function quote(
 
 export async function publishIntent(
 	params: types.PublishIntentRequest["params"][0],
-	config: types.RequestConfig = {},
+	config: types.RequestConfig,
 ): Promise<types.PublishIntentResponse["result"]> {
 	const result = await jsonRPCRequest<types.PublishIntentRequest>(
 		"publish_intent",
@@ -29,7 +29,7 @@ export async function publishIntent(
 
 export async function publishIntents(
 	params: types.PublishIntentsRequest["params"][0],
-	config: types.RequestConfig = {},
+	config: types.RequestConfig,
 ): Promise<types.PublishIntentsResponse["result"]> {
 	const result = await jsonRPCRequest<types.PublishIntentsRequest>(
 		"publish_intents",
@@ -42,7 +42,7 @@ export async function publishIntents(
 
 export async function getStatus(
 	params: types.GetStatusRequest["params"][0],
-	config: types.RequestConfig = {},
+	config: types.RequestConfig,
 ): Promise<types.GetStatusResponse["result"]> {
 	const result = await jsonRPCRequest<types.GetStatusRequest>(
 		"get_status",

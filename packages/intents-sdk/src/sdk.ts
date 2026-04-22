@@ -90,7 +90,11 @@ export interface IntentsSDKConfig {
 	 *
 	 * @example
 	 * // Use preset
-	 * new IntentsSDK({ env: "production", referral: "..." });
+	 * new IntentsSDK({
+	 *   env: "production",
+	 *   referral: "...",
+	 *   solverRelayApiKey: "your-jwt",
+	 * });
 	 *
 	 * // Use custom config for private environment
 	 * new IntentsSDK({
@@ -103,12 +107,17 @@ export interface IntentsSDKConfig {
 	 *     nearIntentsBaseURL: "",
 	 *   },
 	 *   referral: "...",
+	 *   solverRelayApiKey: "your-jwt",
 	 * });
 	 */
 	env?: NearIntentsEnv | EnvConfig;
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
+	/**
+	 * JWT/API key for solver-relay HTTP JSON-RPC.
+	 * Required for quote, publish, and status operations.
+	 */
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
 	features?: {

@@ -68,7 +68,14 @@ export async function jsonRPCRequest<
 		headers: new Headers(config?.fetchOptions?.headers),
 	};
 
-	if (config?.solverRelayApiKey) {
+	const hasAuthorizationHeader = fetchOptions.headers.has("Authorization");
+	if (!hasAuthorizationHeader && !config?.solverRelayApiKey) {
+		throw new Error(
+			"solverRelayApiKey or Authorization header is required for solver-relay JSON-RPC requests",
+		);
+	}
+
+	if (!hasAuthorizationHeader && config?.solverRelayApiKey) {
 		fetchOptions.headers.append(
 			"Authorization",
 			`Bearer ${config.solverRelayApiKey}`,

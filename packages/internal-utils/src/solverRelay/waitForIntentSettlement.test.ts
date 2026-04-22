@@ -28,6 +28,7 @@ describe("waitForIntentSettlement()", () => {
 			intentHash: "foo",
 			signal: controller.signal,
 			onTxHashKnown: fn,
+			solverRelayApiKey: "test-jwt",
 		});
 
 		await vi.waitFor(() => expect(fn).toHaveBeenCalledOnce());
@@ -68,6 +69,7 @@ describe("waitForIntentSettlement()", () => {
 			intentHash: "foo",
 			signal: AbortSignal.timeout(5000),
 			onTxHashKnown: fn,
+			solverRelayApiKey: "test-jwt",
 		});
 
 		expect(fn).toHaveBeenCalledOnce();
@@ -90,6 +92,7 @@ describe("waitForIntentSettlement()", () => {
 
 		const result = await waitForIntentSettlement({
 			intentHash: "intent123",
+			solverRelayApiKey: "test-jwt",
 		});
 
 		expect(result).toEqual({
@@ -120,6 +123,7 @@ describe("waitForIntentSettlement()", () => {
 
 		const result = await waitForIntentSettlement({
 			intentHash: "foo",
+			solverRelayApiKey: "test-jwt",
 		});
 
 		expect(requestCount).toBe(2);
@@ -146,7 +150,10 @@ describe("waitForIntentSettlement()", () => {
 		);
 
 		await expect(
-			waitForIntentSettlement({ intentHash: "intent123" }),
+			waitForIntentSettlement({
+				intentHash: "intent123",
+				solverRelayApiKey: "test-jwt",
+			}),
 		).rejects.toThrow(IntentSettlementError);
 	});
 });

@@ -60,7 +60,8 @@ import {KeyPair} from 'near-api-js';
 
 // Initialize the SDK
 const sdk = new IntentsSDK({
-    referral: 'your-referral-code', // Only referral is required
+    referral: 'your-referral-code',
+    solverRelayApiKey: process.env.SOLVER_RELAY_JWT!,
     intentSigner: createIntentSignerNearKeyPair({
         signer: KeyPair.fromString('your-private-key'),
         accountId: 'your-account.near'
@@ -355,6 +356,7 @@ import {Chains} from '@defuse-protocol/intents-sdk'
 
 const sdk = new IntentsSDK({
     ...,
+    solverRelayApiKey: process.env.SOLVER_RELAY_JWT!,
     rpc: {
         [Chains.Near]: ['https://rpc.mainnet.near.org'],
         [Chains.Polygon]: ['https://polygon-rpc.com'],
@@ -374,6 +376,7 @@ Will route migrated PoA tokens (ending with `*.omft.near`) through Omni Bridge i
 ```typescript
 const sdk = new IntentsSDK({
     referral: 'your-referral-code',
+    solverRelayApiKey: process.env.SOLVER_RELAY_JWT!,
     features: {
         routeMigratedPoaTokensThroughOmniBridge: true
     }
