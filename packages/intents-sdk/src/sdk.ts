@@ -114,10 +114,6 @@ export interface IntentsSDKConfig {
 	intentSigner?: IIntentSigner;
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
-	/**
-	 * JWT/API key for solver-relay HTTP JSON-RPC.
-	 * Required for quote, publish, and status operations.
-	 */
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
 	features?: {
