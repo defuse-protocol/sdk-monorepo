@@ -111,12 +111,7 @@ function isTransientError(err: unknown): boolean {
 	}
 
 	// Auth errors are not transient - fail fast
-	if (
-		err instanceof BaseError &&
-		err.walk((err) => isAuthError(err)) !== null
-	) {
-		return false;
-	}
+	if (isAuthError(err)) return false;
 
 	return (
 		err instanceof BaseError &&
