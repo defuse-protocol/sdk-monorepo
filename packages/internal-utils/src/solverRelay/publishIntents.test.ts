@@ -14,7 +14,7 @@ describe("publishIntents()", () => {
 		vi.clearAllMocks();
 	});
 
-	it("returns UNKNOWN_ERROR when relay returns non-mapped failure reason", async () => {
+	it("should return UNKNOWN_ERROR", async () => {
 		publishIntentsMock.mockResolvedValueOnce({
 			intent_hashes: [],
 			status: "FAILED",
