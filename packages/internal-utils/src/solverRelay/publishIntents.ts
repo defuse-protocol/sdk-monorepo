@@ -1,13 +1,11 @@
 import { Err, Ok, type Result } from "@thames/monads";
-import { HttpRequestError, RpcRequestError } from "../errors/request";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
 	RelayPublishError,
 	type RelayPublishErrorType,
 	toRelayPublishError,
 } from "./utils/parseFailedPublishError";
-
-const AUTH_ERROR_CODE = 401;
+import { isAuthError } from "./errors/isAuthError";
 
 export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
@@ -70,11 +68,4 @@ function parsePublishIntentsResponse(
 	}
 
 	return Err(toRelayPublishError(publishParams, response));
-}
-
-function isAuthError(err: unknown): boolean {
-	return (
-		(err instanceof HttpRequestError && err.status === AUTH_ERROR_CODE) ||
-		(err instanceof RpcRequestError && err.code === AUTH_ERROR_CODE)
-	);
 }
