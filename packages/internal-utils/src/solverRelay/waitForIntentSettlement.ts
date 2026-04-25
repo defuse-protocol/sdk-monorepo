@@ -1,5 +1,9 @@
 import { BaseError } from "../errors/base";
-import { HttpRequestError, RpcRequestError, TimeoutError } from "../errors/request";
+import {
+	HttpRequestError,
+	RpcRequestError,
+	TimeoutError,
+} from "../errors/request";
 import type { ILogger } from "../logger";
 import { poll, POLL_PENDING, type CompletionStats } from "../utils/poll";
 import {
