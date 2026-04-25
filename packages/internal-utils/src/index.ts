@@ -92,6 +92,8 @@ export {
 	type IntentSettlementErrorType,
 } from "./solverRelay/errors/intentSettlement";
 
+export { isAuthError } from "./solverRelay/errors/isAuthError";
+
 export {
 	RelayPublishError,
 	type RelayPublishErrorType,

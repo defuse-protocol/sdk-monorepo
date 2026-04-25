@@ -6,6 +6,7 @@ export type HttpRequestErrorType = HttpRequestError & {
 };
 export class HttpRequestError extends BaseError {
 	body?: unknown | undefined;
+	code?: number | undefined;
 	headers?: Headers | undefined;
 	status?: number | undefined;
 	url: string;
@@ -36,6 +37,7 @@ export class HttpRequestError extends BaseError {
 			name: "HttpRequestError",
 		});
 		this.body = body;
+		this.code = status;
 		this.headers = headers;
 		this.status = status;
 		this.url = url;

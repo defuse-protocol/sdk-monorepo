@@ -1,10 +1,10 @@
 import { HttpRequestError, RpcRequestError } from "../../errors/request";
 
-export const AUTH_ERROR_CODE = 401;
+const AUTH_ERROR_CODE = 401;
 
-export function isAuthError(err: unknown) {
+export function isAuthError(err: unknown): boolean {
 	return (
-		(err instanceof HttpRequestError && err.status === AUTH_ERROR_CODE) ||
-		(err instanceof RpcRequestError && err.code === AUTH_ERROR_CODE)
+		(err instanceof HttpRequestError || err instanceof RpcRequestError) &&
+		err.code === AUTH_ERROR_CODE
 	);
 }
