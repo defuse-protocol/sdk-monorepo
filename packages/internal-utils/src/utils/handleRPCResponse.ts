@@ -50,7 +50,7 @@ export async function handleRPCResponse<
 
 	throw new RpcRequestError({
 		body,
-		error: { code: -1, data: json, message: "Invalid response" },
+		error,
 		url: response.url,
 	});
 }
