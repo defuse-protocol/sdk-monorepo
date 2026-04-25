@@ -4,6 +4,7 @@ import { server } from "../../test/setup";
 import { waitForIntentSettlement } from "./waitForIntentSettlement";
 import type { GetStatusResponse } from "./solverRelayHttpClient";
 import { IntentSettlementError } from "./errors/intentSettlement";
+import { HttpRequestError, RpcRequestError } from "../errors/request";
 
 describe("waitForIntentSettlement()", () => {
 	it("calls onTxHashKnown callback when tx hash seen", async () => {
@@ -127,6 +128,52 @@ describe("waitForIntentSettlement()", () => {
 			txHash: "bar",
 			intentHash: "foo",
 		});
+	});
+
+	it("fails fast on solver relay auth errors", async () => {
+		let requestCount = 0;
+		server.use(
+			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
+				requestCount++;
+				return HttpResponse.json(
+					{
+						message: "Unauthorized",
+					},
+					{ status: 401, statusText: "Unauthorized" },
+				);
+			}),
+		);
+
+		await expect(
+			waitForIntentSettlement({
+				intentHash: "foo",
+			}),
+		).rejects.toBeInstanceOf(HttpRequestError);
+		expect(requestCount).toBe(1);
+	});
+
+	it("fails fast on JSON-RPC auth errors with code 401", async () => {
+		let requestCount = 0;
+		server.use(
+			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
+				requestCount++;
+				return HttpResponse.json({
+					id: "dontcare",
+					jsonrpc: "2.0",
+					error: {
+						code: 401,
+						message: "Unauthorized",
+					},
+				});
+			}),
+		);
+
+		await expect(
+			waitForIntentSettlement({
+				intentHash: "foo",
+			}),
+		).rejects.toBeInstanceOf(RpcRequestError);
+		expect(requestCount).toBe(1);
 	});
 
 	it("throws IntentSettlementError when settlement fails on-chain", async () => {

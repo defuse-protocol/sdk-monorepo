@@ -103,9 +103,23 @@ export async function waitForIntentSettlement({
 	);
 }
 
+const AUTH_ERROR_CODE = 401;
+
 function isTransientError(err: unknown): boolean {
 	// IntentSettlementError is only thrown for permanent on-chain failures
 	if (err instanceof IntentSettlementError) {
+		return false;
+	}
+
+	// Auth errors are not transient - fail fast
+	if (
+		err instanceof BaseError &&
+		err.walk(
+			(err) =>
+				(err instanceof HttpRequestError && err.status === AUTH_ERROR_CODE) ||
+				(err instanceof RpcRequestError && err.code === AUTH_ERROR_CODE),
+		) !== null
+	) {
 		return false;
 	}
 
