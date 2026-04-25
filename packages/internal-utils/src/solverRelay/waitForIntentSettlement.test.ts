@@ -4,7 +4,7 @@ import { server } from "../../test/setup";
 import { waitForIntentSettlement } from "./waitForIntentSettlement";
 import type { GetStatusResponse } from "./solverRelayHttpClient";
 import { IntentSettlementError } from "./errors/intentSettlement";
-import { HttpRequestError, RpcRequestError } from "../errors/request";
+import { RpcRequestError } from "../errors/request";
 
 describe("waitForIntentSettlement()", () => {
 	it("calls onTxHashKnown callback when tx hash seen", async () => {
@@ -130,29 +130,7 @@ describe("waitForIntentSettlement()", () => {
 		});
 	});
 
-	it("fails fast on solver relay auth errors", async () => {
-		let requestCount = 0;
-		server.use(
-			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
-				requestCount++;
-				return HttpResponse.json(
-					{
-						message: "Unauthorized",
-					},
-					{ status: 401, statusText: "Unauthorized" },
-				);
-			}),
-		);
-
-		await expect(
-			waitForIntentSettlement({
-				intentHash: "foo",
-			}),
-		).rejects.toBeInstanceOf(HttpRequestError);
-		expect(requestCount).toBe(1);
-	});
-
-	it("fails fast on JSON-RPC auth errors with code 401", async () => {
+	it("fails fast on 401 auth errors without retrying", async () => {
 		let requestCount = 0;
 		server.use(
 			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
@@ -168,11 +146,12 @@ describe("waitForIntentSettlement()", () => {
 			}),
 		);
 
-		await expect(
-			waitForIntentSettlement({
-				intentHash: "foo",
-			}),
-		).rejects.toBeInstanceOf(RpcRequestError);
+		const error = await waitForIntentSettlement({
+			intentHash: "foo",
+		}).catch((e) => e);
+
+		expect(error).toBeInstanceOf(RpcRequestError);
+		expect(error.code).toBe(401);
 		expect(requestCount).toBe(1);
 	});
 

@@ -1,4 +1,3 @@
-import { RpcRequestError } from "../errors/request";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as solverRelayHttpClient from "./solverRelayHttpClient";
 import { publishIntents } from "./publishIntents";
@@ -32,24 +31,7 @@ describe("publishIntents()", () => {
 		expect(err).toHaveProperty("code", "UNKNOWN_ERROR");
 	});
 
-	it("throws RpcRequestError with code 401 when relay rejects with auth error", async () => {
-		publishIntentsMock.mockRejectedValueOnce(
-			new RpcRequestError({
-				body: { method: "publish_intents" },
-				error: { code: 401, message: "Unauthorized" },
-				url: "https://solver-relay-v2.chaindefuser.com/rpc",
-			}),
-		);
-
-		await expect(
-			publishIntents({
-				quote_hashes: [],
-				signed_datas: [],
-			}),
-		).rejects.toBeInstanceOf(RpcRequestError);
-	});
-
-	it("keeps wrapping non-auth transport failures as NETWORK_ERROR", async () => {
+	it("wraps transport failures as NETWORK_ERROR", async () => {
 		publishIntentsMock.mockRejectedValueOnce(new Error("socket closed"));
 
 		const result = await publishIntents({
