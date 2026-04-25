@@ -6,7 +6,6 @@ export type HttpRequestErrorType = HttpRequestError & {
 };
 export class HttpRequestError extends BaseError {
 	body?: unknown | undefined;
-	code?: number | undefined;
 	headers?: Headers | undefined;
 	status?: number | undefined;
 	url: string;
@@ -37,7 +36,6 @@ export class HttpRequestError extends BaseError {
 			name: "HttpRequestError",
 		});
 		this.body = body;
-		this.code = status;
 		this.headers = headers;
 		this.status = status;
 		this.url = url;
@@ -87,5 +85,36 @@ export class TimeoutError extends BaseError {
 			metaMessages: [`URL: ${url}`, `Request body: ${serialize(body)}`],
 			name: "TimeoutError",
 		});
+	}
+}
+
+export type AuthErrorType = AuthError & {
+	name: "AuthError";
+};
+export class AuthError extends BaseError {
+	status: number;
+
+	constructor({
+		body,
+		cause,
+		status,
+		url,
+	}: {
+		body?: unknown | undefined;
+		cause?: Error | undefined;
+		status: number;
+		url: string;
+	}) {
+		super("Authentication failed.", {
+			cause,
+			details: "Invalid or missing API key",
+			metaMessages: [
+				`Status: ${status}`,
+				`URL: ${url}`,
+				body && `Request body: ${serialize(body)}`,
+			].filter(Boolean) as string[],
+			name: "AuthError",
+		});
+		this.status = status;
 	}
 }

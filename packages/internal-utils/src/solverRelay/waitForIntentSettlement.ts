@@ -1,5 +1,6 @@
 import { BaseError } from "../errors/base";
 import {
+	AuthError,
 	HttpRequestError,
 	RpcRequestError,
 	TimeoutError,
@@ -10,7 +11,6 @@ import {
 	IntentSettlementError,
 	type IntentSettlementErrorType,
 } from "./errors/intentSettlement";
-import { isAuthError } from "./errors/isAuthError";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import type * as types from "./solverRelayHttpClient/types";
 
@@ -110,8 +110,10 @@ function isTransientError(err: unknown): boolean {
 		return false;
 	}
 
-	// Auth errors are not transient - fail fast
-	if (isAuthError(err)) return false;
+	// Auth errors are not transient so we fail fast here
+	if (err instanceof AuthError) {
+		return false
+	}
 
 	return (
 		err instanceof BaseError &&

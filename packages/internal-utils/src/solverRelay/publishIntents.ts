@@ -1,11 +1,11 @@
 import { Err, Ok, type Result } from "@thames/monads";
+import { AuthError } from "../errors/request";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
 	RelayPublishError,
 	type RelayPublishErrorType,
 	toRelayPublishError,
 } from "./utils/parseFailedPublishError";
-import { isAuthError } from "./errors/isAuthError";
 
 export async function publishIntents(
 	...args: Parameters<typeof solverRelayClient.publishIntents>
@@ -28,7 +28,7 @@ export async function publishIntents(
 				return parsePublishIntentsResponse(params, response);
 			},
 			(err) => {
-				if (isAuthError(err)) throw err;
+				if (err instanceof AuthError) throw err;
 
 				const publishError = new RelayPublishError({
 					reason: "Error occurred during sending a request",

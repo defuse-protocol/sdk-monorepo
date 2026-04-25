@@ -4,7 +4,7 @@ import { server } from "../../test/setup";
 import { waitForIntentSettlement } from "./waitForIntentSettlement";
 import type { GetStatusResponse } from "./solverRelayHttpClient";
 import { IntentSettlementError } from "./errors/intentSettlement";
-import { RpcRequestError } from "../errors/request";
+import { AuthError } from "../errors/request";
 
 describe("waitForIntentSettlement()", () => {
 	it("calls onTxHashKnown callback when tx hash seen", async () => {
@@ -150,8 +150,7 @@ describe("waitForIntentSettlement()", () => {
 			intentHash: "foo",
 		}).catch((e) => e);
 
-		expect(error).toBeInstanceOf(RpcRequestError);
-		expect(error.code).toBe(401);
+		expect(error).toBeInstanceOf(AuthError);
 		expect(requestCount).toBe(1);
 	});
 
