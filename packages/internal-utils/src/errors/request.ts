@@ -96,17 +96,14 @@ export class AuthError extends BaseError {
 
 	constructor({
 		body,
-		cause,
 		status,
 		url,
 	}: {
 		body?: unknown | undefined;
-		cause?: Error | undefined;
 		status: number;
 		url: string;
 	}) {
 		super("Authentication failed.", {
-			cause,
 			details: "Invalid or missing API key",
 			metaMessages: [
 				`Status: ${status}`,
