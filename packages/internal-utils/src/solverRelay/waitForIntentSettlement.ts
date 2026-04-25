@@ -1,15 +1,12 @@
 import { BaseError } from "../errors/base";
-import {
-	HttpRequestError,
-	RpcRequestError,
-	TimeoutError,
-} from "../errors/request";
+import { HttpRequestError, RpcRequestError, TimeoutError } from "../errors/request";
 import type { ILogger } from "../logger";
 import { poll, POLL_PENDING, type CompletionStats } from "../utils/poll";
 import {
 	IntentSettlementError,
 	type IntentSettlementErrorType,
 } from "./errors/intentSettlement";
+import { isAuthError } from "./errors/isAuthError";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import type * as types from "./solverRelayHttpClient/types";
 
@@ -103,8 +100,6 @@ export async function waitForIntentSettlement({
 	);
 }
 
-const AUTH_ERROR_CODE = 401;
-
 function isTransientError(err: unknown): boolean {
 	// IntentSettlementError is only thrown for permanent on-chain failures
 	if (err instanceof IntentSettlementError) {
@@ -114,11 +109,7 @@ function isTransientError(err: unknown): boolean {
 	// Auth errors are not transient - fail fast
 	if (
 		err instanceof BaseError &&
-		err.walk(
-			(err) =>
-				(err instanceof HttpRequestError && err.status === AUTH_ERROR_CODE) ||
-				(err instanceof RpcRequestError && err.code === AUTH_ERROR_CODE),
-		) !== null
+		err.walk((err) => isAuthError(err)) !== null
 	) {
 		return false;
 	}
