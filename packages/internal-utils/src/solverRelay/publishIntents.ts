@@ -28,9 +28,7 @@ export async function publishIntents(
 				return parsePublishIntentsResponse(params, response);
 			},
 			(err) => {
-				if (isAuthError(err)) {
-					throw err;
-				}
+				if (isAuthError(err)) throw err;
 
 				const publishError = new RelayPublishError({
 					reason: "Error occurred during sending a request",
