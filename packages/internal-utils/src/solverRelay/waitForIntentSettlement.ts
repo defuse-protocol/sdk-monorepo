@@ -112,7 +112,7 @@ function isTransientError(err: unknown): boolean {
 
 	// Auth errors are not transient so we fail fast here
 	if (err instanceof AuthError) {
-		return false
+		return false;
 	}
 
 	return (
