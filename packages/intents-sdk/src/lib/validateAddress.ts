@@ -77,6 +77,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Berachain:
 		case Chains.Plasma:
 		case Chains.Scroll:
+		case Chains.Abstract:
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);
