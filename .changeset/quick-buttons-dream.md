@@ -1,0 +1,6 @@
+---
+"@defuse-protocol/crosschain-assetid": minor
+"@defuse-protocol/intents-sdk": minor
+---
+
+Add Abstract chain support
