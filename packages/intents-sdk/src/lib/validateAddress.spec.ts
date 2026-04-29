@@ -283,6 +283,12 @@ describe("validateSolAddress", () => {
 				Chains.Solana,
 			),
 		).toBe(true);
+		expect(
+			validateAddress(
+				"AcbDFdRyw6baL2gJR1oZKCUGaRBi94kBEoNWMzYyZejC",
+				Chains.Fogo,
+			),
+		).toBe(true);
 	});
 
 	it("rejects invalid addresses", () => {
