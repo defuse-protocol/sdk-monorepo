@@ -23,6 +23,7 @@ export const Chains = {
 	Berachain: "eip155:80085",
 	Near: "near:mainnet",
 	Solana: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+	Fogo: "solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251",
 	Tron: "tron:27Lqcw",
 	XRPL: "xrpl:0",
 	TON: "tvm:-239",

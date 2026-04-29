@@ -28,6 +28,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateBchAddress(address);
 
 		case Chains.Solana:
+		case Chains.Fogo:
 			return validateSolAddress(address);
 
 		case Chains.Dogecoin:
