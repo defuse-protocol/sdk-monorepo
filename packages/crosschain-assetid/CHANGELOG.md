@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.4.0
+
+### Minor Changes
+
+- a7a8658: Add Abstract chain support
+
 ## 1.3.0
 
 ### Minor Changes
