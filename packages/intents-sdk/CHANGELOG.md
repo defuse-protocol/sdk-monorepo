@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.61.0
+
+### Minor Changes
+
+- a7a8658: Add Abstract chain support
+
 ## 0.60.0
 
 ### Minor Changes
