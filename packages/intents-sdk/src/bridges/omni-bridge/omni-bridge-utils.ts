@@ -110,6 +110,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Solana, ChainKind.Sol],
 	[Chains.BNB, ChainKind.Bnb],
 	[Chains.Bitcoin, ChainKind.Btc],
+	[Chains.Abstract, ChainKind.Abs],
 ];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
@@ -165,7 +166,8 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("arb:") ||
 			input.startsWith("base:") ||
 			input.startsWith("btc:") ||
-			input.startsWith("bnb:")),
+			input.startsWith("bnb:") ||
+			input.startsWith("abs:")),
 	"Must comply with omni address schema",
 );
 /**
