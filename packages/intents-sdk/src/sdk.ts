@@ -193,6 +193,8 @@ export class IntentsSDK implements IIntentsSDK {
 					},
 					withdrawFees: {
 						[Network.ADI]: 200_000n,
+						[Network.Scroll]: 200_000n,
+						9745: 200_000n, // PLASMA
 					},
 				}),
 			}),
