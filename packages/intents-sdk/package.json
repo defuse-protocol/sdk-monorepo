@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.60.0",
+	"version": "0.62.0",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -44,8 +44,8 @@
 		"@hot-labs/omni-sdk": "2.25.4",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
-		"@omni-bridge/core": "0.2.3",
-		"@omni-bridge/near": "0.2.3",
+		"@omni-bridge/core": "0.6.1",
+		"@omni-bridge/near": "0.6.1",
 		"@noble/hashes": "^1.7.1",
 		"@scure/base": "^1.0.0",
 		"@solana/web3.js": "^1.0.0",

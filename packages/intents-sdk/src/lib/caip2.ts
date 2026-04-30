@@ -23,6 +23,7 @@ export const Chains = {
 	Berachain: "eip155:80085",
 	Near: "near:mainnet",
 	Solana: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+	Fogo: "solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251",
 	Tron: "tron:27Lqcw",
 	XRPL: "xrpl:0",
 	TON: "tvm:-239",
@@ -35,6 +36,7 @@ export const Chains = {
 	Scroll: "eip155:534352",
 	Aleo: "aleo:0",
 	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
+	Abstract: "eip155:2741",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
