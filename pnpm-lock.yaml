@@ -189,6 +189,31 @@ importers:
         specifier: ^5.4.2
         version: 5.8.3
 
+  packages/wallet-sdk:
+    dependencies:
+      '@defuse-protocol/contract-types':
+        specifier: 0.6.1
+        version: 0.6.1
+      '@noble/curves':
+        specifier: 1.9.6
+        version: 1.9.6
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
+      '@scure/base':
+        specifier: ^1.2.6
+        version: 1.2.6
+      borsher:
+        specifier: ^4.0.0
+        version: 4.0.0
+    devDependencies:
+      tsdown:
+        specifier: ^0.19.0
+        version: 0.19.0(typescript@5.8.3)
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.19(@types/node@25.0.10)
+
 packages:
 
   '@0no-co/graphql.web@1.2.0':
@@ -541,6 +566,9 @@ packages:
 
   '@cosmjs/utils@0.37.0':
     resolution: {integrity: sha512-j46yZg+cLBpANGc5sCxtQHJgPGBt5zSKlU+KX9FlDS6JU6q2vZYCpKgucFFpjekEiMagU1eu8cDSCRjTthEM6w==}
+
+  '@defuse-protocol/contract-types@0.6.1':
+    resolution: {integrity: sha512-zac8hlK7wktV8FlNujedFNj3iLKZtE/wFT4MQvGerrynGi7E12GYRF6EZMC2DBH4pVmXZm8ktLlEp5dC34Jn8A==}
 
   '@emnapi/core@1.7.1':
     resolution: {integrity: sha512-o1uhUASyo921r2XtHYOHy7gdkGLge8ghBEQHMWmyJFoXlpU58kIrhhN3w26lpQb6dspetweapMn2CSNwQ8I4wg==}
@@ -2690,6 +2718,7 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
@@ -4809,6 +4838,12 @@ snapshots:
 
   '@cosmjs/utils@0.37.0':
     optional: true
+
+  '@defuse-protocol/contract-types@0.6.1':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
 
   '@emnapi/core@1.7.1':
     dependencies:
