@@ -4,7 +4,7 @@ import {
 	type EnvConfig,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
-import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
+import { type HotBridge as HotSdk, GlobalSettings } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { LRUCache } from "lru-cache";
 import * as v from "valibot";
@@ -129,7 +129,8 @@ export class HotBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 
-		const contractIdSatisfies = parsed.contractId === OMNI_HOT_V2;
+		const contractIdSatisfies =
+			parsed.contractId === GlobalSettings.omniHotContract;
 
 		if (!contractIdSatisfies) {
 			return null;
