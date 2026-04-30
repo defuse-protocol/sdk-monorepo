@@ -94,8 +94,8 @@ importers:
         specifier: workspace:*
         version: link:../internal-utils
       '@hot-labs/omni-sdk':
-        specifier: 2.24.8
-        version: 2.24.8(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)
+        specifier: 2.25.5
+        version: 2.25.5(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@isaacs/ttlcache':
         specifier: ^1.0.0
         version: 1.4.1
@@ -736,8 +736,8 @@ packages:
       '@standard-schema/spec': ^1.0.0
       hono: '>=3.9.0'
 
-  '@hot-labs/omni-sdk@2.24.8':
-    resolution: {integrity: sha512-Pagvft6tiaEF2vuUXA0wwMOXpXThvT7z/JAV+rXEFZGMTrrCEQ5CSyQs5OtDcWLrl6m8dcFT/V0dpdO2kznRAw==}
+  '@hot-labs/omni-sdk@2.25.5':
+    resolution: {integrity: sha512-ob76jBuFd03E/f7pgv08oQXclteK5p5zFvpOzmLeZd4K+oT2Omy0IemI22Oimj9MybrMshX97BXROWZJf+NFcQ==}
 
   '@injectivelabs/abacus-proto-ts@1.14.0':
     resolution: {integrity: sha512-YAKBYGVwqm/OHtHAMGfJaUfANJ1d6Rec19KKUBeJmGB7xqkhybBjSq50OudMNl0oTqUH6NeupqSNQwrU7JvceA==}
@@ -1729,8 +1729,8 @@ packages:
       '@ton-api/client': ^0.4.0
       '@ton/core': '>=0.60.1'
 
-  '@ton/core@0.60.1':
-    resolution: {integrity: sha512-8FwybYbfkk57C3l9gvnlRhRBHbLYmeu0LbB1z9N+dhDz0Z+FJW8w0TJlks8CgHrAFxsT3FlR2LsqFnsauMp38w==}
+  '@ton/core@0.62.0':
+    resolution: {integrity: sha512-GCYlzzx11rSESKkiHvNy9tL8zWth+ZtUbvV29WH478FvBp8xTw24AyoigwXWNV+OLCAcnwlGhZpTpxjD3wzCwA==}
     peerDependencies:
       '@ton/crypto': '>=3.2.0'
 
@@ -4937,7 +4937,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       hono: 4.11.4
 
-  '@hot-labs/omni-sdk@2.24.8(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)':
+  '@hot-labs/omni-sdk@2.25.5(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@near-js/crypto': 2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5))
       '@near-js/providers': 2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/transactions@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5))
@@ -4946,11 +4946,11 @@ snapshots:
       '@near-js/utils': 2.2.5(@near-js/types@2.2.5)
       '@scure/base': 2.0.0
       '@stellar/stellar-sdk': 14.1.1
-      '@ton-api/client': 0.4.0(@ton/core@0.60.1(@ton/crypto@3.3.0))
-      '@ton-api/ton-adapter': 0.4.1(@ton-api/client@0.4.0(@ton/core@0.60.1(@ton/crypto@3.3.0)))(@ton/core@0.60.1(@ton/crypto@3.3.0))
-      '@ton/core': 0.60.1(@ton/crypto@3.3.0)
+      '@ton-api/client': 0.4.0(@ton/core@0.62.0(@ton/crypto@3.3.0))
+      '@ton-api/ton-adapter': 0.4.1(@ton-api/client@0.4.0(@ton/core@0.62.0(@ton/crypto@3.3.0)))(@ton/core@0.62.0(@ton/crypto@3.3.0))
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
       '@ton/crypto': 3.3.0
-      '@ton/ton': 15.2.1(@ton/core@0.60.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)
+      '@ton/ton': 15.2.1(@ton/core@0.62.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)
       ethers: 6.15.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       rlp: 3.0.0
     optionalDependencies:
@@ -5884,7 +5884,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.2
+      '@noble/curves': 1.9.6
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -6185,17 +6185,17 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@ton-api/client@0.4.0(@ton/core@0.60.1(@ton/crypto@3.3.0))':
+  '@ton-api/client@0.4.0(@ton/core@0.62.0(@ton/crypto@3.3.0))':
     dependencies:
-      '@ton/core': 0.60.1(@ton/crypto@3.3.0)
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
       core-js-pure: 3.43.0
 
-  '@ton-api/ton-adapter@0.4.1(@ton-api/client@0.4.0(@ton/core@0.60.1(@ton/crypto@3.3.0)))(@ton/core@0.60.1(@ton/crypto@3.3.0))':
+  '@ton-api/ton-adapter@0.4.1(@ton-api/client@0.4.0(@ton/core@0.62.0(@ton/crypto@3.3.0)))(@ton/core@0.62.0(@ton/crypto@3.3.0))':
     dependencies:
-      '@ton-api/client': 0.4.0(@ton/core@0.60.1(@ton/crypto@3.3.0))
-      '@ton/core': 0.60.1(@ton/crypto@3.3.0)
+      '@ton-api/client': 0.4.0(@ton/core@0.62.0(@ton/crypto@3.3.0))
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
 
-  '@ton/core@0.60.1(@ton/crypto@3.3.0)':
+  '@ton/core@0.62.0(@ton/crypto@3.3.0)':
     dependencies:
       '@ton/crypto': 3.3.0
       symbol.inspect: 1.0.1
@@ -6210,9 +6210,9 @@ snapshots:
       jssha: 3.2.0
       tweetnacl: 1.0.3
 
-  '@ton/ton@15.2.1(@ton/core@0.60.1(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)':
+  '@ton/ton@15.2.1(@ton/core@0.62.0(@ton/crypto@3.3.0))(@ton/crypto@3.3.0)':
     dependencies:
-      '@ton/core': 0.60.1(@ton/crypto@3.3.0)
+      '@ton/core': 0.62.0(@ton/crypto@3.3.0)
       '@ton/crypto': 3.3.0
       axios: 1.11.0
       dataloader: 2.2.3
@@ -8114,7 +8114,7 @@ snapshots:
     dependencies:
       '@adraffy/ens-normalize': 1.11.0
       '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.2
+      '@noble/curves': 1.9.6
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
