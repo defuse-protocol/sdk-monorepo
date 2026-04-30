@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.62.1
+
+### Patch Changes
+
+- f10db35: Fix ADI high withdrawal fee (now 5x lower). Pr also reduces Scroll and Plasma fees by 5x. Solver fix for Plasma also adjusted.
+
 ## 0.62.0
 
 ### Minor Changes
