@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": patch
 ---
 
-Fix adi high withdrawal fee, it gets 5x lower. Also scroll and plasma fees are 5x lower, the hotfix that increased the fee for plasma was also adjusted.
+Fix ADI high withdrawal fee (now 5x lower). Pr also reduces Scroll and Plasma fees by 5x. Solver fix for Plasma also adjusted.
