@@ -11,10 +11,7 @@ import {
 	RelayPublishError,
 	type RpcEndpoint,
 } from "@defuse-protocol/internal-utils";
-import {
-	HotBridge as hotLabsOmniSdk_HotBridge,
-	Network,
-} from "@hot-labs/omni-sdk";
+import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
 import { stringify } from "viem";
 import { AuroraEngineBridge } from "./bridges/aurora-engine-bridge/aurora-engine-bridge";
 import { DirectBridge } from "./bridges/direct-bridge/direct-bridge";
@@ -190,11 +187,6 @@ export class IntentsSDK implements IIntentsSDK {
 					stellarHorizonRpc: stellarRpcUrls.horizon,
 					async executeNearTransaction() {
 						throw new Error("not implemented");
-					},
-					withdrawFees: {
-						[Network.ADI]: 200_000n,
-						[Network.Scroll]: 200_000n,
-						9745: 200_000n, // PLASMA
 					},
 				}),
 			}),
