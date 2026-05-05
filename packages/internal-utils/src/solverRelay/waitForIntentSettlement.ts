@@ -1,5 +1,6 @@
 import { BaseError } from "../errors/base";
 import {
+	AuthError,
 	HttpRequestError,
 	RpcRequestError,
 	TimeoutError,
@@ -106,6 +107,11 @@ export async function waitForIntentSettlement({
 function isTransientError(err: unknown): boolean {
 	// IntentSettlementError is only thrown for permanent on-chain failures
 	if (err instanceof IntentSettlementError) {
+		return false;
+	}
+
+	// Auth errors are not transient so we fail fast here
+	if (err instanceof AuthError) {
 		return false;
 	}
 

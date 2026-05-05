@@ -87,3 +87,31 @@ export class TimeoutError extends BaseError {
 		});
 	}
 }
+
+export type AuthErrorType = AuthError & {
+	name: "AuthError";
+};
+export class AuthError extends BaseError {
+	status: number;
+
+	constructor({
+		body,
+		status,
+		url,
+	}: {
+		body?: unknown | undefined;
+		status: number;
+		url: string;
+	}) {
+		super("Authentication failed.", {
+			details: "Invalid or missing API key",
+			metaMessages: [
+				`Status: ${status}`,
+				`URL: ${url}`,
+				body && `Request body: ${serialize(body)}`,
+			].filter(Boolean) as string[],
+			name: "AuthError",
+		});
+		this.status = status;
+	}
+}

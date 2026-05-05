@@ -4,6 +4,7 @@ import { server } from "../../test/setup";
 import { waitForIntentSettlement } from "./waitForIntentSettlement";
 import type { GetStatusResponse } from "./solverRelayHttpClient";
 import { IntentSettlementError } from "./errors/intentSettlement";
+import { AuthError } from "../errors/request";
 
 describe("waitForIntentSettlement()", () => {
 	it("calls onTxHashKnown callback when tx hash seen", async () => {
@@ -127,6 +128,30 @@ describe("waitForIntentSettlement()", () => {
 			txHash: "bar",
 			intentHash: "foo",
 		});
+	});
+
+	it("fails fast on 401 auth errors without retrying", async () => {
+		let requestCount = 0;
+		server.use(
+			http.post("https://solver-relay-v2.chaindefuser.com/rpc", () => {
+				requestCount++;
+				return HttpResponse.json({
+					id: "dontcare",
+					jsonrpc: "2.0",
+					error: {
+						code: 401,
+						message: "Unauthorized",
+					},
+				});
+			}),
+		);
+
+		const error = await waitForIntentSettlement({
+			intentHash: "foo",
+		}).catch((e) => e);
+
+		expect(error).toBeInstanceOf(AuthError);
+		expect(requestCount).toBe(1);
 	});
 
 	it("throws IntentSettlementError when settlement fails on-chain", async () => {

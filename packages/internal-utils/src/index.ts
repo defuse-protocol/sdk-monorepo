@@ -63,6 +63,8 @@ export {
 } from "./errors/assert";
 
 export {
+	AuthError,
+	type AuthErrorType,
 	HttpRequestError,
 	type HttpRequestErrorType,
 	RpcRequestError,

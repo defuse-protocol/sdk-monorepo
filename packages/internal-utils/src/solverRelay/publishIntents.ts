@@ -1,4 +1,5 @@
 import { Err, Ok, type Result } from "@thames/monads";
+import { AuthError } from "../errors/request";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
 	RelayPublishError,
@@ -27,6 +28,8 @@ export async function publishIntents(
 				return parsePublishIntentsResponse(params, response);
 			},
 			(err) => {
+				if (err instanceof AuthError) throw err;
+
 				const publishError = new RelayPublishError({
 					reason: "Error occurred during sending a request",
 					code: "NETWORK_ERROR",

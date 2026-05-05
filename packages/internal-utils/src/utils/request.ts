@@ -1,5 +1,5 @@
 import { retry } from "@lifeomic/attempt";
-import { HttpRequestError, TimeoutError } from "../errors/request";
+import { AuthError, HttpRequestError, TimeoutError } from "../errors/request";
 import { isNetworkError } from "../errors/utils/isNetworkError";
 import { toError } from "../errors/utils/toError";
 import type { ILogger } from "../logger";
@@ -125,6 +125,14 @@ async function request_({
 			},
 		);
 
+		if (!response.ok && response.status === 401) {
+			throw new AuthError({
+				body,
+				status: response.status,
+				url: url.toString(),
+			});
+		}
+
 		if (!response.ok) {
 			throw new HttpRequestError({
 				body,
@@ -137,6 +145,7 @@ async function request_({
 
 		return response;
 	} catch (err: unknown) {
+		if (err instanceof AuthError) throw err;
 		if (err instanceof HttpRequestError) throw err;
 		if (err instanceof TimeoutError) throw err;
 

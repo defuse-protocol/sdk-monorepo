@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { RpcRequestError } from "../errors/request";
+import { AuthError, RpcRequestError } from "../errors/request";
 
 type SuccessResult<result> = {
 	result: result;
@@ -14,6 +14,8 @@ export type RpcResponse<TResult = unknown, TError = unknown> = {
 	id: number | string;
 } & (SuccessResult<TResult> | ErrorResult<TError>);
 
+const AUTH_ERROR_CODE = 401;
+
 export async function handleRPCResponse<
 	TSchema extends v.BaseSchema<TInput, TOutput, TIssue>,
 	TInput,
@@ -26,21 +28,29 @@ export async function handleRPCResponse<
 	const json = await response.json();
 
 	const parsed = v.safeParse(schema, json);
-	if (parsed.success) {
-		if (parsed.output.error !== undefined) {
-			throw new RpcRequestError({
-				body,
-				error: parsed.output.error,
-				url: response.url,
-			});
-		}
 
-		return parsed.output.result;
+	if (!parsed.success) {
+		throw new RpcRequestError({
+			body,
+			error: { code: -1, data: json, message: "Invalid response" },
+			url: response.url,
+		});
+	}
+
+	const { error } = parsed.output;
+	if (error === undefined) return parsed.output.result;
+
+	if (error.code === AUTH_ERROR_CODE) {
+		throw new AuthError({
+			body,
+			status: error.code,
+			url: response.url,
+		});
 	}
 
 	throw new RpcRequestError({
 		body,
-		error: { code: -1, data: json, message: "Invalid response" },
+		error,
 		url: response.url,
 	});
 }
