@@ -24,7 +24,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -480,6 +480,11 @@ export class OmniBridge implements Bridge {
 		}
 
 		if (utxoChainWithdrawal) {
+			if (assetInfo.blockchain === Chains.Bitcoin)
+				assert(
+					args.destinationAddress === args.destinationAddress.toLowerCase(),
+					"Only lowercased btc addresses are supported",
+				);
 			// UTXO availability and minimum withdrawal thresholds for UTXO chains are sourced
 			// from the Omni Bridge indexer.
 			const fee = await withTimeout(
