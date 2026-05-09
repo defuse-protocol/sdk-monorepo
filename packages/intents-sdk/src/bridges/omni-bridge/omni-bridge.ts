@@ -480,13 +480,12 @@ export class OmniBridge implements Bridge {
 		}
 
 		if (utxoChainWithdrawal) {
-			if (assetInfo.blockchain === Chains.Bitcoin)
-				if (assetInfo.blockchain === Chains.Bitcoin) {
-					assert(
-						/^bc1[ac-hj-np-z02-9]+$/.test(args.destinationAddress),
-						"Only lowercase bech32 Bitcoin addresses are supported by the contract",
-					);
-				}
+			if (assetInfo.blockchain === Chains.Bitcoin) {
+				assert(
+					/^bc1[ac-hj-np-z02-9]+$/.test(args.destinationAddress),
+					"Only lowercase bech32 Bitcoin addresses are supported by the contract",
+				);
+			}
 
 			// UTXO availability and minimum withdrawal thresholds for UTXO chains are sourced
 			// from the Omni Bridge indexer.
