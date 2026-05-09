@@ -480,10 +480,13 @@ export class OmniBridge implements Bridge {
 		}
 
 		if (utxoChainWithdrawal) {
-			if (assetInfo.blockchain === Chains.Bitcoin) {
+			if (
+				assetInfo.blockchain === Chains.Bitcoin &&
+				args.destinationAddress.toLowerCase().startsWith("bc1")
+			) {
 				assert(
 					/^bc1[ac-hj-np-z02-9]+$/.test(args.destinationAddress),
-					"Only lowercase bech32 Bitcoin addresses are supported by the contract",
+					"Only lowercase bech32 Bitcoin addresses are supported by the contract.",
 				);
 			}
 
