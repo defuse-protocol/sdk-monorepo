@@ -350,10 +350,20 @@ export class OmniBridge implements Bridge {
 			amount += utxoMaxGasFee + utxoProtocolFee;
 		}
 
+		let destinationAddress = args.withdrawalParams.destinationAddress;
+		// Omni contract only accepts lowercase bech32 addresses; uppercase/mixed-case
+		// bech32 is spec-valid but rejected on-chain. Base58 (legacy/P2SH) is left as-is.
+		if (
+			assetInfo.blockchain === Chains.Bitcoin &&
+			/^bc1/i.test(destinationAddress)
+		) {
+			destinationAddress = destinationAddress.toLowerCase();
+		}
+
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
-				destinationAddress: args.withdrawalParams.destinationAddress,
+				destinationAddress,
 				amount,
 				omniChainKind,
 				intentsContract: this.envConfig.contractID,
@@ -480,16 +490,6 @@ export class OmniBridge implements Bridge {
 		}
 
 		if (utxoChainWithdrawal) {
-			if (
-				assetInfo.blockchain === Chains.Bitcoin &&
-				args.destinationAddress.toLowerCase().startsWith("bc1")
-			) {
-				assert(
-					/^bc1[ac-hj-np-z02-9]+$/.test(args.destinationAddress),
-					"Only lowercase bech32 Bitcoin addresses are supported by the contract.",
-				);
-			}
-
 			// UTXO availability and minimum withdrawal thresholds for UTXO chains are sourced
 			// from the Omni Bridge indexer.
 			const fee = await withTimeout(
