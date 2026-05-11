@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.5.0
+
+### Minor Changes
+
+- 4fd76f4: Add starknet support
+
 ## 1.4.0
 
 ### Minor Changes
