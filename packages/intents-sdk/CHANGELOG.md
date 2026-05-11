@@ -1,5 +1,15 @@
 # @defuse-protocol/intents-sdk
 
+## 0.63.0
+
+### Minor Changes
+
+- 4fd76f4: Add starknet support for Omni Bridge
+
+### Patch Changes
+
+- 560c248: Improve ton address validation by adding checksum validation
+
 ## 0.62.2
 
 ### Patch Changes
