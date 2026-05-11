@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2";
-import { base58, bech32m, hex, bech32 } from "@scure/base";
+import { base58, bech32m, hex, bech32, base64urlnopad } from "@scure/base";
 import { PublicKey } from "@solana/web3.js";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
@@ -389,8 +389,29 @@ function validateTronHexAddress(address: string): boolean {
 	}
 }
 
-function validateTonAddress(address: string) {
-	return /^[EU]Q[0-9A-Za-z_-]{46}$/.test(address);
+function crc16ccitt(data: Uint8Array): [number, number] {
+	let crc = 0x0000;
+	for (const byte of data) {
+		crc ^= byte << 8;
+		for (let i = 0; i < 8; i++) {
+			crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+		}
+		crc &= 0xffff;
+	}
+	return [(crc >> 8) & 0xff, crc & 0xff];
+}
+
+function validateTonAddress(address: string): boolean {
+	try {
+		const data = base64urlnopad.decode(address);
+		if (data.length !== 36) return false;
+		const tag = data[0];
+		if (tag !== 0x11 && tag !== 0x51) return false;
+		const [hi, lo] = crc16ccitt(data.subarray(0, 34));
+		return data[34] === hi && data[35] === lo;
+	} catch {
+		return false;
+	}
 }
 
 function validateSuiAddress(address: string) {

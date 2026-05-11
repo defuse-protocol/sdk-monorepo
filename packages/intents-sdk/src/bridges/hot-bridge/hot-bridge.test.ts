@@ -150,7 +150,7 @@ describe("HotBridge", () => {
 			{
 				assetId:
 					"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR",
-				destinationAddress: "EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
+				destinationAddress: "EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB",
 			}, // UDST Ton
 		])("allows correct addresses", async ({ assetId, destinationAddress }) => {
 			const stellarRpcUrls = configureStellarRpcUrls(

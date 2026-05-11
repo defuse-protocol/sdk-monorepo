@@ -344,35 +344,105 @@ describe("validateTronAddress", () => {
 	});
 });
 
+// Test addresses from ton-core and tonweb test suites:
+// https://github.com/ton-org/ton-core/blob/main/src/address/Address.spec.ts
 describe("validateTonAddress", () => {
-	it("accepts valid addresses", () => {
-		expect(
-			validateAddress(
-				"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
-				Chains.TON,
-			),
-		).toBe(true);
-		expect(
-			validateAddress(
-				"UQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
-				Chains.TON,
-			),
-		).toBe(true);
+	it("accepts mainnet bounceable addresses (EQ)", () => {
+		const valid = [
+			// ton-core Address.spec.ts — all four variants share the same hash
+			"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB",
+			// tonweb test addresses
+			"EQB6-6po0yspb68p7RRetC-hONAz-JwxG9514IEOKw_llXd5",
+			"EQDhZBNuiJoWgq-0xEc0A46-nIcEKAQbS-0MkWU_I2LEp3Ty",
+			"EQC4FOmjcQAw2U-e00I-7Fs-NLiEF7lNQUxVpqOJ-ZKh-dGt",
+			"EQBvI0aFLnw2QbZgjMPCLRdtRHxhUyinQudg6sdiohIwg5jL",
+			"EQDjVXa_oltdBP64Nc__p397xLCvGm2IcZ1ba7anSW0NAkeP",
+			"EQCRGnccIFznQqxm_oBm8PHz95iOe89Oe6hRAhSlAaMctuo6",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
 	});
 
-	it("rejects addresses with extra characters", () => {
+	it("accepts mainnet non-bounceable addresses (UQ)", () => {
+		const valid = [
+			// ton-core Address.spec.ts
+			"UQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi41-E",
+			// tonweb test addresses
+			"UQCHYR_fbDjjr1dtyMmgBbH3HSBAgSNwHdOZvAbgkNOV2n2D",
+			"Uf8KrqWGw1CTcUHRgqZE57aKBeSOK0iuxduwtlTHusmD5PWf",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
+	});
+
+	it("rejects testnet bounceable addresses (kQ / kf)", () => {
+		const testnet = [
+			// ton-core Address.spec.ts
+			"kQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi47nL",
+			// tonweb — test giver address
+			"kf_8uRo6OBbQ97jCx2EIuKm8Wmt6Vb15-KsQHFLbKSMiYIny",
+			"kf_sPxv06KagKaRmOOKxeDQwApCx3i8IQOwv507XD51JOLka",
+			"kQAu6bT9Twd8myIygMNXY9-e2rC0GsINNvQAlnfflcOv4rie",
+		];
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
+	it("rejects testnet non-bounceable addresses (0Q)", () => {
+		const testnet = [
+			// ton-core Address.spec.ts
+			"0QAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4-QO",
+			// tonweb test addresses
+			"0QAyni3YDAhs7c-7imWvPyEbMEeVPMX8eWDLQ5GUe-B-Bl9Z",
+			"0QAu6bT9Twd8myIygMNXY9-e2rC0GsINNvQAlnfflcOv4uVb",
+		];
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
+	it("rejects address with invalid checksum", () => {
+		// Last character changed from B to A — corrupts the CRC bytes
 		expect(
 			validateAddress(
-				"xEQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
+				"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJA",
 				Chains.TON,
 			),
 		).toBe(false);
+	});
+
+	it("rejects truncated address", () => {
 		expect(
 			validateAddress(
-				"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bLx",
+				"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJ",
 				Chains.TON,
 			),
 		).toBe(false);
+	});
+
+	it("rejects raw format address", () => {
+		expect(
+			validateAddress(
+				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	it("rejects URI-prefixed address", () => {
+		expect(
+			validateAddress(
+				"ton://EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	it("rejects empty string", () => {
+		expect(validateAddress("", Chains.TON)).toBe(false);
 	});
 });
 

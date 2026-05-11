@@ -107,7 +107,7 @@ describe("AuroraEngineBridge", () => {
 			"rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv", // XRPL
 			"t3cFfPt1Bcvgez9ZbMBFWeZsskxTkPzGCow", // Zcash
 			"TGNZdiQV31H3JvTtC1yH6yuipnqs6LN2Jv", // TRON
-			"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL", // TON
+			"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB", // TON
 			"0x3a5e9d40e8bb62a7f6f8b6d934a1e42a7a2f5cc1cb122c1b9a8d2f6cb09a8712", // SUI
 			"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTV", // Stellar
 			"0xbc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd3", // Aptos
