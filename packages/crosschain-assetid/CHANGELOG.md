@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- 4fd76f4: Add starknet support
+- 4fd76f4: Add starknet support for Omni Bridge
 
 ## 1.4.0
 
