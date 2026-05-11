@@ -24,7 +24,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -350,10 +350,20 @@ export class OmniBridge implements Bridge {
 			amount += utxoMaxGasFee + utxoProtocolFee;
 		}
 
+		let destinationAddress = args.withdrawalParams.destinationAddress;
+		// Omni contract only accepts lowercase bech32 addresses; uppercase/mixed-case
+		// bech32 is spec-valid but rejected on-chain. Base58 (legacy/P2SH) is left as-is.
+		if (
+			assetInfo.blockchain === Chains.Bitcoin &&
+			/^bc1/i.test(destinationAddress)
+		) {
+			destinationAddress = destinationAddress.toLowerCase();
+		}
+
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
-				destinationAddress: args.withdrawalParams.destinationAddress,
+				destinationAddress,
 				amount,
 				omniChainKind,
 				intentsContract: this.envConfig.contractID,
