@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.62.2
+
+### Patch Changes
+
+- 95eca42: To lower case bech32 btc addresses , as contract accepts only lowercase bech32
+
 ## 0.62.1
 
 ### Patch Changes
