@@ -6,7 +6,7 @@ describe("CAIP2 utilities", () => {
 		expect(Chains.Fogo).toBe("solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251");
 	});
 
-	it("exposes the Movement chain constant", () => {
+	it("should expose the Movement chain constant", () => {
 		expect(Chains.Movement).toBe("move-mvmt:126");
 	});
 
