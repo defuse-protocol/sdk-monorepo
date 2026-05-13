@@ -67,6 +67,8 @@ export type GetSupportedTokensResponse = JSONRPCResponse<{
 		min_deposit_amount: string;
 		min_withdrawal_amount: string;
 		withdrawal_fee: string;
+		/** Contract address or "native" for native chain assets */
+		origin_chain_address: string;
 		/**
 		 * Internal POA Bridge identifier.
 		 * @deprecated This identifier is for internal use only and should not be used in client code.
