@@ -735,6 +735,8 @@ export class OmniBridge implements Bridge {
 				typeof window !== "undefined"
 					? transfer.utxo_transfer?.btc_pending_id
 					: transfer.finalised?.UtxoLog?.transaction_hash;
+		} else if (destinationChain === ChainKind.Strk) {
+			txHash = transfer.finalised?.Starknet?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
 		}
