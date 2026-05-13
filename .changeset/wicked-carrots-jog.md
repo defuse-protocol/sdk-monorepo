@@ -3,4 +3,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Block withdrawals to tokens addresses
+Block withdrawals to token addresses
