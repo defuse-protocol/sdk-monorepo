@@ -112,10 +112,7 @@ export class DestinationAddressMatchesTokenAddressError extends BaseError {
 		public assetId: string,
 	) {
 		super("Destination address must not be the token contract address.", {
-			metaMessages: [
-				`Asset ID: ${assetId}`,
-				`Token address: ${tokenAddress}`,
-			],
+			metaMessages: [`Asset ID: ${assetId}`, `Token address: ${tokenAddress}`],
 			name: "DestinationAddressMatchesTokenAddressError",
 		});
 	}
