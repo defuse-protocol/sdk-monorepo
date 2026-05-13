@@ -6,6 +6,10 @@ describe("CAIP2 utilities", () => {
 		expect(Chains.Fogo).toBe("solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251");
 	});
 
+	it("exposes the Movement chain constant", () => {
+		expect(Chains.Movement).toBe("move-mvmt:126");
+	});
+
 	describe("getEIP155ChainId()", () => {
 		it("should extract chain ID from valid EIP-155 CAIP2 identifiers", () => {
 			expect(getEIP155ChainId("eip155:1")).toBe(1);
