@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.63.2
+
+### Patch Changes
+
+- 34b5e03: Fix starknet withdrawals via omni bridge
+
 ## 0.63.1
 
 ### Patch Changes
