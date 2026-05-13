@@ -101,6 +101,26 @@ export class UnsupportedAssetIdError extends BaseError {
 	}
 }
 
+export type DestinationAddressMatchesTokenAddressErrorType =
+	DestinationAddressMatchesTokenAddressError & {
+		name: "DestinationAddressMatchesTokenAddressError";
+	};
+
+export class DestinationAddressMatchesTokenAddressError extends BaseError {
+	constructor(
+		public tokenAddress: string,
+		public assetId: string,
+	) {
+		super("Destination address must not be the token contract address.", {
+			metaMessages: [
+				`Asset ID: ${assetId}`,
+				`Token address: ${tokenAddress}`,
+			],
+			name: "DestinationAddressMatchesTokenAddressError",
+		});
+	}
+}
+
 export type InvalidDestinationAddressForWithdrawalErrorType =
 	InvalidDestinationAddressForWithdrawalError & {
 		name: "InvalidDestinationAddressForWithdrawalError";
