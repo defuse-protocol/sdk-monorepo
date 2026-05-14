@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.64.1
+
+### Patch Changes
+
+- a35bba4: Fix TON intent hashes and HOT bridge withdrawals for valid address forms the contract accepts but the SDK was rejecting
+
 ## 0.64.0
 
 ### Minor Changes
