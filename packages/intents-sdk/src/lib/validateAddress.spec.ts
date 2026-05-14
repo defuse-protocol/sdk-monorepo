@@ -377,6 +377,29 @@ describe("validateTonAddress", () => {
 		}
 	});
 
+	// HOT SDK uses @ton/core's Address.parse, which accepts both URL-safe
+	// (-, _) and standard (+, /) base64. Validation must accept both too,
+	// otherwise we'd block wallets that emit standard base64.
+	it("accepts mainnet addresses in standard-base64 charset (+, /)", () => {
+		const valid = [
+			"EQAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi4wJB",
+			"UQAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi41+E",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
+	});
+
+	it("still rejects testnet addresses in standard-base64 charset", () => {
+		const testnet = [
+			"kQAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi47nL",
+			"0QAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi4+QO",
+		];
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
 	it("rejects testnet bounceable addresses (kQ / kf)", () => {
 		const testnet = [
 			// ton-core Address.spec.ts
@@ -423,13 +446,59 @@ describe("validateTonAddress", () => {
 		).toBe(false);
 	});
 
-	it("rejects raw format address", () => {
+	// Raw form has no network tag, so we can't tell mainnet from testnet here.
+	// HOT bridge passes it through @ton/core's Address.parse, so we accept what
+	// that accepts.
+	it("accepts raw format addresses (basechain and masterchain)", () => {
+		const valid = [
+			"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+			"-1:3333333333333333333333333333333333333333333333333333333333333333",
+			// Uppercase hex works too (@ton/core uses Buffer.from(s, 'hex')).
+			"0:2CF55953E92EFBEADAB7BA725C3F93A0B23F842CBBA72D7B8E6F510A70E422E3",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
+	});
+
+	it("rejects raw format with non-integer workchain", () => {
 		expect(
 			validateAddress(
-				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+				"abc:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
 				Chains.TON,
 			),
 		).toBe(false);
+	});
+
+	it("rejects raw format with wrong hex length", () => {
+		expect(
+			validateAddress(
+				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	it("rejects raw format with non-hex characters", () => {
+		expect(
+			validateAddress(
+				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422zz",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	// Real TON only uses workchains 0 and -1. Anything else is a typo, so
+	// reject it here instead of letting the bridge contract fail later.
+	it("rejects raw addresses on unknown workchains", () => {
+		const unknown = [
+			"2:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+			"127:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+			"-2:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+		];
+		for (const address of unknown) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
 	});
 
 	it("rejects URI-prefixed address", () => {
