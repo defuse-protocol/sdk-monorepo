@@ -65,6 +65,9 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Aptos:
 			return validateAptosAddress(address);
 
+		case Chains.Movement:
+			return validateMovementAddress(address);
+
 		case Chains.Cardano:
 			return validateCardanoAddress(address);
 
@@ -428,6 +431,29 @@ function validateStellarAddress(address: string) {
 
 function validateAptosAddress(address: string) {
 	return /^0x[a-fA-F0-9]{64}$/.test(address);
+}
+
+// Accept non strict addresses
+function validateMovementAddress(address: string) {
+	let parsedAddress = address;
+	if (address.startsWith("0x")) {
+		parsedAddress = address.slice(2);
+	}
+
+	if (parsedAddress.length === 0 || parsedAddress.length > 64) {
+		return false;
+	}
+
+	if (!/^[a-fA-F0-9]+$/.test(parsedAddress)) {
+		return false;
+	}
+
+	if (parsedAddress.length >= 60) {
+		return true;
+	}
+
+	const paddedAddress = parsedAddress.padStart(64, "0");
+	return /^0{63}[0-9a-fA-F]$/.test(paddedAddress);
 }
 
 /**

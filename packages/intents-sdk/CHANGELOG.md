@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.64.0
+
+### Minor Changes
+
+- abf930b: Add Movement mainnet network support for SDK chain constants, address validation, and POA Bridge network mappings.
+
+### Patch Changes
+
+- Updated dependencies [abf930b]
+  - @defuse-protocol/internal-utils@0.32.0
+
 ## 0.63.2
 
 ### Patch Changes

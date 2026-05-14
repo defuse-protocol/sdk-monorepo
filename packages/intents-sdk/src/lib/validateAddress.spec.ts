@@ -577,6 +577,36 @@ describe("validateAptosAddress", () => {
 	});
 });
 
+describe("validateMovementAddress", () => {
+	it("accepts valid Movement addresses", () => {
+		expect(
+			validateAddress(
+				"0xbc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd3",
+				Chains.Movement,
+			),
+		).toBe(true);
+		expect(validateAddress("0xa", Chains.Movement)).toBe(true);
+		expect(validateAddress("a", Chains.Movement)).toBe(true);
+		expect(
+			validateAddress(
+				"bc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd",
+				Chains.Movement,
+			),
+		).toBe(true);
+	});
+
+	it("rejects invalid Movement addresses", () => {
+		expect(validateAddress("0x123", Chains.Movement)).toBe(false);
+		expect(
+			validateAddress(
+				"bc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f36",
+				Chains.Movement,
+			),
+		).toBe(false);
+		expect(validateAddress("0X1", Chains.Movement)).toBe(false);
+	});
+});
+
 describe("validateCardanoAddress", () => {
 	it("accepts valid mainnet addresses", () => {
 		expect(

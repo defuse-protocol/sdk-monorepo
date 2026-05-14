@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.32.0
+
+### Minor Changes
+
+- abf930b: Add Movement mainnet network support for SDK chain constants, address validation, and POA Bridge network mappings.
+
 ## 0.31.2
 
 ### Patch Changes
