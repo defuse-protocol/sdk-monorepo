@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2";
-import { base58, bech32m, hex, bech32, base64urlnopad } from "@scure/base";
+import { base58, bech32m, hex, bech32 } from "@scure/base";
 import { PublicKey } from "@solana/web3.js";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
@@ -8,6 +8,13 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
+import {
+	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
+	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
+	TON_WORKCHAIN_BASECHAIN,
+	TON_WORKCHAIN_MASTERCHAIN,
+	tryParseTonAddress,
+} from "./ton-address";
 
 /**
  * Validates that an address matches the expected format for a given blockchain.
@@ -392,29 +399,26 @@ function validateTronHexAddress(address: string): boolean {
 	}
 }
 
-function crc16ccitt(data: Uint8Array): [number, number] {
-	let crc = 0x0000;
-	for (const byte of data) {
-		crc ^= byte << 8;
-		for (let i = 0; i < 8; i++) {
-			crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
-		}
-		crc &= 0xffff;
-	}
-	return [(crc >> 8) & 0xff, crc & 0xff];
-}
-
 function validateTonAddress(address: string): boolean {
-	try {
-		const data = base64urlnopad.decode(address);
-		if (data.length !== 36) return false;
-		const tag = data[0];
-		if (tag !== 0x11 && tag !== 0x51) return false;
-		const [hi, lo] = crc16ccitt(data.subarray(0, 34));
-		return data[34] === hi && data[35] === lo;
-	} catch {
+	const parsed = tryParseTonAddress(address);
+	if (parsed === null) return false;
+
+	// Real TON only uses workchain 0 and -1. Both forms can technically encode
+	// other values, but no real wallet does.
+	if (
+		parsed.workchainId !== TON_WORKCHAIN_BASECHAIN &&
+		parsed.workchainId !== TON_WORKCHAIN_MASTERCHAIN
+	) {
 		return false;
 	}
+
+	// Friendly form has a tag byte. Reject testnet tags. Raw form has no tag
+	// (null), so it passes this check.
+	return (
+		parsed.tag === null ||
+		parsed.tag === TON_ADDRESS_TAG_BOUNCEABLE_MAINNET ||
+		parsed.tag === TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET
+	);
 }
 
 function validateSuiAddress(address: string) {
