@@ -25,6 +25,7 @@ export const PoaBridgeNetworkReference = {
 	SUI: "sui:mainnet",
 	STELLAR: "stellar:mainnet",
 	APTOS: "aptos:mainnet",
+	MOVEMENT: "movement:mainnet",
 	CARDANO: "cardano:mainnet",
 	LITECOIN: "ltc:mainnet",
 	MONAD: "eth:143",

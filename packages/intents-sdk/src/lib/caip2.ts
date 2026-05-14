@@ -29,6 +29,7 @@ export const Chains = {
 	TON: "tvm:-239",
 	Sui: "sui:mainnet",
 	Aptos: "aptos:mainnet",
+	Movement: "move-mvmt:126",
 	Stellar: "stellar:pubnet",
 	Cardano: "cip34:1-764824073",
 	Starknet: "starknet:SN_MAIN",
