@@ -30,6 +30,7 @@ import {
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
@@ -170,6 +171,17 @@ export class DirectBridge implements Bridge {
 		) {
 			throw new DestinationExplicitNearAccountDoesntExistError(
 				args.destinationAddress,
+			);
+		}
+
+		const { contractId: tokenAccountId } = utils.parseDefuseAssetId(
+			args.assetId,
+		);
+
+		if (tokenAccountId === args.destinationAddress) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				tokenAccountId,
+				args.assetId,
 			);
 		}
 

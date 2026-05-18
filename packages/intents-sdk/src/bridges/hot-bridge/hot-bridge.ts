@@ -9,6 +9,7 @@ import { utils } from "@hot-labs/omni-sdk";
 import { LRUCache } from "lru-cache";
 import * as v from "valibot";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
@@ -17,7 +18,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { type Chain, Chains } from "../../lib/caip2";
+import { type Chain, Chains, isEvmChain } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -272,10 +273,17 @@ export class HotBridge implements Bridge {
 				assetInfo.blockchain,
 			);
 		}
+		const nativeAsset = "native" in assetInfo;
+		const token = nativeAsset ? "native" : assetInfo.address;
+		if (
+			!nativeAsset && isEvmChain(assetInfo.blockchain)
+				? token.toLowerCase() === args.destinationAddress.toLowerCase()
+				: token === args.destinationAddress
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(token, args.assetId);
+		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
-			const token = "native" in assetInfo ? "native" : assetInfo.address;
-
 			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
 				args.destinationAddress,
 				token,

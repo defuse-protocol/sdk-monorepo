@@ -2,6 +2,7 @@ import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, expect, it, vi } from "vitest";
 import { HotBridge } from "./hot-bridge";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
@@ -219,6 +220,41 @@ describe("HotBridge", () => {
 						destinationAddress,
 					}),
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
+			},
+		);
+		it.each([
+			{
+				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
+				destinationAddress: "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+			}, // UDSC Polygon
+			{
+				assetId: "nep245:v2_1.omni.hot.tg:56_2CMMyVTGZkeyNZTSvS5sarzfir6g",
+				destinationAddress: "0x55d398326f99059ff775485246999027b3197955",
+			}, // USDT BSC
+			{
+				assetId:
+					"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR",
+				destinationAddress: "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+			}, // USDT Ton
+			{
+				assetId: "nep245:v2_1.omni.hot.tg:9745_3aL9skCy1yhPoDB8oKMmRHRN7SJW",
+				destinationAddress: "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
+			}, // USDT0 Plasma
+		])(
+			"blocks withdrawals of token to it's address",
+			async ({ assetId, destinationAddress }) => {
+				const bridge = new HotBridge({
+					envConfig: configsByEnvironment.production,
+					hotSdk: {} as unknown as HotOmniSdk,
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						assetId,
+						amount: 1n,
+						destinationAddress,
+					}),
+				).rejects.toThrow(DestinationAddressMatchesTokenAddressError);
 			},
 		);
 	});
