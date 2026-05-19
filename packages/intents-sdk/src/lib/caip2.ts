@@ -38,7 +38,7 @@ export const Chains = {
 	Aleo: "aleo:0",
 	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
 	Abstract: "eip155:2741",
-	HyperCore: "hlcore:mainnet",
+	HyperCore: "hlcore:mainnet", // No official CAIP-2 identifier exists for HyperCore; this value is unofficial and may change.
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
