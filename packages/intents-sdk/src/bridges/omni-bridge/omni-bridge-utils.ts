@@ -112,6 +112,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Bitcoin, ChainKind.Btc],
 	[Chains.Abstract, ChainKind.Abs],
 	[Chains.Starknet, ChainKind.Strk],
+	[Chains.Zcash, ChainKind.Zcash],
 ];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
@@ -122,7 +123,7 @@ export function chainKindToCaip2(network: ChainKind): Chain | null {
 	return CHAIN_MAPPINGS.find(([_, kind]) => kind === network)?.[0] ?? null;
 }
 
-const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc];
+const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc, ChainKind.Zcash];
 
 export function isUtxoChain(network: ChainKind): boolean {
 	return UTXO_CHAINS.includes(network);
@@ -169,7 +170,8 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("btc:") ||
 			input.startsWith("bnb:") ||
 			input.startsWith("abs:") ||
-			input.startsWith("strk:")),
+			input.startsWith("strk:") ||
+			input.startsWith("zcash:")),
 	"Must comply with omni address schema",
 );
 /**
