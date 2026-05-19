@@ -38,7 +38,7 @@ export const Chains = {
 	Aleo: "aleo:0",
 	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
 	Abstract: "eip155:2741",
-	HyperCore: "hyperliquid:mainnet",
+	HyperCore: "hlcore:mainnet",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
