@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.65.0
+
+### Minor Changes
+
+- 9e88214: Add HyperCore to caip2 chains
+
 ## 0.64.1
 
 ### Patch Changes
