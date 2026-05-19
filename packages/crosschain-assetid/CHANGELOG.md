@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.6.0
+
+### Minor Changes
+
+- 9e88214: Add HyperCore to caip2 chains
+
 ## 1.5.1
 
 ### Patch Changes
