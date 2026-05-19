@@ -39,7 +39,7 @@ export const Chains = {
 	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
 	Abstract: "eip155:2741",
 	HyperEvm: "eip155:999",
-	HyperCore: "hyperliquid:core",
+	HyperCore: "hyperliquid:mainnet",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
