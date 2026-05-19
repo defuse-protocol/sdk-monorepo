@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Add hyperEvm and hyperCore to caip2 chains
+Add HyperCore to caip2 chains
