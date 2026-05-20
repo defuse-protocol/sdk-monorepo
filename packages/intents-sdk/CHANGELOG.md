@@ -1,5 +1,18 @@
 # @defuse-protocol/intents-sdk
 
+## 0.66.0
+
+### Minor Changes
+
+- 8ef16f0: Split relay publish failures into confirmed rejections and unknown-result errors. `publishIntents` now uses `RelayPublishRejectedError` for relay `status: "FAILED"` responses and `RelayPublishResultUnknownError` when a usable publish response cannot be confirmed, while keeping `RelayPublishError` as the shared base class.
+
+  **BREAKING CHANGES:** `RelayPublishError` is now an abstract base class, `code` only exists on `RelayPublishRejectedError`, and `NETWORK_ERROR` is no longer part of the publish rejection code set. Handle `RelayPublishResultUnknownError` for in-doubt publish results.
+
+### Patch Changes
+
+- Updated dependencies [8ef16f0]
+  - @defuse-protocol/internal-utils@0.33.0
+
 ## 0.65.0
 
 ### Minor Changes
