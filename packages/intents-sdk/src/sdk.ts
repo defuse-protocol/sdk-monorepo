@@ -8,7 +8,7 @@ import {
 	nearFailoverRpcProvider,
 	extractRpcUrls,
 	solverRelay,
-	RelayPublishError,
+	RelayPublishRejectedError,
 	type RpcEndpoint,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
@@ -677,7 +677,12 @@ export class IntentsSDK implements IIntentsSDK {
 
 			return await fn(cachedSalt);
 		} catch (err) {
-			if (!(err instanceof RelayPublishError && err.code === "INVALID_SALT"))
+			if (
+				!(
+					err instanceof RelayPublishRejectedError &&
+					err.code === "INVALID_SALT"
+				)
+			)
 				throw err;
 
 			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");

@@ -11,53 +11,107 @@ type PublishErrorCode =
 	| "INSUFFICIENT_BALANCE"
 	| "PUBLIC_KEY_NOT_EXIST"
 	| "UNKNOWN_ERROR"
-	| "NETWORK_ERROR"
 	| "INVALID_SALT";
 
-export type RelayPublishErrorType = RelayPublishError & {
-	name: "RelayPublishError";
+type PublishParams =
+	| Parameters<typeof solverRelayClient.publishIntents>[0]
+	| Parameters<typeof solverRelayClient.publishIntent>[0];
+
+export type RelayPublishRejectedErrorType = RelayPublishRejectedError & {
+	name: "RelayPublishRejectedError";
 };
-export class RelayPublishError extends BaseError {
-	name = "RelayPublishError" as const;
+
+export type RelayPublishResultUnknownErrorType =
+	RelayPublishResultUnknownError & {
+		name: "RelayPublishResultUnknownError";
+	};
+
+export type RelayPublishErrorType =
+	| RelayPublishRejectedErrorType
+	| RelayPublishResultUnknownErrorType;
+
+export abstract class RelayPublishError extends BaseError {
+	publishParams: PublishParams;
+
+	protected constructor({
+		cause,
+		metaMessages,
+		name,
+		publishParams,
+		reason,
+	}: {
+		cause?: unknown;
+		metaMessages?: string[];
+		name: "RelayPublishRejectedError" | "RelayPublishResultUnknownError";
+		publishParams: PublishParams;
+		reason: string;
+	}) {
+		super("Failed to publish intent.", {
+			details: reason,
+			metaMessages: [
+				...(metaMessages ?? []),
+				`Publish params: ${serialize(publishParams)}`,
+			],
+			name,
+			cause,
+		});
+		this.publishParams = publishParams;
+	}
+}
+
+export class RelayPublishRejectedError extends RelayPublishError {
+	name = "RelayPublishRejectedError" as const;
 	code: PublishErrorCode;
 
 	constructor({
 		reason,
 		code,
 		publishParams,
-		cause,
 	}: {
 		reason: string;
 		code: PublishErrorCode;
-		publishParams:
-			| Parameters<typeof solverRelayClient.publishIntents>[0]
-			| Parameters<typeof solverRelayClient.publishIntent>[0];
-		cause?: unknown;
+		publishParams: PublishParams;
 	}) {
-		super("Failed to publish intent.", {
-			details: reason,
-			metaMessages: [
-				`Code: ${code}`,
-				`Publish params: ${serialize(publishParams)}`,
-			],
-			name: "RelayPublishError",
-			cause: cause,
+		super({
+			reason,
+			metaMessages: [`Code: ${code}`],
+			name: "RelayPublishRejectedError",
+			publishParams,
 		});
 		this.code = code;
 	}
 }
 
+export class RelayPublishResultUnknownError extends RelayPublishError {
+	name = "RelayPublishResultUnknownError" as const;
+
+	constructor({
+		reason,
+		publishParams,
+		cause,
+	}: {
+		reason: string;
+		publishParams: PublishParams;
+		cause?: unknown;
+	}) {
+		super({
+			reason,
+			name: "RelayPublishResultUnknownError",
+			publishParams,
+			cause,
+		});
+	}
+}
+
 export function toRelayPublishError(
-	publishParams:
-		| Parameters<typeof solverRelayClient.publishIntents>[0]
-		| Parameters<typeof solverRelayClient.publishIntent>[0],
+	publishParams: PublishParams,
 	response:
 		| Awaited<ReturnType<typeof solverRelayClient.publishIntents>>
 		| Awaited<ReturnType<typeof solverRelayClient.publishIntent>>,
-): RelayPublishErrorType {
+): RelayPublishRejectedErrorType {
 	assert(response.status === "FAILED", "Expected response to be failed");
 
-	return new RelayPublishError({
+	return new RelayPublishRejectedError({
 		reason: response.reason,
 		code: parseFailedPublishReason(response),
 		publishParams,

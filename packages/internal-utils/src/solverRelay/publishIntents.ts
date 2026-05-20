@@ -1,7 +1,7 @@
 import { Err, Ok, type Result } from "@thames/monads";
 import * as solverRelayClient from "./solverRelayHttpClient";
 import {
-	RelayPublishError,
+	RelayPublishResultUnknownError,
 	type RelayPublishErrorType,
 	toRelayPublishError,
 } from "./utils/parseFailedPublishError";
@@ -27,9 +27,9 @@ export async function publishIntents(
 				return parsePublishIntentsResponse(params, response);
 			},
 			(err) => {
-				const publishError = new RelayPublishError({
-					reason: "Error occurred during sending a request",
-					code: "NETWORK_ERROR",
+				const publishError = new RelayPublishResultUnknownError({
+					reason:
+						"Failed to receive a usable publish response from the relay. Publish result is unknown.",
 					publishParams: params,
 					cause: err,
 				});
