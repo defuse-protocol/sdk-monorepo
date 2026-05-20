@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.66.1
+
+### Patch Changes
+
+- 5de36f2: (no changes)
+
 ## 0.66.0
 
 ### Minor Changes
