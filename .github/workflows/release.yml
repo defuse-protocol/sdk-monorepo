@@ -10,6 +10,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    environment: npm-publish
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: write
