@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.67.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
+### Patch Changes
+
+- Updated dependencies [a7c4fd9]
+  - @defuse-protocol/internal-utils@0.34.0
+
 ## 0.66.1
 
 ### Patch Changes
