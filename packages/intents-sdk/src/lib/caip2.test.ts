@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { Chains, getEIP155ChainId } from "./caip2";
 
 describe("CAIP2 utilities", () => {
+	it("should expose the Fogo chain constant", () => {
+		expect(Chains.Fogo).toBe("solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251");
+	});
 	it("should expose the Movement chain constant", () => {
 		expect(Chains.Movement).toBe("move-mvmt:126");
 	});
