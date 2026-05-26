@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.34.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
 ## 0.33.0
 
 ### Minor Changes
