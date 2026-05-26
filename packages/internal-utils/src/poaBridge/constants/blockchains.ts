@@ -10,7 +10,6 @@ export const PoaBridgeNetworkReference = {
 	BITCOIN: "btc:mainnet",
 	BITCOINCASH: "bch:mainnet",
 	SOLANA: "sol:mainnet",
-	FOGO: "fogo:mainnet",
 	DOGECOIN: "doge:mainnet",
 	XRPLEDGER: "xrp:mainnet",
 	ZCASH: "zec:mainnet",
