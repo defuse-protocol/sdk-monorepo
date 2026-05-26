@@ -112,6 +112,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Bitcoin, ChainKind.Btc],
 	[Chains.Abstract, ChainKind.Abs],
 	[Chains.Starknet, ChainKind.Strk],
+	[Chains.Fogo, ChainKind.Strk],
 ];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
@@ -169,7 +170,8 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("btc:") ||
 			input.startsWith("bnb:") ||
 			input.startsWith("abs:") ||
-			input.startsWith("strk:")),
+			input.startsWith("strk:") ||
+			input.startsWith("fogo:")),
 	"Must comply with omni address schema",
 );
 /**
