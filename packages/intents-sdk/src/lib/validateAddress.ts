@@ -323,7 +323,7 @@ function validateXrpAddress(address: string) {
  * Supports:
  * - Transparent addresses (t1, t3)
  * - TEX addresses (tex1)
- * - Unified Orchard / Unified Addresses (UA) 
+ * - Unified Orchard / Unified Addresses (UA)
  */
 function validateZcashAddress(address: string) {
 	// Transparent address validation
