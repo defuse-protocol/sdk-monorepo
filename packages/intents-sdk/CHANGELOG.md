@@ -1,5 +1,41 @@
 # @defuse-protocol/intents-sdk
 
+## 0.67.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
+### Patch Changes
+
+- Updated dependencies [a7c4fd9]
+  - @defuse-protocol/internal-utils@0.34.0
+
+## 0.66.1
+
+### Patch Changes
+
+- 5de36f2: (no changes)
+
+## 0.66.0
+
+### Minor Changes
+
+- 8ef16f0: Split relay publish failures into confirmed rejections and unknown-result errors. `publishIntents` now uses `RelayPublishRejectedError` for relay `status: "FAILED"` responses and `RelayPublishResultUnknownError` when a usable publish response cannot be confirmed, while keeping `RelayPublishError` as the shared base class.
+
+  **BREAKING CHANGES:** `RelayPublishError` is now an abstract base class, `code` only exists on `RelayPublishRejectedError`, and `NETWORK_ERROR` is no longer part of the publish rejection code set. Handle `RelayPublishResultUnknownError` for in-doubt publish results.
+
+### Patch Changes
+
+- Updated dependencies [8ef16f0]
+  - @defuse-protocol/internal-utils@0.33.0
+
+## 0.65.0
+
+### Minor Changes
+
+- 9e88214: Add HyperCore to caip2 chains
+
 ## 0.64.1
 
 ### Patch Changes

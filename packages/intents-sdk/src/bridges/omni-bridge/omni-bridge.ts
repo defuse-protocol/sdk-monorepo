@@ -725,7 +725,10 @@ export class OmniBridge implements Bridge {
 		let txHash = null;
 		if (isEvmChain(destinationChain)) {
 			txHash = transfer.finalised?.EVMLog?.transaction_hash;
-		} else if (destinationChain === ChainKind.Sol) {
+		} else if (
+			destinationChain === ChainKind.Sol ||
+			destinationChain === ChainKind.Fogo
+		) {
 			txHash = transfer.finalised?.Solana?.signature;
 		} else if (isUtxoChain(destinationChain)) {
 			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change

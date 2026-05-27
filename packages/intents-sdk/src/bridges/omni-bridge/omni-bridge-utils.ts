@@ -112,6 +112,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Bitcoin, ChainKind.Btc],
 	[Chains.Abstract, ChainKind.Abs],
 	[Chains.Starknet, ChainKind.Strk],
+	[Chains.Fogo, ChainKind.Fogo],
 	[Chains.Zcash, ChainKind.Zcash],
 ];
 
@@ -171,6 +172,7 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("bnb:") ||
 			input.startsWith("abs:") ||
 			input.startsWith("strk:") ||
+			input.startsWith("fogo:") ||
 			input.startsWith("zcash:")),
 	"Must comply with omni address schema",
 );
