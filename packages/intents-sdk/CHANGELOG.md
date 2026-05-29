@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.67.1
+
+### Patch Changes
+
+- d58e02c: Use bridge indexer for getting destination hash for stellar withdrawals via hot bridge
+
 ## 0.67.0
 
 ### Minor Changes
