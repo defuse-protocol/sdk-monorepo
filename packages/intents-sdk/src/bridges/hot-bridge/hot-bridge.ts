@@ -390,9 +390,9 @@ export class HotBridge implements Bridge {
 		}
 
 		const isEvm = args.landingChain.startsWith("eip155:");
-		// For EVM networks, the bridge indexer is the source of truth for withdrawal hashes.
+		// For EVM networks and Stellar, the bridge indexer is the source of truth for withdrawal hashes.
 		// The HOT API is only used as a fallback since the contract view method can return invalid hashes.
-		if (isEvm) {
+		if (isEvm || args.landingChain === Chains.Stellar) {
 			try {
 				args.logger?.info("Fetching withdrawal hash from bridge indexer", {
 					nearTxHash: args.tx.hash,
