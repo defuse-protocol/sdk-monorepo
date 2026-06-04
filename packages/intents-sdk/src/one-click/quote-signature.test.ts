@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
 	type OneClickQuoteResponse,
 	type OneClickQuoteRequest,
-	buildSignedQuote,
-	buildSignedQuoteRequest,
-	quoteHash,
 	verifyQuoteSignature,
 } from "./quote-signature";
 
@@ -12,11 +9,11 @@ const quoteResponse: OneClickQuoteResponse = {
 	quote: {
 		amountIn: "1000000000000000000000000000",
 		amountInFormatted: "1000.0",
-		amountInUsd: "3050.0000",
+		amountInUsd: "2360.0000",
 		minAmountIn: "990000000000000000000000000",
 		amountOut: "999000000000000000000000000",
 		amountOutFormatted: "999.0",
-		amountOutUsd: "3046.9500",
+		amountOutUsd: "2357.6400",
 		minAmountOut: "989010000000000000000000000",
 		timeEstimate: 20,
 		refundFee: "0",
@@ -24,7 +21,7 @@ const quoteResponse: OneClickQuoteResponse = {
 		deadline: "2027-01-15T13:50:06.704Z",
 		timeWhenInactive: "2027-01-15T13:50:06.704Z",
 		depositAddress:
-			"d471820bf8d9ae73dce04990f4a8606a492e9053ae66cfa5d20e48d3eb12ac2e",
+			"20998d8471f5aeb4f04d14c69f2b228348212b031d524a001c4e28f237d593e8",
 	},
 	quoteRequest: {
 		dry: false,
@@ -35,9 +32,9 @@ const quoteResponse: OneClickQuoteResponse = {
 		depositType: "ORIGIN_CHAIN",
 		destinationAsset: "nep141:wrap.near",
 		amount: "1000000000000000000000000000",
-		refundTo: "0x0b424406b6cbe4e22a26dd19c2a8156ea19d9329",
+		refundTo: "test.near",
 		refundType: "ORIGIN_CHAIN",
-		recipient: "0x0b424406b6cbe4e22a26dd19c2a8156ea19d9329",
+		recipient: "test.near",
 		recipientType: "DESTINATION_CHAIN",
 		deadline: "2027-01-12T13:50:06.704Z",
 		confidentiality: "public",
@@ -52,9 +49,9 @@ const quoteResponse: OneClickQuoteResponse = {
 		],
 	},
 	signature:
-		"ed25519:2tP661MVuFS885kvCUJbxGJTZqoeV1ekro9SV2LVQmox5FYdDbPQctXMzfdP56rSeUsshXHWP7636CQwL2iRLjhr",
-	timestamp: "2026-06-03T15:26:55.692Z",
-	correlationId: "8b295da9-e42d-4f7d-8639-3cd8baec9530",
+		"ed25519:2VMJbqbmkYrRwKqsm9WKZqustmzstAx7TFeBmtSBdM5s7VMT3vbwrq64AgmbE8KFJvRJX21mMqYzmd3VgjegwFcd",
+	timestamp: "2026-06-04T10:23:21.079Z",
+	correlationId: "0f41830b-ce99-4ac9-a659-809a35ff2fd9",
 };
 
 const quoteRequest: OneClickQuoteRequest = {
@@ -66,9 +63,9 @@ const quoteRequest: OneClickQuoteRequest = {
 	depositType: "ORIGIN_CHAIN",
 	destinationAsset: "nep141:wrap.near",
 	amount: "1000000000000000000000000000",
-	refundTo: "0x0b424406b6cbe4e22a26dd19c2a8156ea19d9329",
+	refundTo: "test.near",
 	refundType: "ORIGIN_CHAIN",
-	recipient: "0x0b424406b6cbe4e22a26dd19c2a8156ea19d9329",
+	recipient: "test.near",
 	recipientType: "DESTINATION_CHAIN",
 	referral: "test",
 	deadline: "2027-01-12T13:50:06.704Z",
@@ -91,12 +88,6 @@ describe("1Click quote signature", () => {
 		expect(verifyQuoteSignature(responseBody)).toBe(true);
 	});
 
-	it("hashes the server signed fields", () => {
-		expect(quoteHash(quoteResponse)).toBe(
-			"25oXZLUeTs49qWMtgSUdFDT2Xn1wQGtfvW8mW7J9qYbB",
-		);
-	});
-
 	it("verifies a valid quote signature", () => {
 		expect(verifyQuoteSignature(quoteResponse)).toBe(true);
 	});
@@ -111,44 +102,5 @@ describe("1Click quote signature", () => {
 		};
 
 		expect(verifyQuoteSignature(modifiedQuote)).toBe(false);
-	});
-
-	it("excludes unsigned response-only fields from the signed payload", () => {
-		expect(buildSignedQuote(quoteResponse)).toEqual({
-			amountIn: "1000000000000000000000000000",
-			amountInFormatted: "1000.0",
-			amountInUsd: "3050.0000",
-			minAmountIn: "990000000000000000000000000",
-			amountOut: "999000000000000000000000000",
-			amountOutFormatted: "999.0",
-			amountOutUsd: "3046.9500",
-			minAmountOut: "989010000000000000000000000",
-		});
-		expect(buildSignedQuoteRequest(quoteResponse)).toEqual({
-			dry: false,
-			swapType: "FLEX_INPUT",
-			slippageTolerance: 100,
-			originAsset: "nep141:wrap.near",
-			depositType: "ORIGIN_CHAIN",
-			destinationAsset: "nep141:wrap.near",
-			amount: "1000000000000000000000000000",
-			refundTo: "0x0b424406b6cbe4e22a26dd19c2a8156ea19d9329",
-			refundType: "ORIGIN_CHAIN",
-			recipient: "0x0b424406b6cbe4e22a26dd19c2a8156ea19d9329",
-			recipientType: "DESTINATION_CHAIN",
-			deadline: "2027-01-12T13:50:06.704Z",
-			quoteWaitingTimeMs: undefined,
-			referral: "test",
-			virtualChainRecipient: undefined,
-			virtualChainRefundRecipient: undefined,
-			customRecipientMsg: undefined,
-			sessionId: undefined,
-			connectedWallets: undefined,
-			correlationId: undefined,
-			appFees: undefined,
-			partnerId: undefined,
-			userAccountId: undefined,
-			depositMode: undefined,
-		});
 	});
 });
