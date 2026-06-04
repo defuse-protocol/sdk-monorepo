@@ -220,6 +220,22 @@ export { IntentPayloadBuilder } from "./src/intents/intent-payload-builder";
 export { computeIntentHash } from "./src/intents/intent-hash";
 
 // ============================================================================
+// 1Click Quote Signature
+// ============================================================================
+export {
+	buildSignedQuote,
+	buildSignedQuoteRequest,
+	hashQuote,
+	quoteHash,
+	verifyQuoteSignature,
+	type OneClickQuote,
+	type OneClickQuoteRequest,
+	type OneClickQuoteResponse,
+	type OneClickSignedQuote,
+	type OneClickSignedQuoteRequest,
+} from "./src/one-click/quote-signature";
+
+// ============================================================================
 // Address Validation Helper
 // ============================================================================
 export { validateAddress as validateAddressFormat } from "./src/lib/validateAddress";
