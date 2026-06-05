@@ -1,3 +1,4 @@
+import type { ILogger } from "../logger";
 import { assert } from "../utils/assert";
 import { QuoteError } from "./errors/quote";
 import type { quote } from "./solverRelayHttpClient";
@@ -25,12 +26,13 @@ export async function getQuote(
 		timeout: (params.quoteParams?.wait_ms ?? 0) + 10000,
 		...params.config,
 	});
-	return handleQuoteResult(result, params.quoteParams);
+	return handleQuoteResult(result, params.quoteParams, params.config.logger);
 }
 
 function handleQuoteResult(
 	result: Awaited<ReturnType<typeof quote>>,
 	quoteParams: GetQuoteParams["quoteParams"],
+	logger?: ILogger,
 ) {
 	if (result == null) {
 		throw new QuoteError({
@@ -40,13 +42,26 @@ function handleQuoteResult(
 	}
 
 	const failedQuotes: FailedQuote[] = [];
-	const validQuotes = [];
+	const validQuotes: Quote[] = [];
 	for (const q of result) {
-		if (isValidQuote(q)) {
-			validQuotes.push(q);
-		} else {
+		if (!isValidQuote(q)) {
 			failedQuotes.push(q);
+			continue;
 		}
+
+		// The relay aggregates quotes from independent solvers, so a buggy or
+		// malicious solver can echo back tokens we never requested. Acting on
+		// such a quote would make the user swap the wrong assets, so drop it
+		// (it is neither a usable quote nor an INSUFFICIENT_AMOUNT failure).
+		if (!matchesRequestedTokens(q, quoteParams)) {
+			logger?.warn("quote: dropping quote with mismatched tokens", {
+				quoteParams,
+				quote: q,
+			});
+			continue;
+		}
+
+		validQuotes.push(q);
 	}
 
 	const hasExactIn = quoteParams.exact_amount_in != null;
@@ -96,4 +111,16 @@ function sortQuotes(
 
 function isValidQuote(quote: Quote | FailedQuote): quote is Quote {
 	return !("type" in quote);
+}
+
+function matchesRequestedTokens(
+	quote: Quote,
+	quoteParams: GetQuoteParams["quoteParams"],
+): boolean {
+	return (
+		quote.defuse_asset_identifier_in ===
+			quoteParams.defuse_asset_identifier_in &&
+		quote.defuse_asset_identifier_out ===
+			quoteParams.defuse_asset_identifier_out
+	);
 }
