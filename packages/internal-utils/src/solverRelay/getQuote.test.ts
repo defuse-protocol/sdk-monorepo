@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AssertionError } from "../errors/assert";
+import { QuoteError } from "./errors/quote";
 import { getQuote } from "./getQuote";
 import type { Quote } from "./solverRelayHttpClient/types";
 import * as quoteWithLogModule from "./utils/quoteWithLog";
@@ -93,5 +94,64 @@ describe("getQuote() exact_amount validation", () => {
 		expect(error.message).toContain(
 			"exact_amount_in=undefined, exact_amount_out=undefined",
 		);
+	});
+});
+
+describe("getQuote() request verification", () => {
+	const mismatchedTokenQuote: Quote = {
+		...validQuote,
+		quote_hash: "hash-mismatch-token",
+		// Solver echoed back a different output token than requested,
+		// while offering a more attractive amount_out.
+		defuse_asset_identifier_out: "nep245:v2_1.omni.hot.tg:56_other_token",
+		amount_out: "99000000000000",
+	};
+
+	it("ignores a higher-ranked quote whose tokens differ from the request", async () => {
+		vi.mocked(quoteWithLogModule.quoteWithLog).mockResolvedValueOnce([
+			mismatchedTokenQuote,
+			validQuote,
+		]);
+
+		const result = await getQuote({
+			quoteParams: { ...baseParams, exact_amount_in: "1000000000000" },
+			config,
+		});
+
+		expect(result).toEqual(validQuote);
+	});
+
+	it("ignores an exact_in quote whose amount_in differs from the request", async () => {
+		// Solver only fills half the requested input but advertises a huge output.
+		const wrongAmountInQuote: Quote = {
+			...validQuote,
+			quote_hash: "hash-wrong-amount-in",
+			amount_in: "500000000000",
+			amount_out: "99000000000000",
+		};
+		vi.mocked(quoteWithLogModule.quoteWithLog).mockResolvedValueOnce([
+			wrongAmountInQuote,
+			validQuote,
+		]);
+
+		const result = await getQuote({
+			quoteParams: { ...baseParams, exact_amount_in: "1000000000000" },
+			config,
+		});
+
+		expect(result).toEqual(validQuote);
+	});
+
+	it("throws QuoteError when every quote fails to match the request", async () => {
+		vi.mocked(quoteWithLogModule.quoteWithLog).mockResolvedValueOnce([
+			mismatchedTokenQuote,
+		]);
+
+		const error = await getQuote({
+			quoteParams: { ...baseParams, exact_amount_in: "1000000000000" },
+			config,
+		}).catch((e) => e);
+
+		expect(error).toBeInstanceOf(QuoteError);
 	});
 });

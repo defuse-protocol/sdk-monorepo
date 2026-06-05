@@ -1,3 +1,4 @@
+import type { ILogger } from "../logger";
 import { assert } from "../utils/assert";
 import { QuoteError } from "./errors/quote";
 import type { quote } from "./solverRelayHttpClient";
@@ -25,28 +26,19 @@ export async function getQuote(
 		timeout: (params.quoteParams?.wait_ms ?? 0) + 10000,
 		...params.config,
 	});
-	return handleQuoteResult(result, params.quoteParams);
+	return handleQuoteResult(result, params.quoteParams, params.config.logger);
 }
 
 function handleQuoteResult(
 	result: Awaited<ReturnType<typeof quote>>,
 	quoteParams: GetQuoteParams["quoteParams"],
+	logger?: ILogger,
 ) {
 	if (result == null) {
 		throw new QuoteError({
 			quote: null,
 			quoteParams,
 		});
-	}
-
-	const failedQuotes: FailedQuote[] = [];
-	const validQuotes = [];
-	for (const q of result) {
-		if (isValidQuote(q)) {
-			validQuotes.push(q);
-		} else {
-			failedQuotes.push(q);
-		}
 	}
 
 	const hasExactIn = quoteParams.exact_amount_in != null;
@@ -56,6 +48,32 @@ function handleQuoteResult(
 		`Invalid quoteParams: exactly one of exact_amount_in or exact_amount_out must be set (got exact_amount_in=${quoteParams.exact_amount_in}, exact_amount_out=${quoteParams.exact_amount_out}).`,
 	);
 	const quoteKind = hasExactIn ? "exact_in" : "exact_out";
+
+	const failedQuotes: FailedQuote[] = [];
+	const validQuotes: Quote[] = [];
+	for (const q of result) {
+		if (!isValidQuote(q)) {
+			failedQuotes.push(q);
+			continue;
+		}
+
+		// The relay aggregates quotes from independent solvers, so a buggy or
+		// malicious solver can return a quote that doesn't match what we asked
+		// for: wrong tokens, or a different fixed amount than requested. Acting
+		// on such a quote would make the user swap the wrong assets/amounts, and
+		// a mismatched fixed amount also makes sortQuotes compare unlike quotes.
+		// Drop it (it is neither usable nor an INSUFFICIENT_AMOUNT failure).
+		if (!matchesRequest(q, quoteParams)) {
+			logger?.warn("quote: dropping quote that doesn't match the request", {
+				quoteParams,
+				quote: q,
+			});
+			continue;
+		}
+
+		validQuotes.push(q);
+	}
+
 	const bestQuote = sortQuotes(validQuotes, quoteKind)[0];
 	if (bestQuote != null) {
 		return bestQuote;
@@ -96,4 +114,26 @@ function sortQuotes(
 
 function isValidQuote(quote: Quote | FailedQuote): quote is Quote {
 	return !("type" in quote);
+}
+
+function matchesRequest(
+	quote: Quote,
+	quoteParams: GetQuoteParams["quoteParams"],
+): boolean {
+	if (
+		quote.defuse_asset_identifier_in !==
+			quoteParams.defuse_asset_identifier_in ||
+		quote.defuse_asset_identifier_out !==
+			quoteParams.defuse_asset_identifier_out
+	) {
+		return false;
+	}
+
+	// Only the side fixed by the request is verified; the other side is what the
+	// solver competes on (max amount_out for exact_in, min amount_in for
+	// exact_out). Compare as BigInt so formatting differences don't matter.
+	if (quoteParams.exact_amount_in != null) {
+		return BigInt(quote.amount_in) === BigInt(quoteParams.exact_amount_in);
+	}
+	return BigInt(quote.amount_out) === BigInt(quoteParams.exact_amount_out);
 }
