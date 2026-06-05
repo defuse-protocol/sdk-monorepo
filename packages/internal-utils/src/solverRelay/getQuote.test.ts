@@ -97,10 +97,10 @@ describe("getQuote() exact_amount validation", () => {
 	});
 });
 
-describe("getQuote() returned-token verification", () => {
-	const mismatchedQuote: Quote = {
+describe("getQuote() request verification", () => {
+	const mismatchedTokenQuote: Quote = {
 		...validQuote,
-		quote_hash: "hash-mismatch",
+		quote_hash: "hash-mismatch-token",
 		// Solver echoed back a different output token than requested,
 		// while offering a more attractive amount_out.
 		defuse_asset_identifier_out: "nep245:v2_1.omni.hot.tg:56_other_token",
@@ -109,7 +109,7 @@ describe("getQuote() returned-token verification", () => {
 
 	it("ignores a higher-ranked quote whose tokens differ from the request", async () => {
 		vi.mocked(quoteWithLogModule.quoteWithLog).mockResolvedValueOnce([
-			mismatchedQuote,
+			mismatchedTokenQuote,
 			validQuote,
 		]);
 
@@ -121,9 +121,30 @@ describe("getQuote() returned-token verification", () => {
 		expect(result).toEqual(validQuote);
 	});
 
-	it("throws QuoteError when every quote has mismatched tokens", async () => {
+	it("ignores an exact_in quote whose amount_in differs from the request", async () => {
+		// Solver only fills half the requested input but advertises a huge output.
+		const wrongAmountInQuote: Quote = {
+			...validQuote,
+			quote_hash: "hash-wrong-amount-in",
+			amount_in: "500000000000",
+			amount_out: "99000000000000",
+		};
 		vi.mocked(quoteWithLogModule.quoteWithLog).mockResolvedValueOnce([
-			mismatchedQuote,
+			wrongAmountInQuote,
+			validQuote,
+		]);
+
+		const result = await getQuote({
+			quoteParams: { ...baseParams, exact_amount_in: "1000000000000" },
+			config,
+		});
+
+		expect(result).toEqual(validQuote);
+	});
+
+	it("throws QuoteError when every quote fails to match the request", async () => {
+		vi.mocked(quoteWithLogModule.quoteWithLog).mockResolvedValueOnce([
+			mismatchedTokenQuote,
 		]);
 
 		const error = await getQuote({

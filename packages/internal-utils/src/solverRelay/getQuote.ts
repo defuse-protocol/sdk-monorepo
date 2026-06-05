@@ -41,6 +41,14 @@ function handleQuoteResult(
 		});
 	}
 
+	const hasExactIn = quoteParams.exact_amount_in != null;
+	const hasExactOut = quoteParams.exact_amount_out != null;
+	assert(
+		hasExactIn !== hasExactOut,
+		`Invalid quoteParams: exactly one of exact_amount_in or exact_amount_out must be set (got exact_amount_in=${quoteParams.exact_amount_in}, exact_amount_out=${quoteParams.exact_amount_out}).`,
+	);
+	const quoteKind = hasExactIn ? "exact_in" : "exact_out";
+
 	const failedQuotes: FailedQuote[] = [];
 	const validQuotes: Quote[] = [];
 	for (const q of result) {
@@ -50,11 +58,13 @@ function handleQuoteResult(
 		}
 
 		// The relay aggregates quotes from independent solvers, so a buggy or
-		// malicious solver can echo back tokens we never requested. Acting on
-		// such a quote would make the user swap the wrong assets, so drop it
-		// (it is neither a usable quote nor an INSUFFICIENT_AMOUNT failure).
-		if (!matchesRequestedTokens(q, quoteParams)) {
-			logger?.warn("quote: dropping quote with mismatched tokens", {
+		// malicious solver can return a quote that doesn't match what we asked
+		// for: wrong tokens, or a different fixed amount than requested. Acting
+		// on such a quote would make the user swap the wrong assets/amounts, and
+		// a mismatched fixed amount also makes sortQuotes compare unlike quotes.
+		// Drop it (it is neither usable nor an INSUFFICIENT_AMOUNT failure).
+		if (!matchesRequest(q, quoteParams)) {
+			logger?.warn("quote: dropping quote that doesn't match the request", {
 				quoteParams,
 				quote: q,
 			});
@@ -64,13 +74,6 @@ function handleQuoteResult(
 		validQuotes.push(q);
 	}
 
-	const hasExactIn = quoteParams.exact_amount_in != null;
-	const hasExactOut = quoteParams.exact_amount_out != null;
-	assert(
-		hasExactIn !== hasExactOut,
-		`Invalid quoteParams: exactly one of exact_amount_in or exact_amount_out must be set (got exact_amount_in=${quoteParams.exact_amount_in}, exact_amount_out=${quoteParams.exact_amount_out}).`,
-	);
-	const quoteKind = hasExactIn ? "exact_in" : "exact_out";
 	const bestQuote = sortQuotes(validQuotes, quoteKind)[0];
 	if (bestQuote != null) {
 		return bestQuote;
@@ -113,14 +116,24 @@ function isValidQuote(quote: Quote | FailedQuote): quote is Quote {
 	return !("type" in quote);
 }
 
-function matchesRequestedTokens(
+function matchesRequest(
 	quote: Quote,
 	quoteParams: GetQuoteParams["quoteParams"],
 ): boolean {
-	return (
-		quote.defuse_asset_identifier_in ===
-			quoteParams.defuse_asset_identifier_in &&
-		quote.defuse_asset_identifier_out ===
+	if (
+		quote.defuse_asset_identifier_in !==
+			quoteParams.defuse_asset_identifier_in ||
+		quote.defuse_asset_identifier_out !==
 			quoteParams.defuse_asset_identifier_out
-	);
+	) {
+		return false;
+	}
+
+	// Only the side fixed by the request is verified; the other side is what the
+	// solver competes on (max amount_out for exact_in, min amount_in for
+	// exact_out). Compare as BigInt so formatting differences don't matter.
+	if (quoteParams.exact_amount_in != null) {
+		return BigInt(quote.amount_in) === BigInt(quoteParams.exact_amount_in);
+	}
+	return BigInt(quote.amount_out) === BigInt(quoteParams.exact_amount_out);
 }
