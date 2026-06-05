@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.34.1
+
+### Patch Changes
+
+- a6f918c: Drop quotes whose returned tokens or fixed amount don't match the request
+
 ## 0.34.0
 
 ### Minor Changes
