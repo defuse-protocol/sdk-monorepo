@@ -69,7 +69,7 @@ const caip2Mapping = {
 	[Chains.Starknet]: "starknet:mainnet",
 	[Chains.Aleo]: "aleo:mainnet",
 	[Chains.Dash]: "dash:mainnet",
-	[Chains.Plasma]: "eth:9745"
+	[Chains.Plasma]: "eth:9745",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
