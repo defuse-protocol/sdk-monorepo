@@ -69,6 +69,7 @@ const caip2Mapping = {
 	[Chains.Starknet]: "starknet:mainnet",
 	[Chains.Aleo]: "aleo:mainnet",
 	[Chains.Dash]: "dash:mainnet",
+	[Chains.TON]: "ton:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -95,6 +96,7 @@ const tokenPrefixMapping = {
 	xrp: Chains.XRPL,
 	zec: Chains.Zcash,
 	gnosis: Chains.Gnosis,
+	ton: Chains.TON,
 	bera: Chains.Berachain,
 	tron: Chains.Tron,
 	sui: Chains.Sui,
