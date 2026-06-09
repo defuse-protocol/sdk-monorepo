@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.68.0
+
+### Minor Changes
+
+- 3b25ae5: Add support for Plasma to PoA bridge
+
+### Patch Changes
+
+- Updated dependencies [3b25ae5]
+  - @defuse-protocol/internal-utils@0.35.0
+
 ## 0.67.2
 
 ### Patch Changes

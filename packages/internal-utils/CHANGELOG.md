@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.35.0
+
+### Minor Changes
+
+- 3b25ae5: Add support for Plasma to PoA bridge
+
 ## 0.34.1
 
 ### Patch Changes
