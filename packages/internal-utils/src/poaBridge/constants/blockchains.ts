@@ -32,6 +32,7 @@ export const PoaBridgeNetworkReference = {
 	STARKNET: "starknet:mainnet",
 	ALEO: "aleo:mainnet",
 	DASH: "dash:mainnet",
+	PLASMA: "eth:9745",
 } as const;
 
 export const VirtualNetworkReference = {
