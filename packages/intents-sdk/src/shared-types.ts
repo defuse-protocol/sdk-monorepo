@@ -378,6 +378,7 @@ export interface Bridge {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
+		destinationMemo?: string;
 		feeEstimation: FeeEstimation;
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
