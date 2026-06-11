@@ -177,6 +177,7 @@ export class PoaBridge implements Bridge {
 		destinationAddress: string;
 		logger?: ILogger;
 		skipMinAmountValidation?: boolean;
+		destinationMemo?: string;
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
@@ -229,8 +230,7 @@ export class PoaBridge implements Bridge {
 				);
 				const requireDestinationTag =
 					accountInfo.account_flags.requireDestinationTag;
-
-				if (requireDestinationTag)
+				if (requireDestinationTag && !args.destinationMemo)
 					throw new XrplDestinationTagRequiredError(args.destinationAddress);
 
 				const depositAuthEnabled = accountInfo.account_flags.depositAuth;
