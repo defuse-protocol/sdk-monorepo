@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.68.1
+
+### Patch Changes
+
+- 0a0d651: Fix require destination tag check for xrp withdrawals via PoA
+
 ## 0.68.0
 
 ### Minor Changes
