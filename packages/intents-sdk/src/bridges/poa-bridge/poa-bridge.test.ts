@@ -621,7 +621,7 @@ describe("PoaBridge", () => {
 				}),
 			).rejects.toThrow();
 		});
-		it("throws XrplDestinationTagRequiredError if destination tag is required", async () => {
+		it("throws XrplDestinationTagRequiredError if destination tag is required but not specified", async () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
@@ -657,6 +657,45 @@ describe("PoaBridge", () => {
 					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
 				}),
 			).rejects.toThrow(XrplDestinationTagRequiredError);
+		});
+
+		it("Not throws XrplDestinationTagRequiredError if destination tag is required but destinationMemo is specified", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:xrp.omft.near",
+						min_withdrawal_amount: "1",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "a:m",
+					},
+				],
+			});
+			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+				account_data: { Account: "Account" },
+				account_flags: {
+					requireDestinationTag: true,
+					depositAuth: false,
+				},
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:xrp.omft.near",
+					amount: 5000n,
+					destinationAddress: "rNxp4h8apvRis6mJf9Sh8C6iRxfrDWN7AV",
+					destinationMemo: "568006966",
+				}),
+			).resolves.toBeUndefined();
 		});
 
 		it("throws XrplDepositAuthEnabledError if depositAuth is enabled", async () => {
