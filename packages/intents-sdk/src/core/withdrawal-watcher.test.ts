@@ -14,10 +14,13 @@ import { Chains } from "../lib/caip2";
 import {
 	BridgeNotFoundError,
 	createWithdrawalIdentifiers,
+	NearWithdrawalFailedError,
 	watchWithdrawal,
 	WithdrawalFailedError,
 	WithdrawalWatchError,
 } from "./withdrawal-watcher";
+
+const CONTRACT_ID = "intents.near";
 
 describe("watchWithdrawal", () => {
 	it("returns tx info when withdrawal completes immediately", async () => {
@@ -28,7 +31,12 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({ bridge, wid });
+		const result = await watchWithdrawal({
+			bridge,
+			wid,
+			nearProvider: createMockNearProvider() as any,
+			intentsContractId: CONTRACT_ID,
+		});
 
 		expect(result).toEqual({ hash: "0xabc123" });
 	});
@@ -41,7 +49,12 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({ bridge, wid });
+		const result = await watchWithdrawal({
+			bridge,
+			wid,
+			nearProvider: createMockNearProvider() as any,
+			intentsContractId: CONTRACT_ID,
+		});
 
 		expect(result).toEqual({ hash: null });
 	});
@@ -54,9 +67,14 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		await expect(watchWithdrawal({ bridge, wid })).rejects.toThrow(
-			WithdrawalFailedError,
-		);
+		await expect(
+			watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider: createMockNearProvider() as any,
+				intentsContractId: CONTRACT_ID,
+			}),
+		).rejects.toThrow(WithdrawalFailedError);
 	});
 
 	it("retries on pending status and succeeds when completed", async () => {
@@ -67,7 +85,12 @@ describe("watchWithdrawal", () => {
 			.mockResolvedValueOnce({ status: "completed", txHash: "0xfinal" });
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({ bridge, wid });
+		const result = await watchWithdrawal({
+			bridge,
+			wid,
+			nearProvider: createMockNearProvider() as any,
+			intentsContractId: CONTRACT_ID,
+		});
 
 		expect(result).toEqual({ hash: "0xfinal" });
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(3);
@@ -78,14 +101,26 @@ describe("watchWithdrawal", () => {
 		vi.spyOn(bridge, "describeWithdrawal").mockResolvedValue({
 			status: "pending",
 		});
+		const txStatusReceipts = vi
+			.fn()
+			.mockResolvedValue(createSuccessfulTxOutcome());
 
 		const controller = new AbortController();
 		controller.abort();
 
 		const wid = createWithdrawalIdentifier();
 		await expect(
-			watchWithdrawal({ bridge, wid, signal: controller.signal }),
+			watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider: createMockNearProvider() as any,
+				intentsContractId: CONTRACT_ID,
+				signal: controller.signal,
+			}),
 		).rejects.toThrow();
+
+		// The signal gates the NEAR fetch: polling bails out before the first call.
+		expect(txStatusReceipts).not.toHaveBeenCalled();
 	});
 
 	it("retries on transient errors below threshold and succeeds", async () => {
@@ -104,7 +139,13 @@ describe("watchWithdrawal", () => {
 		};
 		const wid = createWithdrawalIdentifier();
 
-		const result = await watchWithdrawal({ bridge, wid, logger });
+		const result = await watchWithdrawal({
+			bridge,
+			wid,
+			nearProvider: createMockNearProvider() as any,
+			intentsContractId: CONTRACT_ID,
+			logger,
+		});
 
 		expect(result).toEqual({ hash: "0xsuccess" });
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(3);
@@ -122,9 +163,14 @@ describe("watchWithdrawal", () => {
 
 		const wid = createWithdrawalIdentifier();
 
-		await expect(watchWithdrawal({ bridge, wid })).rejects.toThrow(
-			WithdrawalWatchError,
-		);
+		await expect(
+			watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider: createMockNearProvider() as any,
+				intentsContractId: CONTRACT_ID,
+			}),
+		).rejects.toThrow(WithdrawalWatchError);
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(5);
 	});
 
@@ -139,7 +185,12 @@ describe("watchWithdrawal", () => {
 			.mockResolvedValueOnce({ status: "completed", txHash: "0xsuccess" });
 
 		const wid = createWithdrawalIdentifier();
-		const result = await watchWithdrawal({ bridge, wid });
+		const result = await watchWithdrawal({
+			bridge,
+			wid,
+			nearProvider: createMockNearProvider() as any,
+			intentsContractId: CONTRACT_ID,
+		});
 
 		expect(result).toEqual({ hash: "0xsuccess" });
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(6);
@@ -153,11 +204,93 @@ describe("watchWithdrawal", () => {
 		});
 
 		const wid = createWithdrawalIdentifier();
-		await expect(watchWithdrawal({ bridge, wid })).rejects.toThrow(
-			WithdrawalFailedError,
-		);
+		await expect(
+			watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider: createMockNearProvider() as any,
+				intentsContractId: CONTRACT_ID,
+			}),
+		).rejects.toThrow(WithdrawalFailedError);
 
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(1);
+	});
+
+	it("throws NearWithdrawalFailedError when the NEAR intent tx failed", async () => {
+		const bridge = createMockBridge();
+		const describeSpy = vi.spyOn(bridge, "describeWithdrawal");
+		const nearProvider = createMockNearProvider(
+			vi.fn().mockResolvedValue({
+				status: {
+					Failure: { error_message: "panicked", error_type: "ActionError" },
+				},
+				receipts_outcome: [],
+			}),
+		) as any;
+
+		const wid = createWithdrawalIdentifier();
+		await expect(
+			watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider,
+				intentsContractId: CONTRACT_ID,
+			}),
+		).rejects.toThrow(NearWithdrawalFailedError);
+
+		// A NEAR-side failure short-circuits before the bridge is ever polled.
+		expect(describeSpy).not.toHaveBeenCalled();
+	});
+
+	it("throws NearWithdrawalFailedError when a NEAR receipt failed", async () => {
+		const bridge = createMockBridge();
+		const nearProvider = createMockNearProvider(
+			vi.fn().mockResolvedValue({
+				status: { SuccessValue: "" },
+				receipts_outcome: [
+					{
+						outcome: {
+							status: {
+								Failure: { error_message: "receipt failed", error_type: "x" },
+							},
+						},
+					},
+				],
+			}),
+		) as any;
+
+		const wid = createWithdrawalIdentifier();
+		await expect(
+			watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider,
+				intentsContractId: CONTRACT_ID,
+			}),
+		).rejects.toThrow(NearWithdrawalFailedError);
+	});
+
+	it("retries the NEAR tx status fetch on a transient error, then proceeds", async () => {
+		const bridge = createMockBridge();
+		vi.spyOn(bridge, "describeWithdrawal").mockResolvedValue({
+			status: "completed",
+			txHash: "0xok",
+		});
+		const txStatusReceipts = vi
+			.fn()
+			.mockRejectedValueOnce(new Error("RPC down"))
+			.mockResolvedValueOnce(createSuccessfulTxOutcome());
+
+		const wid = createWithdrawalIdentifier();
+		const result = await watchWithdrawal({
+			bridge,
+			wid,
+			nearProvider: { txStatusReceipts } as any,
+			intentsContractId: CONTRACT_ID,
+		});
+
+		expect(result).toEqual({ hash: "0xok" });
+		expect(txStatusReceipts).toHaveBeenCalledTimes(2);
 	});
 });
 
@@ -306,6 +439,20 @@ function createMockBridge(
 			txHash: null,
 		}),
 	};
+}
+
+/** A successful NEAR tx outcome: final status has a SuccessValue, no failed receipts. */
+function createSuccessfulTxOutcome() {
+	return {
+		status: { SuccessValue: "" },
+		receipts_outcome: [],
+	};
+}
+
+function createMockNearProvider(
+	txStatusReceipts = vi.fn().mockResolvedValue(createSuccessfulTxOutcome()),
+) {
+	return { txStatusReceipts };
 }
 
 function createWithdrawalIdentifier(): WithdrawalIdentifier {

@@ -1,5 +1,6 @@
 import {
 	BaseError,
+	type CompletionStats,
 	type ILogger,
 	poll,
 	POLL_PENDING,
@@ -14,10 +15,25 @@ import type {
 	WithdrawalParams,
 } from "../shared-types";
 import { getWithdrawalStatsForChain } from "../constants/withdrawal-timing";
+import type { Provider } from "near-api-js/lib/providers";
 
 const MAX_CONSECUTIVE_ERRORS = 5;
 
+/**
+ * Polling budget for fetching the NEAR intent tx status. The tx is already
+ * submitted before watching starts, so a fetch only fails on transient RPC
+ * errors: retry aggressively with a 15s ceiling. Persistent failures bail out
+ * earlier via {@link MAX_CONSECUTIVE_ERRORS}.
+ */
+const NEAR_TX_STATUS_STATS: CompletionStats = {
+	p50: 500,
+	p90: 2_000,
+	p99: 15_000,
+};
+
 export async function watchWithdrawal(args: {
+	nearProvider: Provider;
+	intentsContractId: string;
 	bridge: Bridge;
 	wid: WithdrawalIdentifier;
 	signal?: AbortSignal;
@@ -30,6 +46,21 @@ export async function watchWithdrawal(args: {
 	let consecutiveErrors = 0;
 
 	try {
+		const nearFailureReason = await checkIfWithdrawalFailedOnNearSide({
+			nearProvider: args.nearProvider,
+			contractId: args.intentsContractId,
+			txHash: args.wid.tx.hash,
+			signal: args.signal,
+			logger: args.logger,
+		});
+
+		if (nearFailureReason !== null) {
+			args.logger?.error(
+				`Withdrawal failed on NEAR side: ${nearFailureReason}`,
+			);
+			throw new NearWithdrawalFailedError(nearFailureReason);
+		}
+
 		return await poll(
 			async () => {
 				try {
@@ -75,6 +106,83 @@ export async function watchWithdrawal(args: {
 		}
 		throw err;
 	}
+}
+
+/**
+ * Inspects the NEAR-side execution outcome of the withdrawal transaction.
+ *
+ * Fetches the tx status via {@link poll} so the request honors `signal` (it can
+ * be aborted between attempts) and survives transient RPC errors, retrying up
+ * to {@link MAX_CONSECUTIVE_ERRORS} times before failing with a
+ * {@link WithdrawalWatchError}.
+ *
+ * Returns a human-readable reason when the transaction failed on NEAR, or
+ * `null` when it succeeded. Throwing the terminal failure is intentionally left
+ * to the caller: a non-null reason is meant to be wrapped in a
+ * {@link NearWithdrawalFailedError}.
+ */
+async function checkIfWithdrawalFailedOnNearSide(args: {
+	nearProvider: Provider;
+	contractId: string;
+	txHash: string;
+	signal?: AbortSignal;
+	logger?: ILogger;
+}): Promise<string | null> {
+	let consecutiveErrors = 0;
+
+	const transaction = await poll(
+		async () => {
+			try {
+				const tx = await args.nearProvider.txStatusReceipts(
+					args.txHash,
+					args.contractId,
+					"FINAL",
+				);
+				consecutiveErrors = 0;
+
+				// "NotStarted"/"Started" mean the tx hasn't reached a terminal
+				// status yet — keep polling instead of treating it as a failure.
+				if (tx.status === "NotStarted" || tx.status === "Started") {
+					return POLL_PENDING;
+				}
+				return tx;
+			} catch (err: unknown) {
+				consecutiveErrors++;
+				if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+					throw new WithdrawalWatchError(err);
+				}
+
+				args.logger?.warn(
+					`Transient error fetching NEAR tx status (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
+				);
+				return POLL_PENDING;
+			}
+		},
+		{ stats: NEAR_TX_STATUS_STATS, signal: args.signal },
+	);
+
+	// Pending statuses were filtered out while polling, so the status is now
+	// terminal. It's a failure only on an explicit `Failure` — either the
+	// detailed object form (`{ Failure }`) or the basic `"Failure"` string. A
+	// `SuccessValue` (or any other terminal status) is not a NEAR-side failure.
+	const status = transaction.status;
+	if (typeof status === "object" && status?.Failure !== undefined) {
+		const reason = `Withdrawal tx has status failed: ${JSON.stringify(status.Failure)}`;
+		return reason;
+	}
+
+	for (const receipt of transaction.receipts_outcome) {
+		const outcomeStatus = receipt.outcome.status;
+		if (
+			typeof outcomeStatus === "object" &&
+			outcomeStatus.Failure !== undefined
+		) {
+			const reason = `Withdrawal tx has status failed: ${JSON.stringify(outcomeStatus.Failure)}`;
+			return reason;
+		}
+	}
+
+	return null;
 }
 
 export async function createWithdrawalIdentifiers(args: {
@@ -134,6 +242,18 @@ export class WithdrawalFailedError extends BaseError {
 	constructor(reason: string) {
 		super(`Withdrawal failed: ${reason}`, {
 			name: "WithdrawalFailedError",
+		});
+	}
+}
+
+export type NearWithdrawalFailedErrorType = NearWithdrawalFailedError & {
+	name: "NearWithdrawalFailedError";
+};
+
+export class NearWithdrawalFailedError extends BaseError {
+	constructor(reason: string) {
+		super(`Withdrawal failed on NEAR side: ${reason}`, {
+			name: "NearWithdrawalFailedError",
 		});
 	}
 }
