@@ -79,6 +79,7 @@ import {
 import { IntentPayloadBuilder } from "./intents/intent-payload-builder";
 import { DEFAULT_DEADLINE_MS } from "./intents/intent-payload-factory";
 import * as v from "valibot";
+import type { Provider } from "near-api-js/lib/providers";
 
 export interface IntentsSDKConfig {
 	/**
@@ -129,6 +130,7 @@ export class IntentsSDK implements IIntentsSDK {
 	protected solverRelayApiKey: string | undefined;
 	protected hotBridgeApiKey: string | undefined;
 	protected saltManager: ISaltManager;
+	protected nearProvider: Provider;
 
 	constructor(args: IntentsSDKConfig) {
 		this.envConfig = resolveEnvConfig(args.env);
@@ -140,6 +142,7 @@ export class IntentsSDK implements IIntentsSDK {
 			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
 		assert(nearRpcEndpoints.length > 0, "NEAR RPC URLs are not provided");
 		const nearProvider = nearFailoverRpcProvider({ urls: nearRpcEndpoints });
+		this.nearProvider = nearProvider;
 		// Plain URLs for external SDKs that don't support config objects
 		const nearRpcUrls = extractRpcUrls(nearRpcEndpoints);
 
@@ -595,6 +598,7 @@ export class IntentsSDK implements IIntentsSDK {
 						await Promise.allSettled([previousPromise]);
 					}
 					return watchWithdrawal({
+						nearProvider: this.nearProvider,
 						bridge: entry.bridge,
 						wid: entry.wid,
 						signal,
@@ -608,6 +612,7 @@ export class IntentsSDK implements IIntentsSDK {
 
 			// Non-HOT bridges: parallel polling (existing behavior)
 			return watchWithdrawal({
+				nearProvider: this.nearProvider,
 				bridge: entry.bridge,
 				wid: entry.wid,
 				signal,
