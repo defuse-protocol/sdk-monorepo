@@ -599,7 +599,6 @@ export class IntentsSDK implements IIntentsSDK {
 					}
 					return watchWithdrawal({
 						nearProvider: this.nearProvider,
-						intentsContractId: this.envConfig.contractID,
 						bridge: entry.bridge,
 						wid: entry.wid,
 						signal,
@@ -614,7 +613,6 @@ export class IntentsSDK implements IIntentsSDK {
 			// Non-HOT bridges: parallel polling (existing behavior)
 			return watchWithdrawal({
 				nearProvider: this.nearProvider,
-				intentsContractId: this.envConfig.contractID,
 				bridge: entry.bridge,
 				wid: entry.wid,
 				signal,

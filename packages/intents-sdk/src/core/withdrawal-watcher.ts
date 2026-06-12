@@ -5,6 +5,7 @@ import {
 	poll,
 	POLL_PENDING,
 	PollTimeoutError,
+	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import type {
 	Bridge,
@@ -15,15 +16,18 @@ import type {
 	WithdrawalParams,
 } from "../shared-types";
 import { getWithdrawalStatsForChain } from "../constants/withdrawal-timing";
+import { providers } from "near-api-js";
 import type { Provider } from "near-api-js/lib/providers";
 
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 /**
- * Polling budget for fetching the NEAR intent tx status. The tx is already
- * submitted before watching starts, so a fetch only fails on transient RPC
- * errors: retry aggressively with a 15s ceiling. Persistent failures bail out
- * earlier via {@link MAX_CONSECUTIVE_ERRORS}.
+ * Total polling budget for confirming the NEAR intent tx status. The tx is
+ * already submitted before watching starts, so it normally resolves on the
+ * first attempt; the budget absorbs propagation lag (pending) and transient RPC
+ * errors before giving up at the 15s ceiling. Per-attempt latency is bounded
+ * separately by {@link NEAR_TX_STATUS_FETCH_TIMEOUT_MS}; a run of transient
+ * errors bails out earlier via {@link MAX_CONSECUTIVE_ERRORS}.
  */
 const NEAR_TX_STATUS_STATS: CompletionStats = {
 	p50: 500,
@@ -31,9 +35,36 @@ const NEAR_TX_STATUS_STATS: CompletionStats = {
 	p99: 15_000,
 };
 
+/**
+ * Per-attempt ceiling for a single tx-status fetch. The provider has its own
+ * internal retry/backoff and never receives `signal`, so without this a single
+ * call can block for tens of seconds — well past the poll's p99 — making both
+ * the abort signal and the polling budget ineffective. Capping each attempt
+ * keeps them meaningful: a stalled call is dropped and retried on the next tick.
+ */
+const NEAR_TX_STATUS_FETCH_TIMEOUT_MS = 5_000;
+
+/**
+ * NEAR RPC error types that mean "the tx isn't observable as final yet" rather
+ * than a real fetch failure: the queried node doesn't know the tx (propagation
+ * lag) or its `wait_until=FINAL` wait timed out server-side. These are treated
+ * as pending (keep polling), not as transient errors counted against
+ * {@link MAX_CONSECUTIVE_ERRORS}.
+ */
+const NEAR_TX_PENDING_ERROR_TYPES = [
+	"UNKNOWN_TRANSACTION",
+	"TIMEOUT_ERROR",
+] as const;
+
+function isNearTxPendingError(err: unknown): boolean {
+	return (
+		err instanceof providers.TypedError &&
+		NEAR_TX_PENDING_ERROR_TYPES.some((type) => type === err.type)
+	);
+}
+
 export async function watchWithdrawal(args: {
 	nearProvider: Provider;
-	intentsContractId: string;
 	bridge: Bridge;
 	wid: WithdrawalIdentifier;
 	signal?: AbortSignal;
@@ -48,7 +79,11 @@ export async function watchWithdrawal(args: {
 	try {
 		const nearFailureReason = await checkIfWithdrawalFailedOnNearSide({
 			nearProvider: args.nearProvider,
-			contractId: args.intentsContractId,
+			// `sender_account_id` for tx status must be the account that signed the
+			// settlement tx (the relayer), which `wid.tx.accountId` tracks — not the
+			// verifying contract. Today they're the same (`intents.near`), but the
+			// relayer account may change; this keeps the lookup correct if it does.
+			senderAccountId: args.wid.tx.accountId,
 			txHash: args.wid.tx.hash,
 			signal: args.signal,
 			logger: args.logger,
@@ -123,7 +158,7 @@ export async function watchWithdrawal(args: {
  */
 async function checkIfWithdrawalFailedOnNearSide(args: {
 	nearProvider: Provider;
-	contractId: string;
+	senderAccountId: string;
 	txHash: string;
 	signal?: AbortSignal;
 	logger?: ILogger;
@@ -133,10 +168,19 @@ async function checkIfWithdrawalFailedOnNearSide(args: {
 	const transaction = await poll(
 		async () => {
 			try {
-				const tx = await args.nearProvider.txStatusReceipts(
-					args.txHash,
-					args.contractId,
-					"FINAL",
+				// Cap the in-flight call: the provider's own retry/backoff ignores
+				// `signal`, so an unbounded call would defeat both the abort signal
+				// and the poll's p99 budget.
+				const tx = await withTimeout(
+					() =>
+						args.nearProvider.txStatusReceipts(
+							args.txHash,
+							args.senderAccountId,
+							"FINAL",
+						),
+					{
+						timeout: NEAR_TX_STATUS_FETCH_TIMEOUT_MS,
+					},
 				);
 				consecutiveErrors = 0;
 
@@ -147,6 +191,14 @@ async function checkIfWithdrawalFailedOnNearSide(args: {
 				}
 				return tx;
 			} catch (err: unknown) {
+				// A definitive "not yet known / not yet final" RPC response is an
+				// expected pending signal, not a failure — keep polling without
+				// spending the transient-error budget.
+				if (isNearTxPendingError(err)) {
+					consecutiveErrors = 0;
+					return POLL_PENDING;
+				}
+
 				consecutiveErrors++;
 				if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
 					throw new WithdrawalWatchError(err);
@@ -158,7 +210,14 @@ async function checkIfWithdrawalFailedOnNearSide(args: {
 				return POLL_PENDING;
 			}
 		},
-		{ stats: NEAR_TX_STATUS_STATS, signal: args.signal },
+		{
+			stats: NEAR_TX_STATUS_STATS,
+			signal: args.signal,
+			// Cap the backoff: a not-yet-final/not-yet-visible tx resolves on a
+			// ~1-2s timescale, so retry promptly instead of letting poll escalate
+			// to its default 10s COLD interval.
+			maxInterval: 1_000,
+		},
 	);
 
 	// Pending statuses were filtered out while polling, so the status is now

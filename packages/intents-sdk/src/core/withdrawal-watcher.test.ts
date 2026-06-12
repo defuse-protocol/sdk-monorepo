@@ -11,6 +11,7 @@ import type {
 	WithdrawalParams,
 } from "../shared-types";
 import { Chains } from "../lib/caip2";
+import type { Provider } from "near-api-js/lib/providers";
 import {
 	BridgeNotFoundError,
 	createWithdrawalIdentifiers,
@@ -19,8 +20,6 @@ import {
 	WithdrawalFailedError,
 	WithdrawalWatchError,
 } from "./withdrawal-watcher";
-
-const CONTRACT_ID = "intents.near";
 
 describe("watchWithdrawal", () => {
 	it("returns tx info when withdrawal completes immediately", async () => {
@@ -34,8 +33,7 @@ describe("watchWithdrawal", () => {
 		const result = await watchWithdrawal({
 			bridge,
 			wid,
-			nearProvider: createMockNearProvider() as any,
-			intentsContractId: CONTRACT_ID,
+			nearProvider: createMockNearProvider(),
 		});
 
 		expect(result).toEqual({ hash: "0xabc123" });
@@ -52,8 +50,7 @@ describe("watchWithdrawal", () => {
 		const result = await watchWithdrawal({
 			bridge,
 			wid,
-			nearProvider: createMockNearProvider() as any,
-			intentsContractId: CONTRACT_ID,
+			nearProvider: createMockNearProvider(),
 		});
 
 		expect(result).toEqual({ hash: null });
@@ -71,8 +68,7 @@ describe("watchWithdrawal", () => {
 			watchWithdrawal({
 				bridge,
 				wid,
-				nearProvider: createMockNearProvider() as any,
-				intentsContractId: CONTRACT_ID,
+				nearProvider: createMockNearProvider(),
 			}),
 		).rejects.toThrow(WithdrawalFailedError);
 	});
@@ -88,8 +84,7 @@ describe("watchWithdrawal", () => {
 		const result = await watchWithdrawal({
 			bridge,
 			wid,
-			nearProvider: createMockNearProvider() as any,
-			intentsContractId: CONTRACT_ID,
+			nearProvider: createMockNearProvider(),
 		});
 
 		expect(result).toEqual({ hash: "0xfinal" });
@@ -113,8 +108,7 @@ describe("watchWithdrawal", () => {
 			watchWithdrawal({
 				bridge,
 				wid,
-				nearProvider: createMockNearProvider() as any,
-				intentsContractId: CONTRACT_ID,
+				nearProvider: createMockNearProvider(txStatusReceipts),
 				signal: controller.signal,
 			}),
 		).rejects.toThrow();
@@ -142,8 +136,7 @@ describe("watchWithdrawal", () => {
 		const result = await watchWithdrawal({
 			bridge,
 			wid,
-			nearProvider: createMockNearProvider() as any,
-			intentsContractId: CONTRACT_ID,
+			nearProvider: createMockNearProvider(),
 			logger,
 		});
 
@@ -167,8 +160,7 @@ describe("watchWithdrawal", () => {
 			watchWithdrawal({
 				bridge,
 				wid,
-				nearProvider: createMockNearProvider() as any,
-				intentsContractId: CONTRACT_ID,
+				nearProvider: createMockNearProvider(),
 			}),
 		).rejects.toThrow(WithdrawalWatchError);
 		expect(bridge.describeWithdrawal).toHaveBeenCalledTimes(5);
@@ -188,8 +180,7 @@ describe("watchWithdrawal", () => {
 		const result = await watchWithdrawal({
 			bridge,
 			wid,
-			nearProvider: createMockNearProvider() as any,
-			intentsContractId: CONTRACT_ID,
+			nearProvider: createMockNearProvider(),
 		});
 
 		expect(result).toEqual({ hash: "0xsuccess" });
@@ -208,8 +199,7 @@ describe("watchWithdrawal", () => {
 			watchWithdrawal({
 				bridge,
 				wid,
-				nearProvider: createMockNearProvider() as any,
-				intentsContractId: CONTRACT_ID,
+				nearProvider: createMockNearProvider(),
 			}),
 		).rejects.toThrow(WithdrawalFailedError);
 
@@ -226,7 +216,7 @@ describe("watchWithdrawal", () => {
 				},
 				receipts_outcome: [],
 			}),
-		) as any;
+		);
 
 		const wid = createWithdrawalIdentifier();
 		await expect(
@@ -234,7 +224,6 @@ describe("watchWithdrawal", () => {
 				bridge,
 				wid,
 				nearProvider,
-				intentsContractId: CONTRACT_ID,
 			}),
 		).rejects.toThrow(NearWithdrawalFailedError);
 
@@ -257,7 +246,7 @@ describe("watchWithdrawal", () => {
 					},
 				],
 			}),
-		) as any;
+		);
 
 		const wid = createWithdrawalIdentifier();
 		await expect(
@@ -265,7 +254,6 @@ describe("watchWithdrawal", () => {
 				bridge,
 				wid,
 				nearProvider,
-				intentsContractId: CONTRACT_ID,
 			}),
 		).rejects.toThrow(NearWithdrawalFailedError);
 	});
@@ -285,8 +273,7 @@ describe("watchWithdrawal", () => {
 		const result = await watchWithdrawal({
 			bridge,
 			wid,
-			nearProvider: { txStatusReceipts } as any,
-			intentsContractId: CONTRACT_ID,
+			nearProvider: createMockNearProvider(txStatusReceipts),
 		});
 
 		expect(result).toEqual({ hash: "0xok" });
@@ -451,8 +438,9 @@ function createSuccessfulTxOutcome() {
 
 function createMockNearProvider(
 	txStatusReceipts = vi.fn().mockResolvedValue(createSuccessfulTxOutcome()),
-) {
-	return { txStatusReceipts };
+): Provider {
+	// biome-ignore lint/suspicious/noExplicitAny: partial mock — watchWithdrawal only calls txStatusReceipts
+	return { txStatusReceipts } as any;
 }
 
 function createWithdrawalIdentifier(): WithdrawalIdentifier {
