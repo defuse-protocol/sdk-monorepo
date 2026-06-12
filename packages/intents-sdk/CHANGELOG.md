@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.69.0
+
+### Minor Changes
+
+- 57df8be: Make `sol-0xa69aa1bcb03a369e338156a8718ad60271145803.omdep.near` (kVault gtSOL Balanced (kV-gtSOLb)) token is free to bridge.
+
 ## 0.68.1
 
 ### Patch Changes
