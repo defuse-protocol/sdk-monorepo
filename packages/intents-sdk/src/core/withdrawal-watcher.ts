@@ -229,6 +229,9 @@ async function checkIfWithdrawalFailedOnNearSide(args: {
 		const reason = `Withdrawal tx has status failed: ${JSON.stringify(status.Failure)}`;
 		return reason;
 	}
+	if (status === "Failure") {
+		return "Withdrawal tx has status failed";
+	}
 
 	for (const receipt of transaction.receipts_outcome) {
 		const outcomeStatus = receipt.outcome.status;
@@ -238,6 +241,9 @@ async function checkIfWithdrawalFailedOnNearSide(args: {
 		) {
 			const reason = `Withdrawal tx has status failed: ${JSON.stringify(outcomeStatus.Failure)}`;
 			return reason;
+		}
+		if (outcomeStatus === "Failure") {
+			return "Withdrawal tx has status failed";
 		}
 	}
 
