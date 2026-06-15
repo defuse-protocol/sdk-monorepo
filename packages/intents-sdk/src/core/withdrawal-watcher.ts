@@ -23,8 +23,8 @@ import type { Provider } from "near-api-js/lib/providers";
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 const NEAR_TX_STATUS_STATS: CompletionStats = {
-	p50: 500,
-	p90: 2_000,
+	p50: 5000,
+	p90: 15_000,
 	p99: 30_000,
 };
 
