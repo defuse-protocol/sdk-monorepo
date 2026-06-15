@@ -1352,7 +1352,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				omniFeeSubsidizedTokens: ["lsd-usdt.rhealab.near"],
+				omniFeeSubsidizedTokens: ["nep141:lsd-usdt.rhealab.near"],
 			});
 
 			await expect(
@@ -1503,7 +1503,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				omniFeeSubsidizedTokens: ["lsd-usdt.rhealab.near"],
+				omniFeeSubsidizedTokens: ["nep141:lsd-usdt.rhealab.near"],
 			});
 
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
