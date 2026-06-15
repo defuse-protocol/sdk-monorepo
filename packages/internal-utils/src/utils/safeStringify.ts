@@ -17,11 +17,12 @@
  */
 export function safeStringify(value: unknown, space?: number): string {
 	try {
-		return JSON.stringify(
+		const serialized = JSON.stringify(
 			value,
 			(_key, val: unknown) => (typeof val === "bigint" ? val.toString() : val),
 			space,
 		);
+		return serialized ?? String(value);
 	} catch {
 		return String(value);
 	}
