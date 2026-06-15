@@ -18,6 +18,9 @@ describe("safeStringify()", () => {
 		const circular: Record<string, unknown> = { id: 1n };
 		circular.self = circular;
 
-		expect(() => safeStringify(circular)).not.toThrow();
+		const result = safeStringify(circular);
+
+		expect(result).toBeTypeOf("string");
+		expect(result).toBe(String(circular));
 	});
 });
