@@ -122,7 +122,7 @@ export interface IntentsSDKConfig {
 		 * the SDK forces the native-token fee to 0 when quoting and skips the
 		 * "fee > 0" validation, despite the Omni API reporting a non-zero fee.
 		 */
-		omniFeeSubsidizedAssetIds?: string[];
+		omniFeeSubsidizedTokens?: string[];
 	};
 }
 
@@ -202,7 +202,7 @@ export class IntentsSDK implements IIntentsSDK {
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
-				omniFeeSubsidizedAssetIds: args.features?.omniFeeSubsidizedAssetIds,
+				omniFeeSubsidizedTokens: args.features?.omniFeeSubsidizedTokens,
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,
