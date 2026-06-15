@@ -1507,10 +1507,7 @@ describe("OmniBridge", () => {
 			});
 
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("nep141:lsd-usdt.rhealab.near", [
-				0n,
-				0n,
-			]);
+			bridge["storageDepositCache"].set("lsd-usdt.rhealab.near", [0n, 0n]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
