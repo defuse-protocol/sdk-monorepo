@@ -118,11 +118,11 @@ export interface IntentsSDKConfig {
 		 */
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 		/**
-		 * Asset IDs whose Omni Bridge native-token fee is subsidized. The Omni API
-		 * still reports a non-zero fee for these tokens, so the SDK overrides it to
-		 * 0 when quoting a withdrawal and skips the "fee must be > 0" validation.
+		 * Asset IDs (e.g. `nep141:token.near`) whose Omni Bridge fee is subsidized:
+		 * the SDK forces the native-token fee to 0 when quoting and skips the
+		 * "fee > 0" validation, despite the Omni API reporting a non-zero fee.
 		 */
-		omniFeeSubsidizedTokens?: string[];
+		omniFeeSubsidizedAssetIds?: string[];
 	};
 }
 
@@ -202,7 +202,7 @@ export class IntentsSDK implements IIntentsSDK {
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
-				omniFeeSubsidizedTokens: args.features?.omniFeeSubsidizedTokens,
+				omniFeeSubsidizedAssetIds: args.features?.omniFeeSubsidizedAssetIds,
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,

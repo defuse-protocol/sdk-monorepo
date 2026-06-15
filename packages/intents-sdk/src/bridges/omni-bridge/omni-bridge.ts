@@ -89,7 +89,7 @@ export class OmniBridge implements Bridge {
 		ttl: 3000,
 	});
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
-	protected omniFeeSubsidizedTokens: string[];
+	protected omniFeeSubsidizedAssetIds: string[];
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -107,13 +107,13 @@ export class OmniBridge implements Bridge {
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
-		omniFeeSubsidizedTokens,
+		omniFeeSubsidizedAssetIds,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
-		omniFeeSubsidizedTokens?: string[];
+		omniFeeSubsidizedAssetIds?: string[];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
@@ -121,7 +121,7 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
-		this.omniFeeSubsidizedTokens = omniFeeSubsidizedTokens ?? [];
+		this.omniFeeSubsidizedAssetIds = omniFeeSubsidizedAssetIds ?? [];
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -392,7 +392,9 @@ export class OmniBridge implements Bridge {
 		logger?: ILogger;
 		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
-		const isFeeSubsidized = this.omniFeeSubsidizedTokens.includes(args.assetId);
+		const isFeeSubsidized = this.omniFeeSubsidizedAssetIds.includes(
+			args.assetId,
+		);
 		if (!isFeeSubsidized) {
 			assert(
 				args.feeEstimation.amount > 0n,
@@ -605,7 +607,9 @@ export class OmniBridge implements Bridge {
 		}
 
 		// Omni API returns non-zero fee for subsidized tokens, so we enforce 0 fee for specific tokens.
-		if (this.omniFeeSubsidizedTokens.includes(args.withdrawalParams.assetId)) {
+		if (
+			this.omniFeeSubsidizedAssetIds.includes(args.withdrawalParams.assetId)
+		) {
 			fee.native_token_fee = 0n;
 		}
 
