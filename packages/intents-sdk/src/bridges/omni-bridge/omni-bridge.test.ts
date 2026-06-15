@@ -1352,11 +1352,12 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
+				omniFeeSubsidizedTokens: ["fryingpan.near"],
 			});
 
 			await expect(
 				bridge.validateWithdrawal({
-					assetId: "nep141:lsd-usdt.rhealab.near",
+					assetId: "nep141:fryingpan.near",
 					amount: 1_000_000n,
 					destinationAddress: zeroAddress,
 					feeEstimation: {
@@ -1502,14 +1503,15 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
+				omniFeeSubsidizedTokens: ["fryingpan.near"],
 			});
 
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("lsd-usdt.rhealab.near", [0n, 0n]);
+			bridge["storageDepositCache"].set("fryingpan.near", [0n, 0n]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
-					assetId: "nep141:lsd-usdt.rhealab.near",
+					assetId: "nep141:fryingpan.near",
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,

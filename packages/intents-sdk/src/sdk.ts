@@ -117,6 +117,12 @@ export interface IntentsSDKConfig {
 		 * Enable this to use Omni Bridge for POA tokens that have been migrated to the Omni infrastructure.
 		 */
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+		/**
+		 * Asset IDs whose Omni Bridge native-token fee is subsidized. The Omni API
+		 * still reports a non-zero fee for these tokens, so the SDK overrides it to
+		 * 0 when quoting a withdrawal and skips the "fee must be > 0" validation.
+		 */
+		omniFeeSubsidizedTokens?: string[];
 	};
 }
 
@@ -196,6 +202,7 @@ export class IntentsSDK implements IIntentsSDK {
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
+				omniFeeSubsidizedTokens: args.features?.omniFeeSubsidizedTokens,
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,
