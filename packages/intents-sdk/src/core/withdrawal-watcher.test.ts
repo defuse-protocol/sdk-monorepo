@@ -279,6 +279,39 @@ describe("watchWithdrawal", () => {
 		expect(result).toEqual({ hash: "0xok" });
 		expect(txStatusReceipts).toHaveBeenCalledTimes(2);
 	});
+
+	it("treats a hanging NEAR tx status fetch as pending and retries", async () => {
+		vi.useFakeTimers();
+		try {
+			const bridge = createMockBridge();
+			vi.spyOn(bridge, "describeWithdrawal").mockResolvedValue({
+				status: "completed",
+				txHash: "0xok",
+			});
+			// First attempt never settles, so it is dropped by the per-attempt
+			// timeout; a client-side timeout is a pending signal, not a failure, so
+			// the next attempt still runs and succeeds.
+			const txStatusReceipts = vi
+				.fn()
+				.mockImplementationOnce(() => new Promise(() => {}))
+				.mockResolvedValueOnce(createSuccessfulTxOutcome());
+
+			const wid = createWithdrawalIdentifier();
+			const promise = watchWithdrawal({
+				bridge,
+				wid,
+				nearProvider: createMockNearProvider(txStatusReceipts),
+			});
+
+			// Past the per-attempt timeout plus the inter-attempt sleep.
+			await vi.advanceTimersByTimeAsync(6_000);
+
+			await expect(promise).resolves.toEqual({ hash: "0xok" });
+			expect(txStatusReceipts).toHaveBeenCalledTimes(2);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });
 
 describe("createWithdrawalIdentifiers", () => {

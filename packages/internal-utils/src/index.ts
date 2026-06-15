@@ -36,6 +36,7 @@ export {
 	type PollOptions,
 } from "./utils/poll";
 export { request, type RequestErrorType } from "./utils/request";
+export { safeStringify } from "./utils/safeStringify";
 export { serialize } from "./utils/serialize";
 export {
 	nearFailoverRpcProvider,

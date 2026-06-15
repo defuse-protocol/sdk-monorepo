@@ -5,6 +5,7 @@ import {
 	poll,
 	POLL_PENDING,
 	PollTimeoutError,
+	safeStringify,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
 import type {
@@ -21,27 +22,12 @@ import type { Provider } from "near-api-js/lib/providers";
 
 const MAX_CONSECUTIVE_ERRORS = 5;
 
-/**
- * Total polling budget for confirming the NEAR intent tx status. The tx is
- * already submitted before watching starts, so it normally resolves on the
- * first attempt; the budget absorbs propagation lag (pending) and transient RPC
- * errors before giving up at the 15s ceiling. Per-attempt latency is bounded
- * separately by {@link NEAR_TX_STATUS_FETCH_TIMEOUT_MS}; a run of transient
- * errors bails out earlier via {@link MAX_CONSECUTIVE_ERRORS}.
- */
 const NEAR_TX_STATUS_STATS: CompletionStats = {
 	p50: 500,
 	p90: 2_000,
-	p99: 15_000,
+	p99: 30_000,
 };
 
-/**
- * Per-attempt ceiling for a single tx-status fetch. The provider has its own
- * internal retry/backoff and never receives `signal`, so without this a single
- * call can block for tens of seconds — well past the poll's p99 — making both
- * the abort signal and the polling budget ineffective. Capping each attempt
- * keeps them meaningful: a stalled call is dropped and retried on the next tick.
- */
 const NEAR_TX_STATUS_FETCH_TIMEOUT_MS = 5_000;
 
 /**
@@ -63,6 +49,21 @@ function isNearTxPendingError(err: unknown): boolean {
 	);
 }
 
+/**
+ * Per-attempt fetch timeout marker. A client-side timeout means "this node
+ * didn't answer in time", which is the same "not observable as final yet"
+ * situation as a server-side `TIMEOUT_ERROR` — so it's treated as pending (keep
+ * polling), not as a transient failure counted against
+ * {@link MAX_CONSECUTIVE_ERRORS}.
+ */
+class NearTxStatusFetchTimeoutError extends BaseError {
+	constructor() {
+		super("NEAR tx status fetch timed out", {
+			name: "NearTxStatusFetchTimeoutError",
+		});
+	}
+}
+
 export async function watchWithdrawal(args: {
 	nearProvider: Provider;
 	bridge: Bridge;
@@ -77,7 +78,7 @@ export async function watchWithdrawal(args: {
 	let consecutiveErrors = 0;
 
 	try {
-		const nearFailureReason = await checkIfWithdrawalFailedOnNearSide({
+		const nearWithdrawalError = await checkIfWithdrawalFailedOnNearSide({
 			nearProvider: args.nearProvider,
 			// `sender_account_id` for tx status must be the account that signed the
 			// settlement tx (the relayer), which `wid.tx.accountId` tracks — not the
@@ -89,11 +90,9 @@ export async function watchWithdrawal(args: {
 			logger: args.logger,
 		});
 
-		if (nearFailureReason !== null) {
-			args.logger?.error(
-				`Withdrawal failed on NEAR side: ${nearFailureReason}`,
-			);
-			throw new NearWithdrawalFailedError(nearFailureReason);
+		if (nearWithdrawalError !== null) {
+			args.logger?.error(nearWithdrawalError.message);
+			throw nearWithdrawalError;
 		}
 
 		return await poll(
@@ -162,92 +161,100 @@ async function checkIfWithdrawalFailedOnNearSide(args: {
 	txHash: string;
 	signal?: AbortSignal;
 	logger?: ILogger;
-}): Promise<string | null> {
-	let consecutiveErrors = 0;
+}): Promise<NearWithdrawalFailedError | null> {
+	try {
+		let consecutiveErrors = 0;
 
-	const transaction = await poll(
-		async () => {
-			try {
-				// Cap the in-flight call: the provider's own retry/backoff ignores
-				// `signal`, so an unbounded call would defeat both the abort signal
-				// and the poll's p99 budget.
-				const tx = await withTimeout(
-					() =>
-						args.nearProvider.txStatusReceipts(
-							args.txHash,
-							args.senderAccountId,
-							"FINAL",
-						),
-					{
-						timeout: NEAR_TX_STATUS_FETCH_TIMEOUT_MS,
-					},
-				);
-				consecutiveErrors = 0;
-
-				// "NotStarted"/"Started" mean the tx hasn't reached a terminal
-				// status yet — keep polling instead of treating it as a failure.
-				if (tx.status === "NotStarted" || tx.status === "Started") {
-					return POLL_PENDING;
-				}
-				return tx;
-			} catch (err: unknown) {
-				// A definitive "not yet known / not yet final" RPC response is an
-				// expected pending signal, not a failure — keep polling without
-				// spending the transient-error budget.
-				if (isNearTxPendingError(err)) {
+		const transaction = await poll(
+			async ({ remainingMs }) => {
+				try {
+					const tx = await withTimeout(
+						() =>
+							args.nearProvider.txStatusReceipts(
+								args.txHash,
+								args.senderAccountId,
+								"FINAL",
+							),
+						{
+							timeout: Math.min(NEAR_TX_STATUS_FETCH_TIMEOUT_MS, remainingMs),
+							errorInstance: new NearTxStatusFetchTimeoutError(),
+						},
+					);
 					consecutiveErrors = 0;
+
+					// "NotStarted"/"Started" mean the tx hasn't reached a terminal
+					// status yet — keep polling instead of treating it as a failure.
+					if (tx.status === "NotStarted" || tx.status === "Started") {
+						return POLL_PENDING;
+					}
+					return tx;
+				} catch (err: unknown) {
+					// A definitive "not yet known / not yet final" RPC response — or a
+					// client-side per-attempt timeout — is an expected pending signal,
+					// not a failure: keep polling without spending the transient-error
+					// budget.
+					if (
+						isNearTxPendingError(err) ||
+						err instanceof NearTxStatusFetchTimeoutError
+					) {
+						consecutiveErrors = 0;
+						return POLL_PENDING;
+					}
+
+					consecutiveErrors++;
+					if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+						throw new WithdrawalWatchError(err);
+					}
+
+					args.logger?.warn(
+						`Transient error fetching NEAR tx status (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
+					);
 					return POLL_PENDING;
 				}
+			},
+			{
+				stats: NEAR_TX_STATUS_STATS,
+				signal: args.signal,
+				// Cap the backoff: a not-yet-final/not-yet-visible tx resolves on a
+				// ~1-2s timescale, so retry promptly instead of letting poll escalate
+				// to its default 10s COLD interval.
+				maxInterval: 1_000,
+			},
+		);
 
-				consecutiveErrors++;
-				if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-					throw new WithdrawalWatchError(err);
-				}
+		// Pending statuses were filtered out while polling, so the status is now
+		// terminal. It's a failure only on an explicit `Failure` — either the
+		// detailed object form (`{ Failure }`) or the basic `"Failure"` string. A
+		// `SuccessValue` (or any other terminal status) is not a NEAR-side failure.
+		const status = transaction.status;
+		if (typeof status === "object" && status?.Failure !== undefined) {
+			return new NearWithdrawalFailedError(safeStringify(status.Failure));
+		}
+		if (status === "Failure") {
+			return new NearWithdrawalFailedError("Near tx has status failed");
+		}
 
-				args.logger?.warn(
-					`Transient error fetching NEAR tx status (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}): ${err}`,
+		for (const receipt of transaction.receipts_outcome) {
+			const outcomeStatus = receipt.outcome.status;
+			if (
+				typeof outcomeStatus === "object" &&
+				outcomeStatus.Failure !== undefined
+			) {
+				return new NearWithdrawalFailedError(
+					safeStringify(outcomeStatus.Failure),
 				);
-				return POLL_PENDING;
 			}
-		},
-		{
-			stats: NEAR_TX_STATUS_STATS,
-			signal: args.signal,
-			// Cap the backoff: a not-yet-final/not-yet-visible tx resolves on a
-			// ~1-2s timescale, so retry promptly instead of letting poll escalate
-			// to its default 10s COLD interval.
-			maxInterval: 1_000,
-		},
-	);
-
-	// Pending statuses were filtered out while polling, so the status is now
-	// terminal. It's a failure only on an explicit `Failure` — either the
-	// detailed object form (`{ Failure }`) or the basic `"Failure"` string. A
-	// `SuccessValue` (or any other terminal status) is not a NEAR-side failure.
-	const status = transaction.status;
-	if (typeof status === "object" && status?.Failure !== undefined) {
-		const reason = `Withdrawal tx has status failed: ${JSON.stringify(status.Failure)}`;
-		return reason;
-	}
-	if (status === "Failure") {
-		return "Withdrawal tx has status failed";
-	}
-
-	for (const receipt of transaction.receipts_outcome) {
-		const outcomeStatus = receipt.outcome.status;
-		if (
-			typeof outcomeStatus === "object" &&
-			outcomeStatus.Failure !== undefined
-		) {
-			const reason = `Withdrawal tx has status failed: ${JSON.stringify(outcomeStatus.Failure)}`;
-			return reason;
+			if (outcomeStatus === "Failure") {
+				return new NearWithdrawalFailedError("Near tx has status failed");
+			}
 		}
-		if (outcomeStatus === "Failure") {
-			return "Withdrawal tx has status failed";
-		}
-	}
 
-	return null;
+		return null;
+	} catch (error) {
+		return new NearWithdrawalFailedError(
+			`Checking Near withdrawal tx failed unexpectedly: ${safeStringify(error)}`,
+		);
+	}
 }
 
 export async function createWithdrawalIdentifiers(args: {
