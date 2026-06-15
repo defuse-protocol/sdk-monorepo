@@ -54,4 +54,19 @@ describe("extractRawSignature()", () => {
 		const result = extractRawSignature(Buffer.from(input, "hex"), "p256");
 		expect(result.length).toBe(64);
 	});
+
+	it("rejects non-canonical DER for p256", () => {
+		// Spurious 0x00 sign byte on an s whose high bit is clear. WebAuthn
+		// authenticators must emit canonical DER, so this is parser strictness
+		// we want to keep: lenient parsing is what masked the duplicate
+		// @peculiar/asn1-schema breakage this module migrated away from.
+		const input =
+			"30450220" +
+			"0b858e8d13abdf3ed76bf3cf952d334010ed758e215d1db07d3a33e637d6caf1" +
+			"022100" +
+			"51571f169a8ee96d083be9d13a12cf81923d6f3df87023ee5f3aa84f807af84a";
+		expect(() =>
+			extractRawSignature(Buffer.from(input, "hex"), "p256"),
+		).toThrow();
+	});
 });
