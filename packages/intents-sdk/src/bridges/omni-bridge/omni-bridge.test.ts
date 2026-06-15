@@ -1352,12 +1352,15 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				omniFeeSubsidizedAssetIds: ["nep141:lsd-usdt.rhealab.near"],
+				omniFeeSubsidizedAssetIds: [
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				],
 			});
 
 			await expect(
 				bridge.validateWithdrawal({
-					assetId: "nep141:lsd-usdt.rhealab.near",
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 					amount: 1_000_000n,
 					destinationAddress: zeroAddress,
 					feeEstimation: {
@@ -1503,15 +1506,21 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				omniFeeSubsidizedAssetIds: ["nep141:lsd-usdt.rhealab.near"],
+				omniFeeSubsidizedAssetIds: [
+					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				],
 			});
 
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("lsd-usdt.rhealab.near", [0n, 0n]);
+			bridge["storageDepositCache"].set(
+				"sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				[0n, 0n],
+			);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
-					assetId: "nep141:lsd-usdt.rhealab.near",
+					assetId:
+						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
