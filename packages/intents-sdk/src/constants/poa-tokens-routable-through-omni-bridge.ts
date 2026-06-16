@@ -19,7 +19,6 @@ export const POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE: Record<
 	"sol-df27d7abcc1c656d4ac3b1399bbfbba1994e6d8c.omft.near": ChainKind.Sol, // TURBO
 	"sol-1f00bb36e75cfc8e1274c1507cc3054f5b3f3ce1.omft.near": ChainKind.Sol, // PUBLIC
 	"sol-c634d063ceff771aff0c972ec396fd915a6bbd0e.omft.near": ChainKind.Sol, // SPX
-	"sol-2dc7b64e5dd3c717fc85abaf51cdcd4b18687f09.omft.near": ChainKind.Sol, // sUSDC
 	"sol-d600e625449a4d9380eaf5e3265e54c90d34e260.omft.near": ChainKind.Sol, // MELANIA
 	"sol.omft.near": ChainKind.Sol, // SOL
 } as const;
