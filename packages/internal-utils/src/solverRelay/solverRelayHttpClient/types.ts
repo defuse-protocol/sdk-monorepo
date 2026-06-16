@@ -29,20 +29,29 @@ export type JSONRPCResponse<Result> = {
 
 export type JSONRPCErrorType = RequestErrorType | RpcRequestError;
 
-export type QuoteRequest = JSONRPCRequest<
-	"quote",
-	{
-		defuse_asset_identifier_in: string;
-		defuse_asset_identifier_out: string;
-		exact_amount_in?: string;
-		exact_amount_out?: string;
-		min_deadline_ms?: number;
-		wait_ms?: number;
-		min_wait_ms?: number;
-		max_wait_ms?: number;
-		trusted_metadata?: unknown;
-	}
->;
+type QuoteParamsBase = {
+	defuse_asset_identifier_in: string;
+	defuse_asset_identifier_out: string;
+	min_deadline_ms?: number;
+	wait_ms?: number;
+	min_wait_ms?: number;
+	max_wait_ms?: number;
+	trusted_metadata?: unknown;
+};
+
+type QuoteParamsExactIn = QuoteParamsBase & {
+	exact_amount_in: string;
+	exact_amount_out?: never;
+};
+
+type QuoteParamsExactOut = QuoteParamsBase & {
+	exact_amount_out: string;
+	exact_amount_in?: never;
+};
+
+type QuoteParams = QuoteParamsExactIn | QuoteParamsExactOut;
+
+export type QuoteRequest = JSONRPCRequest<"quote", QuoteParams>;
 
 export type Params<T extends JSONRPCRequest<unknown, unknown>> = T["params"][0];
 

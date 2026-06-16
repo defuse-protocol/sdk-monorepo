@@ -1,5 +1,128 @@
 # @defuse-protocol/internal-utils
 
+## 0.35.1
+
+### Patch Changes
+
+- 371f4b3: Parse P-256 WebAuthn signatures with `@noble/curves` instead of `@peculiar/asn1-ecc`/`@peculiar/asn1-schema`, and drop both dependencies.
+
+  `@peculiar/asn1-schema` keeps decorator-registered schema metadata in a module-singleton registry. When a dependency tree contains two copies of the package, `AsnParser.parse` reads from a different registry than the one `ECDSASigValue` registered in, silently returning empty `r`/`s` — the extracted signature collapses to zero bytes and every ES256 passkey signature fails downstream. `p256.Signature.fromDER(...).normalizeS().toCompactRawBytes()` is behavior-equivalent (DER sign-byte stripping, 32-byte left-padding, low-S normalization) with no global state.
+
+  Note: `fromDER` is strict about canonical DER, which spec-compliant authenticators always emit; malformed input now throws instead of being parsed leniently. The unexported-from-index `normalizeSignatureS` helper was removed along with the hand-rolled padding helpers.
+
+## 0.35.0
+
+### Minor Changes
+
+- 3b25ae5: Add support for Plasma to PoA bridge
+
+## 0.34.1
+
+### Patch Changes
+
+- a6f918c: Drop quotes whose returned tokens or fixed amount don't match the request
+
+## 0.34.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
+## 0.33.0
+
+### Minor Changes
+
+- 8ef16f0: Split relay publish failures into confirmed rejections and unknown-result errors. `publishIntents` now uses `RelayPublishRejectedError` for relay `status: "FAILED"` responses and `RelayPublishResultUnknownError` when a usable publish response cannot be confirmed, while keeping `RelayPublishError` as the shared base class.
+
+  **BREAKING CHANGES:** `RelayPublishError` is now an abstract base class, `code` only exists on `RelayPublishRejectedError`, and `NETWORK_ERROR` is no longer part of the publish rejection code set. Handle `RelayPublishResultUnknownError` for in-doubt publish results.
+
+## 0.32.0
+
+### Minor Changes
+
+- abf930b: Add Movement mainnet network support for SDK chain constants, address validation, and POA Bridge network mappings.
+
+## 0.31.2
+
+### Patch Changes
+
+- 39df660: Point CJS consumers at `.d.cts` type declarations via conditional `exports`. With `"type": "module"` set, every `.d.ts` file is interpreted as ESM-flavored types under `moduleResolution: node16`/`nodenext`/`bundler`, which can cause subtle interop mismatches (e.g. around default exports) for CJS consumers. tsdown already emits the `.d.cts` artifacts; this change wires them into the `exports` map so they actually get resolved.
+- Updated dependencies [39df660]
+  - @defuse-protocol/contract-types@0.6.4
+
+## 0.31.1
+
+### Patch Changes
+
+- Updated dependencies [aabbd1a]
+  - @defuse-protocol/contract-types@0.6.3
+
+## 0.31.0
+
+### Minor Changes
+
+- bbff053: Add pagination and status filtering for recent_deposits method in poa and adjust get recent deposits function to support pagination
+
+## 0.30.1
+
+### Patch Changes
+
+- 22d37b4: Fix wrong quote kind detection in get quote (EXACT_OUT quote treated as EXACT_IN)
+
+## 0.30.0
+
+### Minor Changes
+
+- 6eb198d: Add more validation checks for XRP withdrawals
+
+## 0.29.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
+## 0.28.4
+
+### Patch Changes
+
+- 6c0ae0f: Mark near addresses with uppercase as invalid
+
+## 0.28.3
+
+### Patch Changes
+
+- 2f5eea8: fix(internal-utils): left-pad P256 signature r,s to 32 bytes
+
+  DER encoding represents integers in minimal form, stripping leading zero bytes.
+  When r or s < 2^248 (~0.4% chance per component), the decoded value is 31 bytes
+  instead of 32, producing a 63-byte signature that the on-chain deserializer rejects.
+
+## 0.28.2
+
+### Patch Changes
+
+- Updated dependencies [4520b4a]
+  - @defuse-protocol/contract-types@0.6.2
+
+## 0.28.1
+
+### Patch Changes
+
+- Updated dependencies [be5c0fb]
+  - @defuse-protocol/contract-types@0.6.1
+
+## 0.28.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+## 0.27.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
 ## 0.26.0
 
 ### Minor Changes

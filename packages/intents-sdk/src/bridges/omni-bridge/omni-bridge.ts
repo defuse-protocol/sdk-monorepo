@@ -24,7 +24,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
@@ -47,7 +47,9 @@ import {
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 } from "./error";
 import {
-	MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR,
+	FEE_SUBSIDIZED_TOKENS,
+	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 } from "./omni-bridge-constants";
@@ -80,6 +82,13 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
+	protected intentsStorageBalanceCache = new TTLCache<
+		typeof INTENTS_STORAGE_BALANCE_CACHE_KEY,
+		bigint
+	>({
+		max: 1,
+		ttl: 3000,
+	});
 	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
 		string,
@@ -341,10 +350,20 @@ export class OmniBridge implements Bridge {
 			amount += utxoMaxGasFee + utxoProtocolFee;
 		}
 
+		let destinationAddress = args.withdrawalParams.destinationAddress;
+		// Omni contract only accepts lowercase bech32 addresses; uppercase/mixed-case
+		// bech32 is spec-valid but rejected on-chain. Base58 (legacy/P2SH) is left as-is.
+		if (
+			assetInfo.blockchain === Chains.Bitcoin &&
+			/^bc1/i.test(destinationAddress)
+		) {
+			destinationAddress = destinationAddress.toLowerCase();
+		}
+
 		intents.push(
 			...createWithdrawIntentsPrimitive({
 				assetId: args.withdrawalParams.assetId,
-				destinationAddress: args.withdrawalParams.destinationAddress,
+				destinationAddress,
 				amount,
 				omniChainKind,
 				intentsContract: this.envConfig.contractID,
@@ -368,11 +387,15 @@ export class OmniBridge implements Bridge {
 		feeEstimation: FeeEstimation;
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
+		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
-		assert(
-			args.feeEstimation.amount > 0n,
-			`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
-		);
+		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
+		if (!isFeeSubsidized) {
+			assert(
+				args.feeEstimation.amount > 0n,
+				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
+			);
+		}
 
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
 
@@ -413,43 +436,43 @@ export class OmniBridge implements Bridge {
 			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
-		// verifyTransferAmount ensures (amount - fee) > 0 after normalisation.
-		// We pass the actual amount and a zero fee to avoid fee-handling differences
-		// between different withdrawal types (UTXO transfers vs regular transfers where the fee is paid in wrap.near).
-		const normalisationCheckSucceeded = verifyTransferAmount(
-			args.amount, // total amount without fee
-			0n, // fee
-			decimals.origin_decimals,
-			decimals.decimals,
-		);
-		if (normalisationCheckSucceeded === false) {
-			const minAmount = getMinimumTransferableAmount(
+
+		if (!args.skipMinAmountValidation) {
+			// verifyTransferAmount ensures (amount - fee) > 0 after normalisation.
+			// We pass the actual amount and a zero fee to avoid fee-handling differences
+			// between different withdrawal types (UTXO transfers vs regular transfers where the fee is paid in wrap.near).
+			const normalisationCheckSucceeded = verifyTransferAmount(
+				args.amount, // total amount without fee
+				0n, // fee
 				decimals.origin_decimals,
 				decimals.decimals,
 			);
-			throw new MinWithdrawalAmountError(minAmount, args.amount, args.assetId);
+			if (normalisationCheckSucceeded === false) {
+				const minAmount = getMinimumTransferableAmount(
+					decimals.origin_decimals,
+					decimals.decimals,
+				);
+				throw new MinWithdrawalAmountError(
+					minAmount,
+					args.amount,
+					args.assetId,
+				);
+			}
 		}
 
-		const storageBalance = await getAccountOmniStorageBalance(
-			this.nearProvider,
-			this.envConfig.contractID,
-		);
+		const intentsStorageBalance = await this.getCachedIntentsStorageBalance();
 
-		const intentsNearStorageBalance =
-			storageBalance === null ? 0n : BigInt(storageBalance.available);
-		// Ensure available storage balance is > MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR.
+		// Ensure available storage balance is > MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR.
 		// If it’s lower, block the transfer—otherwise the funds will be refunded
 		// to the intents contract account instead of the original withdrawing account.
-		if (
-			intentsNearStorageBalance <= MIN_ALLOWED_STORAGE_BALANCE_FOR_INTENTS_NEAR
-		) {
+		if (intentsStorageBalance <= MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
 			throw new IntentsNearOmniAvailableBalanceTooLowError(
-				intentsNearStorageBalance.toString(),
+				intentsStorageBalance.toString(),
 			);
 		}
 
 		const utxoChainWithdrawal = isUtxoChain(omniChainKind);
-		if (utxoChainWithdrawal === false) {
+		if (!utxoChainWithdrawal && !isFeeSubsidized) {
 			const relayerFee = getUnderlyingFee(
 				args.feeEstimation,
 				RouteEnum.OmniBridge,
@@ -517,14 +540,17 @@ export class OmniBridge implements Bridge {
 				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
 			);
 
-			// args.amount is without fee, we need to pass an amount with fee
-			const actualAmountWithFee = args.amount + utxoMaxGasFee + utxoProtocolFee;
-			if (actualAmountWithFee < minAmount) {
-				throw new MinWithdrawalAmountError(
-					minAmount,
-					actualAmountWithFee,
-					args.assetId,
-				);
+			if (!args.skipMinAmountValidation) {
+				// args.amount is without fee, we need to pass an amount with fee
+				const actualAmountWithFee =
+					args.amount + utxoMaxGasFee + utxoProtocolFee;
+				if (actualAmountWithFee < minAmount) {
+					throw new MinWithdrawalAmountError(
+						minAmount,
+						actualAmountWithFee,
+						args.assetId,
+					);
+				}
 			}
 		}
 
@@ -574,6 +600,12 @@ export class OmniBridge implements Bridge {
 				fee.native_token_fee,
 			);
 		}
+
+		// Omni API returns non-zero fee for subsidized tokens, so we enforce 0 fee for specific tokens.
+		if (FEE_SUBSIDIZED_TOKENS.includes(args.withdrawalParams.assetId)) {
+			fee.native_token_fee = 0n;
+		}
+
 		const underlyingFees: RouteFeeStructures[RouteEnum["OmniBridge"]] = {
 			relayerFee: fee.native_token_fee,
 			storageDepositFee: 0n,
@@ -693,7 +725,10 @@ export class OmniBridge implements Bridge {
 		let txHash = null;
 		if (isEvmChain(destinationChain)) {
 			txHash = transfer.finalised?.EVMLog?.transaction_hash;
-		} else if (destinationChain === ChainKind.Sol) {
+		} else if (
+			destinationChain === ChainKind.Sol ||
+			destinationChain === ChainKind.Fogo
+		) {
 			txHash = transfer.finalised?.Solana?.signature;
 		} else if (destinationChain === ChainKind.Btc) {
 			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change
@@ -703,6 +738,8 @@ export class OmniBridge implements Bridge {
 				typeof window !== "undefined"
 					? transfer.utxo_transfer?.btc_pending_id
 					: transfer.finalised?.UtxoLog?.transaction_hash;
+		} else if (destinationChain === ChainKind.Strk) {
+			txHash = transfer.finalised?.Starknet?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
 		}
@@ -791,6 +828,34 @@ export class OmniBridge implements Bridge {
 		}
 
 		return tokenDecimals;
+	}
+
+	/**
+	 * Gets cached storage_balance value of intents contract on Omni Bridge contract.
+	 */
+	private async getCachedIntentsStorageBalance(): Promise<bigint> {
+		const cached = this.intentsStorageBalanceCache.get(
+			INTENTS_STORAGE_BALANCE_CACHE_KEY,
+		);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const storageBalance = await getAccountOmniStorageBalance(
+			this.nearProvider,
+			this.envConfig.contractID,
+		);
+		const intentsStorageBalance =
+			storageBalance === null ? 0n : BigInt(storageBalance.available);
+
+		if (intentsStorageBalance > MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR) {
+			this.intentsStorageBalanceCache.set(
+				INTENTS_STORAGE_BALANCE_CACHE_KEY,
+				intentsStorageBalance,
+			);
+		}
+
+		return intentsStorageBalance;
 	}
 
 	/**

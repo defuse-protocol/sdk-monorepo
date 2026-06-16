@@ -1,6 +1,7 @@
 import {
 	configsByEnvironment,
 	RelayPublishError,
+	RelayPublishRejectedError,
 } from "@defuse-protocol/internal-utils";
 import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it, vi } from "vitest";
@@ -66,7 +67,7 @@ describe("sdk.signAndSendIntent()", () => {
 
 		// Fail on any error exept salt error
 		vi.mocked(intentRelayer.publishIntent).mockRejectedValueOnce(
-			new RelayPublishError({
+			new RelayPublishRejectedError({
 				reason: "nonce was already used",
 				code: "NONCE_USED",
 				publishParams: { quote_hashes: [], signed_datas: [] },
@@ -82,7 +83,7 @@ describe("sdk.signAndSendIntent()", () => {
 
 		// Retry on salt error
 		vi.mocked(intentRelayer.publishIntent).mockRejectedValueOnce(
-			new RelayPublishError({
+			new RelayPublishRejectedError({
 				reason: "Invalid salt",
 				code: "INVALID_SALT",
 				publishParams: { quote_hashes: [], signed_datas: [] },

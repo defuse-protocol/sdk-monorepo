@@ -8,6 +8,13 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
+import {
+	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
+	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
+	TON_WORKCHAIN_BASECHAIN,
+	TON_WORKCHAIN_MASTERCHAIN,
+	tryParseTonAddress,
+} from "./ton-address";
 
 /**
  * Validates that an address matches the expected format for a given blockchain.
@@ -28,6 +35,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateBchAddress(address);
 
 		case Chains.Solana:
+		case Chains.Fogo:
 			return validateSolAddress(address);
 
 		case Chains.Dogecoin:
@@ -57,6 +65,9 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Aptos:
 			return validateAptosAddress(address);
 
+		case Chains.Movement:
+			return validateMovementAddress(address);
+
 		case Chains.Cardano:
 			return validateCardanoAddress(address);
 
@@ -77,8 +88,13 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Berachain:
 		case Chains.Plasma:
 		case Chains.Scroll:
+		case Chains.Abstract:
+		case Chains.HyperCore:
 			return validateEthAddress(address);
-
+		case Chains.Aleo:
+			return validateAleoAddress(address);
+		case Chains.Dash:
+			return validateDashAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -89,13 +105,93 @@ function validateEthAddress(address: string) {
 	return isAddress(address, { strict: true });
 }
 
-function validateBtcAddress(address: string) {
-	return (
-		/^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address) ||
-		/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)
-	);
+/**
+ * Validates Bitcoin mainnet addresses. Supported types:
+ *
+ * Base58Check (legacy):
+ *   - P2PKH  starts with 1   version 0x00  e.g. 1A1zP1eP...
+ *   - P2SH   starts with 3   version 0x05  e.g. 3J98t1Wp...
+ *
+ * Bech32 (native SegWit v0):
+ *   - P2WPKH  bc1q  42 chars  20-byte witness program
+ *   - P2WSH   bc1q  62 chars  32-byte witness program
+ *
+ * Bech32m (native SegWit v1+):
+ *   - P2TR    bc1p  62 chars  32-byte witness program (Taproot)
+ */
+function validateBtcAddress(address: string): boolean {
+	try {
+		if (address.toLowerCase().startsWith("bc1")) {
+			return validateBtcBech32Address(address);
+		}
+		return validateBtcBase58Address(address);
+	} catch {
+		return false;
+	}
+}
+
+function validateBtcBase58Address(address: string): boolean {
+	const decoded: Uint8Array = base58.decode(address);
+
+	// version (1) + hash160 (20) + checksum (4) = 25 bytes
+	if (decoded.length !== 25) return false;
+
+	const version = decoded[0];
+	// 0x00 = P2PKH mainnet, 0x05 = P2SH mainnet
+	if (version !== 0x00 && version !== 0x05) return false;
+
+	const payload = decoded.subarray(0, 21);
+	const checksum = decoded.subarray(21, 25);
+	const expectedChecksum = sha256(sha256(payload)).subarray(0, 4);
+
+	for (let i = 0; i < 4; i++) {
+		if (checksum[i] !== expectedChecksum[i]) return false;
+	}
+	return true;
+}
+
+function validateBtcBech32Address(address: string): boolean {
+	let decoded: { prefix: string; words: number[] };
+	let isBech32m = false;
+
+	try {
+		decoded = bech32.decode(address as `${string}1${string}`);
+	} catch {
+		try {
+			decoded = bech32m.decode(address as `${string}1${string}`);
+			isBech32m = true;
+		} catch {
+			return false;
+		}
+	}
+
+	if (decoded.prefix.toLowerCase() !== "bc") return false;
+
+	const { words } = decoded;
+	if (!words || words.length < 1) return false;
+
+	const witnessVersion = words[0];
+	if (witnessVersion === undefined || witnessVersion < 0 || witnessVersion > 16)
+		return false;
+
+	const program = bech32.fromWords(words.slice(1));
+	const progLen = program.length;
+
+	if (progLen < 2 || progLen > 40) return false;
+
+	// v0: Bech32 only — 20 bytes (P2WPKH) or 32 bytes (P2WSH)
+	if (witnessVersion === 0) {
+		if (isBech32m) return false;
+		return progLen === 20 || progLen === 32;
+	}
+
+	// v1: Bech32m only — 32 bytes (P2TR / Taproot)
+	if (witnessVersion === 1) {
+		if (!isBech32m) return false;
+		return progLen === 32;
+	}
+
+	return false;
 }
 
 /**
@@ -304,8 +400,26 @@ function validateTronHexAddress(address: string): boolean {
 	}
 }
 
-function validateTonAddress(address: string) {
-	return /^[EU]Q[0-9A-Za-z_-]{46}$/.test(address);
+function validateTonAddress(address: string): boolean {
+	const parsed = tryParseTonAddress(address);
+	if (parsed === null) return false;
+
+	// Real TON only uses workchain 0 and -1. Both forms can technically encode
+	// other values, but no real wallet does.
+	if (
+		parsed.workchainId !== TON_WORKCHAIN_BASECHAIN &&
+		parsed.workchainId !== TON_WORKCHAIN_MASTERCHAIN
+	) {
+		return false;
+	}
+
+	// Friendly form has a tag byte. Reject testnet tags. Raw form has no tag
+	// (null), so it passes this check.
+	return (
+		parsed.tag === null ||
+		parsed.tag === TON_ADDRESS_TAG_BOUNCEABLE_MAINNET ||
+		parsed.tag === TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET
+	);
 }
 
 function validateSuiAddress(address: string) {
@@ -318,6 +432,29 @@ function validateStellarAddress(address: string) {
 
 function validateAptosAddress(address: string) {
 	return /^0x[a-fA-F0-9]{64}$/.test(address);
+}
+
+// Accept non strict addresses
+function validateMovementAddress(address: string) {
+	let parsedAddress = address;
+	if (address.startsWith("0x")) {
+		parsedAddress = address.slice(2);
+	}
+
+	if (parsedAddress.length === 0 || parsedAddress.length > 64) {
+		return false;
+	}
+
+	if (!/^[a-fA-F0-9]+$/.test(parsedAddress)) {
+		return false;
+	}
+
+	if (parsedAddress.length >= 60) {
+		return true;
+	}
+
+	const paddedAddress = parsedAddress.padStart(64, "0");
+	return /^0{63}[0-9a-fA-F]$/.test(paddedAddress);
 }
 
 /**
@@ -467,4 +604,217 @@ function validateLitecoinBech32Address(address: string): boolean {
 
 	// Other versions
 	return false;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Edwards BLS12-377 curve parameters and arithmetic
+//
+// Matches the validation in snarkVM:
+//   curves/src/templates/twisted_edwards_extended/affine.rs  (point decompression)
+//   console/types/group/src/from_x_coordinate.rs            (subgroup check)
+//   curves/src/edwards_bls12/parameters.rs                  (curve constants)
+// ──────────────────────────────────────────────────────────────────────
+
+/** Base field modulus (= scalar field order of BLS12-377). */
+const P =
+	8444461749428370424248824938781546531375899335154063827935233455917409239041n;
+
+/** Edwards curve coefficient d.  Curve: -x² + y² = 1 + d·x²·y² (a = -1). */
+const D = 3021n;
+
+/** Prime-order subgroup order (= scalar field of Edwards BLS12-377, cofactor = 4). */
+const SUBGROUP_ORDER =
+	2111115437357092606062206234695386632838870926408408195193685246394721360383n;
+
+// ── field helpers ────────────────────────────────────────────────────
+
+function modPow(base: bigint, exp: bigint, m: bigint): bigint {
+	let result = 1n;
+	base = ((base % m) + m) % m;
+	while (exp > 0n) {
+		if (exp & 1n) result = (result * base) % m;
+		exp >>= 1n;
+		base = (base * base) % m;
+	}
+	return result;
+}
+
+/** Tonelli-Shanks square root in F_P. Returns null when n is a non-residue. */
+function modSqrt(n: bigint): bigint | null {
+	n = ((n % P) + P) % P;
+	if (n === 0n) return 0n;
+	if (modPow(n, (P - 1n) / 2n, P) !== 1n) return null;
+
+	// Factor P-1 = 2^s · q
+	let s = 0;
+	let q = P - 1n;
+	while ((q & 1n) === 0n) {
+		s++;
+		q >>= 1n;
+	}
+
+	// Find a quadratic non-residue z
+	let z = 2n;
+	while (modPow(z, (P - 1n) / 2n, P) !== P - 1n) z++;
+
+	let m = s;
+	let c = modPow(z, q, P);
+	let t = modPow(n, q, P);
+	let r = modPow(n, (q + 1n) / 2n, P);
+
+	for (;;) {
+		if (t === 1n) return r;
+		// Find least i such that t^(2^i) ≡ 1
+		let i = 1;
+		let tmp = (t * t) % P;
+		while (tmp !== 1n) {
+			tmp = (tmp * tmp) % P;
+			i++;
+		}
+		// b = c^(2^(m-i-1))
+		let b = c;
+		for (let j = 0; j < m - i - 1; j++) b = (b * b) % P;
+		m = i;
+		c = (b * b) % P;
+		t = (t * c) % P;
+		r = (r * b) % P;
+	}
+}
+
+// ── Extended twisted-Edwards point arithmetic ───────────────────────
+// Representation: (X, Y, T, Z) with x = X/Z, y = Y/Z, T = X·Y/Z.
+// Formulas from "Twisted Edwards Curves Revisited" §3 (a = -1 case).
+
+type ExtPoint = readonly [bigint, bigint, bigint, bigint];
+
+const EXT_ZERO: ExtPoint = [0n, 1n, 0n, 1n];
+
+function extAdd(a: ExtPoint, b: ExtPoint): ExtPoint {
+	const [X1, Y1, T1, Z1] = a;
+	const [X2, Y2, T2, Z2] = b;
+	const A = (X1 * X2) % P;
+	const B = (Y1 * Y2) % P;
+	const C = (((T1 * D) % P) * T2) % P;
+	const Dd = (Z1 * Z2) % P;
+	const E = (((((X1 + Y1) % P) * ((X2 + Y2) % P)) % P) - A - B + 2n * P) % P;
+	const F = (((Dd - C) % P) + P) % P;
+	const G = (Dd + C) % P;
+	const H = (B + A) % P; // a = -1 → B - aA = B + A
+	return [(E * F) % P, (G * H) % P, (E * H) % P, (F * G) % P];
+}
+
+function extDouble(a: ExtPoint): ExtPoint {
+	const [X, Y, _T, Z] = a;
+	const A = (X * X) % P;
+	const B = (Y * Y) % P;
+	const C = (2n * ((Z * Z) % P)) % P;
+	const Dd = (P - A) % P; // a·A = -A
+	const E = (((((X + Y) % P) * ((X + Y) % P)) % P) - A - B + 2n * P) % P;
+	const G = (Dd + B) % P;
+	const F = (((G - C) % P) + P) % P;
+	const H = (((Dd - B) % P) + P) % P;
+	return [(E * F) % P, (G * H) % P, (E * H) % P, (F * G) % P];
+}
+
+function scalarMul(pt: ExtPoint, scalar: bigint): ExtPoint {
+	let result: ExtPoint = EXT_ZERO;
+	let base = pt;
+	let s = scalar;
+	while (s > 0n) {
+		if (s & 1n) result = extAdd(result, base);
+		base = extDouble(base);
+		s >>= 1n;
+	}
+	return result;
+}
+
+/** Check whether an extended point is the identity (0, 1). */
+function isIdentity(pt: ExtPoint): boolean {
+	// X/Z == 0  and  Y/Z == 1  ⟹  X == 0  and  Y == Z
+	return pt[0] === 0n && pt[1] === pt[3];
+}
+
+// ── public API ──────────────────────────────────────────────────────
+
+/**
+ * Validates an Aleo address by decoding the bech32m payload, decompressing
+ * the Edwards BLS12-377 point, and verifying it lies in the prime-order
+ * subgroup — matching snarkVM's `Group::from_x_coordinate` exactly.
+ *
+ * Compressed format: x-coordinate (little-endian, 32 bytes) with y-sign
+ * flag in bit 7 of byte 31.
+ */
+export function validateAleoAddress(address: string): boolean {
+	try {
+		const decoded = bech32m.decodeToBytes(address);
+		if (decoded.prefix !== "aleo") return false;
+		if (decoded.bytes.length !== 32) return false;
+
+		// Extract x-coordinate, clearing the y-sign flag (MSB of last byte)
+		const bytes = new Uint8Array(decoded.bytes);
+		bytes[31] = (bytes[31] as number) & 0x7f;
+
+		let x = 0n;
+		for (let i = 31; i >= 0; i--) {
+			x = (x << 8n) | BigInt(bytes[i] as number);
+		}
+		if (x >= P) return false;
+
+		// y² = (1 + x²) / (1 - d·x²)  (equivalent to Rust: (a·x²-1)/(d·x²-1) with a=-1)
+		const x2 = (x * x) % P;
+		const num = (1n + x2) % P;
+		const den = (((1n - ((D * x2) % P)) % P) + P) % P;
+		if (den === 0n) return false;
+
+		const denInv = modPow(den, P - 2n, P);
+		const y2 = (num * denInv) % P;
+
+		// Decompress: recover y via square root
+		const y = modSqrt(y2);
+		if (y === null) return false;
+
+		// snarkVM checks both (x, y) and (x, -y) for subgroup membership
+		const negY = y === 0n ? 0n : P - y;
+		const p1: ExtPoint = [x, y, (x * y) % P, 1n];
+		const p2: ExtPoint = [x, negY, (x * negY) % P, 1n];
+
+		for (const pt of [p1, p2]) {
+			if (isIdentity(scalarMul(pt, SUBGROUP_ORDER))) return true;
+		}
+		return false;
+	} catch {
+		return false;
+	}
+}
+
+export function validateDashAddress(address: string): boolean {
+	try {
+		const decoded: Uint8Array = base58.decode(address);
+
+		// version (1) + payload (20) + checksum (4)
+		if (decoded.length !== 25) return false;
+
+		const version = decoded[0];
+		if (
+			version !== 0x4c && // P2PKH
+			version !== 0x10 // P2SH
+		) {
+			return false;
+		}
+
+		const payload = decoded.subarray(0, 21);
+		const checksum = decoded.subarray(21, 25);
+
+		const hash1 = sha256(payload);
+		const hash2 = sha256(hash1);
+		const expectedChecksum = hash2.subarray(0, 4);
+
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+
+		return true;
+	} catch {
+		return false;
+	}
 }

@@ -1,5 +1,31 @@
 # @defuse-protocol/contract-types
 
+## 0.6.4
+
+### Patch Changes
+
+- 39df660: Point CJS consumers at `.d.cts` type declarations via conditional `exports`. With `"type": "module"` set, every `.d.ts` file is interpreted as ESM-flavored types under `moduleResolution: node16`/`nodenext`/`bundler`, which can cause subtle interop mismatches (e.g. around default exports) for CJS consumers. tsdown already emits the `.d.cts` artifacts; this change wires them into the `exports` map so they actually get resolved.
+
+## 0.6.3
+
+### Patch Changes
+
+- aabbd1a: Allow extra fields in external wallet input schemas (TON, NEP-413, EVM) during runtime validation. Wallets can include fields outside the Defuse schema without failing validation.
+
+## 0.6.2
+
+### Patch Changes
+
+- 4520b4a: Fix WebAuthn oneOf duplicate and support both key algorithms
+
+## 0.6.1
+
+### Patch Changes
+
+- be5c0fb: fix: tip191 (Tron) and sep53 (Stellar) validation in MultiPayloadValidator
+
+  parseJson keyword was mutating payload data during oneOf evaluation, corrupting sibling branches. Deferred mutations until after AJV selects the matching branch.
+
 ## 0.6.0
 
 ### Minor Changes

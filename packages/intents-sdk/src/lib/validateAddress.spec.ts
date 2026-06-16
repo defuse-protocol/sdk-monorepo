@@ -4,22 +4,91 @@ import {
 	validateLitecoinAddress,
 	validateBchAddress,
 	validateCardanoAddress,
+	validateDashAddress,
 } from "./validateAddress";
 import { Chains } from "./caip2";
+describe("validateNearAddress", () => {
+	it("accepts named accounts", () => {
+		expect(validateAddress("alice.near", Chains.Near)).toBe(true);
+		expect(validateAddress("bob.testnet", Chains.Near)).toBe(true);
+		expect(validateAddress("ab", Chains.Near)).toBe(true);
+	});
 
+	it("accepts sub-accounts", () => {
+		expect(validateAddress("app.alice.near", Chains.Near)).toBe(true);
+	});
+
+	it("accepts accounts with hyphens and underscores", () => {
+		expect(validateAddress("my-account.near", Chains.Near)).toBe(true);
+		expect(validateAddress("my_account.near", Chains.Near)).toBe(true);
+	});
+
+	it("accepts NEAR implicit accounts (64 hex chars)", () => {
+		expect(validateAddress("a".repeat(64), Chains.Near)).toBe(true);
+	});
+
+	it("accepts ETH implicit accounts (0x + 40 hex chars)", () => {
+		expect(validateAddress(`0x${"a".repeat(40)}`, Chains.Near)).toBe(true);
+	});
+
+	it("accepts NEAR deterministic accounts (0s + 40 hex chars)", () => {
+		expect(validateAddress(`0s${"a".repeat(40)}`, Chains.Near)).toBe(true);
+	});
+
+	it("rejects accounts shorter than 2 characters", () => {
+		expect(validateAddress("a", Chains.Near)).toBe(false);
+		expect(validateAddress("", Chains.Near)).toBe(false);
+	});
+
+	it("rejects accounts longer than 64 characters", () => {
+		expect(validateAddress("a".repeat(65), Chains.Near)).toBe(false);
+	});
+
+	it("rejects uppercase characters", () => {
+		expect(validateAddress("Alice.near", Chains.Near)).toBe(false);
+	});
+
+	it("rejects accounts with invalid characters", () => {
+		expect(validateAddress("alice@near", Chains.Near)).toBe(false);
+		expect(validateAddress("alice near", Chains.Near)).toBe(false);
+	});
+
+	it("rejects accounts starting or ending with separator", () => {
+		expect(validateAddress("-alice.near", Chains.Near)).toBe(false);
+		expect(validateAddress("alice-.near", Chains.Near)).toBe(false);
+		expect(validateAddress(".alice.near", Chains.Near)).toBe(false);
+	});
+
+	it("rejects checksummed ETH addresses", () => {
+		expect(
+			validateAddress(
+				"0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+				Chains.Near,
+			),
+		).toBe(false);
+	});
+});
 describe("validateBtcAddress", () => {
 	it("accepts valid addresses", () => {
 		const valid = [
 			// P2PKH (1...)
 			"18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
+			"17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem",
 			// P2SH (3...)
 			"3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 			// Bech32 SegWit v0 (bc1q...)
 			"bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
 			"bc1q34aq5drpuwy3wgl9lhup9892qp6svr8ldzyy7c",
-			// Bech32m Taproot (bc1p...)
+			"bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+			"bc1q973xrrgje6etkkn9q9azzsgpxeddats8ckvp5s",
+			"BC1Q973XRRGJE6ETKKN9Q9AZZSGPXEDDATS8CKVP5S",
+			"BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
+			// Bech32m Taproot / P2TR (bc1p...)
 			"bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297",
+			"bc1ptxs597p3fnpd8gwut5p467ulsydae3rp9z75hd99w8k3ljr9g9rqx6ynaw",
+			// Mainnet Bech32 P2WSH
+			"bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3",
 		];
 
 		for (const address of valid) {
@@ -27,18 +96,45 @@ describe("validateBtcAddress", () => {
 		}
 	});
 
-	it("rejects invalid addresses", () => {
+	it("rejects invalid or not supported addresses", () => {
 		const invalid = [
 			// Extra characters at start (not base58)
 			"018HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			// Invalid characters (0, O, I, l are not in base58)
 			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNON2",
+			// INVALID Bitcoin - last char changed (bad checksum)
+			"1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3",
+			// INVALID Bitcoin - middle char changed (bad checksum)
+			"1BvBMSEYstWetqTFn5Au4m4GFg7xJbNVN2",
 			// Invalid first character
 			"28HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
 			// Too short
 			"1BvBMSEYstWetqTFn5Au",
+			"x",
 			// Invalid bech32 prefix
 			"tc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+			// Testnet P2PKH
+			"mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn",
+			// Invalid P2PKH
+			"17VZNX1SN5NtKa8UFFxwQbFeFc3iqRYhem",
+			// Testnet P2SH
+			"2MzQwSSnBHWHqSAqtTVQ6v47XtaisrJa1Vc",
+			// invalid P2PKH (bad checksum)
+			"17VZNX1SN5NtKa8UFFxwQbFFFc3iqRYhem",
+			// Testnet Bech32 P2WPKH
+			"tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+			// Regtest Bech32 P2WPKH
+			"bcrt1q6z64a43mjgkcq0ul2znwneq3spghrlau9slefp",
+			// Testnet Bech32 P2TR
+			"tb1p84x2ryuyfevgnlpnxt9f39gm7r68gwtvllxqe5w2n5ru00s9aquslzggwq",
+			// Regtest Bech32 P2TR
+			"bcrt1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqc8gma6",
+			// Testnet Bech32 P2WSH
+			"tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7",
+			// Regtest Bech32 P2WSH
+			"bcrt1q5n2k3frgpxces3dsw4qfpqk4kksv0cz96pldxdwxrrw0d5ud5hcqzzx7zt",
+			// Invalid Bech32
+			"bc1qw508d6qejxtdg4y5r3zrrvary0c5xw7kv8f3t4",
 		];
 
 		for (const address of invalid) {
@@ -79,12 +175,118 @@ describe("validateEthAddress", () => {
 	});
 });
 
+describe("validateAleoAddress", () => {
+	it("accepts valid bech32m addresses", () => {
+		const valid = [
+			// From existing tests
+			"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+			"aleo1hd0xpfhlys8npclk5mwzs8mrjtst4tf6ww2kqeauhtajma2duyyqy74d2m",
+			"aleo1utccvqnv2wudda5zp4seuj0a72ln43w5m5njkckcfgc4jkccyyzsezysts",
+			"aleo1lakx4yl4anysx0uygkaq87pteev4rnzm9gkhfx6f8ae7yvg0a5ps5tcj0j",
+			"aleo1xqtecvkjs5chpah5afgv6vmege0c6yzvqzj7st5x63lqhh8mg5xqcnxp7r",
+			// From snarkVM console/account test constants
+			"aleo1wvgwnqvy46qq0zemj0k6sfp3zv0mp77rw97khvwuhac05yuwscxqmfyhwf",
+			// From ProvableHQ SDK test data (account-data.ts)
+			"aleo184vuwr5u7u0ha5f5k44067dd2uaqewxx6pe5ltha5pv99wvhfqxqv339h4",
+			"aleo1j7qxyunfldj2lp8hsvy7mw5k8zaqgjfyr72x2gh3x4ewgae8v5gscf5jh3",
+			"aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px",
+			"aleo1n43sa2tl5zu28nma3uklpq77gg67rsvg6m460gkzref4ps9wlvgqdvlemw",
+			// From ProvableHQ SDK test data (records.ts)
+			"aleo12a4wll9ax6w5355jph0dr5wt2vla5sss2t4cnch0tc3vzh643v8qcfvc7a",
+			"aleo1j92w9mhqznj2hvufad796y8suykjppk7f6n6xmncmktfm95vggzqx4sjlh",
+			"aleo1vskzxa2qqgnhznxsqh6tgq93c30sfkj6xqwe7sr85lgjkexjlcxs3lxhy3",
+			"aleo1q8zc0asncaw9d83ft2dynyqz08fcpq3p40depmrj4wjda28rdvrsvegg45",
+			"aleo1jqnajd8g6ezqjq0eefm4zeqynwx6vzed8flnkmejw0afy09dusrszzk46k",
+			// From ProvableHQ SDK wasm tests (credits.aleo program)
+			"aleo1lqmly7ez2k48ajf5hs92ulphaqr05qm4n8qwzj8v0yprmasgpqgsez59gg",
+		];
+
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.Aleo)).toBe(true);
+		}
+	});
+
+	it("rejects bech32m-encoded addresses that are not on the elliptic curve", () => {
+		const offCurve = [
+			// Original test vector
+			"aleo18kqq6556r4kk5vcth0h84l4hxlsqgm70jum4aeylvy7es0ew9yzqcj9jzh",
+			// Generated: valid bech32m, 32-byte payload, but y² is a non-quadratic residue
+			// x=1
+			"aleo1qyqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhezjc8",
+			// x=3
+			"aleo1qvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqm4th9s",
+			// x=4
+			"aleo1qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqf8qw3l",
+			// x=12
+			"aleo1pcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqhjxjjn",
+			// Mixed byte pattern
+			"aleo1vsqqqqqqqqqqqqqqqqqqqqqqluqqqqqqqqqqqqqqqqqqqqqq4vqqtzmh99",
+		];
+
+		for (const address of offCurve) {
+			expect(validateAddress(address, Chains.Aleo)).toBe(false);
+		}
+	});
+
+	it("rejects addresses with wrong prefix", () => {
+		// Wrong prefix (not 'aleo')
+		expect(
+			validateAddress(
+				"near1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses with invalid bech32m checksum", () => {
+		// Invalid checksum (changed last character from 'j' to 'k')
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0k",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses that are too short", () => {
+		expect(validateAddress("aleo1dg722m22fzpz6", Chains.Aleo)).toBe(false);
+	});
+
+	it("rejects addresses with extra characters", () => {
+		expect(
+			validateAddress(
+				"xaleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0j",
+				Chains.Aleo,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				"aleo1dg722m22fzpz6xjdrvl9tzu5t68zmypj5p74khlqcac0gvednygqxaax0jx",
+				Chains.Aleo,
+			),
+		).toBe(false);
+	});
+
+	it("rejects completely invalid strings", () => {
+		expect(validateAddress("not-an-aleo-address", Chains.Aleo)).toBe(false);
+		expect(validateAddress("aleo1", Chains.Aleo)).toBe(false);
+		expect(validateAddress("aleo1xyz", Chains.Aleo)).toBe(false);
+		expect(validateAddress("", Chains.Aleo)).toBe(false);
+	});
+});
+
 describe("validateSolAddress", () => {
 	it("accepts valid addresses", () => {
 		expect(
 			validateAddress(
 				"9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
 				Chains.Solana,
+			),
+		).toBe(true);
+		expect(
+			validateAddress(
+				"AcbDFdRyw6baL2gJR1oZKCUGaRBi94kBEoNWMzYyZejC",
+				Chains.Fogo,
 			),
 		).toBe(true);
 	});
@@ -142,35 +344,174 @@ describe("validateTronAddress", () => {
 	});
 });
 
+// Test addresses from ton-core and tonweb test suites:
+// https://github.com/ton-org/ton-core/blob/main/src/address/Address.spec.ts
 describe("validateTonAddress", () => {
-	it("accepts valid addresses", () => {
-		expect(
-			validateAddress(
-				"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
-				Chains.TON,
-			),
-		).toBe(true);
-		expect(
-			validateAddress(
-				"UQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
-				Chains.TON,
-			),
-		).toBe(true);
+	it("accepts mainnet bounceable addresses (EQ)", () => {
+		const valid = [
+			// ton-core Address.spec.ts — all four variants share the same hash
+			"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB",
+			// tonweb test addresses
+			"EQB6-6po0yspb68p7RRetC-hONAz-JwxG9514IEOKw_llXd5",
+			"EQDhZBNuiJoWgq-0xEc0A46-nIcEKAQbS-0MkWU_I2LEp3Ty",
+			"EQC4FOmjcQAw2U-e00I-7Fs-NLiEF7lNQUxVpqOJ-ZKh-dGt",
+			"EQBvI0aFLnw2QbZgjMPCLRdtRHxhUyinQudg6sdiohIwg5jL",
+			"EQDjVXa_oltdBP64Nc__p397xLCvGm2IcZ1ba7anSW0NAkeP",
+			"EQCRGnccIFznQqxm_oBm8PHz95iOe89Oe6hRAhSlAaMctuo6",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
 	});
 
-	it("rejects addresses with extra characters", () => {
+	it("accepts mainnet non-bounceable addresses (UQ)", () => {
+		const valid = [
+			// ton-core Address.spec.ts
+			"UQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi41-E",
+			// tonweb test addresses
+			"UQCHYR_fbDjjr1dtyMmgBbH3HSBAgSNwHdOZvAbgkNOV2n2D",
+			"Uf8KrqWGw1CTcUHRgqZE57aKBeSOK0iuxduwtlTHusmD5PWf",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
+	});
+
+	// HOT SDK uses @ton/core's Address.parse, which accepts both URL-safe
+	// (-, _) and standard (+, /) base64. Validation must accept both too,
+	// otherwise we'd block wallets that emit standard base64.
+	it("accepts mainnet addresses in standard-base64 charset (+, /)", () => {
+		const valid = [
+			"EQAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi4wJB",
+			"UQAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi41+E",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
+	});
+
+	it("still rejects testnet addresses in standard-base64 charset", () => {
+		const testnet = [
+			"kQAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi47nL",
+			"0QAs9VlT6S776tq3unJcP5Ogsj+ELLunLXuOb1EKcOQi4+QO",
+		];
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
+	it("rejects testnet bounceable addresses (kQ / kf)", () => {
+		const testnet = [
+			// ton-core Address.spec.ts
+			"kQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi47nL",
+			// tonweb — test giver address
+			"kf_8uRo6OBbQ97jCx2EIuKm8Wmt6Vb15-KsQHFLbKSMiYIny",
+			"kf_sPxv06KagKaRmOOKxeDQwApCx3i8IQOwv507XD51JOLka",
+			"kQAu6bT9Twd8myIygMNXY9-e2rC0GsINNvQAlnfflcOv4rie",
+		];
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
+	it("rejects testnet non-bounceable addresses (0Q)", () => {
+		const testnet = [
+			// ton-core Address.spec.ts
+			"0QAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4-QO",
+			// tonweb test addresses
+			"0QAyni3YDAhs7c-7imWvPyEbMEeVPMX8eWDLQ5GUe-B-Bl9Z",
+			"0QAu6bT9Twd8myIygMNXY9-e2rC0GsINNvQAlnfflcOv4uVb",
+		];
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
+	it("rejects address with invalid checksum", () => {
+		// Last character changed from B to A — corrupts the CRC bytes
 		expect(
 			validateAddress(
-				"xEQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bL",
+				"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJA",
 				Chains.TON,
 			),
 		).toBe(false);
+	});
+
+	it("rejects truncated address", () => {
 		expect(
 			validateAddress(
-				"EQC8YkFdI7PYqD0Ph3ZrZqL1e4aU5RZzXJ9cJmQKzF1h_2bLx",
+				"EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJ",
 				Chains.TON,
 			),
 		).toBe(false);
+	});
+
+	// Raw form has no network tag, so we can't tell mainnet from testnet here.
+	// HOT bridge passes it through @ton/core's Address.parse, so we accept what
+	// that accepts.
+	it("accepts raw format addresses (basechain and masterchain)", () => {
+		const valid = [
+			"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+			"-1:3333333333333333333333333333333333333333333333333333333333333333",
+			// Uppercase hex works too (@ton/core uses Buffer.from(s, 'hex')).
+			"0:2CF55953E92EFBEADAB7BA725C3F93A0B23F842CBBA72D7B8E6F510A70E422E3",
+		];
+		for (const address of valid) {
+			expect(validateAddress(address, Chains.TON)).toBe(true);
+		}
+	});
+
+	it("rejects raw format with non-integer workchain", () => {
+		expect(
+			validateAddress(
+				"abc:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	it("rejects raw format with wrong hex length", () => {
+		expect(
+			validateAddress(
+				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	it("rejects raw format with non-hex characters", () => {
+		expect(
+			validateAddress(
+				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422zz",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	// Real TON only uses workchains 0 and -1. Anything else is a typo, so
+	// reject it here instead of letting the bridge contract fail later.
+	it("rejects raw addresses on unknown workchains", () => {
+		const unknown = [
+			"2:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+			"127:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+			"-2:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
+		];
+		for (const address of unknown) {
+			expect(validateAddress(address, Chains.TON)).toBe(false);
+		}
+	});
+
+	it("rejects URI-prefixed address", () => {
+		expect(
+			validateAddress(
+				"ton://EQAs9VlT6S776tq3unJcP5Ogsj-ELLunLXuOb1EKcOQi4wJB",
+				Chains.TON,
+			),
+		).toBe(false);
+	});
+
+	it("rejects empty string", () => {
+		expect(validateAddress("", Chains.TON)).toBe(false);
 	});
 });
 
@@ -233,6 +574,36 @@ describe("validateAptosAddress", () => {
 				Chains.Aptos,
 			),
 		).toBe(false);
+	});
+});
+
+describe("validateMovementAddress", () => {
+	it("accepts valid Movement addresses", () => {
+		expect(
+			validateAddress(
+				"0xbc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd3",
+				Chains.Movement,
+			),
+		).toBe(true);
+		expect(validateAddress("0xa", Chains.Movement)).toBe(true);
+		expect(validateAddress("a", Chains.Movement)).toBe(true);
+		expect(
+			validateAddress(
+				"bc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f363ccd",
+				Chains.Movement,
+			),
+		).toBe(true);
+	});
+
+	it("rejects invalid Movement addresses", () => {
+		expect(validateAddress("0x123", Chains.Movement)).toBe(false);
+		expect(
+			validateAddress(
+				"bc3557a52bcac15d470e6ffa421eeea105baffd8471d6aa2c0238380f36",
+				Chains.Movement,
+			),
+		).toBe(false);
+		expect(validateAddress("0X1", Chains.Movement)).toBe(false);
 	});
 });
 
@@ -401,5 +772,69 @@ describe("validateBchAddress()", () => {
 		for (const address of list) {
 			expect(validateBchAddress(address)).toBe(false);
 		}
+	});
+});
+
+describe("validateDashAddress()", () => {
+	it("accepts valid P2PKH addresses", () => {
+		const list = [
+			"Xk1J41RT1znfZmzeHrFYrD8mDcLVu9DPrq",
+			"XygRgBo2MMeG8EaQXjHTYCmmowt7wTcCRJ",
+			"XmzJZQ5tib4NUwqXDH2fAg6jXUkYo4Gwmd",
+			"XnT33zjrFKjt3ymfyQZs2FPiKNer3WVj14",
+			"XeBi9qNEnHLyMNesvkDBbTPRJBKYQiMWdt",
+			"XagqqFetxiDb9wbartKDrXgnqLah6SqX2S",
+		];
+
+		for (const address of list) {
+			expect(validateDashAddress(address)).toBe(true);
+		}
+	});
+
+	it("accepts valid P2SH addresses", () => {
+		const list = [
+			"7cD5qePDe8PikPdWJS7aPfRbzvtnyTSiaM",
+			"7oGTTChaRZoo5t5jXMJskDrsqMiq6bZfn7",
+			"7Tr5zsk9axYPBHSxH4cf8WdGq8vwS56S5J",
+		];
+
+		for (const address of list) {
+			expect(validateDashAddress(address)).toBe(true);
+		}
+	});
+
+	it("rejects addresses with bad checksum", () => {
+		// Changed last character
+		expect(validateDashAddress("XygRgBo2MMeG8EaQXjHTYCmmowt7wTcCRK")).toBe(
+			false,
+		);
+		expect(validateDashAddress("7cD5qePDe8PikPdWJS7aPfRbzvtnyTSiaN")).toBe(
+			false,
+		);
+	});
+
+	it("rejects addresses with wrong version byte", () => {
+		// Bitcoin P2PKH (version 0x00)
+		expect(validateDashAddress("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2")).toBe(
+			false,
+		);
+		// Litecoin P2PKH (version 0x30)
+		expect(validateDashAddress("LUbHk3E8DHKuK93GxCEDebdekFhnNeA2f3")).toBe(
+			false,
+		);
+	});
+
+	it("rejects invalid strings", () => {
+		expect(validateDashAddress("")).toBe(false);
+		expect(validateDashAddress("not-a-dash-address")).toBe(false);
+		expect(validateDashAddress("X")).toBe(false);
+		expect(validateDashAddress("7")).toBe(false);
+	});
+
+	it("rejects testnet addresses", () => {
+		// Testnet P2PKH (version 0x8c, starts with y)
+		expect(validateDashAddress("yNPbcFfabtNmmxKhmGhv49pJEFByBEiYGN")).toBe(
+			false,
+		);
 	});
 });

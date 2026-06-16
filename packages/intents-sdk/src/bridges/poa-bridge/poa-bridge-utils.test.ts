@@ -80,6 +80,8 @@ describe("toPoaNetwork", () => {
 		[Chains.Zcash, "zec:mainnet"],
 		[Chains.Gnosis, "eth:100"],
 		[Chains.Tron, "tron:mainnet"],
+		[Chains.Movement, "movement:mainnet"],
+		[Chains.Plasma, "eth:9745"],
 	])("maps %s to %s", (caip2, expected) => {
 		expect(toPoaNetwork(caip2)).toBe(expected);
 	});
@@ -107,9 +109,11 @@ describe("contractIdToCaip2", () => {
 		["xrp.omft.near", Chains.XRPL],
 		["zec.omft.near", Chains.Zcash],
 		["gnosis.omft.near", Chains.Gnosis],
+		["plasma.omft.near", Chains.Plasma],
 		["tron.omft.near", Chains.Tron],
 		["sui.omft.near", Chains.Sui],
 		["aptos.omft.near", Chains.Aptos],
+		["movement.omft.near", Chains.Movement],
 		["cardano.omft.near", Chains.Cardano],
 		["ltc.omft.near", Chains.Litecoin],
 		["starknet.omft.near", Chains.Starknet],

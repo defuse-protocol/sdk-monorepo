@@ -1,5 +1,297 @@
 # @defuse-protocol/intents-sdk
 
+## 0.69.1
+
+### Patch Changes
+
+- Updated dependencies [371f4b3]
+  - @defuse-protocol/internal-utils@0.35.1
+
+## 0.69.0
+
+### Minor Changes
+
+- 57df8be: Make `sol-0xa69aa1bcb03a369e338156a8718ad60271145803.omdep.near` (kVault gtSOL Balanced (kV-gtSOLb)) token is free to bridge.
+
+## 0.68.1
+
+### Patch Changes
+
+- 0a0d651: Fix require destination tag check for xrp withdrawals via PoA
+
+## 0.68.0
+
+### Minor Changes
+
+- 3b25ae5: Add support for Plasma to PoA bridge
+
+### Patch Changes
+
+- Updated dependencies [3b25ae5]
+  - @defuse-protocol/internal-utils@0.35.0
+
+## 0.67.2
+
+### Patch Changes
+
+- Updated dependencies [a6f918c]
+  - @defuse-protocol/internal-utils@0.34.1
+
+## 0.67.1
+
+### Patch Changes
+
+- d58e02c: Use bridge indexer for getting destination hash for stellar withdrawals via hot bridge
+
+## 0.67.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
+### Patch Changes
+
+- Updated dependencies [a7c4fd9]
+  - @defuse-protocol/internal-utils@0.34.0
+
+## 0.66.1
+
+### Patch Changes
+
+- 5de36f2: (no changes)
+
+## 0.66.0
+
+### Minor Changes
+
+- 8ef16f0: Split relay publish failures into confirmed rejections and unknown-result errors. `publishIntents` now uses `RelayPublishRejectedError` for relay `status: "FAILED"` responses and `RelayPublishResultUnknownError` when a usable publish response cannot be confirmed, while keeping `RelayPublishError` as the shared base class.
+
+  **BREAKING CHANGES:** `RelayPublishError` is now an abstract base class, `code` only exists on `RelayPublishRejectedError`, and `NETWORK_ERROR` is no longer part of the publish rejection code set. Handle `RelayPublishResultUnknownError` for in-doubt publish results.
+
+### Patch Changes
+
+- Updated dependencies [8ef16f0]
+  - @defuse-protocol/internal-utils@0.33.0
+
+## 0.65.0
+
+### Minor Changes
+
+- 9e88214: Add HyperCore to caip2 chains
+
+## 0.64.1
+
+### Patch Changes
+
+- a35bba4: Fix TON intent hashes and HOT bridge withdrawals for valid address forms the contract accepts but the SDK was rejecting
+
+## 0.64.0
+
+### Minor Changes
+
+- abf930b: Add Movement mainnet network support for SDK chain constants, address validation, and POA Bridge network mappings.
+
+### Patch Changes
+
+- Updated dependencies [abf930b]
+  - @defuse-protocol/internal-utils@0.32.0
+
+## 0.63.2
+
+### Patch Changes
+
+- 34b5e03: Fix starknet withdrawals via omni bridge
+
+## 0.63.1
+
+### Patch Changes
+
+- 39df660: Point CJS consumers at `.d.cts` type declarations via conditional `exports`. With `"type": "module"` set, every `.d.ts` file is interpreted as ESM-flavored types under `moduleResolution: node16`/`nodenext`/`bundler`, which can cause subtle interop mismatches (e.g. around default exports) for CJS consumers. tsdown already emits the `.d.cts` artifacts; this change wires them into the `exports` map so they actually get resolved.
+- Updated dependencies [39df660]
+  - @defuse-protocol/internal-utils@0.31.2
+  - @defuse-protocol/contract-types@0.6.4
+
+## 0.63.0
+
+### Minor Changes
+
+- 4fd76f4: Add starknet support for Omni Bridge
+
+### Patch Changes
+
+- 560c248: Improve ton address validation by adding checksum validation
+
+## 0.62.2
+
+### Patch Changes
+
+- 95eca42: To lower case bech32 btc addresses , as contract accepts only lowercase bech32
+
+## 0.62.1
+
+### Patch Changes
+
+- f10db35: Fix ADI high withdrawal fee (now 5x lower). Pr also reduces Scroll and Plasma fees by 5x. Solver fix for Plasma also adjusted.
+
+## 0.62.0
+
+### Minor Changes
+
+- e66398e: Add Fogo support to the intents SDK: exposes the `Chains.Fogo` CAIP2 constant, validates Fogo addresses (Solana-format), and wires Fogo through the POA Bridge so withdrawals to native FOGO and SPL tokens (e.g. iFOGO) on Fogo are routed correctly.
+
+## 0.61.0
+
+### Minor Changes
+
+- a7a8658: Add Abstract chain support
+
+## 0.60.0
+
+### Minor Changes
+
+- 25a3768: Allows 0n amount for feeEstimation when feeInclusive is false (bypassed min amount validation)
+
+## 0.59.1
+
+### Patch Changes
+
+- Updated dependencies [aabbd1a]
+  - @defuse-protocol/contract-types@0.6.3
+  - @defuse-protocol/internal-utils@0.31.1
+
+## 0.59.0
+
+### Minor Changes
+
+- 24bd626: Make `lsd-usdt.rhealab.near` token free to bridge.
+
+### Patch Changes
+
+- 24bd626: Increase error tolerance during withdrawal status polling to 5 consecutive errors.
+
+## 0.58.3
+
+### Patch Changes
+
+- Updated dependencies [bbff053]
+  - @defuse-protocol/internal-utils@0.31.0
+
+## 0.58.2
+
+### Patch Changes
+
+- 22d37b4: Fix wrong quote kind detection in get quote (EXACT_OUT quote treated as EXACT_IN)
+- Updated dependencies [22d37b4]
+  - @defuse-protocol/internal-utils@0.30.1
+
+## 0.58.1
+
+### Patch Changes
+
+- a5c1b6b: Improve bitcoin address validation
+
+## 0.58.0
+
+### Minor Changes
+
+- 6eb198d: Add more validation checks for XRP withdrawals
+
+### Patch Changes
+
+- Updated dependencies [6eb198d]
+  - @defuse-protocol/internal-utils@0.30.0
+
+## 0.57.0
+
+### Minor Changes
+
+- c5b7578: estimateWithdrawalFee executes validateWithdrawal after fee estimation
+
+## 0.56.1
+
+### Patch Changes
+
+- fcc45e2: Log intentHash and nearTxHash in processWithdrawal for easier debugging
+
+## 0.56.0
+
+### Minor Changes
+
+- 781fee2: Add dash network support
+
+### Patch Changes
+
+- Updated dependencies [781fee2]
+  - @defuse-protocol/internal-utils@0.29.0
+
+## 0.55.1
+
+### Patch Changes
+
+- Updated dependencies [6c0ae0f]
+  - @defuse-protocol/internal-utils@0.28.4
+
+## 0.55.0
+
+### Minor Changes
+
+- f95e2dd: Adds cache to omni storage balance request in validate withdrawals of omni bridge
+
+### Patch Changes
+
+- Updated dependencies [2f5eea8]
+  - @defuse-protocol/internal-utils@0.28.3
+
+## 0.54.0
+
+### Minor Changes
+
+- c6c9aa4: Adds optional hot bridge api to sdk config
+
+## 0.53.3
+
+### Patch Changes
+
+- Updated dependencies [4520b4a]
+  - @defuse-protocol/contract-types@0.6.2
+  - @defuse-protocol/internal-utils@0.28.2
+
+## 0.53.2
+
+### Patch Changes
+
+- a570209: Improve logging for hot bridge destination hash fetching
+
+## 0.53.1
+
+### Patch Changes
+
+- Updated dependencies [be5c0fb]
+  - @defuse-protocol/contract-types@0.6.1
+  - @defuse-protocol/internal-utils@0.28.1
+
+## 0.53.0
+
+### Minor Changes
+
+- feb1e30: Use bridge indexer for evm chain in sdk
+
+### Patch Changes
+
+- Updated dependencies [feb1e30]
+  - @defuse-protocol/internal-utils@0.28.0
+
+## 0.52.0
+
+### Minor Changes
+
+- d4e0311: add Aleo network support
+
+### Patch Changes
+
+- Updated dependencies [d4e0311]
+  - @defuse-protocol/internal-utils@0.27.0
+
 ## 0.51.0
 
 ### Minor Changes

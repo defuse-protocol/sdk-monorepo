@@ -1,5 +1,7 @@
 export * as poaBridge from "./poaBridge";
 export * as solverRelay from "./solverRelay";
+export * as bridgeIndexer from "./bridgeIndexer";
+export * as xrpl from "./xrpl";
 export * as utils from "./utils";
 export * as errors from "./errors";
 export * as messageFactory from "./utils/messageFactory";
@@ -93,6 +95,10 @@ export {
 export {
 	RelayPublishError,
 	type RelayPublishErrorType,
+	RelayPublishRejectedError,
+	type RelayPublishRejectedErrorType,
+	RelayPublishResultUnknownError,
+	type RelayPublishResultUnknownErrorType,
 } from "./solverRelay/utils/parseFailedPublishError";
 
 // Top-level utils

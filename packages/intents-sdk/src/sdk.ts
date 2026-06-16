@@ -8,7 +8,7 @@ import {
 	nearFailoverRpcProvider,
 	extractRpcUrls,
 	solverRelay,
-	RelayPublishError,
+	RelayPublishRejectedError,
 	type RpcEndpoint,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
@@ -24,6 +24,7 @@ import { FeeExceedsAmountError } from "./classes/errors";
 import {
 	PUBLIC_EVM_RPC_URLS,
 	PUBLIC_STELLAR_RPC_URLS,
+	PUBLIC_XRPL_RPC_URLS,
 } from "./constants/public-rpc-urls";
 import { IntentExecuter } from "./intents/intent-executer-impl/intent-executer";
 import { IntentRelayerPublic } from "./intents/intent-relayer-impl/intent-relayer-public";
@@ -42,6 +43,7 @@ import { RouteEnum } from "./constants/route-enum";
 import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
+	configureXrplRpcUrls,
 } from "./lib/configure-rpc-config";
 import {
 	createWithdrawalIdentifiers,
@@ -108,6 +110,7 @@ export interface IntentsSDKConfig {
 	rpc?: PartialRPCEndpointMap;
 	referral: string;
 	solverRelayApiKey?: string;
+	hotBridgeApiKey?: string;
 	features?: {
 		/**
 		 * Route migrated POA tokens (*.omft.near) through Omni Bridge.
@@ -124,12 +127,14 @@ export class IntentsSDK implements IIntentsSDK {
 	protected intentSigner?: IIntentSigner;
 	protected bridges: Bridge[];
 	protected solverRelayApiKey: string | undefined;
+	protected hotBridgeApiKey: string | undefined;
 	protected saltManager: ISaltManager;
 
 	constructor(args: IntentsSDKConfig) {
 		this.envConfig = resolveEnvConfig(args.env);
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
+		this.hotBridgeApiKey = args.hotBridgeApiKey;
 
 		const nearRpcEndpoints: RpcEndpoint[] =
 			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
@@ -149,6 +154,8 @@ export class IntentsSDK implements IIntentsSDK {
 			HotBridgeEVMChains,
 		);
 
+		const xrplRpcUrls = configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, args.rpc);
+
 		/**
 		 * Order of bridges matters, because the first bridge that supports the `withdrawalParams` will be used.
 		 * More specific bridges should be placed before more generic ones.
@@ -162,6 +169,7 @@ export class IntentsSDK implements IIntentsSDK {
 			}),
 			new PoaBridge({
 				envConfig: this.envConfig,
+				xrplRpcUrls,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
@@ -169,6 +177,7 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
 				hotSdk: new hotLabsOmniSdk_HotBridge({
+					apiKey: this.hotBridgeApiKey,
 					logger: console,
 					evmRpc: evmRpcUrls,
 					// 1. HotBridge from omni-sdk does not support FailoverProvider.
@@ -346,6 +355,7 @@ export class IntentsSDK implements IIntentsSDK {
 					assetId: args.withdrawalParams.assetId,
 					amount: actualAmount,
 					destinationAddress: args.withdrawalParams.destinationAddress,
+					destinationMemo: args.withdrawalParams.destinationMemo,
 					feeEstimation: args.feeEstimation,
 					routeConfig: args.withdrawalParams.routeConfig,
 					logger: args.logger,
@@ -421,6 +431,23 @@ export class IntentsSDK implements IIntentsSDK {
 						throw new FeeExceedsAmountError(fee, args.withdrawalParams.amount);
 					}
 				}
+				const actualAmount = args.withdrawalParams.feeInclusive
+					? args.withdrawalParams.amount - fee.amount
+					: args.withdrawalParams.amount;
+
+				await bridge.validateWithdrawal({
+					assetId: args.withdrawalParams.assetId,
+					amount: actualAmount,
+					destinationAddress: args.withdrawalParams.destinationAddress,
+					feeEstimation: fee,
+					routeConfig: args.withdrawalParams.routeConfig,
+					logger: args.logger,
+					destinationMemo: args.withdrawalParams.destinationMemo,
+					// When estimating fees before the exact amount is known, skip minimum amount validation while keeping all other validation intact.
+					skipMinAmountValidation:
+						args.withdrawalParams.amount === 0n &&
+						args.withdrawalParams.feeInclusive === false,
+				});
 
 				return fee;
 			}
@@ -652,7 +679,12 @@ export class IntentsSDK implements IIntentsSDK {
 
 			return await fn(cachedSalt);
 		} catch (err) {
-			if (!(err instanceof RelayPublishError && err.code === "INVALID_SALT"))
+			if (
+				!(
+					err instanceof RelayPublishRejectedError &&
+					err.code === "INVALID_SALT"
+				)
+			)
 				throw err;
 
 			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");
@@ -796,11 +828,15 @@ export class IntentsSDK implements IIntentsSDK {
 			logger: args.logger,
 		});
 
+		args.logger?.info("Intent published", { intentHash });
+
 		// Step 3: Wait for intent settlement
 		const intentTx = await this.waitForIntentSettlement({
 			intentHash: intentHash,
 			logger: args.logger,
 		});
+
+		args.logger?.info("Intent settled", { txHash: intentTx.hash });
 
 		// Step 4: Wait for withdrawal completion
 		const destinationTx = await this.waitForWithdrawalCompletion({
