@@ -27,6 +27,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgesConfiguration,
 	FeeEstimation,
 	NearTxInfo,
 	OmniBridgeRouteConfig,
@@ -101,17 +102,24 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
+	private configuration: Required<
+		NonNullable<BridgesConfiguration[RouteEnum["OmniBridge"]]>
+	> = {
+		prefundedNativeFeeTokens: [],
+	};
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
+		configuration,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+		configuration?: BridgesConfiguration[RouteEnum["OmniBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
@@ -119,6 +127,9 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
+		if (configuration !== undefined) {
+			this.configuration = Object.assign(this.configuration, configuration);
+		}
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -390,7 +401,9 @@ export class OmniBridge implements Bridge {
 		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
 		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
-		if (!isFeeSubsidized) {
+		const isPrefundedWithdrawal =
+			this.configuration.prefundedNativeFeeTokens.includes(args.assetId);
+		if (!isFeeSubsidized && !isPrefundedWithdrawal) {
 			assert(
 				args.feeEstimation.amount > 0n,
 				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
@@ -636,7 +649,12 @@ export class OmniBridge implements Bridge {
 		let amount = 0n;
 		let quote = null;
 		// Skip quoting when native fee = 0 and no storage deposit is needed.
-		if (totalAmountToQuote > 0n) {
+		if (
+			totalAmountToQuote > 0n &&
+			!this.configuration.prefundedNativeFeeTokens.includes(
+				args.withdrawalParams.assetId,
+			)
+		) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
 				feeAssetId: NEAR_NATIVE_ASSET_ID,
