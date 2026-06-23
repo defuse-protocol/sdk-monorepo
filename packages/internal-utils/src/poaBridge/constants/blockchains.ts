@@ -57,6 +57,8 @@ export const BlockchainEnum = {
 	PLASMA: "eth:9745",
 	/* SCROLL is operated by HOT bridge */
 	SCROLL: "eth:534352",
+	/* FOGO is operated by Omni bridge */
+	FOGO: "solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251",
 } as const;
 
 export type BlockchainEnum =
