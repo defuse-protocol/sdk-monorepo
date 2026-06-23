@@ -1907,8 +1907,8 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
 		[
-			"nep141:sol.omdep.near",
-			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
+			"nep141:sol.omft.near",
+			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Solana },
 		],
 		[
 			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
