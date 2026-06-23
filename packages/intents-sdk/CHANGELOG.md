@@ -1,5 +1,15 @@
 # @defuse-protocol/intents-sdk
 
+## 0.70.0
+
+### Minor Changes
+
+- 11d0ed6: Add more poa omni routable tokens
+
+### Patch Changes
+
+- e9a2271: Use bridge-indexer as the source of truth for TON HOT withdrawal destination transaction hashes.
+
 ## 0.69.1
 
 ### Patch Changes
