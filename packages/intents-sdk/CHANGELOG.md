@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.71.0
+
+### Minor Changes
+
+- 6d2a8cd: Remove kVault token from omni fee subsidized
+
 ## 0.70.0
 
 ### Minor Changes
