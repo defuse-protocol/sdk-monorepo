@@ -47,7 +47,6 @@ describe("OmniBridge", () => {
 
 			const assetIds = [
 				"nep141:eth.bridge.near",
-				"nep141:sol.omdep.near",
 				"nep141:base.omdep.near",
 				"nep141:arb.omdep.near",
 				"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
@@ -403,7 +402,7 @@ describe("OmniBridge", () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					transfer_message: {
-						token: "near:sol.omdep.near",
+						token: "near:sol.omft.near",
 						amount: "100000",
 						sender: "near:test.near",
 						recipient: "sol:9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
@@ -433,7 +432,7 @@ describe("OmniBridge", () => {
 				landingChain: Chains.Solana,
 				index: 0,
 				withdrawalParams: {
-					assetId: "nep141:sol.omdep.near",
+					assetId: "nep141:sol.omft.near",
 					amount: 100000n,
 					destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
 					feeInclusive: false,
