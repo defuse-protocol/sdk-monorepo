@@ -10,6 +10,7 @@ export const PoaBridgeNetworkReference = {
 	BITCOIN: "btc:mainnet",
 	BITCOINCASH: "bch:mainnet",
 	SOLANA: "sol:mainnet",
+	FOGO: "fogo:mainnet",
 	DOGECOIN: "doge:mainnet",
 	XRPLEDGER: "xrp:mainnet",
 	ZCASH: "zec:mainnet",
@@ -57,8 +58,6 @@ export const BlockchainEnum = {
 	PLASMA: "eth:9745",
 	/* SCROLL is operated by HOT bridge */
 	SCROLL: "eth:534352",
-	/* FOGO is operated by Omni bridge */
-	FOGO: "solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251",
 } as const;
 
 export type BlockchainEnum =
