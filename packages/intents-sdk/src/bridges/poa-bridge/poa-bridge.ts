@@ -22,6 +22,7 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
+	BridgesConfiguration,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -52,22 +53,34 @@ export class PoaBridge implements Bridge {
 		string,
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
+	private configuration: Required<
+		NonNullable<BridgesConfiguration[RouteEnum["PoaBridge"]]>
+	> = {
+		zeroFeeTokens: [],
+	};
 
 	constructor({
 		envConfig,
 		xrplRpcUrls,
 		routeMigratedPoaTokensThroughOmniBridge,
+		configuration,
 	}: {
 		envConfig: EnvConfig;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 		xrplRpcUrls: string[];
+		configuration?: BridgesConfiguration[RouteEnum["PoaBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.xrplRpcUrls = xrplRpcUrls;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
+		if (configuration !== undefined) {
+			this.configuration = Object.assign(this.configuration, configuration);
+		}
 	}
 
+	// const isPrefundedWithdrawal =
+	// 	this.configuration.prefundedNativeFeeTokens.includes(args.assetId);
 	private getPoaBridgeBaseURL(): string {
 		if (!this.envConfig.poaBridgeBaseURL) {
 			throw new Error(
@@ -153,10 +166,14 @@ export class PoaBridge implements Bridge {
 			RouteEnum.PoaBridge,
 			"relayerFee",
 		);
-		assert(
-			relayerFee > 0n,
-			`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
-		);
+		if (
+			!this.configuration.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+		) {
+			assert(
+				relayerFee > 0n,
+				`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
+			);
+		}
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
 			amount: args.withdrawalParams.amount + relayerFee,
@@ -254,6 +271,19 @@ export class PoaBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
+		if (
+			!this.configuration.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+		) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						relayerFee: 0n,
+					},
+				},
+			};
+		}
 		const estimation = await poaBridge.httpClient.getWithdrawalEstimate(
 			{
 				token: utils.getTokenAccountId(args.withdrawalParams.assetId),
