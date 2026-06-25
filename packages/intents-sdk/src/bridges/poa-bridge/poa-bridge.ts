@@ -272,7 +272,7 @@ export class PoaBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 
 		if (
-			!this.configuration.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+			this.configuration.zeroFeeTokens.includes(args.withdrawalParams.assetId)
 		) {
 			return {
 				amount: 0n,
