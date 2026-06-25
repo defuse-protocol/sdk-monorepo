@@ -1,5 +1,17 @@
 # @defuse-protocol/intents-sdk
 
+## 0.72.0
+
+### Minor Changes
+
+- 474169b: Export the `QuoteOptions` type from the package entry point
+
+### Patch Changes
+
+- 9c51003: Restore `PoaBridgeNetworkReference.FOGO` (`fogo:mainnet`) for Omni bridge integration.
+- Updated dependencies [9c51003]
+  - @defuse-protocol/internal-utils@0.35.2
+
 ## 0.71.0
 
 ### Minor Changes
