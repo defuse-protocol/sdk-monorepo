@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.35.2
+
+### Patch Changes
+
+- 9c51003: Restore `PoaBridgeNetworkReference.FOGO` (`fogo:mainnet`) for Omni bridge integration.
+
 ## 0.35.1
 
 ### Patch Changes

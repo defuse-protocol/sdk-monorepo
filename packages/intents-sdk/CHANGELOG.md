@@ -1,5 +1,33 @@
 # @defuse-protocol/intents-sdk
 
+## 0.72.0
+
+### Minor Changes
+
+- 474169b: Export the `QuoteOptions` type from the package entry point
+
+### Patch Changes
+
+- 9c51003: Restore `PoaBridgeNetworkReference.FOGO` (`fogo:mainnet`) for Omni bridge integration.
+- Updated dependencies [9c51003]
+  - @defuse-protocol/internal-utils@0.35.2
+
+## 0.71.0
+
+### Minor Changes
+
+- 6d2a8cd: Remove kVault token from omni fee subsidized
+
+## 0.70.0
+
+### Minor Changes
+
+- 11d0ed6: Add more poa omni routable tokens
+
+### Patch Changes
+
+- e9a2271: Use bridge-indexer as the source of truth for TON HOT withdrawal destination transaction hashes.
+
 ## 0.69.1
 
 ### Patch Changes

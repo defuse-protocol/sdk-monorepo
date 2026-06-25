@@ -48,6 +48,8 @@ export type {
 	TxNoInfo,
 	// Asset parsing
 	ParsedAssetInfo,
+	// Quote options
+	QuoteOptions,
 } from "./src/shared-types";
 
 // ============================================================================

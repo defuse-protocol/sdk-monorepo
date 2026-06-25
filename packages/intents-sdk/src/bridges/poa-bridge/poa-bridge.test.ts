@@ -189,7 +189,10 @@ describe("PoaBridge", () => {
 			).resolves.toBe(true);
 		});
 
-		it.each(["nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near"])(
+		it.each([
+			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+			"nep141:sol.omft.near",
+		])(
 			"doesn't support `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
@@ -204,7 +207,10 @@ describe("PoaBridge", () => {
 			},
 		);
 
-		it.each(["nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near"])(
+		it.each([
+			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+			"nep141:sol.omft.near",
+		])(
 			"supports `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true only when route config is specified",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
