@@ -7,6 +7,7 @@ import { BridgeAPI } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
+import * as estimateFee from "../../lib/estimate-fee";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
@@ -1520,6 +1521,132 @@ describe("OmniBridge", () => {
 
 			const omniFees = result.underlyingFees[RouteEnum.OmniBridge];
 			expect(omniFees?.relayerFee).toBe(0n);
+		});
+	});
+
+	describe("prefundedNativeFeeTokens", () => {
+		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
+		const prefundedAssetId = "nep141:eth.bridge.near";
+
+		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 50_000_000_000n,
+				usd_fee: 0.5,
+				insufficient_utxo: false,
+			});
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error("getFeeQuote must not be called for prefunded tokens"),
+				);
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
+			});
+
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("eth.bridge.near", [0n, 0n]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: prefundedAssetId,
+					destinationAddress: zeroAddress,
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+					amount: 1_000_000n,
+				},
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(result.amount).toBe(0n);
+			expect(result.quote).toBeNull();
+			expect(result.underlyingFees[RouteEnum.OmniBridge]?.relayerFee).toBe(
+				50_000_000_000n,
+			);
+		});
+
+		it("validateWithdrawal accepts a zero fee amount for a prefunded token", async () => {
+			const highBalance = (
+				MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n
+			).toString();
+
+			vi.spyOn(
+				omniBridgeUtils,
+				"getAccountOmniStorageBalance",
+			).mockResolvedValue({ total: highBalance, available: highBalance });
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+				"eth:0x0000000000000000000000000000000000000000",
+			);
+			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
+				decimals: 6,
+				origin_decimals: 6,
+			});
+
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: prefundedAssetId,
+					amount: 1_000_000n,
+					destinationAddress: zeroAddress,
+					feeEstimation: {
+						// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
+						amount: 0n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								relayerFee: 50_000_000_000n,
+								storageDepositFee: 0n,
+							},
+						},
+					},
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).resolves.toBeUndefined();
+		});
+
+		it("validateWithdrawal rejects a zero fee amount for a token that is not prefunded", async () => {
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: prefundedAssetId,
+					amount: 1_000_000n,
+					destinationAddress: zeroAddress,
+					feeEstimation: {
+						amount: 0n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								relayerFee: 0n,
+								storageDepositFee: 0n,
+							},
+						},
+					},
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+				}),
+			).rejects.toThrow("Invalid Omni Bridge fee: expected > 0");
 		});
 	});
 });
