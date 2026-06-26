@@ -73,7 +73,7 @@ export class PoaBridge implements Bridge {
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
 		this.bridgeConfig = {
-				zeroFeeTokens: bridgeConfig?.zeroFeeTokens ?? [],
+			zeroFeeTokens: bridgeConfig?.zeroFeeTokens ?? [],
 		};
 	}
 

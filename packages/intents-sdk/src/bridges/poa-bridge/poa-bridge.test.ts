@@ -12,6 +12,7 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { Chains } from "../../lib/caip2";
+import { RouteEnum } from "../../constants/route-enum";
 import {
 	createHotBridgeRoute,
 	createPoaBridgeRoute,
@@ -35,6 +36,7 @@ vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 				...original.poaBridge.httpClient,
 				getWithdrawalStatus: vi.fn(),
 				getSupportedTokens: vi.fn(),
+				getWithdrawalEstimate: vi.fn(),
 			},
 		},
 		xrpl: {
@@ -1263,6 +1265,83 @@ describe("PoaBridge", () => {
 			).rejects.toBe(serverError);
 
 			expect(poaBridge.httpClient.getWithdrawalStatus).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe("zeroFeeTokens", () => {
+		const zeroFeeAssetId = "nep141:btc.omft.near";
+		const destinationAddress = "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j";
+
+		it("estimateWithdrawalFee returns a zero fee and skips the remote estimate for a configured token", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				bridgeConfig: { zeroFeeTokens: [zeroFeeAssetId] },
+			});
+
+			const fee = await bridge.estimateWithdrawalFee({
+				withdrawalParams: { assetId: zeroFeeAssetId, destinationAddress },
+			});
+
+			expect(fee).toEqual({
+				amount: 0n,
+				quote: null,
+				underlyingFees: { [RouteEnum.PoaBridge]: { relayerFee: 0n } },
+			});
+			expect(poaBridge.httpClient.getWithdrawalEstimate).not.toHaveBeenCalled();
+		});
+
+		it("createWithdrawalIntents allows a zero relayer fee for a configured token", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				bridgeConfig: { zeroFeeTokens: [zeroFeeAssetId] },
+			});
+
+			const intents = await bridge.createWithdrawalIntents({
+				withdrawalParams: {
+					assetId: zeroFeeAssetId,
+					amount: 1000000n,
+					destinationAddress,
+					feeInclusive: false,
+				},
+				feeEstimation: {
+					amount: 0n,
+					quote: null,
+					underlyingFees: { [RouteEnum.PoaBridge]: { relayerFee: 0n } },
+				},
+			});
+
+			expect(intents).toEqual([
+				expect.objectContaining({
+					intent: "ft_withdraw",
+					token: "btc.omft.near",
+					amount: "1000000",
+				}),
+			]);
+		});
+
+		it("createWithdrawalIntents rejects a zero relayer fee for a token that is not configured", () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			expect(() =>
+				bridge.createWithdrawalIntents({
+					withdrawalParams: {
+						assetId: zeroFeeAssetId,
+						amount: 1000000n,
+						destinationAddress,
+						feeInclusive: false,
+					},
+					feeEstimation: {
+						amount: 0n,
+						quote: null,
+						underlyingFees: { [RouteEnum.PoaBridge]: { relayerFee: 0n } },
+					},
+				}),
+			).toThrow("Invalid POA bridge relayer fee");
 		});
 	});
 });
