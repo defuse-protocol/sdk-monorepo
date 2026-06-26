@@ -22,6 +22,7 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -52,20 +53,28 @@ export class PoaBridge implements Bridge {
 		string,
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
+	private bridgeConfig: Required<
+		NonNullable<BridgeConfigs[RouteEnum["PoaBridge"]]>
+	>;
 
 	constructor({
 		envConfig,
 		xrplRpcUrls,
 		routeMigratedPoaTokensThroughOmniBridge,
+		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 		xrplRpcUrls: string[];
+		bridgeConfig?: BridgeConfigs[RouteEnum["PoaBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.xrplRpcUrls = xrplRpcUrls;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
+		this.bridgeConfig = {
+			zeroFeeTokens: bridgeConfig?.zeroFeeTokens ?? [],
+		};
 	}
 
 	private getPoaBridgeBaseURL(): string {
@@ -153,10 +162,14 @@ export class PoaBridge implements Bridge {
 			RouteEnum.PoaBridge,
 			"relayerFee",
 		);
-		assert(
-			relayerFee > 0n,
-			`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
-		);
+		if (
+			!this.bridgeConfig.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+		) {
+			assert(
+				relayerFee > 0n,
+				`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
+			);
+		}
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
 			amount: args.withdrawalParams.amount + relayerFee,
@@ -254,6 +267,19 @@ export class PoaBridge implements Bridge {
 		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
 		assert(assetInfo != null, "Asset is not supported");
 
+		if (
+			this.bridgeConfig.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+		) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.PoaBridge]: {
+						relayerFee: 0n,
+					},
+				},
+			};
+		}
 		const estimation = await poaBridge.httpClient.getWithdrawalEstimate(
 			{
 				token: utils.getTokenAccountId(args.withdrawalParams.assetId),
