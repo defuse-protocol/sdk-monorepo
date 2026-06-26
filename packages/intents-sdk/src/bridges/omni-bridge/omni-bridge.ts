@@ -27,7 +27,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
-	BridgesConfiguration,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	OmniBridgeRouteConfig,
@@ -102,24 +102,22 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
-	private configuration: Required<
-		NonNullable<BridgesConfiguration[RouteEnum["OmniBridge"]]>
-	> = {
-		prefundedNativeFeeTokens: [],
-	};
+	private bridgeConfig: Required<
+		NonNullable<BridgeConfigs[RouteEnum["OmniBridge"]]>
+	>;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
-		configuration,
+		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
-		configuration?: BridgesConfiguration[RouteEnum["OmniBridge"]];
+		bridgeConfig?: BridgeConfigs[RouteEnum["OmniBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
@@ -127,9 +125,9 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
-		if (configuration !== undefined) {
-			this.configuration = Object.assign(this.configuration, configuration);
-		}
+		this.bridgeConfig = {
+			prefundedNativeFeeTokens: bridgeConfig?.prefundedNativeFeeTokens ?? [],
+		};
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -402,7 +400,7 @@ export class OmniBridge implements Bridge {
 	}): Promise<void> {
 		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
 		const isPrefundedWithdrawal =
-			this.configuration.prefundedNativeFeeTokens.includes(args.assetId);
+			this.bridgeConfig.prefundedNativeFeeTokens.includes(args.assetId);
 		if (!isFeeSubsidized && !isPrefundedWithdrawal) {
 			assert(
 				args.feeEstimation.amount > 0n,
@@ -648,10 +646,11 @@ export class OmniBridge implements Bridge {
 
 		let amount = 0n;
 		let quote = null;
-		// Skip quoting when native fee = 0 and no storage deposit is needed.
+		// Skip quoting when native fee = 0 and no storage deposit is needed
+		// or for prefunded tokens.
 		if (
 			totalAmountToQuote > 0n &&
-			!this.configuration.prefundedNativeFeeTokens.includes(
+			!this.bridgeConfig.prefundedNativeFeeTokens.includes(
 				args.withdrawalParams.assetId,
 			)
 		) {

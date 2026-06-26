@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Support prefunded tokens
+Support prefunded tokens for Omni bridge via Bridge Config

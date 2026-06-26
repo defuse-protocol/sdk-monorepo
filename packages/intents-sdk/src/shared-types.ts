@@ -335,9 +335,13 @@ export interface RouteFeeStructures {
 	/** Internal transfers have no fees */
 	[RouteEnum.InternalTransfer]: null;
 }
-
-export interface BridgesConfiguration {
+/**
+ * Per-bridge configuration, keyed by route. Each entry is optional and tunes
+ * the behaviour of a single bridge; omitting one falls back to that bridge's defaults.
+ */
+export interface BridgeConfigs {
 	[RouteEnum.OmniBridge]?: {
+		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is prefunded. */
 		prefundedNativeFeeTokens?: string[];
 	};
 }
