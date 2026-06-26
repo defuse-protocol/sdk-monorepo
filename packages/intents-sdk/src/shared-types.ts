@@ -337,6 +337,17 @@ export interface RouteFeeStructures {
 }
 
 /**
+ * Per-bridge configuration, keyed by route. Each entry is optional and tunes
+ * the behaviour of a single bridge; omitting one falls back to that bridge's defaults.
+ */
+export interface BridgeConfigs {
+	[RouteEnum.PoaBridge]?: {
+		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is waived (charged as 0). */
+		zeroFeeTokens?: string[];
+	};
+}
+
+/**
  * Represents the different categories of fees that may apply across various withdrawal operations.
  * Each route type has an optional fee structure. Uses a mapped type to ensure all RouteEnum values are covered.
  */
