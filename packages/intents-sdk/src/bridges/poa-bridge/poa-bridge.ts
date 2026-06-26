@@ -77,8 +77,6 @@ export class PoaBridge implements Bridge {
 		};
 	}
 
-	// const isPrefundedWithdrawal =
-	// 	this.configuration.prefundedNativeFeeTokens.includes(args.assetId);
 	private getPoaBridgeBaseURL(): string {
 		if (!this.envConfig.poaBridgeBaseURL) {
 			throw new Error(
