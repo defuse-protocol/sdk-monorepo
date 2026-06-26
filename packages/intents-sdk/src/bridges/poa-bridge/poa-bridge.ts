@@ -22,7 +22,7 @@ import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import type {
 	Bridge,
-	BridgesConfiguration,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -53,30 +53,28 @@ export class PoaBridge implements Bridge {
 		string,
 		Awaited<ReturnType<typeof poaBridge.httpClient.getSupportedTokens>>
 	>({ ttl: 30 * 1000 });
-	private configuration: Required<
-		NonNullable<BridgesConfiguration[RouteEnum["PoaBridge"]]>
-	> = {
-		zeroFeeTokens: [],
-	};
+	private bridgeConfig: Required<
+		NonNullable<BridgeConfigs[RouteEnum["PoaBridge"]]>
+	>;
 
 	constructor({
 		envConfig,
 		xrplRpcUrls,
 		routeMigratedPoaTokensThroughOmniBridge,
-		configuration,
+		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 		xrplRpcUrls: string[];
-		configuration?: BridgesConfiguration[RouteEnum["PoaBridge"]];
+		bridgeConfig?: BridgeConfigs[RouteEnum["PoaBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.xrplRpcUrls = xrplRpcUrls;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
-		if (configuration !== undefined) {
-			this.configuration = Object.assign(this.configuration, configuration);
-		}
+		this.bridgeConfig = {
+				zeroFeeTokens: bridgeConfig?.zeroFeeTokens ?? [],
+		};
 	}
 
 	// const isPrefundedWithdrawal =
@@ -167,7 +165,7 @@ export class PoaBridge implements Bridge {
 			"relayerFee",
 		);
 		if (
-			!this.configuration.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+			!this.bridgeConfig.zeroFeeTokens.includes(args.withdrawalParams.assetId)
 		) {
 			assert(
 				relayerFee > 0n,
@@ -272,7 +270,7 @@ export class PoaBridge implements Bridge {
 		assert(assetInfo != null, "Asset is not supported");
 
 		if (
-			this.configuration.zeroFeeTokens.includes(args.withdrawalParams.assetId)
+			this.bridgeConfig.zeroFeeTokens.includes(args.withdrawalParams.assetId)
 		) {
 			return {
 				amount: 0n,

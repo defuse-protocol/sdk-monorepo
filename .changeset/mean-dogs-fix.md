@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Zero fee PoA tokens
+Allow config passing for PoA bridge to allowlist zero fee tokens

@@ -52,6 +52,7 @@ import {
 import type {
 	BatchWithdrawalResult,
 	Bridge,
+	BridgeConfigs,
 	CreateWithdrawalCompletionPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
@@ -118,6 +119,7 @@ export interface IntentsSDKConfig {
 		 */
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 	};
+	bridgeConfigs?: BridgeConfigs;
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -170,6 +172,7 @@ export class IntentsSDK implements IIntentsSDK {
 			new PoaBridge({
 				envConfig: this.envConfig,
 				xrplRpcUrls,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.PoaBridge],
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
