@@ -200,6 +200,25 @@ function setupMocks() {
 		constructor(...args: ConstructorParameters<typeof IntentsSDK>) {
 			super(...args);
 			this.bridges = [mockBridge];
+			// watchWithdrawal first checks the NEAR intent tx status; stub it as a
+			// successful, finalized tx so tests reach the bridge-polling path.
+			vi.spyOn(this.nearProvider, "txStatusReceipts").mockResolvedValue({
+				final_execution_status: "FINAL",
+				status: { SuccessValue: "" },
+				transaction: {},
+				transaction_outcome: {
+					id: "fake-hash",
+					outcome: {
+						logs: [],
+						receipt_ids: [],
+						gas_burnt: 0,
+						tokens_burnt: "0",
+						executor_id: "foo.near",
+						status: { SuccessValue: "" },
+					},
+				},
+				receipts_outcome: [],
+			});
 		}
 	}
 
