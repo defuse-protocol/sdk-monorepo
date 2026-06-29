@@ -345,10 +345,6 @@ export interface BridgeConfigs {
 		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is prefunded. */
 		prefundedNativeFeeTokens?: string[];
 	};
-	[RouteEnum.PoaBridge]?: {
-		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is waived (charged as 0). */
-		zeroFeeTokens?: string[];
-	};
 }
 
 /**

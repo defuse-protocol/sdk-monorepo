@@ -172,7 +172,6 @@ export class IntentsSDK implements IIntentsSDK {
 			new PoaBridge({
 				envConfig: this.envConfig,
 				xrplRpcUrls,
-				bridgeConfig: args.bridgeConfigs?.[RouteEnum.PoaBridge],
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
