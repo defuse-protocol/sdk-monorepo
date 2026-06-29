@@ -153,6 +153,10 @@ export class PoaBridge implements Bridge {
 			RouteEnum.PoaBridge,
 			"relayerFee",
 		);
+		assert(
+			relayerFee >= 0n,
+			`Invalid POA bridge relayer fee: expected >= 0, got ${relayerFee}`,
+		);
 
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
@@ -263,6 +267,10 @@ export class PoaBridge implements Bridge {
 			},
 		);
 		const relayerFee = BigInt(estimation.withdrawalFee);
+		assert(
+			relayerFee >= 0n,
+			`Invalid POA bridge relayer fee: expected >= 0, got ${relayerFee}`,
+		);
 		return {
 			amount: relayerFee,
 			quote: null,
