@@ -172,7 +172,6 @@ export class IntentsSDK implements IIntentsSDK {
 			new PoaBridge({
 				envConfig: this.envConfig,
 				xrplRpcUrls,
-				bridgeConfig: args.bridgeConfigs?.[RouteEnum.PoaBridge],
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
@@ -199,6 +198,7 @@ export class IntentsSDK implements IIntentsSDK {
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.OmniBridge],
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,

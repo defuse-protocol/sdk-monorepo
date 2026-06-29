@@ -341,9 +341,9 @@ export interface RouteFeeStructures {
  * the behaviour of a single bridge; omitting one falls back to that bridge's defaults.
  */
 export interface BridgeConfigs {
-	[RouteEnum.PoaBridge]?: {
-		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is waived (charged as 0). */
-		zeroFeeTokens?: string[];
+	[RouteEnum.OmniBridge]?: {
+		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is prefunded. */
+		prefundedNativeFeeTokens?: string[];
 	};
 }
 
