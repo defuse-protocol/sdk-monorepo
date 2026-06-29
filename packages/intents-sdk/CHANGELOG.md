@@ -1,5 +1,15 @@
 # @defuse-protocol/intents-sdk
 
+## 0.73.0
+
+### Minor Changes
+
+- 3fcb03d: Support prefunded tokens for Omni Bridge via Bridge Config, also delete zero token fee configuration for PoA Bridge.
+  - Added `bridgeConfigs[RouteEnum.OmniBridge].prefundedNativeFeeTokens` — asset IDs whose withdrawal native fee is prefunded.
+  - Removed `bridgeConfigs[RouteEnum.PoaBridge].zeroFeeTokens` — the PoA Bridge zero-fee token configuration is no longer supported.
+
+- 33ca1a2: Allow config passing for PoA bridge to allowlist zero fee tokens
+
 ## 0.72.0
 
 ### Minor Changes
