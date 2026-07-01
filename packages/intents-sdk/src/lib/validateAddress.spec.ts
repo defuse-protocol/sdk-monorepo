@@ -652,17 +652,43 @@ describe("validateStarknetAddress", () => {
 
 describe("validateZcashAddress", () => {
 	const validTransparentAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";
-	const validUAAddress =
-		"u1rgqfsvuxkwv7vc54nxd4g733xwh686ur06usz8vucns3ywx350fmeaz5w7a7mxg5u6gp28pufwlmsenxzqhphcl9nt56u5428c836u7wyecxs7alnms08txxr3g4gj850eclnhsfcw2cfll92r3xfd7ydhhpslymygl9qxz4wudrtlfh";
 	const invalidTransparentAddress = "t1r2VHBwC5eAnZB22YNFSJg8iFtWgoAEKW000";
-	const invalidUA = "u1r2VHBwC5eAnZB22YNFSJg8iFtWgoAEKW000";
+
+	// Synthetic UAs generated via ZIP 316 F4Jumble with deterministic receiver bytes.
+	const uaOrchardOnly =
+		"u1mvjnzd2jv4mwpzv0v5ze2p8d0txt4erah3ffx2m68wz74et90nx2wzhvxkv4kdaw2e5lv5c59f8r8j3cnev277jjgljywujnkct3q6kq";
+	const uaSaplingOnly =
+		"u1c4q5lx2m27v5n8m0v8eeehd3zy43a27v8ze7thlns6njkea00f8p5e6an3hhsa3cmzvhdcgxjmyfpw6v8wxq35gh74hsrw7z2c2ze2y7";
+	const uaP2pkhSapling =
+		"u1t9qnfm852emx7a8am0pg5ygh3s4astw5t60lnw6w40043vz8hz6v8a8ew8yk79wfykemjdfw4h7gkpsmyw4nkqud2f826mrx2rmr6xpun05mdn50jd08qvdspqvtnrt32xsn50wyzdt";
+	const uaP2shSapling =
+		"u165jnk429hv09y4xuhetfryln6y8fnk826c95h74nhypptdsz6quvy23yjms04dwn8ql5t04lq0a8xr23mslg5z330p9kseu8xaffpggz5pdtewh0e6ktfaa3qprjsa884httqkas78a";
+	const uaSaplingOrchard =
+		"u1x08faycv384llwet8r8zedp0w8axcjtckhpv03sj0anft683j2ku9lfamp5q60avusdt4xkg2rlf6nq7pxy444jm3lwtequrzwxm5d8dgcy023fjl4hh4j68c8uuy79v6dk4j5w042zl5wk3vgwatvfr8rlky09vwkjw5yltrqreyr3f";
+	const uaP2pkhSaplingOrchard =
+		"u1ngljcknkpc3k59rg493pz2fck9u7pd3fhq7yc45rt92s3c97rcm3nxxs659vn9d8u4n4x65yfsav90t0am2yea9huj8fgk8hzmh5w5g0sxdrm4q2dyp4jq839srf435uwxnvjf2xzaa9awprt76zrq45ppy60rzlru6p2t87el9m3syfn36jfdl5ts0kmyd629paqwfcqddnw8s6t3l";
+	// Real orchard-only UA from Zcash explorer.
+	const uaRealOrchardOnly =
+		"u1fasx684eaqjej3rvn7kjnjsymdm8mdv66nuym9uh9xznmf3skz6zz0qt3q3cflw8cgy8cfndran77a4e797q7t32u779q9halyx7djty";
 
 	it("accepts a valid transparent address", () => {
 		expect(validateAddress(validTransparentAddress, Chains.Zcash)).toBe(true);
 	});
 
-	it("accepts a valid UA address", () => {
-		expect(validateAddress(validUAAddress, Chains.Zcash)).toBe(true);
+	it("accepts a UA containing an orchard receiver", () => {
+		expect(validateAddress(uaOrchardOnly, Chains.Zcash)).toBe(true);
+		expect(validateAddress(uaSaplingOrchard, Chains.Zcash)).toBe(true);
+		expect(validateAddress(uaP2pkhSaplingOrchard, Chains.Zcash)).toBe(true);
+		expect(validateAddress(uaRealOrchardOnly, Chains.Zcash)).toBe(true);
+	});
+
+	it("accepts a UA containing a transparent receiver alongside sapling", () => {
+		expect(validateAddress(uaP2pkhSapling, Chains.Zcash)).toBe(true);
+		expect(validateAddress(uaP2shSapling, Chains.Zcash)).toBe(true);
+	});
+
+	it("rejects a UA that only contains a sapling receiver", () => {
+		expect(validateAddress(uaSaplingOnly, Chains.Zcash)).toBe(false);
 	});
 
 	it("rejects a transparent address with invalid characters", () => {
@@ -671,8 +697,10 @@ describe("validateZcashAddress", () => {
 		);
 	});
 
-	it("rejects a ua address with invalid characters", () => {
-		expect(validateAddress(invalidUA, Chains.Zcash)).toBe(false);
+	it("rejects a malformed UA string", () => {
+		expect(
+			validateAddress("u1r2VHBwC5eAnZB22YNFSJg8iFtWgoAEKW000", Chains.Zcash),
+		).toBe(false);
 	});
 });
 
