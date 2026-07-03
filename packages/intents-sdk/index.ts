@@ -91,6 +91,8 @@ export {
 	type WithdrawalWatchErrorType,
 	WithdrawalFailedError,
 	type WithdrawalFailedErrorType,
+	NearWithdrawalFailedError,
+	type NearWithdrawalFailedErrorType,
 } from "./src/core/withdrawal-watcher";
 
 // Bridge SDK Core Errors
