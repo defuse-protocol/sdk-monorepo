@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.74.0
+
+### Minor Changes
+
+- dff53e3: Support omni withdrawals via Polygon
+
 ## 0.73.0
 
 ### Minor Changes
