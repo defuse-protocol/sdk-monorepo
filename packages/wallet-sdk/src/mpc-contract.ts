@@ -1,4 +1,4 @@
-import type { PromiseSingle, Request } from "./types/wallet";
+import type { NearPromise, Request } from "./types/wallet";
 import { base64, hex } from "@scure/base";
 
 export enum DomainId {
@@ -17,7 +17,7 @@ export class MpcContract {
 		domainId: DomainId,
 		payload: Uint8Array,
 		path: string,
-	): PromiseSingle {
+	): NearPromise {
 		const hexPayload = hex.encode(payload);
 
 		let payload_v2: { Ecdsa: string } | { Eddsa: string };
@@ -51,16 +51,16 @@ export class MpcContract {
 			},
 		});
 
-		console.log(`Domain ID ${argsJson}`);
-
 		return {
 			receiver_id: this.contractId,
 			actions: [
 				{
 					action: "function_call",
-					function_name: "sign",
-					args: base64.encode(new TextEncoder().encode(argsJson)),
-					deposit: "1",
+					payload: {
+						function_name: "sign",
+						args: base64.encode(new TextEncoder().encode(argsJson)),
+						deposit: "1",
+					},
 				},
 			],
 		};
@@ -72,11 +72,8 @@ export class MpcContract {
 		path: string = "",
 	): Request {
 		return {
-			ops: [],
-			out: {
-				after: [],
-				then: [this.buildSignMpcPromiseSingle(domainId, payload, path)],
-			},
+			internal: [],
+			external: [this.buildSignMpcPromiseSingle(domainId, payload, path)],
 		};
 	}
 }

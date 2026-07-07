@@ -3,12 +3,11 @@ export { OneClickClient } from "./oneclick-client";
 export type {
 	RequestMessage,
 	Request,
-	PromiseDag,
-	PromiseSingle,
+	NearPromise,
 	PromiseAction,
 	FunctionCallAction,
 	TransferAction,
-	StateInitAction,
+	DeterministicStateInitAction,
 	StateInit,
 	WalletOp,
 } from "./types/wallet";

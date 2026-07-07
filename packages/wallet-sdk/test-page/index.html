@@ -149,9 +149,9 @@
     <section>
         <h2>0. Connect to Relayer (<code>new OneClickClient({ baseUrl, authToken })</code>)</h2>
         <label for="baseUrl">Base URL</label>
-        <input id="baseUrl" value="http://localhost:3000" />
+        <input id="baseUrl" placeholder="Set VITE_WALLET_SDK_BASE_URL" />
         <label for="authToken">Auth Token (JWT, optional)</label>
-        <textarea id="authToken" placeholder="Paste token"></textarea>
+        <textarea id="authToken" placeholder="Set VITE_JWT_KEY or paste token"></textarea>
         <button id="connectBtn">Connect</button>
         <div id="connectOutput" class="output" hidden></div>
     </section>

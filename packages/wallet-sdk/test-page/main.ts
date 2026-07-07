@@ -1,8 +1,10 @@
+/// <reference types="vite/client" />
+
 import { base64, hex } from "@scure/base";
-import type { RequestMessage } from "../src/types/wallet";
+import type { RequestMessage } from "../src";
 import { WalletWebAuthnP256 } from "../src/wallet-contract";
 import { DomainId, MpcContract } from "../src/mpc-contract";
-import { OneClickClient } from "../src/oneclick-client";
+import { OneClickClient } from "../src";
 
 function getInput(id: string): HTMLInputElement {
 	const element = document.getElementById(id);
@@ -48,6 +50,9 @@ const $baseUrl = getInput("baseUrl");
 const $authToken = getTextarea("authToken");
 const $connectBtn = getButton("connectBtn");
 const $connectOutput = getDiv("connectOutput");
+
+$baseUrl.value = import.meta.env.VITE_WALLET_SDK_BASE_URL ?? "";
+$authToken.value = import.meta.env.VITE_JWT_KEY ?? "";
 
 const $publicKey = getInput("publicKey");
 const $createPasskey = getButton("createPasskey");

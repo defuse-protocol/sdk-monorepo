@@ -14,7 +14,7 @@ export class OneClickClient {
 	async sign(body: {
 		msg: unknown;
 		proof: string;
-		stateInit: unknown;
+		deterministicStateInit?: unknown;
 	}): Promise<{ status: number; body: string }> {
 		const res = await this.post("/v0/sign", body);
 		const text = await res.text();
