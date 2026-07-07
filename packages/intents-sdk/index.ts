@@ -48,6 +48,8 @@ export type {
 	TxNoInfo,
 	// Asset parsing
 	ParsedAssetInfo,
+	// Quote options
+	QuoteOptions,
 } from "./src/shared-types";
 
 // ============================================================================
@@ -142,6 +144,12 @@ export {
 	PoaWithdrawalPendingError,
 	type PoaWithdrawalPendingErrorType,
 } from "@defuse-protocol/internal-utils";
+export {
+	XrplDestinationTagRequiredError,
+	type XrplDestinationTagRequiredErrorType,
+	XrplDepositAuthEnabledError,
+	type XrplDepositAuthEnabledErrorType,
+} from "./src/bridges/poa-bridge/errors";
 
 // HTTP & Network Errors
 export {
@@ -167,6 +175,10 @@ export {
 	type IntentSettlementErrorType,
 	RelayPublishError,
 	type RelayPublishErrorType,
+	RelayPublishRejectedError,
+	type RelayPublishRejectedErrorType,
+	RelayPublishResultUnknownError,
+	type RelayPublishResultUnknownErrorType,
 } from "@defuse-protocol/internal-utils";
 
 export type {

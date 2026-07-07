@@ -23,11 +23,13 @@ export const Chains = {
 	Berachain: "eip155:80085",
 	Near: "near:mainnet",
 	Solana: "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+	Fogo: "solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251",
 	Tron: "tron:27Lqcw",
 	XRPL: "xrpl:0",
 	TON: "tvm:-239",
 	Sui: "sui:mainnet",
 	Aptos: "aptos:mainnet",
+	Movement: "move-mvmt:126",
 	Stellar: "stellar:pubnet",
 	Cardano: "cip34:1-764824073",
 	Starknet: "starknet:SN_MAIN",
@@ -35,6 +37,8 @@ export const Chains = {
 	Scroll: "eip155:534352",
 	Aleo: "aleo:0",
 	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
+	Abstract: "eip155:2741",
+	HyperCore: "hlcore:mainnet", // No official CAIP-2 identifier exists for HyperCore; this value is unofficial and may change.
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];

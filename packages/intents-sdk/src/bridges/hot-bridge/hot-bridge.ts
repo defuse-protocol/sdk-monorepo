@@ -4,7 +4,7 @@ import {
 	type EnvConfig,
 	withTimeout,
 } from "@defuse-protocol/internal-utils";
-import { type HotBridge as HotSdk, OMNI_HOT_V2 } from "@hot-labs/omni-sdk";
+import { type HotBridge as HotSdk, GlobalSettings } from "@hot-labs/omni-sdk";
 import { utils } from "@hot-labs/omni-sdk";
 import { LRUCache } from "lru-cache";
 import * as v from "valibot";
@@ -129,7 +129,8 @@ export class HotBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 
-		const contractIdSatisfies = parsed.contractId === OMNI_HOT_V2;
+		const contractIdSatisfies =
+			parsed.contractId === GlobalSettings.omniHotContract;
 
 		if (!contractIdSatisfies) {
 			return null;
@@ -313,7 +314,7 @@ export class HotBridge implements Bridge {
 					args.withdrawalParams.assetId !== feeAssetId
 				) {
 					// Plasma withdrawals require inflated gas price for solver to quote non-native tokens
-					result.gasPrice *= 20n;
+					result.gasPrice *= 100n;
 				}
 				return result;
 			},
@@ -389,9 +390,10 @@ export class HotBridge implements Bridge {
 		}
 
 		const isEvm = args.landingChain.startsWith("eip155:");
-		// For EVM networks, the bridge indexer is the source of truth for withdrawal hashes.
-		// The HOT API is only used as a fallback since the contract view method can return invalid hashes.
-		if (isEvm) {
+		const isTon = args.landingChain === Chains.TON;
+		// Bridge indexer is the source of truth for destination hashes on these chains.
+		// TON does not fall back to HOT API hashes because they can refer to trace roots instead of CEX-visible transfers.
+		if (isEvm || args.landingChain === Chains.Stellar || isTon) {
 			try {
 				args.logger?.info("Fetching withdrawal hash from bridge indexer", {
 					nearTxHash: args.tx.hash,
@@ -414,6 +416,18 @@ export class HotBridge implements Bridge {
 					};
 				}
 			} catch (error) {
+				if (isTon) {
+					args.logger?.error(
+						"Bridge indexer failed unexpectedly, keeping TON withdrawal pending",
+						{
+							nearTxHash: args.tx.hash,
+							nonce: nonce.toString(),
+							error,
+						},
+					);
+					return { status: "pending" };
+				}
+
 				// Bridge indexer failed, fallback to HOT API
 				args.logger?.error(
 					"Bridge indexer failed unexpectedly, trying HOT API fallback",

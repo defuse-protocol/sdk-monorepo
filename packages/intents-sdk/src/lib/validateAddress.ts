@@ -8,6 +8,13 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
+import {
+	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
+	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
+	TON_WORKCHAIN_BASECHAIN,
+	TON_WORKCHAIN_MASTERCHAIN,
+	tryParseTonAddress,
+} from "./ton-address";
 
 /**
  * Validates that an address matches the expected format for a given blockchain.
@@ -28,6 +35,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateBchAddress(address);
 
 		case Chains.Solana:
+		case Chains.Fogo:
 			return validateSolAddress(address);
 
 		case Chains.Dogecoin:
@@ -57,6 +65,9 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Aptos:
 			return validateAptosAddress(address);
 
+		case Chains.Movement:
+			return validateMovementAddress(address);
+
 		case Chains.Cardano:
 			return validateCardanoAddress(address);
 
@@ -77,6 +88,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Berachain:
 		case Chains.Plasma:
 		case Chains.Scroll:
+		case Chains.Abstract:
+		case Chains.HyperCore:
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);
@@ -92,13 +105,93 @@ function validateEthAddress(address: string) {
 	return isAddress(address, { strict: true });
 }
 
-function validateBtcAddress(address: string) {
-	return (
-		/^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address) ||
-		/^bc1[02-9ac-hj-np-z]{11,87}$/.test(address) ||
-		/^bc1p[02-9ac-hj-np-z]{42,87}$/.test(address)
-	);
+/**
+ * Validates Bitcoin mainnet addresses. Supported types:
+ *
+ * Base58Check (legacy):
+ *   - P2PKH  starts with 1   version 0x00  e.g. 1A1zP1eP...
+ *   - P2SH   starts with 3   version 0x05  e.g. 3J98t1Wp...
+ *
+ * Bech32 (native SegWit v0):
+ *   - P2WPKH  bc1q  42 chars  20-byte witness program
+ *   - P2WSH   bc1q  62 chars  32-byte witness program
+ *
+ * Bech32m (native SegWit v1+):
+ *   - P2TR    bc1p  62 chars  32-byte witness program (Taproot)
+ */
+function validateBtcAddress(address: string): boolean {
+	try {
+		if (address.toLowerCase().startsWith("bc1")) {
+			return validateBtcBech32Address(address);
+		}
+		return validateBtcBase58Address(address);
+	} catch {
+		return false;
+	}
+}
+
+function validateBtcBase58Address(address: string): boolean {
+	const decoded: Uint8Array = base58.decode(address);
+
+	// version (1) + hash160 (20) + checksum (4) = 25 bytes
+	if (decoded.length !== 25) return false;
+
+	const version = decoded[0];
+	// 0x00 = P2PKH mainnet, 0x05 = P2SH mainnet
+	if (version !== 0x00 && version !== 0x05) return false;
+
+	const payload = decoded.subarray(0, 21);
+	const checksum = decoded.subarray(21, 25);
+	const expectedChecksum = sha256(sha256(payload)).subarray(0, 4);
+
+	for (let i = 0; i < 4; i++) {
+		if (checksum[i] !== expectedChecksum[i]) return false;
+	}
+	return true;
+}
+
+function validateBtcBech32Address(address: string): boolean {
+	let decoded: { prefix: string; words: number[] };
+	let isBech32m = false;
+
+	try {
+		decoded = bech32.decode(address as `${string}1${string}`);
+	} catch {
+		try {
+			decoded = bech32m.decode(address as `${string}1${string}`);
+			isBech32m = true;
+		} catch {
+			return false;
+		}
+	}
+
+	if (decoded.prefix.toLowerCase() !== "bc") return false;
+
+	const { words } = decoded;
+	if (!words || words.length < 1) return false;
+
+	const witnessVersion = words[0];
+	if (witnessVersion === undefined || witnessVersion < 0 || witnessVersion > 16)
+		return false;
+
+	const program = bech32.fromWords(words.slice(1));
+	const progLen = program.length;
+
+	if (progLen < 2 || progLen > 40) return false;
+
+	// v0: Bech32 only — 20 bytes (P2WPKH) or 32 bytes (P2WSH)
+	if (witnessVersion === 0) {
+		if (isBech32m) return false;
+		return progLen === 20 || progLen === 32;
+	}
+
+	// v1: Bech32m only — 32 bytes (P2TR / Taproot)
+	if (witnessVersion === 1) {
+		if (!isBech32m) return false;
+		return progLen === 32;
+	}
+
+	return false;
 }
 
 /**
@@ -307,8 +400,26 @@ function validateTronHexAddress(address: string): boolean {
 	}
 }
 
-function validateTonAddress(address: string) {
-	return /^[EU]Q[0-9A-Za-z_-]{46}$/.test(address);
+function validateTonAddress(address: string): boolean {
+	const parsed = tryParseTonAddress(address);
+	if (parsed === null) return false;
+
+	// Real TON only uses workchain 0 and -1. Both forms can technically encode
+	// other values, but no real wallet does.
+	if (
+		parsed.workchainId !== TON_WORKCHAIN_BASECHAIN &&
+		parsed.workchainId !== TON_WORKCHAIN_MASTERCHAIN
+	) {
+		return false;
+	}
+
+	// Friendly form has a tag byte. Reject testnet tags. Raw form has no tag
+	// (null), so it passes this check.
+	return (
+		parsed.tag === null ||
+		parsed.tag === TON_ADDRESS_TAG_BOUNCEABLE_MAINNET ||
+		parsed.tag === TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET
+	);
 }
 
 function validateSuiAddress(address: string) {
@@ -321,6 +432,29 @@ function validateStellarAddress(address: string) {
 
 function validateAptosAddress(address: string) {
 	return /^0x[a-fA-F0-9]{64}$/.test(address);
+}
+
+// Accept non strict addresses
+function validateMovementAddress(address: string) {
+	let parsedAddress = address;
+	if (address.startsWith("0x")) {
+		parsedAddress = address.slice(2);
+	}
+
+	if (parsedAddress.length === 0 || parsedAddress.length > 64) {
+		return false;
+	}
+
+	if (!/^[a-fA-F0-9]+$/.test(parsedAddress)) {
+		return false;
+	}
+
+	if (parsedAddress.length >= 60) {
+		return true;
+	}
+
+	const paddedAddress = parsedAddress.padStart(64, "0");
+	return /^0{63}[0-9a-fA-F]$/.test(paddedAddress);
 }
 
 /**

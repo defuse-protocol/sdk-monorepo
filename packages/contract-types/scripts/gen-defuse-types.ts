@@ -1922,6 +1922,18 @@ async function main() {
 	// Note: expandPropertiesWithAnyOf, addStrictAdditionalProperties already applied in PHASE 1
 	validationSchema = moveContentEncodingToDescription(validationSchema);
 
+	// External wallet schemas: allow extra fields we don't control (JSON Schema default is true).
+	const OPEN_VALIDATION_DEFINITIONS = [
+		"DefusePayload_for_DefuseIntents",
+		"Nep413DefusePayload",
+		"TonConnectPayloadSchemaText",
+	] as const;
+
+	for (const name of OPEN_VALIDATION_DEFINITIONS) {
+		const def = validationSchema.definitions?.[name];
+		if (def) delete def.additionalProperties;
+	}
+
 	// Step 9: Dereference schema (inline all $refs) - this goes LAST for structural changes
 	validationSchema = dereferenceSchema(validationSchema);
 	validationSchema = deduplicateOneOf(validationSchema);

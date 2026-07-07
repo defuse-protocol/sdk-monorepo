@@ -4,6 +4,7 @@ import { Chains } from "./caip2";
 import {
 	configureEvmRpcUrls,
 	configureStellarRpcUrls,
+	configureXrplRpcUrls,
 } from "./configure-rpc-config";
 
 describe("configureEvmRpcUrls()", () => {
@@ -153,6 +154,40 @@ describe("configureEvmRpcUrls()", () => {
 		expect(result).toEqual({
 			1: ["https://eth-mainnet.public.blastapi.io"],
 		});
+	});
+});
+
+describe("configureXrplRpcUrls()", () => {
+	const mockDefaultRpcUrls = ["https://xrpl-rpc.publicnode.com"];
+
+	it("returns default URLs when no user config provided", () => {
+		const result = configureXrplRpcUrls(mockDefaultRpcUrls, {});
+
+		expect(result).toEqual(["https://xrpl-rpc.publicnode.com"]);
+	});
+
+	it("overrides defaults with user config", () => {
+		const result = configureXrplRpcUrls(mockDefaultRpcUrls, {
+			[Chains.XRPL]: ["https://custom-xrpl-rpc.com"],
+		});
+
+		expect(result).toEqual(["https://custom-xrpl-rpc.com"]);
+	});
+
+	it("ignores other chains", () => {
+		const result = configureXrplRpcUrls(mockDefaultRpcUrls, {
+			[Chains.Polygon]: ["https://custom-polygon-rpc.com"],
+		});
+
+		expect(result).toEqual(["https://xrpl-rpc.publicnode.com"]);
+	});
+
+	it("throws when empty list provided", () => {
+		expect(() =>
+			configureXrplRpcUrls(mockDefaultRpcUrls, {
+				[Chains.XRPL]: [],
+			}),
+		).toThrow("XRPL RPC URL is not provided");
 	});
 });
 

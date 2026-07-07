@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/contract-types",
-	"version": "0.6.2",
+	"version": "0.6.4",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -18,17 +18,25 @@
 	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs",
-			"default": "./dist/index.js"
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
 		},
 		"./schemas/intents.schema.json": "./schemas/intents.schema.json",
 		"./validate": {
-			"types": "./dist/validate.d.ts",
-			"import": "./dist/validate.js",
-			"require": "./dist/validate.cjs",
-			"default": "./dist/validate.js"
+			"import": {
+				"types": "./dist/validate.d.ts",
+				"default": "./dist/validate.js"
+			},
+			"require": {
+				"types": "./dist/validate.d.cts",
+				"default": "./dist/validate.cjs"
+			}
 		}
 	},
 	"typesVersions": {

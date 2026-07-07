@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/internal-utils",
-	"version": "0.29.0",
+	"version": "0.35.2",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -18,10 +18,14 @@
 	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs",
-			"default": "./dist/index.js"
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
 		}
 	},
 	"files": [
@@ -38,9 +42,8 @@
 	"dependencies": {
 		"@defuse-protocol/contract-types": "workspace:*",
 		"@lifeomic/attempt": "^3.0.0",
+		"@noble/curves": "^1.4.0",
 		"@noble/hashes": "^1.7.1",
-		"@peculiar/asn1-ecc": "^2.0.0",
-		"@peculiar/asn1-schema": "^2.0.0",
 		"@scure/base": "^1.0.0",
 		"@thames/monads": "^0.7.0",
 		"near-api-js": "^4.0.0 || ^5.0.0",
