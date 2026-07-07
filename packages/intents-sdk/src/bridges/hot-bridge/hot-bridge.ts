@@ -325,7 +325,9 @@ export class HotBridge implements Bridge {
 		);
 
 		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
+			args.withdrawalParams.assetId === feeAssetId ||
+			feeAmount === 0n ||
+			args.quoteOptions?.skip
 				? null
 				: await getFeeQuote({
 						feeAmount,

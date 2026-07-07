@@ -1524,8 +1524,7 @@ describe("OmniBridge", () => {
 		});
 	});
 
-	describe("prefundedNativeFeeTokens", () => {
-		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
+	describe("Prefunded token flow", () => {
 		const prefundedAssetId = "nep141:eth.bridge.near";
 
 		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
@@ -1547,7 +1546,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
 			});
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
@@ -1560,6 +1558,9 @@ describe("OmniBridge", () => {
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
+				},
+				quoteOptions: {
+					skip: true,
 				},
 			});
 
@@ -1590,7 +1591,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
 			});
 
 			const minStoragedDeposit = 1n;
@@ -1609,6 +1609,9 @@ describe("OmniBridge", () => {
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
+				},
+				quoteOptions: {
+					skip: true,
 				},
 			});
 
@@ -1647,7 +1650,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
 			});
 
 			await expect(
@@ -1669,36 +1671,6 @@ describe("OmniBridge", () => {
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 				}),
 			).resolves.toBeUndefined();
-		});
-
-		it("validateWithdrawal rejects a zero fee amount for a token that is not prefunded", async () => {
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
-
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider,
-			});
-
-			await expect(
-				bridge.validateWithdrawal({
-					assetId: prefundedAssetId,
-					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
-					feeEstimation: {
-						amount: 0n,
-						quote: null,
-						underlyingFees: {
-							[RouteEnum.OmniBridge]: {
-								relayerFee: 0n,
-								storageDepositFee: 0n,
-							},
-						},
-					},
-					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
-				}),
-			).rejects.toThrow("Invalid Omni Bridge fee: expected > 0");
 		});
 	});
 });
