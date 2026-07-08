@@ -119,6 +119,8 @@ export {
 	type HotWithdrawalNotFoundErrorType,
 	HotWithdrawalApiFeeRequestTimeoutError,
 	type HotWithdrawalApiFeeRequestTimeoutErrorType,
+	StellarAccountNotActivatedError,
+	type StellarAccountNotActivatedErrorType,
 } from "./src/bridges/hot-bridge/error";
 
 // Omni Bridge Errors
