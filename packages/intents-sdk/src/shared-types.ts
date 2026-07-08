@@ -216,11 +216,20 @@ export interface IIntentsSDK {
 	): Promise<BatchWithdrawalResult>;
 }
 
+/**
+ * Options controlling the solver relay quote request when the withdrawal asset
+ * needs to be swapped into the asset that covers withdrawal fees.
+ */
 export interface QuoteOptions {
 	waitMs?: number;
 	minWaitMs?: number;
 	maxWaitMs?: number;
 	trustedMetadata?: unknown;
+	/**
+	 * Skips quoting/swapping the withdrawal asset into the fee asset entirely.
+	 * Useful when the account already holds the asset needed to cover withdrawal fees.
+	 */
+	skip?: boolean;
 }
 
 export interface NearTxInfo {
@@ -334,17 +343,6 @@ export interface RouteFeeStructures {
 
 	/** Internal transfers have no fees */
 	[RouteEnum.InternalTransfer]: null;
-}
-
-/**
- * Per-bridge configuration, keyed by route. Each entry is optional and tunes
- * the behaviour of a single bridge; omitting one falls back to that bridge's defaults.
- */
-export interface BridgeConfigs {
-	[RouteEnum.OmniBridge]?: {
-		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is prefunded. */
-		prefundedNativeFeeTokens?: string[];
-	};
 }
 
 /**
