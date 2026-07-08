@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
 import * as estimateFee from "../../lib/estimate-fee";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
@@ -1308,7 +1309,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: "nep141:eth.bridge.near",
 					amount: 1000000000000000000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
 					feeEstimation: {
 						amount: 25_000_000_000n,
 						quote: null,
@@ -1358,7 +1359,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: "nep141:lsd-usdt.rhealab.near",
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: "0x0000000000000000000000000000000000000001",
 					feeEstimation: {
 						amount: 0n,
 						quote: null,
@@ -1444,6 +1445,54 @@ describe("OmniBridge", () => {
 			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
 		});
 
+		it.each([
+			{
+				assetId:
+					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+				destinationAddress: "0xaaaaaa20d9e0e2461697782ef11675f668207961",
+				targetChain: Chains.Ethereum,
+			},
+			{
+				assetId: "nep141:token.publicailab.near",
+				destinationAddress: "0x5cd0ba37d1d2eeaafae7af26a9346e80938d1669",
+				targetChain: Chains.Ethereum,
+			},
+		])(
+			"blocks withdrawals of token to it's address",
+			async ({ assetId, destinationAddress, targetChain }) => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider,
+				});
+
+				const result = bridge.validateWithdrawal({
+					assetId,
+					amount: 0n,
+					destinationAddress,
+					skipMinAmountValidation: true,
+					routeConfig: createOmniBridgeRoute(targetChain),
+					feeEstimation: {
+						amount: 1n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								storageDepositFee: 0n,
+								relayerFee: 1n,
+							},
+						},
+					},
+				});
+
+				await expect(result).rejects.toThrow(
+					DestinationAddressMatchesTokenAddressError,
+				);
+			},
+		);
+
 		it("Skips all min amount checks when skipMinAmountValidation is true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
@@ -1510,7 +1559,7 @@ describe("OmniBridge", () => {
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
 					assetId: "nep141:lsd-usdt.rhealab.near",
-					destinationAddress: zeroAddress,
+					destinationAddress: "0x0000000000000000000000000000000000000001",
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
 				},

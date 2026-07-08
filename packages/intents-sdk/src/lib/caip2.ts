@@ -43,6 +43,10 @@ export const Chains = {
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
 
+export function isEvmChain(chain: Chain) {
+	return chain.startsWith("eip155:");
+}
+
 export function getEIP155ChainId(chain: string): number {
 	assert(chain.startsWith("eip155:"), "Chain is not an EIP-155 chain");
 	const chainIdStr = chain.slice(7);
