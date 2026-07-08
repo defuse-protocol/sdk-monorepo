@@ -628,7 +628,7 @@ export class OmniBridge implements Bridge {
 		let amount = 0n;
 		let quote = null;
 		// Skip quoting when native fee = 0 and no storage deposit is needed
-		// or when fee is prefunded
+		// or when the account already holds the asset needed to cover withdrawal fees
 		if (totalAmountToQuote > 0n && !args.quoteOptions?.skip) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,

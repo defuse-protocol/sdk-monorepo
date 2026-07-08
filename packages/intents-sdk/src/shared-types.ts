@@ -216,11 +216,19 @@ export interface IIntentsSDK {
 	): Promise<BatchWithdrawalResult>;
 }
 
+/**
+ * Options controlling the solver relay quote requested when the withdrawal asset
+ * needs to be swapped into the asset that covers withdrawal fees.
+ */
 export interface QuoteOptions {
 	waitMs?: number;
 	minWaitMs?: number;
 	maxWaitMs?: number;
 	trustedMetadata?: unknown;
+	/**
+	 * Skips quoting/swapping the withdrawal asset into the fee asset entirely.
+	 * Useful when the account already holds the asset needed to cover withdrawal fees.
+	 */
 	skip?: boolean;
 }
 
