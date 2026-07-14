@@ -337,7 +337,7 @@ describe("OmniBridge", () => {
 		): Awaited<ReturnType<BridgeAPI["getTransfer"]>>[0] {
 			return {
 				transfer_id: null,
-				source_chain: null,
+				origin_chain: null,
 				destination_chain: null,
 				sender: null,
 				recipient: null,
