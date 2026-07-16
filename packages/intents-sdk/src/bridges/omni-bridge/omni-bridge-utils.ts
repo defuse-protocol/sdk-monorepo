@@ -42,11 +42,13 @@ export function createWithdrawIntentsPrimitive(params: {
 		recipient: OmniAddress;
 		fee: string;
 		native_token_fee: string;
+		external_id: string;
 		msg?: string;
 	} = {
 		recipient,
 		fee: "0",
 		native_token_fee: params.nativeFee.toString(),
+		external_id: crypto.randomUUID()
 	};
 	// For withdrawals to Bitcoin and other UTXO chains we need to specify maxGasFee to the relayer
 	// that is picking up our TX and sends it to a connector (btc connector for example).
@@ -77,6 +79,7 @@ export function createWithdrawIntentsPrimitive(params: {
 				},
 				sender: `near:${params.intentsContract}`,
 				msg,
+				external_id: ftWithdrawPayload.external_id
 			}),
 			amount: params.nativeFee.toString(),
 			contract_id: OMNI_BRIDGE_CONTRACT,
