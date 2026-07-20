@@ -572,7 +572,13 @@ describe("OmniBridge", () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					recipient: "btc:bc1qtest",
-					utxo_winning_tx_hash: "btc-pending-tx-hash",
+					utxo_meta: {
+						chain: "Btc",
+						pending_sign_id: "btc-pending-tx-hash",
+						relayer_fee: null,
+						protocol_fee: null,
+						relayer_account_id: null,
+					},
 					finalised: {
 						transaction_hash: "btc-final-tx-hash",
 						chain: "Btc",
@@ -618,7 +624,13 @@ describe("OmniBridge", () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					recipient: "btc:bc1qtest",
-					utxo_winning_tx_hash: "btc-pending-tx-hash",
+					utxo_meta: {
+						chain: "Btc",
+						pending_sign_id: "btc-pending-tx-hash",
+						relayer_fee: null,
+						protocol_fee: null,
+						relayer_account_id: null,
+					},
 					finalised: {
 						transaction_hash: "btc-final-tx-hash",
 						chain: "Btc",
@@ -660,11 +672,11 @@ describe("OmniBridge", () => {
 			vi.unstubAllGlobals();
 		});
 
-		it("returns pending when BTC utxo_winning_tx_hash has no pending id", async () => {
+		it("returns pending when BTC pending_sign_id has no pending id", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
 					recipient: "btc:bc1qtest",
-					utxo_winning_tx_hash: null,
+					utxo_meta: null,
 					finalised: null,
 				}),
 			]);

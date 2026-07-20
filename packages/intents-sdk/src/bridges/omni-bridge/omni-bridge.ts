@@ -746,7 +746,7 @@ export class OmniBridge implements Bridge {
 		) {
 			txHash = transfer.finalised?.transaction_hash;
 		} else if (isUtxoChain(destinationChain)) {
-			// utxo_winning_tx_hash is not the finalised tx hash. In rare cases, the hash may
+			// pending_sign_id is not the finalised tx hash. In rare cases, the hash may
 			// change if the BTC transfer fails to be submitted. We return fast hash for FE and
 			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
