@@ -732,31 +732,27 @@ export class OmniBridge implements Bridge {
 			})
 		)[args.index];
 
-		if (transfer == null || transfer.transfer_message == null) {
+		if (transfer == null || transfer.recipient == null) {
 			return { status: "pending" };
 		}
 
-		const destinationChain = getChain(
-			transfer.transfer_message.recipient as OmniAddress,
-		);
+		const destinationChain = getChain(transfer.recipient as OmniAddress);
 		let txHash = null;
-		if (isEvmChain(destinationChain)) {
-			txHash = transfer.finalised?.EVMLog?.transaction_hash;
-		} else if (
+		if (
+			isEvmChain(destinationChain) ||
 			destinationChain === ChainKind.Sol ||
-			destinationChain === ChainKind.Fogo
+			destinationChain === ChainKind.Fogo ||
+			destinationChain === ChainKind.Strk
 		) {
-			txHash = transfer.finalised?.Solana?.signature;
-		} else if (destinationChain === ChainKind.Btc) {
-			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change
-			// if the BTC transfer fails to be submitted. We return fast hash for FE and wait
-			// for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE.
+			txHash = transfer.finalised?.transaction_hash;
+		} else if (isUtxoChain(destinationChain)) {
+			// pending_sign_id is not the finalised tx hash. In rare cases, the hash may
+			// change if the BTC transfer fails to be submitted. We return fast hash for FE and
+			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
 				typeof window !== "undefined"
-					? transfer.utxo_transfer?.btc_pending_id
-					: transfer.finalised?.UtxoLog?.transaction_hash;
-		} else if (destinationChain === ChainKind.Strk) {
-			txHash = transfer.finalised?.Starknet?.transaction_hash;
+					? transfer.utxo_meta?.pending_sign_id
+					: transfer.finalised?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
 		}
