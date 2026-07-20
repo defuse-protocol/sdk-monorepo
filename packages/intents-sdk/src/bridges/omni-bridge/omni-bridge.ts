@@ -751,7 +751,7 @@ export class OmniBridge implements Bridge {
 			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
 				typeof window !== "undefined"
-					? transfer.utxo_winning_tx_hash
+					? transfer.utxo_meta?.pending_sign_id
 					: transfer.finalised?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
