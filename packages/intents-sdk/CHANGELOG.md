@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.74.1
+
+### Patch Changes
+
+- da83616: Update omni sdk dependecy so new api version is used in describe withdrawal method in omni bridge
+
 ## 0.74.0
 
 ### Minor Changes
