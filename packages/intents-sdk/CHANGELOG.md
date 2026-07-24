@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.75.0
+
+### Minor Changes
+
+- f70c142: Add external_id (crypto.randomUUID()) field to avoid identical Omni bridge withdrawals being stuck
+
 ## 0.74.1
 
 ### Patch Changes
