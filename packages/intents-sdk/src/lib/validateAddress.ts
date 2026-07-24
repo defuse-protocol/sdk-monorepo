@@ -15,6 +15,7 @@ import {
 	TON_WORKCHAIN_MASTERCHAIN,
 	tryParseTonAddress,
 } from "./ton-address";
+import { validateZcashUnifiedAddress } from "./zcash-unified-address";
 
 /**
  * Validates that an address matches the expected format for a given blockchain.
@@ -323,6 +324,8 @@ function validateXrpAddress(address: string) {
  * Supports:
  * - Transparent addresses (t1, t3)
  * - TEX addresses (tex1)
+ * - Unified addresses (u1) — accepted only when the UA contains an
+ *   Orchard, P2PKH, or P2SH receiver. Sapling-only UAs are rejected.
  */
 function validateZcashAddress(address: string) {
 	// Transparent address validation
@@ -346,14 +349,8 @@ function validateZcashAddress(address: string) {
 	}
 
 	// Unified address validation
-	const uaHrp = "u";
-	if (address.startsWith(`${uaHrp}1`)) {
-		try {
-			const decoded = bech32m.decodeToBytes(address);
-			return decoded.prefix === uaHrp;
-		} catch {
-			return false;
-		}
+	if (address.startsWith("u1")) {
+		return validateZcashUnifiedAddress(address);
 	}
 
 	return false;
