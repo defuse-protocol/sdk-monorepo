@@ -742,7 +742,8 @@ export class OmniBridge implements Bridge {
 			isEvmChain(destinationChain) ||
 			destinationChain === ChainKind.Sol ||
 			destinationChain === ChainKind.Fogo ||
-			destinationChain === ChainKind.Strk
+			destinationChain === ChainKind.Strk ||
+			destinationChain === ChainKind.Aptos
 		) {
 			txHash = transfer.finalised?.transaction_hash;
 		} else if (isUtxoChain(destinationChain)) {

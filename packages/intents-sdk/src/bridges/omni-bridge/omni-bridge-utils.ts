@@ -119,7 +119,8 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Starknet, ChainKind.Strk],
 	[Chains.Fogo, ChainKind.Fogo],
 	[Chains.Polygon, ChainKind.Pol],
-];
+	[Chains.Aptos, ChainKind.Aptos],
+];	
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
 	return CHAIN_MAPPINGS.find(([chain]) => chain === network)?.[1] ?? null;
@@ -178,7 +179,8 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("abs:") ||
 			input.startsWith("strk:") ||
 			input.startsWith("fogo:") ||
-			input.startsWith("pol:")),
+			input.startsWith("pol:") ||
+			input.startsWith("aptos:")),
 	"Must comply with omni address schema",
 );
 /**
