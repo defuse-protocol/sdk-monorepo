@@ -120,7 +120,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Fogo, ChainKind.Fogo],
 	[Chains.Polygon, ChainKind.Pol],
 	[Chains.Aptos, ChainKind.Aptos],
-];	
+];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
 	return CHAIN_MAPPINGS.find(([chain]) => chain === network)?.[1] ?? null;
