@@ -35,6 +35,7 @@ const stringSchema = {
 		"1cs_v1:eth-sepolia:erc721:0xAbcDEF1234567890abcdef1234567890ABCDef12:42",
 		"1cs_v1:near:near-nft:apes.coolnft.near:series.1%3Ablue%2F42",
 		"1cs_v1:aptos:aptos-coin:0x1%3A%3Aaptos_coin%3A%3AAptosCoin",
+		"1cs_v1:aptos:aptos-fa:0x0b0b819dcf8d9517ed14195a95adfae6a49bfdb49de33a532ca0aa7ee588e8e0",
 		"1cs_v1:fiat:iso4217:EUR",
 	],
 };
@@ -76,6 +77,13 @@ const objectSchema = {
 			namespace: "near-nft",
 			reference: "apes.coolnft.near",
 			selector: "series.1:blue/42",
+		},
+		{
+			version: "v1",
+			chain: "aptos",
+			namespace: "aptos-fa",
+			reference:
+				"0x0b0b819dcf8d9517ed14195a95adfae6a49bfdb49de33a532ca0aa7ee588e8e0",
 		},
 		{
 			version: "v1",
