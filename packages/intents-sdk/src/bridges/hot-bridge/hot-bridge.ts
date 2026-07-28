@@ -33,6 +33,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	HotWithdrawalApiFeeRequestTimeoutError,
 	HotWithdrawalNotFoundError,
+	StellarAccountNotActivatedError,
 } from "./error";
 import { HotWithdrawStatus, MIN_GAS_AMOUNT } from "./hot-bridge-constants";
 import {
@@ -253,6 +254,7 @@ export class HotBridge implements Bridge {
 	 * Hot bridge validates trustlines for Stellar addresses.
 	 * For Stellar chains, checks if the destination address has the required trustline.
 	 * @throws {TrustlineNotFoundError} If Stellar destination address lacks required trustline
+	 * @throws {StellarAccountNotActivatedError} If Stellar destination account is not activated
 	 */
 	async validateWithdrawal(args: {
 		assetId: string;
@@ -273,20 +275,29 @@ export class HotBridge implements Bridge {
 			);
 		}
 
-		if (assetInfo.blockchain === Chains.Stellar) {
-			const token = "native" in assetInfo ? "native" : assetInfo.address;
-
+		if (
+			assetInfo.blockchain === Chains.Stellar &&
+			"native" in assetInfo === false
+		) {
+			const accountExists = await this.hotSdk.stellar.isAccountExists(
+				args.destinationAddress,
+			);
+			if (!accountExists) {
+				throw new StellarAccountNotActivatedError(
+					args.destinationAddress,
+					args.assetId,
+				);
+			}
 			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
 				args.destinationAddress,
-				token,
+				assetInfo.address,
 			);
-
 			if (!hasTrustline) {
 				throw new TrustlineNotFoundError(
 					args.destinationAddress,
 					args.assetId,
 					assetInfo.blockchain,
-					token,
+					assetInfo.address,
 				);
 			}
 		}

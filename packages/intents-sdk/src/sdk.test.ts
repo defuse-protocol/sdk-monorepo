@@ -372,10 +372,17 @@ describe.concurrent("hot_bridge", () => {
 	});
 
 	describe.concurrent("stellar", () => {
+		beforeEach(() => {
+			vi.resetModules();
+			vi.resetAllMocks();
+		});
+
 		const stellarAddress =
 			"GAUA7XL5K54CC2DDGP77FJ2YBHRJLT36CPZDXWPM6MP7MANOGG77PNJU";
 		const stellarAddressWithoutTrustline =
 			"GCITNLN5SCIYD5XCLVZZORBIBOR7SBAOSUWWP6S636ZLELGXZHOE3RLU";
+		const nonActivatedStellarAddress =
+			"GA3RIDQDYSZUVKWX4RGD7RI36YASAHZ7W6W7EHW2F73EQYDF6CLPFGUO";
 
 		// todo: unskip when HOT fixes the issue
 		it.skip("estimateWithdrawalFee(): returns fee", async () => {
@@ -442,6 +449,67 @@ describe.concurrent("hot_bridge", () => {
 			});
 
 			await expect(fee).rejects.toThrow(TrustlineNotFoundError);
+		});
+
+		it("estimateWithdrawalFee(): rejects for token withdrawal to not activated account", async () => {
+			using solverRelay = await useMockedSolverRelay();
+
+			// Need to dynamically import because of runtime mocking above
+			const { IntentsSDK } = await import("./sdk");
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+			const { StellarAccountNotActivatedError } = await import(
+				"./bridges/hot-bridge/error"
+			);
+
+			const quote = {
+				amount_in: "1",
+				amount_out: "1",
+				defuse_asset_identifier_in:
+					"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+				defuse_asset_identifier_out:
+					"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+				expiration_time: "",
+				quote_hash: "",
+			};
+
+			solverRelay.getQuote.mockResolvedValue(quote);
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+					amount: 1000000n,
+					destinationAddress: nonActivatedStellarAddress,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).rejects.toThrow(StellarAccountNotActivatedError);
+		});
+
+		it("estimateWithdrawalFee(): allows XLM withdrawal to not activated account", async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId:
+						"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+					amount: 1000000n,
+					destinationAddress: nonActivatedStellarAddress,
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: expect.any(BigInt),
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						blockNumber: expect.any(BigInt),
+						relayerFee: expect.any(BigInt),
+					},
+				},
+			});
 		});
 
 		it("createWithdrawalIntents(): returns intents array", async () => {
