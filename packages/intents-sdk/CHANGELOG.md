@@ -1,5 +1,12 @@
 # @defuse-protocol/intents-sdk
 
+## 0.76.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
 ## 0.75.0
 
 ### Minor Changes
