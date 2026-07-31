@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": patch
 ---
 
-Remove web3 sol js lib and copy paste address validation from there
+Replace `@solana/web3.js` with `@noble/curves` for Solana address validation.
