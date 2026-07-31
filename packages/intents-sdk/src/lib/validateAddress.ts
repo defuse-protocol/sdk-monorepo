@@ -1,6 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2";
+import { ed25519 } from "@noble/curves/ed25519";
 import { base58, bech32m, hex, bech32 } from "@scure/base";
-import { PublicKey } from "@solana/web3.js";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
 	isValidXAddress as xrp_isValidXAddress,
@@ -304,7 +304,14 @@ function verifyBchChecksum(address: string): boolean {
 
 function validateSolAddress(address: string) {
 	try {
-		return PublicKey.isOnCurve(address);
+		// Copy paste from solana/web3.js PublicKey.isOnCurve method
+		const decoded = base58.decode(address);
+		if (decoded.length !== 32) {
+			return false;
+		}
+
+		ed25519.Point.fromHex(decoded);
+		return true;
 	} catch {
 		return false;
 	}

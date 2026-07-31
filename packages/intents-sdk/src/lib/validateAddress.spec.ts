@@ -291,6 +291,20 @@ describe("validateSolAddress", () => {
 		).toBe(true);
 	});
 
+	it("rejects off curve addresses (Contracts, Multisigs, ATA, PDA)", () => {
+		expect(
+			validateAddress(
+				"FsJRthJuqDCrMdErx986WCuYEM4WEJv1gSiZkXgdEVbE",
+				Chains.Solana,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				"x8WbHW2ab3dMMFrxf6UngdQtXmVzGX1bUZJpPFVvU6R",
+				Chains.Solana,
+			),
+		).toBe(false);
+	});
 	it("rejects invalid addresses", () => {
 		expect(validateAddress("invalid-solana-address", Chains.Solana)).toBe(
 			false,
