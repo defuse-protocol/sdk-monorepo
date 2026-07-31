@@ -291,7 +291,7 @@ describe("validateSolAddress", () => {
 		).toBe(true);
 	});
 
-	it("rejects off curve addresses (Contracts, Multisigs, ATA, PDA)", () => {
+	it("rejects off curve addresses (Multisigs, ATA, PDA)", () => {
 		expect(
 			validateAddress(
 				"FsJRthJuqDCrMdErx986WCuYEM4WEJv1gSiZkXgdEVbE",
