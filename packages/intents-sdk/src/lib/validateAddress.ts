@@ -310,7 +310,7 @@ function validateSolAddress(address: string) {
 			return false;
 		}
 
-		ed25519.Point.fromHex(decoded);
+		ed25519.ExtendedPoint.fromHex(decoded);
 		return true;
 	} catch {
 		return false;
