@@ -102,9 +102,6 @@ importers:
       '@lifeomic/attempt':
         specifier: ^3.0.0
         version: 3.1.0
-      '@noble/curves':
-        specifier: ^1.4.0
-        version: 1.9.6
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0

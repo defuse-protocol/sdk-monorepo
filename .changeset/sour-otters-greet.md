@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": patch
 ---
 
-Replace `@solana/web3.js` with `@noble/curves` for Solana address validation.
+Simplify Solana wallet validation and remove `@solana/web3.js` 
