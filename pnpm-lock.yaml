@@ -106,17 +106,14 @@ importers:
         specifier: ^1.7.1
         version: 1.8.0
       '@omni-bridge/core':
-        specifier: 0.9.0
-        version: 0.9.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
+        specifier: 0.16.0
+        version: 0.16.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@omni-bridge/near':
-        specifier: 0.9.0
-        version: 0.9.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
+        specifier: 0.16.0
+        version: 0.16.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@scure/base':
         specifier: ^1.0.0
         version: 1.2.6
-      '@solana/web3.js':
-        specifier: ^1.0.0
-        version: 1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       borsher:
         specifier: ^4.0.0
         version: 4.0.0
@@ -154,15 +151,12 @@ importers:
       '@lifeomic/attempt':
         specifier: ^3.0.0
         version: 3.1.0
+      '@noble/curves':
+        specifier: ^1.4.0
+        version: 1.9.6
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
-      '@peculiar/asn1-ecc':
-        specifier: ^2.0.0
-        version: 2.3.15
-      '@peculiar/asn1-schema':
-        specifier: ^2.0.0
-        version: 2.3.15
       '@scure/base':
         specifier: ^1.0.0
         version: 1.2.6
@@ -1221,11 +1215,11 @@ packages:
     engines: {node: ^14.18.0 || >=16.10.0, npm: '>=5.10.0'}
     hasBin: true
 
-  '@omni-bridge/core@0.9.0':
-    resolution: {integrity: sha512-XO/x3hg3PkNkgIAE3o6swWYuZXoZt+mrxDqXIggU8nTk788qkn1kZ4eI5Vn+zNOt2nvnCPUGXKGMCQwiFOwyTw==}
+  '@omni-bridge/core@0.16.0':
+    resolution: {integrity: sha512-b8STaRhcQpMwKQ9NT3+z15c+89VQmMxLM36qR29aU3egDM5fkd+QSIBH3OjBm9bjPrBwUr86zrpjojl7PhPQXQ==}
 
-  '@omni-bridge/near@0.9.0':
-    resolution: {integrity: sha512-J/X+2+r14xKoteHHJlaKWT60XgKetDEGoxRGirkvzLjs3KXLdCQRYW78bwtCNPtrJ90yyObeyX8onylelXXPMA==}
+  '@omni-bridge/near@0.16.0':
+    resolution: {integrity: sha512-JH3cUFNJD9vTGXaouawPjQxRUFItr8mR6t/qqthLhz3XNsgBSa5AZST6b3ly3vSmtRWdMxsO7pyJXgCTc/NylA==}
 
   '@open-draft/deferred-promise@2.2.0':
     resolution: {integrity: sha512-CecwLWx3rhxVQF6V4bAgPS5t+So2sTbPgAzafKkVizyi7tlwpcFpdFqq+wqF2OwNBmqFuu6tOyouTuxgpMfzmA==}
@@ -1241,15 +1235,6 @@ packages:
 
   '@oxc-project/types@0.108.0':
     resolution: {integrity: sha512-7lf13b2IA/kZO6xgnIZA88sq3vwrxWk+2vxf6cc+omwYCRTiA5e63Beqf3fz/v8jEviChWWmFYBwzfSeyrsj7Q==}
-
-  '@peculiar/asn1-ecc@2.3.15':
-    resolution: {integrity: sha512-/HtR91dvgog7z/WhCVdxZJ/jitJuIu8iTqiyWVgRE9Ac5imt2sT/E4obqIVGKQw7PIy+X6i8lVBoT6wC73XUgA==}
-
-  '@peculiar/asn1-schema@2.3.15':
-    resolution: {integrity: sha512-QPeD8UA8axQREpgR5UTAfu2mqQmm97oUqahDtNdBcfj3qAnoXzFdQW+aNf/tD2WVXF8Fhmftxoj0eMIT++gX2w==}
-
-  '@peculiar/asn1-x509@2.3.15':
-    resolution: {integrity: sha512-0dK5xqTqSLaxv1FHXIcd4Q/BZNuopg+u1l23hT9rOmQ1g4dNtw0g/RnEi+TboB0gOwGtrWn269v27cMgchFIIg==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -1674,9 +1659,6 @@ packages:
     resolution: {integrity: sha512-i41x4ArQrjdy/iQf75vKwZa+Mx1hOVquamHHe+5lNbObF4CT57oHOTvG9m9DTypuip3O9ucLoryywd6LfP2eEw==}
     engines: {node: '>=12.20.0'}
 
-  '@solana/web3.js@1.98.2':
-    resolution: {integrity: sha512-BqVwEG+TaG2yCkBMbD3C4hdpustR4FpuUFRPUmqRZYYlPI9Hg4XMWxHWOWRzHE9Lkc9NDjzXFX7lDXSgzC7R1A==}
-
   '@solana/web3.js@1.98.4':
     resolution: {integrity: sha512-vv9lfnvjUsRiq//+j5pBdXig0IQdtzA0BRZ3bXEP4KaIyF1CcaydWqgyzQgfZMNIsWNWmG+AUHwPy4AHOD6gpw==}
 
@@ -1698,6 +1680,7 @@ packages:
   '@stellar/stellar-base@14.0.3':
     resolution: {integrity: sha512-mBxNArxWq4wKNJATPJpXB2vIRQ3vUzIvjMCloSsGbfKRrSy96ie8yy7DWh9vSOHV6tNwe85hd3v+p/shlyosqA==}
     engines: {node: '>=20.0.0'}
+    deprecated: This package is now rolled into @stellar/stellar-sdk. Please use @stellar/stellar-sdk to continue receiving updates and support.
 
   '@stellar/stellar-sdk@14.1.1':
     resolution: {integrity: sha512-yu9E9fENEOgt26U/YaApQUUn6TRRhnEzzEOey3y43Nf4l08nbUmlzWYLMl9lcEzEilM68D3ENnEWxBuPylKLQQ==}
@@ -2105,10 +2088,6 @@ packages:
   array-union@2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
-
-  asn1js@3.0.6:
-    resolution: {integrity: sha512-UOCGPYbl0tv8+006qks/dTgV9ajs97X2p0FAbyS2iyCRrmLSRolDaHdp+v/CLgnzHc3fVB+CwYiUmei7ndFcgA==}
-    engines: {node: '>=12.0.0'}
 
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
@@ -3402,13 +3381,6 @@ packages:
 
   pump@3.0.3:
     resolution: {integrity: sha512-todwxLMY7/heScKmntwQG8CXVkWUOdYxIvY2s0VWAAMh/nd8SoYiRaKjlr7+iCs984f2P8zvrfWcDDYVb73NfA==}
-
-  pvtsutils@1.3.6:
-    resolution: {integrity: sha512-PLgQXQ6H2FWCaeRak8vvk1GW462lMxB5s3Jm673N82zI4vqtVUPuZdffdZbPDFRoU8kAhItWFtPCWiPpp4/EDg==}
-
-  pvutils@1.1.3:
-    resolution: {integrity: sha512-pMpnA0qRdFp32b1sJl1wOJNxZLQ2cbQx+k6tjNtZ8CpvVhNqEPRgivZ2WOUev2YMajecdH7ctUPDvEe87nariQ==}
-    engines: {node: '>=6.0.0'}
 
   quansync@0.2.11:
     resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
@@ -5621,7 +5593,7 @@ snapshots:
     dependencies:
       consola: 3.4.2
 
-  '@omni-bridge/core@0.9.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)':
+  '@omni-bridge/core@0.16.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@scure/base': 2.0.0
       '@wormhole-foundation/sdk': 4.9.1(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
@@ -5645,10 +5617,10 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@omni-bridge/near@0.9.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)':
+  '@omni-bridge/near@0.16.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@noble/hashes': 2.0.1
-      '@omni-bridge/core': 0.9.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
+      '@omni-bridge/core': 0.16.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@types/react@19.1.8)(bufferutil@4.0.9)(got@11.8.6)(react@18.3.1)(typescript@5.8.3)(utf-8-validate@5.0.10)
       '@scure/base': 2.0.0
       '@zorsh/zorsh': 0.4.0
       near-kit: 0.7.0(@near-wallet-selector/core@10.1.2(@near-js/keystores@2.2.5(@near-js/crypto@2.2.5(@near-js/types@2.2.5)(@near-js/utils@2.2.5(@near-js/types@2.2.5)))(@near-js/types@2.2.5))(@near-js/utils@2.2.5(@near-js/types@2.2.5)))
@@ -5682,26 +5654,6 @@ snapshots:
   '@oxc-project/types@0.107.0': {}
 
   '@oxc-project/types@0.108.0': {}
-
-  '@peculiar/asn1-ecc@2.3.15':
-    dependencies:
-      '@peculiar/asn1-schema': 2.3.15
-      '@peculiar/asn1-x509': 2.3.15
-      asn1js: 3.0.6
-      tslib: 2.8.1
-
-  '@peculiar/asn1-schema@2.3.15':
-    dependencies:
-      asn1js: 3.0.6
-      pvtsutils: 1.3.6
-      tslib: 2.8.1
-
-  '@peculiar/asn1-x509@2.3.15':
-    dependencies:
-      '@peculiar/asn1-schema': 2.3.15
-      asn1js: 3.0.6
-      pvtsutils: 1.3.6
-      tslib: 2.8.1
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -6084,29 +6036,6 @@ snapshots:
       - encoding
       - utf-8-validate
     optional: true
-
-  '@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@babel/runtime': 7.27.6
-      '@noble/curves': 1.9.6
-      '@noble/hashes': 1.8.0
-      '@solana/buffer-layout': 4.0.1
-      '@solana/codecs-numbers': 2.1.1(typescript@5.8.3)
-      agentkeepalive: 4.6.0
-      bn.js: 5.2.2
-      borsh: 0.7.0
-      bs58: 4.0.1
-      buffer: 6.0.3
-      fast-stable-stringify: 1.0.0
-      jayson: 4.2.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      node-fetch: 2.7.0
-      rpc-websockets: 9.1.1
-      superstruct: 2.0.2
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - typescript
-      - utf-8-validate
 
   '@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
@@ -6888,12 +6817,6 @@ snapshots:
       arkregex: 0.0.5
 
   array-union@2.1.0: {}
-
-  asn1js@3.0.6:
-    dependencies:
-      pvtsutils: 1.3.6
-      pvutils: 1.1.3
-      tslib: 2.8.1
 
   assertion-error@2.0.1: {}
 
@@ -8266,12 +8189,6 @@ snapshots:
     dependencies:
       end-of-stream: 1.4.5
       once: 1.4.0
-
-  pvtsutils@1.3.6:
-    dependencies:
-      tslib: 2.8.1
-
-  pvutils@1.1.3: {}
 
   quansync@0.2.11: {}
 

@@ -10,6 +10,7 @@ export const PoaBridgeNetworkReference = {
 	BITCOIN: "btc:mainnet",
 	BITCOINCASH: "bch:mainnet",
 	SOLANA: "sol:mainnet",
+	FOGO: "fogo:mainnet",
 	DOGECOIN: "doge:mainnet",
 	XRPLEDGER: "xrp:mainnet",
 	ZCASH: "zec:mainnet",
@@ -32,6 +33,7 @@ export const PoaBridgeNetworkReference = {
 	STARKNET: "starknet:mainnet",
 	ALEO: "aleo:mainnet",
 	DASH: "dash:mainnet",
+	PLASMA: "eth:9745",
 } as const;
 
 export const VirtualNetworkReference = {

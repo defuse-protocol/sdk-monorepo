@@ -22,7 +22,7 @@ describe("validateOmniToken()", () => {
 	it("valid omni bridge token ids", () => {
 		for (const assetId of [
 			"eth.bridge.near",
-			"sol.omdep.near",
+			"sol.omft.near",
 			"base.omdep.near",
 			"arb.omdep.near",
 			"foo.omdep.near",

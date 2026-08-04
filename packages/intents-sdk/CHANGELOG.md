@@ -1,5 +1,111 @@
 # @defuse-protocol/intents-sdk
 
+## 0.76.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
+## 0.75.0
+
+### Minor Changes
+
+- f70c142: Add external_id (crypto.randomUUID()) field to avoid identical Omni bridge withdrawals being stuck
+
+## 0.74.1
+
+### Patch Changes
+
+- da83616: Update omni sdk dependecy so new api version is used in describe withdrawal method in omni bridge
+
+## 0.74.0
+
+### Minor Changes
+
+- dff53e3: Support omni withdrawals via Polygon
+
+## 0.73.0
+
+### Minor Changes
+
+- 3fcb03d: Support prefunded tokens for Omni Bridge via Bridge Config, also delete zero token fee configuration for PoA Bridge.
+  - Added `bridgeConfigs[RouteEnum.OmniBridge].prefundedNativeFeeTokens` — asset IDs whose withdrawal native fee is prefunded.
+  - Removed `bridgeConfigs[RouteEnum.PoaBridge].zeroFeeTokens` — the PoA Bridge zero-fee token configuration is no longer supported.
+
+- 33ca1a2: Allow config passing for PoA bridge to allowlist zero fee tokens
+
+## 0.72.0
+
+### Minor Changes
+
+- 474169b: Export the `QuoteOptions` type from the package entry point
+
+### Patch Changes
+
+- 9c51003: Restore `PoaBridgeNetworkReference.FOGO` (`fogo:mainnet`) for Omni bridge integration.
+- Updated dependencies [9c51003]
+  - @defuse-protocol/internal-utils@0.35.2
+
+## 0.71.0
+
+### Minor Changes
+
+- 6d2a8cd: Remove kVault token from omni fee subsidized
+
+## 0.70.0
+
+### Minor Changes
+
+- 11d0ed6: Add more poa omni routable tokens
+
+### Patch Changes
+
+- e9a2271: Use bridge-indexer as the source of truth for TON HOT withdrawal destination transaction hashes.
+
+## 0.69.1
+
+### Patch Changes
+
+- Updated dependencies [371f4b3]
+  - @defuse-protocol/internal-utils@0.35.1
+
+## 0.69.0
+
+### Minor Changes
+
+- 57df8be: Make `sol-0xa69aa1bcb03a369e338156a8718ad60271145803.omdep.near` (kVault gtSOL Balanced (kV-gtSOLb)) token is free to bridge.
+
+## 0.68.1
+
+### Patch Changes
+
+- 0a0d651: Fix require destination tag check for xrp withdrawals via PoA
+
+## 0.68.0
+
+### Minor Changes
+
+- 3b25ae5: Add support for Plasma to PoA bridge
+
+### Patch Changes
+
+- Updated dependencies [3b25ae5]
+  - @defuse-protocol/internal-utils@0.35.0
+
+## 0.67.2
+
+### Patch Changes
+
+- Updated dependencies [a6f918c]
+  - @defuse-protocol/internal-utils@0.34.1
+
+## 0.67.1
+
+### Patch Changes
+
+- d58e02c: Use bridge indexer for getting destination hash for stellar withdrawals via hot bridge
+
 ## 0.67.0
 
 ### Minor Changes

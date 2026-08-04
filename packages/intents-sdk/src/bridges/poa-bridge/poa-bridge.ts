@@ -154,9 +154,10 @@ export class PoaBridge implements Bridge {
 			"relayerFee",
 		);
 		assert(
-			relayerFee > 0n,
-			`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
+			relayerFee >= 0n,
+			`Invalid POA bridge relayer fee: expected >= 0, got ${relayerFee}`,
 		);
+
 		const intent = createWithdrawIntentPrimitive({
 			...args.withdrawalParams,
 			amount: args.withdrawalParams.amount + relayerFee,
@@ -177,6 +178,7 @@ export class PoaBridge implements Bridge {
 		destinationAddress: string;
 		logger?: ILogger;
 		skipMinAmountValidation?: boolean;
+		destinationMemo?: string;
 	}): Promise<void> {
 		const assetInfo = this.parseAssetId(args.assetId);
 		assert(assetInfo != null, "Asset is not supported");
@@ -229,8 +231,7 @@ export class PoaBridge implements Bridge {
 				);
 				const requireDestinationTag =
 					accountInfo.account_flags.requireDestinationTag;
-
-				if (requireDestinationTag)
+				if (requireDestinationTag && !args.destinationMemo)
 					throw new XrplDestinationTagRequiredError(args.destinationAddress);
 
 				const depositAuthEnabled = accountInfo.account_flags.depositAuth;
@@ -267,8 +268,8 @@ export class PoaBridge implements Bridge {
 		);
 		const relayerFee = BigInt(estimation.withdrawalFee);
 		assert(
-			relayerFee > 0n,
-			`Invalid POA bridge relayer fee: expected > 0, got ${relayerFee}`,
+			relayerFee >= 0n,
+			`Invalid POA bridge relayer fee: expected >= 0, got ${relayerFee}`,
 		);
 		return {
 			amount: relayerFee,

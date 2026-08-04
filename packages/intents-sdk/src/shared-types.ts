@@ -337,6 +337,17 @@ export interface RouteFeeStructures {
 }
 
 /**
+ * Per-bridge configuration, keyed by route. Each entry is optional and tunes
+ * the behaviour of a single bridge; omitting one falls back to that bridge's defaults.
+ */
+export interface BridgeConfigs {
+	[RouteEnum.OmniBridge]?: {
+		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is prefunded. */
+		prefundedNativeFeeTokens?: string[];
+	};
+}
+
+/**
  * Represents the different categories of fees that may apply across various withdrawal operations.
  * Each route type has an optional fee structure. Uses a mapped type to ensure all RouteEnum values are covered.
  */
@@ -378,6 +389,7 @@ export interface Bridge {
 		assetId: string;
 		amount: bigint;
 		destinationAddress: string;
+		destinationMemo?: string;
 		feeEstimation: FeeEstimation;
 		routeConfig?: RouteConfig;
 		logger?: ILogger;
