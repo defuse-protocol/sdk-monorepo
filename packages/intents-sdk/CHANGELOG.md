@@ -1,5 +1,24 @@
 # @defuse-protocol/intents-sdk
 
+## 0.77.0
+
+### Minor Changes
+
+- db3c90e: Allow all types of solana addresses and remove `@solana/web3.js`
+
+## 0.76.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
+## 0.75.0
+
+### Minor Changes
+
+- f70c142: Add external_id (crypto.randomUUID()) field to avoid identical Omni bridge withdrawals being stuck
+
 ## 0.74.1
 
 ### Patch Changes
