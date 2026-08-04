@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.78.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
 ## 0.77.0
 
 ### Minor Changes
