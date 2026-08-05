@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.9.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
 ## 1.8.0
 
 ### Minor Changes

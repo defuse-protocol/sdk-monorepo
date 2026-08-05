@@ -1,5 +1,17 @@
 # @defuse-protocol/intents-sdk
 
+## 0.78.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
+## 0.77.0
+
+### Minor Changes
+
+- db3c90e: Allow all types of solana addresses and remove `@solana/web3.js`
+
 ## 0.76.0
 
 ### Minor Changes
