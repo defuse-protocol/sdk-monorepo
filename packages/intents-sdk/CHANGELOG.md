@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.78.1
+
+### Patch Changes
+
+- dbc0e19: Fix hyper evm related utilities function via update of omni bridge packages
+
 ## 0.78.0
 
 ### Minor Changes
