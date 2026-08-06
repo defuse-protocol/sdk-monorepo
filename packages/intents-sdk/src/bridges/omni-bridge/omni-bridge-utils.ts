@@ -120,7 +120,7 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Fogo, ChainKind.Fogo],
 	[Chains.Polygon, ChainKind.Pol],
 	[Chains.Aptos, ChainKind.Aptos],
-	[Chains.HyperEvm, ChainKind.HyperEvm],
+	[Chains.HyperEvm, ChainKind.HlEvm],
 ];
 
 export function caip2ToChainKind(network: Chain): ChainKind | null {
