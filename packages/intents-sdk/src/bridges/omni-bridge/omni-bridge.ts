@@ -27,7 +27,6 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
-	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	OmniBridgeRouteConfig,
@@ -102,22 +101,17 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
-	private bridgeConfig: Required<
-		NonNullable<BridgeConfigs[RouteEnum["OmniBridge"]]>
-	>;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
-		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
-		bridgeConfig?: BridgeConfigs[RouteEnum["OmniBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
@@ -125,9 +119,6 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
-		this.bridgeConfig = {
-			prefundedNativeFeeTokens: bridgeConfig?.prefundedNativeFeeTokens ?? [],
-		};
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -398,16 +389,6 @@ export class OmniBridge implements Bridge {
 		logger?: ILogger;
 		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
-		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
-		const isPrefundedWithdrawal =
-			this.bridgeConfig.prefundedNativeFeeTokens.includes(args.assetId);
-		if (!isFeeSubsidized && !isPrefundedWithdrawal) {
-			assert(
-				args.feeEstimation.amount > 0n,
-				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
-			);
-		}
-
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
 
 		assert(
@@ -483,7 +464,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const utxoChainWithdrawal = isUtxoChain(omniChainKind);
-		if (!utxoChainWithdrawal && !isFeeSubsidized) {
+		if (!utxoChainWithdrawal && !FEE_SUBSIDIZED_TOKENS.includes(args.assetId)) {
 			const relayerFee = getUnderlyingFee(
 				args.feeEstimation,
 				RouteEnum.OmniBridge,
@@ -647,13 +628,8 @@ export class OmniBridge implements Bridge {
 		let amount = 0n;
 		let quote = null;
 		// Skip quoting when native fee = 0 and no storage deposit is needed
-		// or for prefunded tokens.
-		if (
-			totalAmountToQuote > 0n &&
-			!this.bridgeConfig.prefundedNativeFeeTokens.includes(
-				args.withdrawalParams.assetId,
-			)
-		) {
+		// or when the account already holds the asset needed to cover withdrawal fees
+		if (totalAmountToQuote > 0n && !args.quoteOptions?.skip) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
 				feeAssetId: NEAR_NATIVE_ASSET_ID,

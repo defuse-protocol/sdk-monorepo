@@ -229,7 +229,7 @@ export class DirectBridge implements Bridge {
 		const feeAmount = minStorageBalance - userStorageBalance;
 
 		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId
+			args.withdrawalParams.assetId === feeAssetId || args.quoteOptions?.skip
 				? null
 				: await getFeeQuote({
 						feeAmount,

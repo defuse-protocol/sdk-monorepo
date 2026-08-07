@@ -29,6 +29,7 @@ import { HotBridgeEVMChains } from "./hot-bridge-chains";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { RouteEnum } from "../../constants/route-enum";
 import type { FeeEstimation } from "../../shared-types";
+import * as estimateFee from "../../lib/estimate-fee";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 	const actual =
@@ -845,6 +846,49 @@ describe("HotBridge", () => {
 			expect(getGaslessWithdrawFee).toHaveBeenCalledWith(
 				expect.objectContaining({ chain: 143, token: "native" }),
 			);
+			expect(feeEstimation).toEqual({
+				amount: 10n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: 10n,
+						blockNumber: 12345n,
+					},
+				},
+			});
+		});
+
+		it("quoteOptions.skip = true: skips the fee quote but keeps the relayer fee", async () => {
+			const getGaslessWithdrawFee = vi
+				.fn()
+				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
+
+			const hotSdk = {
+				getGaslessWithdrawFee,
+			} as unknown as HotOmniSdk;
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk,
+			});
+
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error(
+						"getFeeQuote must not be called when quoteOptions.skip is true",
+					),
+				);
+
+			const feeEstimation = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: TON_USDT_ASSET_ID,
+					destinationAddress: TON_DESTINATION_ADDRESS,
+				},
+				quoteOptions: { skip: true },
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
 			expect(feeEstimation).toEqual({
 				amount: 10n,
 				quote: null,

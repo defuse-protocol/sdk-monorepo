@@ -1,9 +1,11 @@
 import { configsByEnvironment } from "@defuse-protocol/internal-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
+import { RouteEnum } from "../../constants/route-enum";
+import * as estimateFee from "../../lib/estimate-fee";
 import {
 	createNearWithdrawalRoute,
 	createPoaBridgeRoute,
@@ -143,6 +145,49 @@ describe("DirectBridge", () => {
 				).rejects.toThrow(DestinationExplicitNearAccountDoesntExistError);
 			},
 		);
+	});
+
+	describe("estimateWithdrawalFee()", () => {
+		it("quoteOptions.skip = true: skips the fee quote but keeps the storage deposit fee", async () => {
+			const bridge = new DirectBridge({
+				envConfig: configsByEnvironment.production,
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, storage deposit cache is seeded below
+				nearProvider: {} as any,
+			});
+
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error(
+						"getFeeQuote must not be called when quoteOptions.skip is true",
+					),
+				);
+
+			const minStorageBalance = 1250000000000000000000n;
+			const userStorageBalance = 0n;
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("usdt.tether-token.nearalice.near", [
+				minStorageBalance,
+				userStorageBalance,
+			]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:usdt.tether-token.near",
+					destinationAddress: "alice.near",
+					routeConfig: createNearWithdrawalRoute(),
+				},
+				quoteOptions: { skip: true },
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(result.amount).toBe(minStorageBalance - userStorageBalance);
+			expect(result.quote).toBeNull();
+			expect(
+				result.underlyingFees[RouteEnum.NearWithdrawal]?.storageDepositFee,
+			).toBe(minStorageBalance - userStorageBalance);
+		});
 	});
 });
 
