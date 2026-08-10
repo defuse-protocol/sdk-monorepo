@@ -1422,7 +1422,7 @@ describe("OmniBridge", () => {
 			},
 		])(
 			"blocks withdrawals of token to it's address",
-			async ({ assetId, destinationAddress, targetChain }) => {
+			async ({ assetId, destinationAddress, targetChain, chainKind }) => {
 				const nearProvider = nearFailoverRpcProvider({
 					urls: PUBLIC_NEAR_RPC_URLS,
 				});
@@ -1433,7 +1433,7 @@ describe("OmniBridge", () => {
 				});
 
 				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-					omniAddress(ChainKind.Eth, destinationAddress),
+					omniAddress(chainKind, destinationAddress),
 				);
 
 				const result = bridge.validateWithdrawal({
