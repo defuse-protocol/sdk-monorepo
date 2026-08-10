@@ -3,7 +3,7 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { BridgeAPI } from "@omni-bridge/core";
+import { BridgeAPI, ChainKind, omniAddress } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
@@ -1412,11 +1412,13 @@ describe("OmniBridge", () => {
 					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
 				destinationAddress: "0xaaaaaa20d9e0e2461697782ef11675f668207961",
 				targetChain: Chains.Ethereum,
+				chainKind: ChainKind.Eth,
 			},
 			{
 				assetId: "nep141:token.publicailab.near",
 				destinationAddress: "0x5cd0ba37d1d2eeaafae7af26a9346e80938d1669",
 				targetChain: Chains.Ethereum,
+				chainKind: ChainKind.Eth,
 			},
 		])(
 			"blocks withdrawals of token to it's address",
@@ -1429,6 +1431,10 @@ describe("OmniBridge", () => {
 					envConfig: configsByEnvironment.production,
 					nearProvider,
 				});
+
+				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+					omniAddress(ChainKind.Eth, destinationAddress),
+				);
 
 				const result = bridge.validateWithdrawal({
 					assetId,
