@@ -1536,7 +1536,9 @@ describe("OmniBridge", () => {
 
 	describe("prefundedNativeFeeTokens", () => {
 		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
-		const prefundedAssetId = "nep141:eth.bridge.near";
+		const prefundedAssetId = "nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedTokenId = "bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedOriginChainOmniAddress = "eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
 
 		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
@@ -1562,7 +1564,7 @@ describe("OmniBridge", () => {
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("eth.bridge.near", [0n, 0n]);
+			bridge["storageDepositCache"].set(prefundedTokenId, [0n, 0n]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
@@ -1608,7 +1610,7 @@ describe("OmniBridge", () => {
 			const storageBalanceToPay = minStoragedDeposit - currentStorageBalance;
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("eth.bridge.near", [
+			bridge["storageDepositCache"].set(prefundedTokenId, [
 				minStoragedDeposit,
 				currentStorageBalance,
 			]);
@@ -1643,7 +1645,7 @@ describe("OmniBridge", () => {
 				"getAccountOmniStorageBalance",
 			).mockResolvedValue({ total: highBalance, available: highBalance });
 			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"eth:0x0000000000000000000000000000000000000000",
+				prefundedOriginChainOmniAddress,
 			);
 			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
 				decimals: 6,
