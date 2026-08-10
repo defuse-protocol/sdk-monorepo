@@ -37,6 +37,7 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import { compareAddresses } from "../../lib/compareAddresses";
 import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import { LRUCache } from "lru-cache";
 
@@ -163,6 +164,19 @@ export class DirectBridge implements Bridge {
 			);
 		}
 
+		const { contractId: tokenAccountId } = utils.parseDefuseAssetId(
+			args.assetId,
+		);
+
+		if (
+			compareAddresses(tokenAccountId, args.destinationAddress, Chains.Near)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				tokenAccountId,
+				args.assetId,
+			);
+		}
+
 		// Only check account existence for explicit (named) accounts
 		if (
 			utils.isImplicitAccount(args.destinationAddress) === false &&
@@ -174,16 +188,6 @@ export class DirectBridge implements Bridge {
 			);
 		}
 
-		const { contractId: tokenAccountId } = utils.parseDefuseAssetId(
-			args.assetId,
-		);
-
-		if (tokenAccountId === args.destinationAddress) {
-			throw new DestinationAddressMatchesTokenAddressError(
-				tokenAccountId,
-				args.assetId,
-			);
-		}
 
 		return;
 	}

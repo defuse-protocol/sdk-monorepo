@@ -75,6 +75,7 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { compareAddresses } from "../../lib/compareAddresses";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 type MinStorageBalance = bigint;
@@ -445,10 +446,11 @@ export class OmniBridge implements Bridge {
 
 		const destTokenAddress = getAddress(destTokenOmniAddress);
 		if (
-			isEvmChain(omniChainKind)
-				? destTokenAddress.toLowerCase() ===
-					args.destinationAddress.toLowerCase()
-				: destTokenAddress === args.destinationAddress
+			compareAddresses(
+				destTokenAddress,
+				args.destinationAddress,
+				assetInfo.blockchain,
+			)
 		) {
 			throw new DestinationAddressMatchesTokenAddressError(
 				destTokenAddress,
