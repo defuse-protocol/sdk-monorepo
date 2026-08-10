@@ -188,7 +188,6 @@ export class DirectBridge implements Bridge {
 			);
 		}
 
-
 		return;
 	}
 
