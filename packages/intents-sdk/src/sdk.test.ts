@@ -1005,10 +1005,13 @@ describe("virtual_chain", () => {
 	});
 });
 
+const OMNI_WITHDRAWAL_EXTERNAL_ID = "12345678-1234-4123-8123-123456789012";
+
 describe("omni_bridge", () => {
 	beforeEach(() => {
 		vi.resetModules();
 		vi.restoreAllMocks();
+		vi.spyOn(crypto, "randomUUID").mockReturnValue(OMNI_WITHDRAWAL_EXTERNAL_ID);
 	});
 
 	it("estimateWithdrawalFee(): should return fee", async () => {
@@ -1179,17 +1182,20 @@ describe("omni_bridge", () => {
 			"0x0000000000000000000000000000000000000001",
 		);
 		const actualAmount = withdrawalParams.amount;
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:eth.bridge.near",
-			amount: actualAmount,
-			recipient,
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:eth.bridge.near",
+				amount: actualAmount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: "",
 			},
-			sender: "near:intents.near",
-			msg: "",
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,
@@ -1224,6 +1230,7 @@ describe("omni_bridge", () => {
 					recipient,
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 				}),
 			},
 		]);
@@ -1262,17 +1269,20 @@ describe("omni_bridge", () => {
 			"0x0000000000000000000000000000000000000001",
 		);
 		const actualAmount = withdrawalParams.amount - feeEstimation.amount;
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:eth.bridge.near",
-			amount: actualAmount,
-			recipient,
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:eth.bridge.near",
+				amount: actualAmount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: "",
 			},
-			sender: "near:intents.near",
-			msg: "",
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,
@@ -1307,6 +1317,7 @@ describe("omni_bridge", () => {
 					recipient,
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 				}),
 			},
 		]);
@@ -1367,6 +1378,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, destinationAddress),
 					fee: "0",
 					native_token_fee: "0",
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: JSON.stringify({
 						MaxGasFee: utxoMaxGasFee.toString(),
 					}),
@@ -1430,17 +1442,20 @@ describe("omni_bridge", () => {
 
 		const actualAmount = withdrawalParams.amount;
 		const recipient = omniAddress(ChainKind.Sol, destinationAddress);
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			amount: actualAmount,
-			recipient,
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				amount: actualAmount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: "",
 			},
-			sender: "near:intents.near",
-			msg: "",
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		await expect(intents).resolves.toEqual([
 			{
@@ -1470,6 +1485,7 @@ describe("omni_bridge", () => {
 					recipient,
 					fee: "0",
 					native_token_fee: relayerFee.toString(),
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 				}),
 			},
 		]);
@@ -1529,6 +1545,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, destinationAddress),
 					fee: "0",
 					native_token_fee: "0",
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: JSON.stringify({
 						MaxGasFee: utxoMaxGasFee.toString(),
 					}),
@@ -1747,17 +1764,20 @@ describe("omni_bridge", () => {
 		const utxoMsg = JSON.stringify({
 			MaxGasFee: utxoMaxGasFee.toString(),
 		});
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:nbtc.bridge.near",
-			amount: actualAmount,
-			recipient: omniAddress(ChainKind.Btc, recipient),
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:nbtc.bridge.near",
+				amount: actualAmount,
+				recipient: omniAddress(ChainKind.Btc, recipient),
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: utxoMsg,
 			},
-			sender: "near:intents.near",
-			msg: utxoMsg,
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		await expect(intents).resolves.toEqual([
 			{
@@ -1787,6 +1807,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, recipient),
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: utxoMsg,
 				}),
 			},
@@ -1847,17 +1868,20 @@ describe("omni_bridge", () => {
 		const utxoMsg = JSON.stringify({
 			MaxGasFee: utxoMaxGasFee.toString(),
 		});
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:nbtc.bridge.near",
-			amount: actualAmount,
-			recipient: omniAddress(ChainKind.Btc, recipient),
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:nbtc.bridge.near",
+				amount: actualAmount,
+				recipient: omniAddress(ChainKind.Btc, recipient),
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: utxoMsg,
 			},
-			sender: "near:intents.near",
-			msg: utxoMsg,
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		await expect(intents).resolves.toEqual([
 			{
@@ -1887,6 +1911,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, recipient),
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: utxoMsg,
 				}),
 			},
@@ -1913,8 +1938,8 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
 		[
-			"nep141:sol.omdep.near",
-			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
+			"nep141:sol.omft.near",
+			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Solana },
 		],
 		[
 			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",

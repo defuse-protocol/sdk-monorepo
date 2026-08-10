@@ -29,6 +29,7 @@ export const Chains = {
 	TON: "tvm:-239",
 	Sui: "sui:mainnet",
 	Aptos: "aptos:mainnet",
+	Movement: "move-mvmt:126",
 	Stellar: "stellar:pubnet",
 	Cardano: "cip34:1-764824073",
 	Starknet: "starknet:SN_MAIN",
@@ -37,6 +38,8 @@ export const Chains = {
 	Aleo: "aleo:0",
 	Dash: "bip122:00000ffd590b1485b3caadc19b22e637",
 	Abstract: "eip155:2741",
+	HyperCore: "hlcore:mainnet", // No official CAIP-2 identifier exists for HyperCore; this value is unofficial and may change.
+	HyperEvm: "eip155:999",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];

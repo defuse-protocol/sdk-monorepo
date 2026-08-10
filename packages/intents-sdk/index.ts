@@ -48,6 +48,8 @@ export type {
 	TxNoInfo,
 	// Asset parsing
 	ParsedAssetInfo,
+	// Quote options
+	QuoteOptions,
 } from "./src/shared-types";
 
 // ============================================================================
@@ -173,6 +175,10 @@ export {
 	type IntentSettlementErrorType,
 	RelayPublishError,
 	type RelayPublishErrorType,
+	RelayPublishRejectedError,
+	type RelayPublishRejectedErrorType,
+	RelayPublishResultUnknownError,
+	type RelayPublishResultUnknownErrorType,
 } from "@defuse-protocol/internal-utils";
 
 export type {

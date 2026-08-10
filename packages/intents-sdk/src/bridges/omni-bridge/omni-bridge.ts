@@ -28,6 +28,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	OmniBridgeRouteConfig,
@@ -103,17 +104,22 @@ export class OmniBridge implements Bridge {
 	private tokenDecimalsCache = new TTLCache<OmniAddress, TokenDecimals>({
 		ttl: 3600000,
 	});
+	private bridgeConfig: Required<
+		NonNullable<BridgeConfigs[RouteEnum["OmniBridge"]]>
+	>;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
 		routeMigratedPoaTokensThroughOmniBridge,
+		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
+		bridgeConfig?: BridgeConfigs[RouteEnum["OmniBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
@@ -121,6 +127,9 @@ export class OmniBridge implements Bridge {
 		this.solverRelayApiKey = solverRelayApiKey;
 		this.routeMigratedPoaTokensThroughOmniBridge =
 			routeMigratedPoaTokensThroughOmniBridge ?? false;
+		this.bridgeConfig = {
+			prefundedNativeFeeTokens: bridgeConfig?.prefundedNativeFeeTokens ?? [],
+		};
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -392,7 +401,9 @@ export class OmniBridge implements Bridge {
 		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
 		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
-		if (!isFeeSubsidized) {
+		const isPrefundedWithdrawal =
+			this.bridgeConfig.prefundedNativeFeeTokens.includes(args.assetId);
+		if (!isFeeSubsidized && !isPrefundedWithdrawal) {
 			assert(
 				args.feeEstimation.amount > 0n,
 				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
@@ -650,8 +661,14 @@ export class OmniBridge implements Bridge {
 
 		let amount = 0n;
 		let quote = null;
-		// Skip quoting when native fee = 0 and no storage deposit is needed.
-		if (totalAmountToQuote > 0n) {
+		// Skip quoting when native fee = 0 and no storage deposit is needed
+		// or for prefunded tokens.
+		if (
+			totalAmountToQuote > 0n &&
+			!this.bridgeConfig.prefundedNativeFeeTokens.includes(
+				args.withdrawalParams.assetId,
+			)
+		) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
 				feeAssetId: NEAR_NATIVE_ASSET_ID,
@@ -730,28 +747,28 @@ export class OmniBridge implements Bridge {
 			})
 		)[args.index];
 
-		if (transfer == null || transfer.transfer_message == null) {
+		if (transfer == null || transfer.recipient == null) {
 			return { status: "pending" };
 		}
 
-		const destinationChain = getChain(
-			transfer.transfer_message.recipient as OmniAddress,
-		);
+		const destinationChain = getChain(transfer.recipient as OmniAddress);
 		let txHash = null;
-		if (isEvmChain(destinationChain)) {
-			txHash = transfer.finalised?.EVMLog?.transaction_hash;
-		} else if (destinationChain === ChainKind.Sol) {
-			txHash = transfer.finalised?.Solana?.signature;
-		} else if (destinationChain === ChainKind.Btc) {
-			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change
-			// if the BTC transfer fails to be submitted. We return fast hash for FE and wait
-			// for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE.
+		if (
+			isEvmChain(destinationChain) ||
+			destinationChain === ChainKind.Sol ||
+			destinationChain === ChainKind.Fogo ||
+			destinationChain === ChainKind.Strk ||
+			destinationChain === ChainKind.Aptos
+		) {
+			txHash = transfer.finalised?.transaction_hash;
+		} else if (isUtxoChain(destinationChain)) {
+			// pending_sign_id is not the finalised tx hash. In rare cases, the hash may
+			// change if the BTC transfer fails to be submitted. We return fast hash for FE and
+			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
 				typeof window !== "undefined"
-					? transfer.utxo_transfer?.btc_pending_id
-					: transfer.finalised?.UtxoLog?.transaction_hash;
-		} else if (destinationChain === ChainKind.Strk) {
-			txHash = transfer.finalised?.Starknet?.transaction_hash;
+					? transfer.utxo_meta?.pending_sign_id
+					: transfer.finalised?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
 		}

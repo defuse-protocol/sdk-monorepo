@@ -1,5 +1,8 @@
-import { configsByEnvironment } from "@defuse-protocol/internal-utils";
-import { describe, expect, it, vi } from "vitest";
+import {
+	bridgeIndexer,
+	configsByEnvironment,
+} from "@defuse-protocol/internal-utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { HotBridge } from "./hot-bridge";
 import {
 	DestinationAddressMatchesTokenAddressError,
@@ -27,7 +30,84 @@ import { HotBridgeEVMChains } from "./hot-bridge-chains";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { RouteEnum } from "../../constants/route-enum";
 import type { FeeEstimation } from "../../shared-types";
+
+vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+
+	return {
+		...actual,
+		bridgeIndexer: {
+			...actual.bridgeIndexer,
+			httpClient: {
+				...actual.bridgeIndexer.httpClient,
+				withdrawalsByNearTxHash: vi.fn(),
+			},
+		},
+	};
+});
+
+type BridgeIndexerResponse = Awaited<
+	ReturnType<typeof bridgeIndexer.httpClient.withdrawalsByNearTxHash>
+>;
+
+const TON_USDT_ASSET_ID =
+	"nep245:v2_1.omni.hot.tg:1117_3tsdfyziyc7EJbP2aULWSKU4toBaAcN4FdTgfm5W1mC4ouR";
+const BNB_NATIVE_ASSET_ID = "nep245:v2_1.omni.hot.tg:56_11111111111111111111";
+const TON_DESTINATION_ADDRESS =
+	"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI";
+
+function bridgeIndexerResponse(
+	withdrawals: BridgeIndexerResponse["withdrawals"],
+): BridgeIndexerResponse {
+	return {
+		near_trx: "near-tx-hash",
+		withdrawals,
+	};
+}
+
+function bridgeIndexerWithdrawal({
+	hash,
+	nonce = "1",
+}: {
+	hash: string | null;
+	nonce?: string;
+}): BridgeIndexerResponse["withdrawals"][number] {
+	return {
+		hash,
+		nonce,
+		chain_id: 1117,
+		withdraw_asset: null,
+		withdraw_token: null,
+		withdraw_amount: null,
+		receiver_address: TON_DESTINATION_ADDRESS,
+		signature: null,
+		near_tx_time: null,
+		near_tx_block: null,
+		destination_chain_block: null,
+	};
+}
+
+function mockBridgeIndexerWithdrawals(
+	withdrawals: BridgeIndexerResponse["withdrawals"],
+): void {
+	vi.mocked(bridgeIndexer.httpClient.withdrawalsByNearTxHash).mockResolvedValue(
+		bridgeIndexerResponse(withdrawals),
+	);
+}
+
+function mockBridgeIndexerFailure(): void {
+	vi.mocked(bridgeIndexer.httpClient.withdrawalsByNearTxHash).mockRejectedValue(
+		new Error("Bridge indexer error"),
+	);
+}
+
 describe("HotBridge", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+		vi.mocked(bridgeIndexer.httpClient.withdrawalsByNearTxHash).mockReset();
+	});
+
 	describe("supports()", () => {
 		it.each([
 			"nep245:v2_1.omni.hot.tg:56_11111111111111111111",
@@ -285,7 +365,53 @@ describe("HotBridge", () => {
 	});
 
 	describe("describeWithdrawal()", () => {
-		it("returns completed status with destination tx hash", async () => {
+		it("returns completed TON status with bridge indexer hash", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk: hotSDK,
+			});
+
+			const hotTraceRootHash =
+				"4a810b9459ce2e73d74b497598744e3cb54f50715f90ef07a66397468a60b121";
+			const receiverJettonWalletHash =
+				"2dbebb2ab0d2ad52ed026fc23e3a23c92e1ca23ae5355a4f99dc8f2fc97ff1c1";
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
+				hotTraceRootHash,
+			);
+			mockBridgeIndexerWithdrawals([
+				bridgeIndexerWithdrawal({ hash: receiverJettonWalletHash }),
+			]);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: TON_USDT_ASSET_ID,
+					amount: 100n,
+					destinationAddress: TON_DESTINATION_ADDRESS,
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: receiverJettonWalletHash,
+			});
+		});
+
+		it("keeps TON withdrawal pending while bridge indexer has no hash", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -302,27 +428,83 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
-				"DEADBEEF",
+				"4a810b9459ce2e73d74b497598744e3cb54f50715f90ef07a66397468a60b121",
 			);
+			mockBridgeIndexerWithdrawals([]);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
-					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					assetId: TON_USDT_ASSET_ID,
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: TON_DESTINATION_ADDRESS,
 					feeInclusive: false,
 				},
 				index: 0,
-				tx: { hash: "", accountId: "" },
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
 			});
 
 			const result = await bridge.describeWithdrawal(wid);
 
-			expect(result).toEqual({ status: "completed", txHash: "DEADBEEF" });
+			expect(result).toEqual({ status: "pending" });
 		});
 
-		it("returns completed status with null hash if destination tx hash is not valid", async () => {
+		it("keeps TON withdrawal pending when bridge indexer request fails", async () => {
+			const hotSDK = new HotOmniSdk({
+				logger: console,
+				evmRpc: {},
+				nearRpc: [],
+				async executeNearTransaction() {
+					throw new Error("not implemented");
+				},
+			});
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk: hotSDK,
+			});
+
+			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
+			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			mockBridgeIndexerFailure();
+			const requestApiSpy = vi
+				.spyOn(hotSDK.api, "requestApi")
+				.mockResolvedValue(
+					new Response(
+						JSON.stringify({
+							hash: "4a810b9459ce2e73d74b497598744e3cb54f50715f90ef07a66397468a60b121",
+							nonce: "1",
+							near_trx: "near-tx-hash",
+							withdrawals: [
+								{
+									hash: "4a810b9459ce2e73d74b497598744e3cb54f50715f90ef07a66397468a60b121",
+									nonce: "1",
+									near_trx: "near-tx-hash",
+									verified_withdraw: true,
+									chain_id: 1117,
+								},
+							],
+						}),
+					),
+				);
+
+			const wid = bridge.createWithdrawalIdentifier({
+				withdrawalParams: {
+					assetId: TON_USDT_ASSET_ID,
+					amount: 100n,
+					destinationAddress: TON_DESTINATION_ADDRESS,
+					feeInclusive: false,
+				},
+				index: 0,
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			const result = await bridge.describeWithdrawal(wid);
+
+			expect(result).toEqual({ status: "pending" });
+			expect(requestApiSpy).not.toHaveBeenCalled();
+		});
+
+		it("keeps TON withdrawal pending when bridge indexer has no hash and HOT status hash is invalid", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -341,14 +523,7 @@ describe("HotBridge", () => {
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
 				"invalid_tx_hash",
 			);
-
-			const mockLogger = {
-				error() {},
-				warn: vi.fn(),
-				info() {},
-				debug() {},
-				trace() {},
-			};
+			mockBridgeIndexerWithdrawals([]);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
@@ -363,16 +538,9 @@ describe("HotBridge", () => {
 				tx: { hash: "", accountId: "" },
 			});
 
-			const result = await bridge.describeWithdrawal({
-				...wid,
-				logger: mockLogger,
-			});
+			const result = await bridge.describeWithdrawal(wid);
 
-			expect(result).toEqual({ status: "completed", txHash: null });
-			expect(mockLogger.warn).toHaveBeenCalledWith(
-				"HOT Bridge incorrect destination tx hash detected",
-				{ value: "invalid_tx_hash" },
-			);
+			expect(result).toEqual({ status: "pending" });
 		});
 
 		it("returns failed status when withdrawal is canceled", async () => {
@@ -399,8 +567,7 @@ describe("HotBridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:1117_",
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: TON_DESTINATION_ADDRESS,
 					feeInclusive: false,
 				},
 				index: 0,
@@ -415,7 +582,7 @@ describe("HotBridge", () => {
 			});
 		});
 
-		it("returns completed status with null txHash when status is Completed", async () => {
+		it("keeps TON withdrawal pending when bridge indexer has no hash and HOT status is completed", async () => {
 			const hotSDK = new HotOmniSdk({
 				logger: console,
 				evmRpc: {},
@@ -434,13 +601,13 @@ describe("HotBridge", () => {
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
 				HotWithdrawStatus.Completed,
 			);
+			mockBridgeIndexerWithdrawals([]);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:1117_",
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: TON_DESTINATION_ADDRESS,
 					feeInclusive: false,
 				},
 				index: 0,
@@ -449,7 +616,7 @@ describe("HotBridge", () => {
 
 			const result = await bridge.describeWithdrawal(wid);
 
-			expect(result).toEqual({ status: "completed", txHash: null });
+			expect(result).toEqual({ status: "pending" });
 		});
 
 		it("returns pending status when contract returns null and API has no hash", async () => {
@@ -469,6 +636,7 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			mockBridgeIndexerFailure();
 			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
 				new Response(
 					JSON.stringify({
@@ -482,10 +650,9 @@ describe("HotBridge", () => {
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
-					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					assetId: BNB_NATIVE_ASSET_ID,
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: zeroAddress,
 					feeInclusive: false,
 				},
 				index: 0,
@@ -514,6 +681,7 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			mockBridgeIndexerFailure();
 			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
 				new Response(
 					JSON.stringify({
@@ -526,7 +694,7 @@ describe("HotBridge", () => {
 								nonce: "1",
 								near_trx: "txhash",
 								verified_withdraw: true,
-								chain_id: 1117,
+								chain_id: 56,
 							},
 						],
 					}),
@@ -535,10 +703,9 @@ describe("HotBridge", () => {
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
-					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					assetId: BNB_NATIVE_ASSET_ID,
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: zeroAddress,
 					feeInclusive: false,
 				},
 				index: 0,
@@ -547,7 +714,7 @@ describe("HotBridge", () => {
 
 			const result = await bridge.describeWithdrawal(wid);
 
-			expect(result).toEqual({ status: "completed", txHash: "DEADBEEF" });
+			expect(result).toEqual({ status: "completed", txHash: "0xDEADBEEF" });
 		});
 
 		it("returns pending when API request fails", async () => {
@@ -567,16 +734,16 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			mockBridgeIndexerFailure();
 			vi.spyOn(hotSDK.api, "requestApi").mockRejectedValue(
 				new Error("Network error"),
 			);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
-					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					assetId: BNB_NATIVE_ASSET_ID,
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: zeroAddress,
 					feeInclusive: false,
 				},
 				index: 0,
@@ -605,6 +772,7 @@ describe("HotBridge", () => {
 
 			vi.spyOn(hotSDK.near, "parseWithdrawalNonces").mockResolvedValue([1n]);
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(null);
+			mockBridgeIndexerFailure();
 			vi.spyOn(hotSDK.api, "requestApi").mockResolvedValue(
 				new Response(
 					JSON.stringify({
@@ -617,7 +785,7 @@ describe("HotBridge", () => {
 								nonce: "1",
 								near_trx: "txhash",
 								verified_withdraw: true,
-								chain_id: 1117,
+								chain_id: 56,
 							},
 						],
 					}),
@@ -626,10 +794,9 @@ describe("HotBridge", () => {
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {
-					assetId: "nep245:v2_1.omni.hot.tg:1117_",
+					assetId: BNB_NATIVE_ASSET_ID,
 					amount: 100n,
-					destinationAddress:
-						"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI",
+					destinationAddress: zeroAddress,
 					feeInclusive: false,
 				},
 				index: 0,
@@ -662,6 +829,9 @@ describe("HotBridge", () => {
 			vi.spyOn(hotSDK, "getGaslessWithdrawStatus").mockResolvedValue(
 				"DEADBEEF",
 			);
+			mockBridgeIndexerWithdrawals([
+				bridgeIndexerWithdrawal({ hash: "DEADBEEF" }),
+			]);
 
 			const wid = bridge.createWithdrawalIdentifier({
 				withdrawalParams: {

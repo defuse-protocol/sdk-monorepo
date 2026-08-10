@@ -8,7 +8,7 @@ import {
 	nearFailoverRpcProvider,
 	extractRpcUrls,
 	solverRelay,
-	RelayPublishError,
+	RelayPublishRejectedError,
 	type RpcEndpoint,
 } from "@defuse-protocol/internal-utils";
 import { HotBridge as hotLabsOmniSdk_HotBridge } from "@hot-labs/omni-sdk";
@@ -52,6 +52,7 @@ import {
 import type {
 	BatchWithdrawalResult,
 	Bridge,
+	BridgeConfigs,
 	CreateWithdrawalCompletionPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
@@ -118,6 +119,7 @@ export interface IntentsSDKConfig {
 		 */
 		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 	};
+	bridgeConfigs?: BridgeConfigs;
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -196,6 +198,7 @@ export class IntentsSDK implements IIntentsSDK {
 				solverRelayApiKey: this.solverRelayApiKey,
 				routeMigratedPoaTokensThroughOmniBridge:
 					args.features?.routeMigratedPoaTokensThroughOmniBridge,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.OmniBridge],
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,
@@ -355,6 +358,7 @@ export class IntentsSDK implements IIntentsSDK {
 					assetId: args.withdrawalParams.assetId,
 					amount: actualAmount,
 					destinationAddress: args.withdrawalParams.destinationAddress,
+					destinationMemo: args.withdrawalParams.destinationMemo,
 					feeEstimation: args.feeEstimation,
 					routeConfig: args.withdrawalParams.routeConfig,
 					logger: args.logger,
@@ -441,6 +445,7 @@ export class IntentsSDK implements IIntentsSDK {
 					feeEstimation: fee,
 					routeConfig: args.withdrawalParams.routeConfig,
 					logger: args.logger,
+					destinationMemo: args.withdrawalParams.destinationMemo,
 					// When estimating fees before the exact amount is known, skip minimum amount validation while keeping all other validation intact.
 					skipMinAmountValidation:
 						args.withdrawalParams.amount === 0n &&
@@ -677,7 +682,12 @@ export class IntentsSDK implements IIntentsSDK {
 
 			return await fn(cachedSalt);
 		} catch (err) {
-			if (!(err instanceof RelayPublishError && err.code === "INVALID_SALT"))
+			if (
+				!(
+					err instanceof RelayPublishRejectedError &&
+					err.code === "INVALID_SALT"
+				)
+			)
 				throw err;
 
 			args.logger?.warn?.("Salt error detected. Refreshing salt and retrying");

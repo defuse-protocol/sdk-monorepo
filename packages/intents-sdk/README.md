@@ -159,7 +159,7 @@ Examples:
 - `nep141:wrap.near` - Wrapped NEAR (native NEAR)
 - `nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L` - Polygon USDC through Hot
 - `nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near` - Base USDC through PoA
-- `nep141:sol.omdep.near` - SOL bridged through Omni Bridge
+- `nep141:eth.bridge.near` - ETH bridged through Omni Bridge
 
 ### Intent Execution
 

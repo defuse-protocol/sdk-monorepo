@@ -1,5 +1,30 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.9.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
+## 1.8.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
+## 1.7.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
+## 1.6.0
+
+### Minor Changes
+
+- 9e88214: Add HyperCore to caip2 chains
+
 ## 1.5.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.63.2",
+	"version": "0.78.1",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -48,11 +48,10 @@
 		"@hot-labs/omni-sdk": "2.25.5",
 		"@isaacs/ttlcache": "^1.0.0",
 		"@lifeomic/attempt": "^3.0.0",
-		"@omni-bridge/core": "0.8.0",
-		"@omni-bridge/near": "0.8.0",
+		"@omni-bridge/core": "0.17.0",
+		"@omni-bridge/near": "0.17.0",
 		"@noble/hashes": "^1.7.1",
 		"@scure/base": "^1.0.0",
-		"@solana/web3.js": "^1.0.0",
 		"borsher": "^4.0.0",
 		"lru-cache": "^11",
 		"near-api-js": "^4.0.0 || ^5.0.0",
@@ -61,6 +60,7 @@
 		"viem": "^2.0.0"
 	},
 	"devDependencies": {
+		"@ton/core": "^0.60.0",
 		"tsdown": "0.19.0"
 	}
 }

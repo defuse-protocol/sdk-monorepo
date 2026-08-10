@@ -1,5 +1,182 @@
 # @defuse-protocol/intents-sdk
 
+## 0.78.1
+
+### Patch Changes
+
+- dbc0e19: Fix hyper evm related utilities function via update of omni bridge packages
+
+## 0.78.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
+## 0.77.0
+
+### Minor Changes
+
+- db3c90e: Allow all types of solana addresses and remove `@solana/web3.js`
+
+## 0.76.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
+## 0.75.0
+
+### Minor Changes
+
+- f70c142: Add external_id (crypto.randomUUID()) field to avoid identical Omni bridge withdrawals being stuck
+
+## 0.74.1
+
+### Patch Changes
+
+- da83616: Update omni sdk dependecy so new api version is used in describe withdrawal method in omni bridge
+
+## 0.74.0
+
+### Minor Changes
+
+- dff53e3: Support omni withdrawals via Polygon
+
+## 0.73.0
+
+### Minor Changes
+
+- 3fcb03d: Support prefunded tokens for Omni Bridge via Bridge Config, also delete zero token fee configuration for PoA Bridge.
+  - Added `bridgeConfigs[RouteEnum.OmniBridge].prefundedNativeFeeTokens` — asset IDs whose withdrawal native fee is prefunded.
+  - Removed `bridgeConfigs[RouteEnum.PoaBridge].zeroFeeTokens` — the PoA Bridge zero-fee token configuration is no longer supported.
+
+- 33ca1a2: Allow config passing for PoA bridge to allowlist zero fee tokens
+
+## 0.72.0
+
+### Minor Changes
+
+- 474169b: Export the `QuoteOptions` type from the package entry point
+
+### Patch Changes
+
+- 9c51003: Restore `PoaBridgeNetworkReference.FOGO` (`fogo:mainnet`) for Omni bridge integration.
+- Updated dependencies [9c51003]
+  - @defuse-protocol/internal-utils@0.35.2
+
+## 0.71.0
+
+### Minor Changes
+
+- 6d2a8cd: Remove kVault token from omni fee subsidized
+
+## 0.70.0
+
+### Minor Changes
+
+- 11d0ed6: Add more poa omni routable tokens
+
+### Patch Changes
+
+- e9a2271: Use bridge-indexer as the source of truth for TON HOT withdrawal destination transaction hashes.
+
+## 0.69.1
+
+### Patch Changes
+
+- Updated dependencies [371f4b3]
+  - @defuse-protocol/internal-utils@0.35.1
+
+## 0.69.0
+
+### Minor Changes
+
+- 57df8be: Make `sol-0xa69aa1bcb03a369e338156a8718ad60271145803.omdep.near` (kVault gtSOL Balanced (kV-gtSOLb)) token is free to bridge.
+
+## 0.68.1
+
+### Patch Changes
+
+- 0a0d651: Fix require destination tag check for xrp withdrawals via PoA
+
+## 0.68.0
+
+### Minor Changes
+
+- 3b25ae5: Add support for Plasma to PoA bridge
+
+### Patch Changes
+
+- Updated dependencies [3b25ae5]
+  - @defuse-protocol/internal-utils@0.35.0
+
+## 0.67.2
+
+### Patch Changes
+
+- Updated dependencies [a6f918c]
+  - @defuse-protocol/internal-utils@0.34.1
+
+## 0.67.1
+
+### Patch Changes
+
+- d58e02c: Use bridge indexer for getting destination hash for stellar withdrawals via hot bridge
+
+## 0.67.0
+
+### Minor Changes
+
+- a7c4fd9: Add Fogo support via omni and remove it from PoA
+
+### Patch Changes
+
+- Updated dependencies [a7c4fd9]
+  - @defuse-protocol/internal-utils@0.34.0
+
+## 0.66.1
+
+### Patch Changes
+
+- 5de36f2: (no changes)
+
+## 0.66.0
+
+### Minor Changes
+
+- 8ef16f0: Split relay publish failures into confirmed rejections and unknown-result errors. `publishIntents` now uses `RelayPublishRejectedError` for relay `status: "FAILED"` responses and `RelayPublishResultUnknownError` when a usable publish response cannot be confirmed, while keeping `RelayPublishError` as the shared base class.
+
+  **BREAKING CHANGES:** `RelayPublishError` is now an abstract base class, `code` only exists on `RelayPublishRejectedError`, and `NETWORK_ERROR` is no longer part of the publish rejection code set. Handle `RelayPublishResultUnknownError` for in-doubt publish results.
+
+### Patch Changes
+
+- Updated dependencies [8ef16f0]
+  - @defuse-protocol/internal-utils@0.33.0
+
+## 0.65.0
+
+### Minor Changes
+
+- 9e88214: Add HyperCore to caip2 chains
+
+## 0.64.1
+
+### Patch Changes
+
+- a35bba4: Fix TON intent hashes and HOT bridge withdrawals for valid address forms the contract accepts but the SDK was rejecting
+
+## 0.64.0
+
+### Minor Changes
+
+- abf930b: Add Movement mainnet network support for SDK chain constants, address validation, and POA Bridge network mappings.
+
+### Patch Changes
+
+- Updated dependencies [abf930b]
+  - @defuse-protocol/internal-utils@0.32.0
+
 ## 0.63.2
 
 ### Patch Changes

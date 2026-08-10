@@ -1,6 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2";
-import { base58, bech32m, hex, bech32, base64urlnopad } from "@scure/base";
-import { PublicKey } from "@solana/web3.js";
+import { base58, bech32m, hex, bech32 } from "@scure/base";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
 	isValidXAddress as xrp_isValidXAddress,
@@ -8,6 +7,13 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
+import {
+	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
+	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
+	TON_WORKCHAIN_BASECHAIN,
+	TON_WORKCHAIN_MASTERCHAIN,
+	tryParseTonAddress,
+} from "./ton-address";
 
 /**
  * Validates that an address matches the expected format for a given blockchain.
@@ -58,6 +64,9 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Aptos:
 			return validateAptosAddress(address);
 
+		case Chains.Movement:
+			return validateMovementAddress(address);
+
 		case Chains.Cardano:
 			return validateCardanoAddress(address);
 
@@ -79,6 +88,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Plasma:
 		case Chains.Scroll:
 		case Chains.Abstract:
+		case Chains.HyperCore:
+		case Chains.HyperEvm:
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);
@@ -293,7 +304,13 @@ function verifyBchChecksum(address: string): boolean {
 
 function validateSolAddress(address: string) {
 	try {
-		return PublicKey.isOnCurve(address);
+		const decoded = base58.decode(address);
+		// Solana addresses are raw 32-byte ed25519 public keys, no checksum bytes included
+		if (decoded.length !== 32) {
+			return false;
+		}
+
+		return true;
 	} catch {
 		return false;
 	}
@@ -389,29 +406,26 @@ function validateTronHexAddress(address: string): boolean {
 	}
 }
 
-function crc16ccitt(data: Uint8Array): [number, number] {
-	let crc = 0x0000;
-	for (const byte of data) {
-		crc ^= byte << 8;
-		for (let i = 0; i < 8; i++) {
-			crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
-		}
-		crc &= 0xffff;
-	}
-	return [(crc >> 8) & 0xff, crc & 0xff];
-}
-
 function validateTonAddress(address: string): boolean {
-	try {
-		const data = base64urlnopad.decode(address);
-		if (data.length !== 36) return false;
-		const tag = data[0];
-		if (tag !== 0x11 && tag !== 0x51) return false;
-		const [hi, lo] = crc16ccitt(data.subarray(0, 34));
-		return data[34] === hi && data[35] === lo;
-	} catch {
+	const parsed = tryParseTonAddress(address);
+	if (parsed === null) return false;
+
+	// Real TON only uses workchain 0 and -1. Both forms can technically encode
+	// other values, but no real wallet does.
+	if (
+		parsed.workchainId !== TON_WORKCHAIN_BASECHAIN &&
+		parsed.workchainId !== TON_WORKCHAIN_MASTERCHAIN
+	) {
 		return false;
 	}
+
+	// Friendly form has a tag byte. Reject testnet tags. Raw form has no tag
+	// (null), so it passes this check.
+	return (
+		parsed.tag === null ||
+		parsed.tag === TON_ADDRESS_TAG_BOUNCEABLE_MAINNET ||
+		parsed.tag === TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET
+	);
 }
 
 function validateSuiAddress(address: string) {
@@ -424,6 +438,29 @@ function validateStellarAddress(address: string) {
 
 function validateAptosAddress(address: string) {
 	return /^0x[a-fA-F0-9]{64}$/.test(address);
+}
+
+// Accept non strict addresses
+function validateMovementAddress(address: string) {
+	let parsedAddress = address;
+	if (address.startsWith("0x")) {
+		parsedAddress = address.slice(2);
+	}
+
+	if (parsedAddress.length === 0 || parsedAddress.length > 64) {
+		return false;
+	}
+
+	if (!/^[a-fA-F0-9]+$/.test(parsedAddress)) {
+		return false;
+	}
+
+	if (parsedAddress.length >= 60) {
+		return true;
+	}
+
+	const paddedAddress = parsedAddress.padStart(64, "0");
+	return /^0{63}[0-9a-fA-F]$/.test(paddedAddress);
 }
 
 /**

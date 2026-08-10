@@ -95,6 +95,10 @@ export {
 export {
 	RelayPublishError,
 	type RelayPublishErrorType,
+	RelayPublishRejectedError,
+	type RelayPublishRejectedErrorType,
+	RelayPublishResultUnknownError,
+	type RelayPublishResultUnknownErrorType,
 } from "./solverRelay/utils/parseFailedPublishError";
 
 // Top-level utils

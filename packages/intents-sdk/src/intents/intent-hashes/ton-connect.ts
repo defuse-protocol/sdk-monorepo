@@ -1,5 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2";
 import type { MultiPayload } from "@defuse-protocol/contract-types";
+import { tryParseTonAddress } from "../../lib/ton-address";
 
 export interface TonAddress {
 	workchainId: number; // i32: typically 0 for base workchain, -1 for masterchain
@@ -18,48 +19,12 @@ function numberToBigEndian(num: number, bytes: number): Uint8Array {
 	return result;
 }
 
-/**
- * Parse TON address string to TonAddress object
- * Supports raw format: "workchain:address_hex"
- * Example: "0:f4809e5ffac9dc42a6b1d94c5e74ad5fd86378de675c805f2274d0055cbc9378"
- *
- * @param addressString - TON address string in raw format
- * @returns Parsed TonAddress object
- */
 export function parseTonAddress(addressString: string): TonAddress {
-	const parts = addressString.split(":");
-	if (parts.length !== 2) {
-		throw new Error(
-			`Invalid TON address format: ${addressString}. Expected "workchain:address_hex"`,
-		);
+	const parsed = tryParseTonAddress(addressString);
+	if (parsed === null) {
+		throw new Error(`Invalid TON address: ${addressString}`);
 	}
-
-	// biome-ignore lint/style/noNonNullAssertion: split by ":" guarantees two parts after length check
-	const workchainId = parseInt(parts[0]!, 10);
-	if (Number.isNaN(workchainId)) {
-		throw new Error(`Invalid workchain ID: ${parts[0]}`);
-	}
-
-	// Remove any 0x prefix if present
-	// biome-ignore lint/style/noNonNullAssertion: split by ":" guarantees two parts after length check
-	const addressHex = parts[1]!.startsWith("0x") ? parts[1]!.slice(2) : parts[1];
-
-	// biome-ignore lint/style/noNonNullAssertion: addressHex is assigned above
-	if (addressHex!.length !== 64) {
-		throw new Error(
-			// biome-ignore lint/style/noNonNullAssertion: addressHex is assigned above
-			`Invalid address length: expected 64 hex characters, got ${addressHex!.length}`,
-		);
-	}
-
-	// Convert hex string to bytes
-	const address = new Uint8Array(32);
-	for (let i = 0; i < 32; i++) {
-		// biome-ignore lint/style/noNonNullAssertion: length validated above
-		address[i] = parseInt(addressHex!.slice(i * 2, i * 2 + 2), 16);
-	}
-
-	return { workchainId, address };
+	return parsed;
 }
 
 /**

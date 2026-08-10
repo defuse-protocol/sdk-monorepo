@@ -13,6 +13,7 @@
 	"eip155:80085": "berachain",
 	"eip155:9745": "plasma",
 	"eip155:534352": "scroll",
+	"eip155:999": "hyperevm",
 	"bip122:000000000019d6689c085ae165831e93": "bitcoin",
 	"bip122:00040fe8ec8471911baa1db1266ea15d": "zcash",
 	"bip122:1a91e3dace36e2be3bf030a65679fe82": "doge",
@@ -28,5 +29,7 @@
 	"aleo:0": "aleo",
 	"bip122:00000ffd590b1485b3caadc19b22e637": "dash",
 	"eip155:2741": "abstract",
-	"starknet:SN_MAIN": "starknet"
+	"starknet:SN_MAIN": "starknet",
+	"hlcore:mainnet": "hypercore",
+	"solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251": "fogo"
 }
