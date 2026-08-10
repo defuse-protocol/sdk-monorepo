@@ -1536,9 +1536,12 @@ describe("OmniBridge", () => {
 
 	describe("prefundedNativeFeeTokens", () => {
 		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
-		const prefundedAssetId = "nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
-		const prefundedTokenId = "bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
-		const prefundedOriginChainOmniAddress = "eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
+		const prefundedAssetId =
+			"nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedTokenId =
+			"bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedOriginChainOmniAddress =
+			"eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
 
 		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
