@@ -4,6 +4,11 @@ import { getAddress } from "viem";
 import { Chains, type Chain } from "./caip2";
 import { tryParseTonAddress } from "./ton-address";
 
+/**
+ * Compares two addresses for equality using each chain's canonical form,
+ * e.g. to block transfers to the token's own address. Returns false (not
+ * throw) on malformed input.
+ */
 export function compareAddresses(
 	a: string,
 	b: string,
@@ -66,13 +71,19 @@ export function compareAddresses(
 // significant, and both zero-padded (0x000...01) and short (0x1) forms refer
 // to the same address.
 function compareHexAddress(a: string, b: string): boolean {
-	return normalizeHexAddress(a) === normalizeHexAddress(b);
+	const normalizedA = normalizeHexAddress(a);
+	const normalizedB = normalizeHexAddress(b);
+	if (normalizedA === null || normalizedB === null) return false;
+	return normalizedA === normalizedB;
 }
 
-function normalizeHexAddress(address: string): string {
+function normalizeHexAddress(address: string): string | null {
 	const withoutPrefix = address.toLowerCase().startsWith("0x")
 		? address.slice(2)
 		: address;
+	if (withoutPrefix.length === 0 || !/^[0-9a-fA-F]+$/.test(withoutPrefix)) {
+		return null;
+	}
 	const withoutLeadingZeros = withoutPrefix.replace(/^0+/, "");
 	return withoutLeadingZeros.toLowerCase() || "0";
 }
