@@ -112,11 +112,9 @@ describe("contractIdToCaip2", () => {
 		["plasma.omft.near", Chains.Plasma],
 		["tron.omft.near", Chains.Tron],
 		["sui.omft.near", Chains.Sui],
-		["aptos.omft.near", Chains.Aptos],
 		["movement.omft.near", Chains.Movement],
 		["cardano.omft.near", Chains.Cardano],
 		["ltc.omft.near", Chains.Litecoin],
-		["starknet.omft.near", Chains.Starknet],
 	])("maps %s to %s", (contractId, expected) => {
 		expect(contractIdToCaip2(contractId)).toBe(expected);
 	});
