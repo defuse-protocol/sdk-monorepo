@@ -885,7 +885,6 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
 
-
 		it("supports originally PoA token with routeConfig and valid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,

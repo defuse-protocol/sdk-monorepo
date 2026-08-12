@@ -871,6 +871,6 @@ export class OmniBridge implements Bridge {
 	 * Checks if passed token contract id is an allowlisted PoA token that should be routed via OmniBridge.
 	 */
 	private isPoaTokenRoutedThroughOmniBridge(nearAddress: string): boolean {
-		return POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[nearAddress] !== undefined
+		return POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[nearAddress] !== undefined;
 	}
 }

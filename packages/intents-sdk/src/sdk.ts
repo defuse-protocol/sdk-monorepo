@@ -164,7 +164,7 @@ export class IntentsSDK implements IIntentsSDK {
 			}),
 			new PoaBridge({
 				envConfig: this.envConfig,
-				xrplRpcUrls
+				xrplRpcUrls,
 			}),
 			new HotBridge({
 				envConfig: this.envConfig,

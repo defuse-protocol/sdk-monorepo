@@ -95,8 +95,7 @@ export class PoaBridge implements Bridge {
 
 		if (
 			assetInfo != null &&
-			POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[assetInfo.contractId] !==
-				undefined &&
+			POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[assetInfo.contractId] !== undefined &&
 			params.routeConfig === undefined
 		) {
 			return false;
@@ -119,10 +118,7 @@ export class PoaBridge implements Bridge {
 			return null;
 		}
 
-		if (
-			POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[parsed.contractId] !==
-				undefined
-		) {
+		if (POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[parsed.contractId] !== undefined) {
 			return null;
 		}
 		let blockchain: Chain;

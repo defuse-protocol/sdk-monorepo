@@ -207,7 +207,6 @@ describe("PoaBridge", () => {
 			},
 		);
 
-
 		it.each([
 			"nep141:wrap.near",
 			"nep245:v2_1.omni.hot.tg:56_11111111111111111111",
