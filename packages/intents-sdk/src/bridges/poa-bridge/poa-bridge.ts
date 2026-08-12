@@ -95,8 +95,7 @@ export class PoaBridge implements Bridge {
 
 		if (
 			assetInfo != null &&
-			POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[assetInfo.contractId] !== undefined &&
-			params.routeConfig === undefined
+			POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[assetInfo.contractId] !== undefined
 		) {
 			return false;
 		}

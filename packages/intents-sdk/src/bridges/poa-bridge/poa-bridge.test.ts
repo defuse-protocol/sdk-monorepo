@@ -193,7 +193,7 @@ describe("PoaBridge", () => {
 			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:sol.omft.near",
 		])(
-			"doesn't support `omft.near` tokens that migrated omni bridge",
+			"doesn't support `omft.near` tokens that migrated to omni bridge",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,

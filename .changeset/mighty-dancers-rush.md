@@ -7,3 +7,4 @@ Remove Aptos from PoA bridge
 Remove Starknet from PoA bridge
 Remove feature `routeMigratedPoaTokensThroughOmniBridge` and force-route all Omni migrated PoA tokens
 to Omni
+Rename `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` to `POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE`
