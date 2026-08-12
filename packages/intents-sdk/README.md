@@ -279,6 +279,9 @@ The SDK automatically detects and supports multiple route types based on asset i
 - **Supported Assets**: Fungible tokens (NEP-141) supported by omni bridge relayer.
 - **Use Case**: multi-chain transfers for supported list of chains
 - **Route Type**: `omni_bridge`
+- **Note**: Some tokens originally issued via the PoA Bridge (`.omft.near`) have since migrated to the Omni Bridge.
+  The SDK tracks these in `POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE` and automatically routes them through Omni Bridge
+  instead of PoA Bridge.
 
 ##### Internal Transfer Route
 
