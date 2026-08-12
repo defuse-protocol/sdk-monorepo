@@ -608,11 +608,12 @@ export class OmniBridge implements Bridge {
 					fee.min_amount != null,
 					`Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`,
 				);
+				const actualAmountWithFee = args.amount + args.feeEstimation.amount;
 				const minAmount = BigInt(fee.min_amount);
-				if (args.amount < minAmount) {
+				if (actualAmountWithFee < minAmount) {
 					throw new MinWithdrawalAmountError(
 						minAmount,
-						args.amount,
+						actualAmountWithFee,
 						args.assetId,
 					);
 				}
