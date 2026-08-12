@@ -603,17 +603,16 @@ export class OmniBridge implements Bridge {
 					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 				},
 			);
-			// args.amount is without fee, we need to pass an amount with fee
 			assert(
 				fee.min_amount != null,
 				`Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`,
 			);
-			const actualAmountWithFee = args.amount + args.feeEstimation.amount;
+			// Need to check raw amount that will be minted on Solana against min amount from api
 			const minAmount = BigInt(fee.min_amount);
-			if (actualAmountWithFee < minAmount) {
+			if (args.amount < minAmount) {
 				throw new MinWithdrawalAmountError(
 					minAmount,
-					actualAmountWithFee,
+					args.amount,
 					args.assetId,
 				);
 			}
