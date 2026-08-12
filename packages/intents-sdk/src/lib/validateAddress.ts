@@ -102,6 +102,12 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 }
 
 function validateEthAddress(address: string) {
+	if (
+		address === "0x0000000000000000000000000000000000000000" ||
+		address === "0x000000000000000000000000000000000000dEaD"
+	) {
+		return false;
+	}
 	return isAddress(address, { strict: true });
 }
 
@@ -304,6 +310,9 @@ function verifyBchChecksum(address: string): boolean {
 
 function validateSolAddress(address: string) {
 	try {
+		if (address === "11111111111111111111111111111111") {
+			return false;
+		}
 		const decoded = base58.decode(address);
 		// Solana addresses are raw 32-byte ed25519 public keys, no checksum bytes included
 		if (decoded.length !== 32) {
