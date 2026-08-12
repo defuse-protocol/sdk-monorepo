@@ -56,6 +56,7 @@ const TON_USDT_ASSET_ID =
 const BNB_NATIVE_ASSET_ID = "nep245:v2_1.omni.hot.tg:56_11111111111111111111";
 const TON_DESTINATION_ADDRESS =
 	"UQDrjaLahLkMB-hMCmkzOyBuHJ139ZUYmPHu6RRBKnbdLIYI";
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
 
 function bridgeIndexerResponse(
 	withdrawals: BridgeIndexerResponse["withdrawals"],
@@ -220,7 +221,7 @@ describe("HotBridge", () => {
 		it.each([
 			{
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 			}, // UDSC Polygon
 			{
 				assetId:
