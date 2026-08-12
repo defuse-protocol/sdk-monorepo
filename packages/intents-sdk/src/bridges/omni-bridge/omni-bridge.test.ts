@@ -861,7 +861,7 @@ describe("OmniBridge", () => {
 
 			const result = await bridge.supports({
 				assetId:
-					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+					"nep141:eth-0xdac17f958d2ee523a2206206994597c13d831ec7.omft.near",
 			});
 			expect(result).toBe(false);
 		});
@@ -879,7 +879,7 @@ describe("OmniBridge", () => {
 			await expect(
 				bridge.supports({
 					assetId:
-						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+						"nep141:eth-0xdac17f958d2ee523a2206206994597c13d831ec7.omft.near",
 					routeConfig: createOmniBridgeRoute(),
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);

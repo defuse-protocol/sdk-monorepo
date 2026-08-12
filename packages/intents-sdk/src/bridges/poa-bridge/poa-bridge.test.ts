@@ -173,7 +173,6 @@ describe("PoaBridge", () => {
 	describe("supports()", () => {
 		it.each([
 			"nep141:btc.omft.near",
-			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 		])("supports `omft.near` tokens", async (tokenId) => {
 			const bridge = new PoaBridge({
@@ -284,11 +283,6 @@ describe("PoaBridge", () => {
 					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 				destinationAddress: zeroAddress,
 			}, // UDSC Ethereum
-			{
-				assetId:
-					"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
-				destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
-			}, // UDSC Solana
 			{
 				assetId:
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
@@ -502,11 +496,6 @@ describe("PoaBridge", () => {
 					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 				destinationAddress: "test.near",
 			}, // UDSC Ethereum
-			{
-				assetId:
-					"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
-				destinationAddress: "test.near",
-			}, // UDSC Solana
 			{
 				assetId:
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
