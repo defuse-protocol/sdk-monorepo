@@ -104,7 +104,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 function validateEthAddress(address: string) {
 	if (
 		address === "0x0000000000000000000000000000000000000000" ||
-		address === "0x000000000000000000000000000000000000dEaD"
+		address.toLowerCase() === "0x000000000000000000000000000000000000dead"
 	) {
 		return false;
 	}
