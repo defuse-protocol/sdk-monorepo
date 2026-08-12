@@ -73,6 +73,10 @@ export type GetSupportedTokensResponse = JSONRPCResponse<{
 		 * @internal
 		 */
 		defuse_asset_identifier: string;
+		/**
+		 * Origin chain address for tokens or "native" literal for base tokens.
+		 */
+		origin_chain_address: string | "native";
 	}[];
 }>;
 

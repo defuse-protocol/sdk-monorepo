@@ -20,6 +20,7 @@ import {
 	omniAddress,
 	parseOriginChain,
 	verifyTransferAmount,
+	getAddress,
 } from "@omni-bridge/core";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
@@ -68,11 +69,13 @@ import {
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { compareAddresses } from "../../lib/compareAddresses";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 type MinStorageBalance = bigint;
@@ -430,21 +433,39 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
-		const destTokenAddress = await this.getCachedDestinationTokenAddress(
+		const destTokenOmniAddress = await this.getCachedDestinationTokenAddress(
 			assetInfo.contractId,
 			omniChainKind,
 		);
-		if (destTokenAddress === null) {
+		if (destTokenOmniAddress === null) {
 			throw new TokenNotFoundInDestinationChainError(
 				args.assetId,
 				assetInfo.blockchain,
 			);
 		}
 
-		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
+		const destTokenAddress = getAddress(destTokenOmniAddress);
+		// For EVM base token 0x0000000000000000000000000000000000000000 address is returned
+		// For SVM base token 11111111111111111111111111111111
+		// So for example you wont be able to send eth.bridge.near to 0x0000000000000000000000000000000000000000
+		// or sol.omft.near to 11111111111111111111111111111111
+		if (
+			compareAddresses(
+				destTokenAddress,
+				args.destinationAddress,
+				assetInfo.blockchain,
+			)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				destTokenAddress,
+				args.assetId,
+			);
+		}
+
+		const decimals = await this.getCachedTokenDecimals(destTokenOmniAddress);
 		assert(
 			decimals !== null,
-			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
+			`Failed to retrieve token decimals for address ${destTokenOmniAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
 

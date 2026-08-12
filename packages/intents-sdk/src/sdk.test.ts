@@ -1155,7 +1155,7 @@ describe("omni_bridge", () => {
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
-			destinationAddress: zeroAddress,
+			destinationAddress: "0x0000000000000000000000000000000000000001",
 			feeInclusive: false,
 		};
 
@@ -1177,7 +1177,10 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		const recipient = omniAddress(ChainKind.Eth, zeroAddress);
+		const recipient = omniAddress(
+			ChainKind.Eth,
+			"0x0000000000000000000000000000000000000001",
+		);
 		const actualAmount = withdrawalParams.amount;
 		const implicitAccount = calculateStorageAccountId(
 			{
@@ -1239,7 +1242,7 @@ describe("omni_bridge", () => {
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
-			destinationAddress: zeroAddress,
+			destinationAddress: "0x0000000000000000000000000000000000000001",
 			feeInclusive: true,
 		};
 
@@ -1261,7 +1264,10 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		const recipient = omniAddress(ChainKind.Eth, zeroAddress);
+		const recipient = omniAddress(
+			ChainKind.Eth,
+			"0x0000000000000000000000000000000000000001",
+		);
 		const actualAmount = withdrawalParams.amount - feeEstimation.amount;
 		const implicitAccount = calculateStorageAccountId(
 			{

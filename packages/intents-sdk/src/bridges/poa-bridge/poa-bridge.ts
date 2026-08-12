@@ -9,6 +9,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import TTLCache from "@isaacs/ttlcache";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
@@ -40,6 +41,7 @@ import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
+import { compareAddresses } from "../../lib/compareAddresses";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
@@ -208,6 +210,21 @@ export class PoaBridge implements Bridge {
 				"`assetId` is not supported in PoA bridge.",
 			);
 		}
+
+		if (
+			tokenInfo.origin_chain_address !== "native" &&
+			compareAddresses(
+				tokenInfo.origin_chain_address,
+				args.destinationAddress,
+				assetInfo.blockchain,
+			)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				tokenInfo.origin_chain_address,
+				args.assetId,
+			);
+		}
+
 		if (!args.skipMinAmountValidation) {
 			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
 			if (args.amount < minWithdrawalAmount) {
