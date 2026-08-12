@@ -1933,6 +1933,14 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
 		],
 		[
+			"nep141:aptos.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Aptos },
+		],
+		[
+			"nep141:starknet.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Starknet },
+		],
+		[
 			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
 			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Ethereum },
 		],

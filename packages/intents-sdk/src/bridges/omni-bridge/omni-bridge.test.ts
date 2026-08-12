@@ -885,7 +885,7 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
 
-		it("supports originally PoA token with routeConfig and valid target chain", async () => {
+		it("supports Omni migrated PoA token with routeConfig and valid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -903,7 +903,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("throws for PoA token with routeConfig and invalid target chain", async () => {
+		it("throws for Omni migrated PoA token with routeConfig and invalid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
