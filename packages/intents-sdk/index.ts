@@ -105,6 +105,8 @@ export {
 	type UnsupportedDestinationMemoErrorType,
 	UnsupportedAssetIdError,
 	type UnsupportedAssetIdErrorType,
+	DestinationAddressMatchesTokenAddressError,
+	type DestinationAddressMatchesTokenAddressErrorType,
 } from "./src/classes/errors";
 
 // Direct Bridge Errors

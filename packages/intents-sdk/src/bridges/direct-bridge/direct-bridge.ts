@@ -30,12 +30,14 @@ import {
 	withdrawalParamsInvariant,
 } from "./direct-bridge-utils";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import { compareAddresses } from "../../lib/compareAddresses";
 import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import { LRUCache } from "lru-cache";
 
@@ -159,6 +161,19 @@ export class DirectBridge implements Bridge {
 			throw new InvalidDestinationAddressForWithdrawalError(
 				args.destinationAddress,
 				Chains.Near,
+			);
+		}
+
+		const { contractId: tokenAccountId } = utils.parseDefuseAssetId(
+			args.assetId,
+		);
+
+		if (
+			compareAddresses(tokenAccountId, args.destinationAddress, Chains.Near)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				tokenAccountId,
+				args.assetId,
 			);
 		}
 
