@@ -1,11 +1,9 @@
 import { ChainKind } from "@omni-bridge/core";
 
 /**
- * These tokens can be routed through either PoA Bridge or Omni Bridge
- * depending on the SDK configuration. Use the `routeMigratedPoaTokensThroughOmniBridge`
- * feature flag to enable Omni Bridge routing for these tokens.
+ * These tokens originaly have been PoA Bridge tokens but has been migrated to Omni bridge.
  */
-export const POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE: Record<
+export const POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE: Record<
 	string,
 	ChainKind
 > = {
@@ -21,4 +19,7 @@ export const POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE: Record<
 	"sol-c634d063ceff771aff0c972ec396fd915a6bbd0e.omft.near": ChainKind.Sol, // SPX
 	"sol-d600e625449a4d9380eaf5e3265e54c90d34e260.omft.near": ChainKind.Sol, // MELANIA
 	"sol.omft.near": ChainKind.Sol, // SOL
+	"aptos.omft.near": ChainKind.Aptos, // APTOS
+	"aptos-34ee497f210c5a511e8d5b53bc56d75b63612bb5.omft.near": ChainKind.Aptos, // APTOS USDC
+	"aptos-88cb7619440a914fe6400149a12b443c3ac21d59.omft.near": ChainKind.Aptos // APTOS USDT
 } as const;

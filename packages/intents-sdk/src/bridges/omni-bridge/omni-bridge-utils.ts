@@ -17,7 +17,7 @@ import type {
 	IntentFtWithdraw,
 	IntentStorageDeposit,
 } from "@defuse-protocol/contract-types";
-import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
+import { POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE } from "../../constants/poa-tokens-migrated-to-omni-bridge";
 
 export function createWithdrawIntentsPrimitive(params: {
 	assetId: string;
@@ -138,7 +138,7 @@ export function isUtxoChain(network: ChainKind): boolean {
 }
 
 export function poaContractIdToChainKind(contractId: string): ChainKind | null {
-	return POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[contractId] ?? null;
+	return POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[contractId] ?? null;
 }
 
 export function validateOmniToken(nearAddress: string): boolean {

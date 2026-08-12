@@ -194,11 +194,10 @@ describe("PoaBridge", () => {
 			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:sol.omft.near",
 		])(
-			"doesn't support `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true",
+			"doesn't support `omft.near` tokens that migrated omni bridge",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
-					routeMigratedPoaTokensThroughOmniBridge: true,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
@@ -208,26 +207,6 @@ describe("PoaBridge", () => {
 			},
 		);
 
-		it.each([
-			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			"nep141:sol.omft.near",
-		])(
-			"supports `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true only when route config is specified",
-			async (tokenId) => {
-				const bridge = new PoaBridge({
-					envConfig: configsByEnvironment.production,
-					routeMigratedPoaTokensThroughOmniBridge: true,
-					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
-				});
-
-				await expect(
-					bridge.supports({
-						assetId: tokenId,
-						routeConfig: createPoaBridgeRoute(),
-					}),
-				).resolves.toBe(true);
-			},
-		);
 
 		it.each([
 			"nep141:wrap.near",

@@ -1381,14 +1381,11 @@ describe("omni_bridge", () => {
 		]);
 	});
 
-	it("createWithdrawalIntents(): create withdrawal intents with an allowlisted PoA token with routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+	it("createWithdrawalIntents(): create withdrawal intents with an Omni migrated PoA token", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({
 			referral,
 			intentSigner,
-			features: {
-				routeMigratedPoaTokensThroughOmniBridge: true,
-			},
 		});
 
 		const relayerFee = 1500n;
@@ -1932,8 +1929,8 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
 		[
-			"nep141:sol.omft.near",
-			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Solana },
+			"nep141:sol.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
 		],
 		[
 			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
