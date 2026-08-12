@@ -584,7 +584,10 @@ export class OmniBridge implements Bridge {
 					);
 				}
 			}
-		} else if(omniChainKind === ChainKind.Sol &&  assetInfo.contractId === 'sol.omft.near') {
+		} else if (
+			omniChainKind === ChainKind.Sol &&
+			assetInfo.contractId === "sol.omft.near"
+		) {
 			// Need to validate Min amount for SOL withdrawals
 			const fee = await withTimeout(
 				() =>
@@ -601,8 +604,11 @@ export class OmniBridge implements Bridge {
 			);
 			if (!args.skipMinAmountValidation) {
 				// args.amount is without fee, we need to pass an amount with fee
-				assert(fee.min_amount != null, `Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`)
-				const minAmount = BigInt(fee.min_amount)
+				assert(
+					fee.min_amount != null,
+					`Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`,
+				);
+				const minAmount = BigInt(fee.min_amount);
 				if (args.amount < minAmount) {
 					throw new MinWithdrawalAmountError(
 						minAmount,
