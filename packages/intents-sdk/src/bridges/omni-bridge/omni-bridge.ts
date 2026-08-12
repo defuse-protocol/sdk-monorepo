@@ -585,6 +585,7 @@ export class OmniBridge implements Bridge {
 				}
 			}
 		} else if (
+			!args.skipMinAmountValidation &&
 			omniChainKind === ChainKind.Sol &&
 			assetInfo.contractId === "sol.omft.near"
 		) {
@@ -602,21 +603,19 @@ export class OmniBridge implements Bridge {
 					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
 				},
 			);
-			if (!args.skipMinAmountValidation) {
-				// args.amount is without fee, we need to pass an amount with fee
-				assert(
-					fee.min_amount != null,
-					`Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`,
+			// args.amount is without fee, we need to pass an amount with fee
+			assert(
+				fee.min_amount != null,
+				`Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`,
+			);
+			const actualAmountWithFee = args.amount + args.feeEstimation.amount;
+			const minAmount = BigInt(fee.min_amount);
+			if (actualAmountWithFee < minAmount) {
+				throw new MinWithdrawalAmountError(
+					minAmount,
+					actualAmountWithFee,
+					args.assetId,
 				);
-				const actualAmountWithFee = args.amount + args.feeEstimation.amount;
-				const minAmount = BigInt(fee.min_amount);
-				if (actualAmountWithFee < minAmount) {
-					throw new MinWithdrawalAmountError(
-						minAmount,
-						actualAmountWithFee,
-						args.assetId,
-					);
-				}
 			}
 		}
 
