@@ -445,10 +445,6 @@ export class OmniBridge implements Bridge {
 		}
 
 		const destTokenAddress = getAddress(destTokenOmniAddress);
-		// For EVM base token 0x0000000000000000000000000000000000000000 address is returned
-		// For SVM base token 11111111111111111111111111111111
-		// So for example you wont be able to send eth.bridge.near to 0x0000000000000000000000000000000000000000
-		// or sol.omft.near to 11111111111111111111111111111111
 		if (
 			compareAddresses(
 				destTokenAddress,
