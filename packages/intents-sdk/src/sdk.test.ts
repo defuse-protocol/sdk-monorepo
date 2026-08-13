@@ -28,6 +28,8 @@ const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
 });
 
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
+
 describe.concurrent("poa_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
@@ -211,7 +213,7 @@ describe.concurrent("hot_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 					amount: 1n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeInclusive: false,
 				},
 			});
@@ -293,7 +295,7 @@ describe.concurrent("hot_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 					amount: 0n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeInclusive: false,
 				},
 			});
@@ -338,7 +340,7 @@ describe.concurrent("hot_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				amount: 1n,
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				feeInclusive: false,
 			},
 			feeEstimation,
@@ -359,7 +361,7 @@ describe.concurrent("hot_bridge", () => {
 				intent: "mt_withdraw",
 				min_gas: "91300000000000",
 				msg: expect.stringMatching(
-					/{"receiver_id":"11111111111111111111","amount_native":"6600000024640000","block_number":\d+}/,
+					/{"receiver_id":"11111111111111111112","amount_native":"6600000024640000","block_number":\d+}/,
 				),
 				receiver_id: "bridge-refuel.hot.tg",
 				token: "v2_1.omni.hot.tg",
@@ -987,7 +989,7 @@ describe("virtual_chain", () => {
 				assetId:
 					"nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
 				amount: 0n,
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				feeInclusive: false,
 				routeConfig: createVirtualChainRoute("aurora", null),
 			},

@@ -31,6 +31,8 @@ import {
 } from "./omni-bridge-constants";
 import { OmniBridge } from "./omni-bridge";
 
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
+
 describe("OmniBridge", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
@@ -193,7 +195,7 @@ describe("OmniBridge", () => {
 			{
 				assetId:
 					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				routeConfig: undefined,
 			}, // Aurora token
 			{
@@ -1723,7 +1725,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: prefundedAssetId,
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeEstimation: {
 						// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
 						amount: 0n,
