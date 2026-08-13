@@ -51,9 +51,11 @@ import {
 import {
 	FEE_SUBSIDIZED_TOKENS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
+	SOL_OMNI_CONTRACT_ID,
 } from "./omni-bridge-constants";
 import {
 	caip2ToChainKind,
@@ -439,10 +441,6 @@ export class OmniBridge implements Bridge {
 		}
 
 		const destTokenAddress = getAddress(destTokenOmniAddress);
-		// For EVM base token 0x0000000000000000000000000000000000000000 address is returned
-		// For SVM base token 11111111111111111111111111111111
-		// So for example you wont be able to send eth.bridge.near to 0x0000000000000000000000000000000000000000
-		// or sol.omft.near to 11111111111111111111111111111111
 		if (
 			compareAddresses(
 				destTokenAddress,
@@ -578,6 +576,17 @@ export class OmniBridge implements Bridge {
 					);
 				}
 			}
+		} else if (
+			!args.skipMinAmountValidation &&
+			omniChainKind === ChainKind.Sol &&
+			assetInfo.contractId === SOL_OMNI_CONTRACT_ID &&
+			args.amount < MIN_AMOUNT_SOL_OMNI_WITHDRAWAL
+		) {
+			throw new MinWithdrawalAmountError(
+				MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
+				args.amount,
+				args.assetId,
+			);
 		}
 
 		return;

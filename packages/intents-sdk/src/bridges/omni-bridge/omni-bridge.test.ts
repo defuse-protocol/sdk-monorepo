@@ -31,6 +31,8 @@ import {
 } from "./omni-bridge-constants";
 import { OmniBridge } from "./omni-bridge";
 
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
+
 describe("OmniBridge", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
@@ -193,7 +195,7 @@ describe("OmniBridge", () => {
 			{
 				assetId:
 					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				routeConfig: undefined,
 			}, // Aurora token
 			{
@@ -1366,6 +1368,54 @@ describe("OmniBridge", () => {
 			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
 		});
 
+		it("Throws MinWithdrawalAmountError when amount fails to pass min withdrawal amount for sol.omft.near", async () => {
+			using solverRelay = await useMockedSolverRelay();
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+			const nativeTokenFee = 30_000n;
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: nativeTokenFee,
+				transferred_token_fee: "0",
+				min_amount: "89890",
+				usd_fee: 0.58,
+				insufficient_utxo: false,
+			});
+			const amount = 3000n;
+			const quote = {
+				amount_in: "100",
+				amount_out: nativeTokenFee.toString(),
+				defuse_asset_identifier_in: "nep141:sol.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				expiration_time: "",
+				quote_hash: "",
+			};
+			solverRelay.getQuote.mockResolvedValue(quote);
+
+			const result = bridge.validateWithdrawal({
+				assetId: "nep141:sol.omft.near",
+				amount,
+				destinationAddress: "GmyfrAhK5dexSp6gQ5F9y1JC4ZYyG6iJfgrX8BWPCJNz",
+				feeEstimation: {
+					amount: BigInt(quote.amount_in),
+					quote,
+					underlyingFees: {
+						[RouteEnum.OmniBridge]: {
+							relayerFee: nativeTokenFee,
+							storageDepositFee: 0n,
+						},
+					},
+				},
+			});
+
+			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
+		});
+
 		it.each([
 			{
 				assetId:
@@ -1635,7 +1685,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: prefundedAssetId,
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeEstimation: {
 						// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
 						amount: 0n,
@@ -1683,3 +1733,31 @@ describe("OmniBridge", () => {
 		});
 	});
 });
+
+/*
+ * Use it for easy mocking of `solverRelay.getQuote()`
+ */
+async function useMockedSolverRelay() {
+	// Mock at runtime
+	vi.doMock("@defuse-protocol/internal-utils", async (importOriginal) => {
+		const actual =
+			await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+		return {
+			...actual,
+			solverRelay: {
+				...actual.solverRelay,
+				getQuote: vi.fn(),
+			},
+		};
+	});
+
+	// Import the mocked module
+	const { solverRelay } = await import("@defuse-protocol/internal-utils");
+
+	return {
+		getQuote: vi.mocked(solverRelay.getQuote),
+		[Symbol.dispose]() {
+			vi.doUnmock("@defuse-protocol/internal-utils");
+		},
+	};
+}
