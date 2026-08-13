@@ -51,9 +51,11 @@ import {
 import {
 	FEE_SUBSIDIZED_TOKENS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
+	SOL_OMNI_CONTRACT_ID,
 } from "./omni-bridge-constants";
 import {
 	caip2ToChainKind,
@@ -587,35 +589,14 @@ export class OmniBridge implements Bridge {
 		} else if (
 			!args.skipMinAmountValidation &&
 			omniChainKind === ChainKind.Sol &&
-			assetInfo.contractId === "sol.omft.near"
+			assetInfo.contractId === SOL_OMNI_CONTRACT_ID &&
+			args.amount < MIN_AMOUNT_SOL_OMNI_WITHDRAWAL
 		) {
-			// Need to validate Min amount for SOL withdrawals
-			const fee = await withTimeout(
-				() =>
-					this.omniBridgeAPI.getFee(
-						omniAddress(ChainKind.Near, this.envConfig.contractID),
-						omniAddress(omniChainKind, args.destinationAddress),
-						omniAddress(ChainKind.Near, assetInfo.contractId),
-						args.amount,
-					),
-				{
-					timeout: typeof window !== "undefined" ? 10_000 : 3000,
-					errorInstance: new OmniWithdrawalApiFeeRequestTimeoutError(),
-				},
+			throw new MinWithdrawalAmountError(
+				MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
+				args.amount,
+				args.assetId,
 			);
-			assert(
-				fee.min_amount != null,
-				`Invalid min amount value from Omni Api expect string got: ${fee.min_amount}`,
-			);
-			// Need to check raw amount that will be minted on Solana against min amount from api
-			const minAmount = BigInt(fee.min_amount);
-			if (args.amount < minAmount) {
-				throw new MinWithdrawalAmountError(
-					minAmount,
-					args.amount,
-					args.assetId,
-				);
-			}
 		}
 
 		return;
