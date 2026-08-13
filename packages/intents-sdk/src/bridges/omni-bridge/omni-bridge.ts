@@ -51,9 +51,11 @@ import {
 import {
 	FEE_SUBSIDIZED_TOKENS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
+	SOL_OMNI_CONTRACT_ID,
 } from "./omni-bridge-constants";
 import {
 	caip2ToChainKind,
@@ -584,6 +586,17 @@ export class OmniBridge implements Bridge {
 					);
 				}
 			}
+		} else if (
+			!args.skipMinAmountValidation &&
+			omniChainKind === ChainKind.Sol &&
+			assetInfo.contractId === SOL_OMNI_CONTRACT_ID &&
+			args.amount < MIN_AMOUNT_SOL_OMNI_WITHDRAWAL
+		) {
+			throw new MinWithdrawalAmountError(
+				MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
+				args.amount,
+				args.assetId,
+			);
 		}
 
 		return;
