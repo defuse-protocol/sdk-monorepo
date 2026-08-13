@@ -1,5 +1,18 @@
 # @defuse-protocol/intents-sdk
 
+## 0.79.0
+
+### Minor Changes
+
+- 92fef08: Block sending funds to EVM burner addresses and SVM system program address
+- eb4dde0: Min amount validation for SOL withdrawals to Solana
+- 8975fe8: Block withdrawals to token addresses
+
+### Patch Changes
+
+- Updated dependencies [8975fe8]
+  - @defuse-protocol/internal-utils@0.36.0
+
 ## 0.78.1
 
 ### Patch Changes
