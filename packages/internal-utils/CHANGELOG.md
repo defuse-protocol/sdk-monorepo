@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.36.0
+
+### Minor Changes
+
+- 8975fe8: Block withdrawals to token addresses
+
 ## 0.35.2
 
 ### Patch Changes
