@@ -70,6 +70,7 @@ const caip2Mapping = {
 	[Chains.Aleo]: "aleo:mainnet",
 	[Chains.Dash]: "dash:mainnet",
 	[Chains.Plasma]: "eth:9745",
+	[Chains.Adi]: "eth:36900",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -107,6 +108,7 @@ const tokenPrefixMapping = {
 	aleo: Chains.Aleo,
 	dash: Chains.Dash,
 	plasma: Chains.Plasma,
+	adi: Chains.Adi,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {

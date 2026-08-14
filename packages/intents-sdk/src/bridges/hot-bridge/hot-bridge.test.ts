@@ -111,6 +111,7 @@ describe("HotBridge", () => {
 	describe("supports()", () => {
 		it.each([
 			"nep245:v2_1.omni.hot.tg:56_11111111111111111111",
+			"nep245:v2_1.omni.hot.tg:36900_11111111111111111111",
 			// todo: add more test cases for each supported chain
 		])("supports `v2_1.omni.hot.tg` tokens", async (tokenId) => {
 			const bridge = new HotBridge({
