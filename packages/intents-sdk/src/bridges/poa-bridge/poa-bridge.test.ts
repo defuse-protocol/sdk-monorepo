@@ -184,7 +184,6 @@ describe("PoaBridge", () => {
 	describe("supports()", () => {
 		it.each([
 			"nep141:btc.omft.near",
-			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 			"nep141:adi-0x9cb8142aebbcdc60af7c97af897a67a8f3ca71c2.omft.near",
 		])("supports `omft.near` tokens", async (tokenId) => {
@@ -206,38 +205,16 @@ describe("PoaBridge", () => {
 			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:sol.omft.near",
 		])(
-			"doesn't support `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true",
+			"doesn't support `omft.near` tokens that migrated to omni bridge",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
-					routeMigratedPoaTokensThroughOmniBridge: true,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(
 					false,
 				);
-			},
-		);
-
-		it.each([
-			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			"nep141:sol.omft.near",
-		])(
-			"supports `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true only when route config is specified",
-			async (tokenId) => {
-				const bridge = new PoaBridge({
-					envConfig: configsByEnvironment.production,
-					routeMigratedPoaTokensThroughOmniBridge: true,
-					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
-				});
-
-				await expect(
-					bridge.supports({
-						assetId: tokenId,
-						routeConfig: createPoaBridgeRoute(),
-					}),
-				).resolves.toBe(true);
 			},
 		);
 
@@ -316,13 +293,8 @@ describe("PoaBridge", () => {
 			{
 				assetId:
 					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
-				destinationAddress: zeroAddress,
+				destinationAddress: "0x0000000000000000000000000000000000000001",
 			}, // UDSC Ethereum
-			{
-				assetId:
-					"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
-				destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
-			}, // UDSC Solana
 			{
 				assetId:
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
@@ -589,11 +561,6 @@ describe("PoaBridge", () => {
 					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 				destinationAddress: "test.near",
 			}, // UDSC Ethereum
-			{
-				assetId:
-					"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
-				destinationAddress: "test.near",
-			}, // UDSC Solana
 			{
 				assetId:
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",

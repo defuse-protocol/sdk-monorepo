@@ -40,13 +40,12 @@ import {
 import { Chains, type Chain } from "../../lib/caip2";
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
-import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
+import { POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE } from "../../constants/poa-tokens-migrated-to-omni-bridge";
 import { compareAddresses } from "../../lib/compareAddresses";
 
 export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected envConfig: EnvConfig;
-	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	protected xrplRpcUrls: string[];
 
 	// TTL cache for supported tokens with 30-second TTL
@@ -58,16 +57,12 @@ export class PoaBridge implements Bridge {
 	constructor({
 		envConfig,
 		xrplRpcUrls,
-		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
 		envConfig: EnvConfig;
-		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 		xrplRpcUrls: string[];
 	}) {
 		this.envConfig = envConfig;
 		this.xrplRpcUrls = xrplRpcUrls;
-		this.routeMigratedPoaTokensThroughOmniBridge =
-			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
 
 	private getPoaBridgeBaseURL(): string {
@@ -100,14 +95,9 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
-		// When the feature flag is enabled, delegate eligible tokens to Omni Bridge
-		// unless the user explicitly specified PoA Bridge via routeConfig
 		if (
-			this.routeMigratedPoaTokensThroughOmniBridge &&
 			assetInfo != null &&
-			POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[assetInfo.contractId] !==
-				undefined &&
-			params.routeConfig === undefined
+			POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[assetInfo.contractId] !== undefined
 		) {
 			return false;
 		}
@@ -129,6 +119,9 @@ export class PoaBridge implements Bridge {
 			return null;
 		}
 
+		if (POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[parsed.contractId] !== undefined) {
+			return null;
+		}
 		let blockchain: Chain;
 		try {
 			blockchain = contractIdToCaip2(parsed.contractId);

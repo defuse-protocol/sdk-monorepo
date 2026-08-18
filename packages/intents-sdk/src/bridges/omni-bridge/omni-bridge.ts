@@ -51,9 +51,11 @@ import {
 import {
 	FEE_SUBSIDIZED_TOKENS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
+	SOL_OMNI_CONTRACT_ID,
 } from "./omni-bridge-constants";
 import {
 	caip2ToChainKind,
@@ -75,8 +77,8 @@ import {
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
+import { POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE } from "../../constants/poa-tokens-migrated-to-omni-bridge";
 import { compareAddresses } from "../../lib/compareAddresses";
-import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -93,7 +95,6 @@ export class OmniBridge implements Bridge {
 		max: 1,
 		ttl: 3000,
 	});
-	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -113,21 +114,17 @@ export class OmniBridge implements Bridge {
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
-		routeMigratedPoaTokensThroughOmniBridge,
 		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
-		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 		bridgeConfig?: BridgeConfigs[RouteEnum["OmniBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new BridgeAPI("mainnet");
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.routeMigratedPoaTokensThroughOmniBridge =
-			routeMigratedPoaTokensThroughOmniBridge ?? false;
 		this.bridgeConfig = {
 			prefundedNativeFeeTokens: bridgeConfig?.prefundedNativeFeeTokens ?? [],
 		};
@@ -163,8 +160,9 @@ export class OmniBridge implements Bridge {
 			);
 		}
 		if (nonValidStandard) return false;
-		const poaTokenRoutedThroughOmniBridge =
-			this.isPoaTokenRoutedThroughOmniBridge(parsed.contractId);
+		const poaTokenRoutedThroughOmniBridge = this.isPoaTokenMigratedToOmniBridge(
+			parsed.contractId,
+		);
 		const nonValidToken =
 			!poaTokenRoutedThroughOmniBridge &&
 			validateOmniToken(parsed.contractId) === false;
@@ -242,9 +240,7 @@ export class OmniBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		const omniChainKind = this.isPoaTokenRoutedThroughOmniBridge(
-			parsed.contractId,
-		)
+		const omniChainKind = this.isPoaTokenMigratedToOmniBridge(parsed.contractId)
 			? poaContractIdToChainKind(parsed.contractId)
 			: parseOriginChain(parsed.contractId);
 		if (omniChainKind === null) return null;
@@ -266,7 +262,7 @@ export class OmniBridge implements Bridge {
 			omniChainKind = caip2ToChainKind(routeConfig.chain);
 			blockchain = routeConfig.chain;
 		} else {
-			omniChainKind = this.isPoaTokenRoutedThroughOmniBridge(parsed.contractId)
+			omniChainKind = this.isPoaTokenMigratedToOmniBridge(parsed.contractId)
 				? poaContractIdToChainKind(parsed.contractId)
 				: parseOriginChain(parsed.contractId);
 			if (omniChainKind === null) return null;
@@ -445,10 +441,6 @@ export class OmniBridge implements Bridge {
 		}
 
 		const destTokenAddress = getAddress(destTokenOmniAddress);
-		// For EVM base token 0x0000000000000000000000000000000000000000 address is returned
-		// For SVM base token 11111111111111111111111111111111
-		// So for example you wont be able to send eth.bridge.near to 0x0000000000000000000000000000000000000000
-		// or sol.omft.near to 11111111111111111111111111111111
 		if (
 			compareAddresses(
 				destTokenAddress,
@@ -584,6 +576,17 @@ export class OmniBridge implements Bridge {
 					);
 				}
 			}
+		} else if (
+			!args.skipMinAmountValidation &&
+			omniChainKind === ChainKind.Sol &&
+			assetInfo.contractId === SOL_OMNI_CONTRACT_ID &&
+			args.amount < MIN_AMOUNT_SOL_OMNI_WITHDRAWAL
+		) {
+			throw new MinWithdrawalAmountError(
+				MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
+				args.amount,
+				args.assetId,
+			);
 		}
 
 		return;
@@ -894,12 +897,9 @@ export class OmniBridge implements Bridge {
 	}
 
 	/**
-	 * Checks if passed token contract id is an allowlisted PoA token that should be routed via OmniBridge.
-	 * Always return false when feature flag routeMigratedPoaTokensThroughOmniBridge = false.
+	 * Checks if passed token contract id is a Omni migrated PoA token.
 	 */
-	private isPoaTokenRoutedThroughOmniBridge(nearAddress: string): boolean {
-		return this.routeMigratedPoaTokensThroughOmniBridge
-			? POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[nearAddress] !== undefined
-			: false;
+	private isPoaTokenMigratedToOmniBridge(nearAddress: string): boolean {
+		return POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[nearAddress] !== undefined;
 	}
 }

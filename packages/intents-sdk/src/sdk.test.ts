@@ -28,6 +28,8 @@ const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
 });
 
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
+
 describe.concurrent("poa_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
@@ -211,7 +213,7 @@ describe.concurrent("hot_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 					amount: 1n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeInclusive: false,
 				},
 			});
@@ -293,7 +295,7 @@ describe.concurrent("hot_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 					amount: 0n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeInclusive: false,
 				},
 			});
@@ -338,7 +340,7 @@ describe.concurrent("hot_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				amount: 1n,
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				feeInclusive: false,
 			},
 			feeEstimation,
@@ -359,7 +361,7 @@ describe.concurrent("hot_bridge", () => {
 				intent: "mt_withdraw",
 				min_gas: "91300000000000",
 				msg: expect.stringMatching(
-					/{"receiver_id":"11111111111111111111","amount_native":"6600000024640000","block_number":\d+}/,
+					/{"receiver_id":"11111111111111111112","amount_native":"6600000024640000","block_number":\d+}/,
 				),
 				receiver_id: "bridge-refuel.hot.tg",
 				token: "v2_1.omni.hot.tg",
@@ -987,7 +989,7 @@ describe("virtual_chain", () => {
 				assetId:
 					"nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
 				amount: 0n,
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				feeInclusive: false,
 				routeConfig: createVirtualChainRoute("aurora", null),
 			},
@@ -1387,14 +1389,11 @@ describe("omni_bridge", () => {
 		]);
 	});
 
-	it("createWithdrawalIntents(): create withdrawal intents with an allowlisted PoA token with routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+	it("createWithdrawalIntents(): create withdrawal intents with an Omni migrated PoA token", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({
 			referral,
 			intentSigner,
-			features: {
-				routeMigratedPoaTokensThroughOmniBridge: true,
-			},
 		});
 
 		const relayerFee = 1500n;
@@ -1938,8 +1937,16 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
 		[
-			"nep141:sol.omft.near",
-			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Solana },
+			"nep141:sol.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
+		],
+		[
+			"nep141:aptos.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Aptos },
+		],
+		[
+			"nep141:starknet.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Starknet },
 		],
 		[
 			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
