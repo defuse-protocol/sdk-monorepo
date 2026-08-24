@@ -112,13 +112,6 @@ export interface IntentsSDKConfig {
 	referral: string;
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
-	features?: {
-		/**
-		 * Route migrated POA tokens (*.omft.near) through Omni Bridge.
-		 * Enable this to use Omni Bridge for POA tokens that have been migrated to the Omni infrastructure.
-		 */
-		routeMigratedPoaTokensThroughOmniBridge?: boolean;
-	};
 	bridgeConfigs?: BridgeConfigs;
 }
 
@@ -172,8 +165,6 @@ export class IntentsSDK implements IIntentsSDK {
 			new PoaBridge({
 				envConfig: this.envConfig,
 				xrplRpcUrls,
-				routeMigratedPoaTokensThroughOmniBridge:
-					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 			}),
 			new HotBridge({
 				envConfig: this.envConfig,
@@ -196,8 +187,6 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				routeMigratedPoaTokensThroughOmniBridge:
-					args.features?.routeMigratedPoaTokensThroughOmniBridge,
 				bridgeConfig: args.bridgeConfigs?.[RouteEnum.OmniBridge],
 			}),
 			new DirectBridge({

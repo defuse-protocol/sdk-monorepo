@@ -7,6 +7,7 @@ import {
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
@@ -68,6 +69,7 @@ describe("PoaBridge", () => {
 					standard: "nep141",
 					intents_token_id:
 						"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+					origin_chain_address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 				},
 				{
 					defuse_asset_identifier:
@@ -82,6 +84,7 @@ describe("PoaBridge", () => {
 					standard: "nep141",
 					intents_token_id:
 						"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
+					origin_chain_address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 				},
 				{
 					defuse_asset_identifier:
@@ -96,6 +99,8 @@ describe("PoaBridge", () => {
 					standard: "nep141",
 					intents_token_id:
 						"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
+					origin_chain_address:
+						"0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC",
 				},
 				{
 					defuse_asset_identifier: "zec:mainnet:native",
@@ -107,6 +112,7 @@ describe("PoaBridge", () => {
 					withdrawal_fee: "47000",
 					standard: "nep141",
 					intents_token_id: "nep141:zec.omft.near",
+					origin_chain_address: "native",
 				},
 				{
 					defuse_asset_identifier:
@@ -121,6 +127,7 @@ describe("PoaBridge", () => {
 					standard: "nep141",
 					intents_token_id:
 						"nep141:tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
+					origin_chain_address: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
 				},
 				{
 					defuse_asset_identifier: "btc:mainnet:native",
@@ -132,6 +139,7 @@ describe("PoaBridge", () => {
 					withdrawal_fee: "1500",
 					standard: "nep141",
 					intents_token_id: "nep141:btc.omft.near",
+					origin_chain_address: "native",
 				},
 				{
 					defuse_asset_identifier: "xrp:mainnet:native",
@@ -143,6 +151,7 @@ describe("PoaBridge", () => {
 					withdrawal_fee: "10",
 					standard: "nep141",
 					intents_token_id: "nep141:xrp.omft.near",
+					origin_chain_address: "native",
 				},
 				{
 					defuse_asset_identifier: "doge:mainnet:native",
@@ -154,6 +163,7 @@ describe("PoaBridge", () => {
 					withdrawal_fee: "45000000",
 					standard: "nep141",
 					intents_token_id: "nep141:doge.omft.near",
+					origin_chain_address: "native",
 				},
 				{
 					defuse_asset_identifier: "cardano:mainnet:native",
@@ -165,6 +175,7 @@ describe("PoaBridge", () => {
 					withdrawal_fee: "200000",
 					standard: "nep141",
 					intents_token_id: "nep141:cardano.omft.near",
+					origin_chain_address: "native",
 				},
 			],
 		});
@@ -173,8 +184,8 @@ describe("PoaBridge", () => {
 	describe("supports()", () => {
 		it.each([
 			"nep141:btc.omft.near",
-			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+			"nep141:adi-0x9cb8142aebbcdc60af7c97af897a67a8f3ca71c2.omft.near",
 		])("supports `omft.near` tokens", async (tokenId) => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
@@ -194,38 +205,16 @@ describe("PoaBridge", () => {
 			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
 			"nep141:sol.omft.near",
 		])(
-			"doesn't support `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true",
+			"doesn't support `omft.near` tokens that migrated to omni bridge",
 			async (tokenId) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
-					routeMigratedPoaTokensThroughOmniBridge: true,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
 				});
 
 				await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(
 					false,
 				);
-			},
-		);
-
-		it.each([
-			"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			"nep141:sol.omft.near",
-		])(
-			"supports `omft.near` tokens that can be routed to omni bridge when routeMigratedPoaTokensThroughOmniBridge = true only when route config is specified",
-			async (tokenId) => {
-				const bridge = new PoaBridge({
-					envConfig: configsByEnvironment.production,
-					routeMigratedPoaTokensThroughOmniBridge: true,
-					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
-				});
-
-				await expect(
-					bridge.supports({
-						assetId: tokenId,
-						routeConfig: createPoaBridgeRoute(),
-					}),
-				).resolves.toBe(true);
 			},
 		);
 
@@ -304,13 +293,8 @@ describe("PoaBridge", () => {
 			{
 				assetId:
 					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
-				destinationAddress: zeroAddress,
+				destinationAddress: "0x0000000000000000000000000000000000000001",
 			}, // UDSC Ethereum
-			{
-				assetId:
-					"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
-				destinationAddress: "9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
-			}, // UDSC Solana
 			{
 				assetId:
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
@@ -363,6 +347,55 @@ describe("PoaBridge", () => {
 			).resolves.toBeUndefined();
 		});
 
+		it.each([
+			{
+				assetId:
+					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+				destinationAddress: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+			}, // exact match
+			{
+				assetId:
+					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+				destinationAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+			}, // same EVM address, different (checksummed) case
+			{
+				assetId:
+					"nep141:tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
+				destinationAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+			}, // exact match
+		])(
+			"blocks withdrawals of token to its own address",
+			async ({ assetId, destinationAddress }) => {
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						amount: 50000000000n,
+						assetId,
+						destinationAddress,
+					}),
+				).rejects.toThrow(DestinationAddressMatchesTokenAddressError);
+			},
+		);
+
+		it("allows withdrawing a native token to an address matching its literal `origin_chain_address`", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					amount: 5000n,
+					assetId: "nep141:btc.omft.near",
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+				}),
+			).resolves.toBeUndefined();
+		});
+
 		it("allows correct XRPL address", async () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
@@ -399,6 +432,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -437,6 +471,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -468,6 +503,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -500,6 +536,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -524,11 +561,6 @@ describe("PoaBridge", () => {
 					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 				destinationAddress: "test.near",
 			}, // UDSC Ethereum
-			{
-				assetId:
-					"nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
-				destinationAddress: "test.near",
-			}, // UDSC Solana
 			{
 				assetId:
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
@@ -616,6 +648,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -646,6 +679,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "a:m",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -684,6 +718,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "a:m",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -723,6 +758,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "a:m",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -761,6 +797,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "a:b:c:d",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -797,6 +834,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "a:b:c:d",
+						origin_chain_address: "",
 					},
 				],
 			});
@@ -832,6 +870,7 @@ describe("PoaBridge", () => {
 						min_deposit_amount: "",
 						withdrawal_fee: "",
 						defuse_asset_identifier: "a:b:c:d",
+						origin_chain_address: "",
 					},
 				],
 			});

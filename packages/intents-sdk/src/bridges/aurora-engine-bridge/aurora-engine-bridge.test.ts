@@ -81,7 +81,7 @@ describe("AuroraEngineBridge", () => {
 		);
 	});
 	describe("validateWithdrawal()", () => {
-		it.each([zeroAddress])(
+		it.each(["0x0000000000000000000000000000000000000001"])(
 			"allows EVM addresses",
 			async (destinationAddress) => {
 				const bridge = new AuroraEngineBridge({

@@ -54,7 +54,6 @@ const caip2Mapping = {
 	[Chains.Arbitrum]: "eth:42161",
 	[Chains.Bitcoin]: "btc:mainnet",
 	[Chains.BitcoinCash]: "bch:mainnet",
-	[Chains.Solana]: "sol:mainnet",
 	[Chains.Dogecoin]: "doge:mainnet",
 	[Chains.XRPL]: "xrp:mainnet",
 	[Chains.Zcash]: "zec:mainnet",
@@ -62,14 +61,13 @@ const caip2Mapping = {
 	[Chains.Berachain]: "eth:80094",
 	[Chains.Tron]: "tron:mainnet",
 	[Chains.Sui]: "sui:mainnet",
-	[Chains.Aptos]: "aptos:mainnet",
 	[Chains.Movement]: "movement:mainnet",
 	[Chains.Cardano]: "cardano:mainnet",
 	[Chains.Litecoin]: "ltc:mainnet",
-	[Chains.Starknet]: "starknet:mainnet",
 	[Chains.Aleo]: "aleo:mainnet",
 	[Chains.Dash]: "dash:mainnet",
 	[Chains.Plasma]: "eth:9745",
+	[Chains.Adi]: "eth:36900",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -91,7 +89,6 @@ const tokenPrefixMapping = {
 	arb: Chains.Arbitrum,
 	btc: Chains.Bitcoin,
 	bch: Chains.BitcoinCash,
-	sol: Chains.Solana,
 	doge: Chains.Dogecoin,
 	xrp: Chains.XRPL,
 	zec: Chains.Zcash,
@@ -99,14 +96,13 @@ const tokenPrefixMapping = {
 	bera: Chains.Berachain,
 	tron: Chains.Tron,
 	sui: Chains.Sui,
-	aptos: Chains.Aptos,
 	movement: Chains.Movement,
 	cardano: Chains.Cardano,
 	ltc: Chains.Litecoin,
-	starknet: Chains.Starknet,
 	aleo: Chains.Aleo,
 	dash: Chains.Dash,
 	plasma: Chains.Plasma,
+	adi: Chains.Adi,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {

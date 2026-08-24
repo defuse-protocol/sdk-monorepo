@@ -3,12 +3,13 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { BridgeAPI } from "@omni-bridge/core";
+import { BridgeAPI, ChainKind, omniAddress } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
 import * as estimateFee from "../../lib/estimate-fee";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
@@ -29,6 +30,8 @@ import {
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 } from "./omni-bridge-constants";
 import { OmniBridge } from "./omni-bridge";
+
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
 
 describe("OmniBridge", () => {
 	beforeEach(() => {
@@ -192,7 +195,7 @@ describe("OmniBridge", () => {
 			{
 				assetId:
 					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				routeConfig: undefined,
 			}, // Aurora token
 			{
@@ -861,7 +864,7 @@ describe("OmniBridge", () => {
 
 			const result = await bridge.supports({
 				assetId:
-					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+					"nep141:eth-0xdac17f958d2ee523a2206206994597c13d831ec7.omft.near",
 			});
 			expect(result).toBe(false);
 		});
@@ -879,49 +882,13 @@ describe("OmniBridge", () => {
 			await expect(
 				bridge.supports({
 					assetId:
-						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+						"nep141:eth-0xdac17f958d2ee523a2206206994597c13d831ec7.omft.near",
 					routeConfig: createOmniBridgeRoute(),
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
 
-		it("does not support PoA token routable through Omni with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
-
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider,
-			});
-
-			const result = await bridge.supports({
-				assetId:
-					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			});
-
-			expect(result).toBe(false);
-		});
-		it("Throws when given a PoA token that can be routed through Omni with route config without a target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
-
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider,
-			});
-
-			await expect(
-				bridge.supports({
-					assetId:
-						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-					routeConfig: createOmniBridgeRoute(),
-				}),
-			).rejects.toThrow(UnsupportedAssetIdError);
-		});
-
-		it("supports PoA token with routeConfig and valid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+		it("supports Omni migrated PoA token with routeConfig and valid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -939,7 +906,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("throws for PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+		it("throws for Omni migrated PoA token with routeConfig and invalid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -958,7 +925,7 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(TokenNotFoundInDestinationChainError);
 		});
 
-		it("allows routable PoA token with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("allows Omni migrated PoA token with no routeConfig", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -966,7 +933,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			const result = await bridge.supports({
@@ -976,7 +942,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("allows routable PoA token with routeConfig but no target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("allows Omni migrated PoA token with routeConfig but no target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -984,7 +950,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			const result = await bridge.supports({
@@ -995,7 +960,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("allows routable PoA token with routeConfig and target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("allows Omni migrated PoA token with routeConfig and target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1003,7 +968,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			const result = await bridge.supports({
@@ -1014,7 +978,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("throws for routable PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("throws for Omni migrated PoA token with routeConfig and invalid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1022,7 +986,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			await expect(
@@ -1269,7 +1232,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: "nep141:eth.bridge.near",
 					amount: 1000000000000000000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
 					feeEstimation: {
 						amount: 25_000_000_000n,
 						quote: null,
@@ -1319,7 +1282,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: "nep141:lsd-usdt.rhealab.near",
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: "0x0000000000000000000000000000000000000001",
 					feeEstimation: {
 						amount: 0n,
 						quote: null,
@@ -1405,6 +1368,108 @@ describe("OmniBridge", () => {
 			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
 		});
 
+		it("Throws MinWithdrawalAmountError when amount fails to pass min withdrawal amount for sol.omft.near", async () => {
+			using solverRelay = await useMockedSolverRelay();
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+			const nativeTokenFee = 30_000n;
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: nativeTokenFee,
+				transferred_token_fee: "0",
+				min_amount: "89890",
+				usd_fee: 0.58,
+				insufficient_utxo: false,
+			});
+			const amount = 3000n;
+			const quote = {
+				amount_in: "100",
+				amount_out: nativeTokenFee.toString(),
+				defuse_asset_identifier_in: "nep141:sol.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				expiration_time: "",
+				quote_hash: "",
+			};
+			solverRelay.getQuote.mockResolvedValue(quote);
+
+			const result = bridge.validateWithdrawal({
+				assetId: "nep141:sol.omft.near",
+				amount,
+				destinationAddress: "GmyfrAhK5dexSp6gQ5F9y1JC4ZYyG6iJfgrX8BWPCJNz",
+				feeEstimation: {
+					amount: BigInt(quote.amount_in),
+					quote,
+					underlyingFees: {
+						[RouteEnum.OmniBridge]: {
+							relayerFee: nativeTokenFee,
+							storageDepositFee: 0n,
+						},
+					},
+				},
+			});
+
+			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
+		});
+
+		it.each([
+			{
+				assetId:
+					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+				destinationAddress: "0xaaaaaa20d9e0e2461697782ef11675f668207961",
+				targetChain: Chains.Ethereum,
+				chainKind: ChainKind.Eth,
+			},
+			{
+				assetId: "nep141:token.publicailab.near",
+				destinationAddress: "0x5cd0ba37d1d2eeaafae7af26a9346e80938d1669",
+				targetChain: Chains.Ethereum,
+				chainKind: ChainKind.Eth,
+			},
+		])(
+			"blocks withdrawals of token to it's address",
+			async ({ assetId, destinationAddress, targetChain, chainKind }) => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider,
+				});
+
+				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+					omniAddress(chainKind, destinationAddress),
+				);
+
+				const result = bridge.validateWithdrawal({
+					assetId,
+					amount: 0n,
+					destinationAddress,
+					skipMinAmountValidation: true,
+					routeConfig: createOmniBridgeRoute(targetChain),
+					feeEstimation: {
+						amount: 1n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								storageDepositFee: 0n,
+								relayerFee: 1n,
+							},
+						},
+					},
+				});
+
+				await expect(result).rejects.toThrow(
+					DestinationAddressMatchesTokenAddressError,
+				);
+			},
+		);
+
 		it("Skips all min amount checks when skipMinAmountValidation is true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
@@ -1471,7 +1536,7 @@ describe("OmniBridge", () => {
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
 					assetId: "nep141:lsd-usdt.rhealab.near",
-					destinationAddress: zeroAddress,
+					destinationAddress: "0x0000000000000000000000000000000000000001",
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
 				},
@@ -1487,7 +1552,12 @@ describe("OmniBridge", () => {
 
 	describe("prefundedNativeFeeTokens", () => {
 		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
-		const prefundedAssetId = "nep141:eth.bridge.near";
+		const prefundedAssetId =
+			"nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedTokenId =
+			"bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedOriginChainOmniAddress =
+			"eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
 
 		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
@@ -1513,7 +1583,7 @@ describe("OmniBridge", () => {
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("eth.bridge.near", [0n, 0n]);
+			bridge["storageDepositCache"].set(prefundedTokenId, [0n, 0n]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
@@ -1559,7 +1629,7 @@ describe("OmniBridge", () => {
 			const storageBalanceToPay = minStoragedDeposit - currentStorageBalance;
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("eth.bridge.near", [
+			bridge["storageDepositCache"].set(prefundedTokenId, [
 				minStoragedDeposit,
 				currentStorageBalance,
 			]);
@@ -1594,7 +1664,7 @@ describe("OmniBridge", () => {
 				"getAccountOmniStorageBalance",
 			).mockResolvedValue({ total: highBalance, available: highBalance });
 			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"eth:0x0000000000000000000000000000000000000000",
+				prefundedOriginChainOmniAddress,
 			);
 			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
 				decimals: 6,
@@ -1615,7 +1685,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: prefundedAssetId,
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeEstimation: {
 						// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
 						amount: 0n,
@@ -1663,3 +1733,31 @@ describe("OmniBridge", () => {
 		});
 	});
 });
+
+/*
+ * Use it for easy mocking of `solverRelay.getQuote()`
+ */
+async function useMockedSolverRelay() {
+	// Mock at runtime
+	vi.doMock("@defuse-protocol/internal-utils", async (importOriginal) => {
+		const actual =
+			await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+		return {
+			...actual,
+			solverRelay: {
+				...actual.solverRelay,
+				getQuote: vi.fn(),
+			},
+		};
+	});
+
+	// Import the mocked module
+	const { solverRelay } = await import("@defuse-protocol/internal-utils");
+
+	return {
+		getQuote: vi.mocked(solverRelay.getQuote),
+		[Symbol.dispose]() {
+			vi.doUnmock("@defuse-protocol/internal-utils");
+		},
+	};
+}

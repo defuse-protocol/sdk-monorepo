@@ -1,5 +1,46 @@
 # @defuse-protocol/intents-sdk
 
+## 0.81.0
+
+### Minor Changes
+
+- 2073fd5: Add ADI support to PoA Bridge while retaining native ADI support through HOT Bridge.
+
+### Patch Changes
+
+- Updated dependencies [2073fd5]
+  - @defuse-protocol/internal-utils@0.37.0
+
+## 0.80.0
+
+### Minor Changes
+
+- de15302: Remove Solana from PoA bridge
+  Remove Aptos from PoA bridge
+  Remove Starknet from PoA bridge
+  Remove feature `routeMigratedPoaTokensThroughOmniBridge` and force-route all Omni migrated PoA tokens
+  to Omni
+  Rename `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` to `POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE`
+
+## 0.79.0
+
+### Minor Changes
+
+- 92fef08: Block sending funds to EVM burner addresses and SVM system program address
+- eb4dde0: Min amount validation for SOL withdrawals to Solana
+- 8975fe8: Block withdrawals to token addresses
+
+### Patch Changes
+
+- Updated dependencies [8975fe8]
+  - @defuse-protocol/internal-utils@0.36.0
+
+## 0.78.1
+
+### Patch Changes
+
+- dbc0e19: Fix hyper evm related utilities function via update of omni bridge packages
+
 ## 0.78.0
 
 ### Minor Changes
