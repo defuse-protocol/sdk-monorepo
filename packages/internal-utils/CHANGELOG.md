@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.37.0
+
+### Minor Changes
+
+- 2073fd5: Add ADI support to PoA Bridge while retaining native ADI support through HOT Bridge.
+
 ## 0.36.0
 
 ### Minor Changes
