@@ -185,6 +185,7 @@ describe("PoaBridge", () => {
 		it.each([
 			"nep141:btc.omft.near",
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+			"nep141:adi-0x9cb8142aebbcdc60af7c97af897a67a8f3ca71c2.omft.near",
 		])("supports `omft.near` tokens", async (tokenId) => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
