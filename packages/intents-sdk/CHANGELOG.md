@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.81.0
+
+### Minor Changes
+
+- 2073fd5: Add ADI support to PoA Bridge while retaining native ADI support through HOT Bridge.
+
+### Patch Changes
+
+- Updated dependencies [2073fd5]
+  - @defuse-protocol/internal-utils@0.37.0
+
 ## 0.80.0
 
 ### Minor Changes
