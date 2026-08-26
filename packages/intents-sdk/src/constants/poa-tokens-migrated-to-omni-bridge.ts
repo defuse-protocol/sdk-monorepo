@@ -20,5 +20,5 @@ export const POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE: Record<string, ChainKind> = {
 	"aptos-34ee497f210c5a511e8d5b53bc56d75b63612bb5.omft.near": ChainKind.Aptos, // APTOS USDC
 	"aptos-88cb7619440a914fe6400149a12b443c3ac21d59.omft.near": ChainKind.Aptos, // APTOS USDT
 	"starknet.omft.near": ChainKind.Strk, // STARKNET
-	"zec.omft.near": ChainKind.Strk, // ZCASH
+	"zec.omft.near": ChainKind.Zcash, // ZCASH
 } as const;
