@@ -1,13 +1,11 @@
-import { assert, utils } from "@defuse-protocol/internal-utils";
+import { utils } from "@defuse-protocol/internal-utils";
 import {
 	ChainKind,
-	omniAddress,
 	isBridgeToken,
 	type OmniAddress,
 	type TokenDecimals,
 	getChain,
 } from "@omni-bridge/core";
-import { calculateStorageAccountId } from "@omni-bridge/near";
 import { Chains } from "../../lib/caip2";
 import type { Chain } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT, OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
@@ -18,26 +16,26 @@ import type {
 	IntentStorageDeposit,
 } from "@defuse-protocol/contract-types";
 import { POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE } from "../../constants/poa-tokens-migrated-to-omni-bridge";
+import type { OmniWithdrawIntentParams } from "./omni-withdraw-params";
 
-export function createWithdrawIntentsPrimitive(params: {
-	assetId: string;
-	destinationAddress: string;
-	amount: bigint;
-	nativeFee: bigint;
-	storageDepositAmount: bigint;
-	omniChainKind: ChainKind;
-	intentsContract: string;
-	utxoMaxGasFee: bigint | null;
-}): (IntentStorageDeposit | IntentFtWithdraw)[] {
-	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
-		params.assetId,
-	);
-	assert(standard === "nep141", "Only NEP-141 is supported");
-	const recipient = omniAddress(
-		params.omniChainKind,
-		params.destinationAddress,
-	);
-	let msg = "";
+/**
+ * Lays a calculated withdrawal out as intents.
+ *
+ * It takes the result of `deriveOmniWithdrawIntentParams` rather than the inputs to it, so
+ * there is one calculation and no way to hand it a value that was worked out some other way.
+ * That matters most for the amount: a UTXO chain has already added its fees to it, and doing
+ * that twice would send more than the caller asked for.
+ */
+export function createWithdrawIntentsPrimitive({
+	tokenAccountId,
+	recipient,
+	msg,
+	externalId,
+	storageDepositAccountId,
+	amount,
+	nativeFee,
+	storageDepositAmount,
+}: OmniWithdrawIntentParams): (IntentStorageDeposit | IntentFtWithdraw)[] {
 	const ftWithdrawPayload: {
 		recipient: OmniAddress;
 		fee: string;
@@ -47,43 +45,18 @@ export function createWithdrawIntentsPrimitive(params: {
 	} = {
 		recipient,
 		fee: "0",
-		native_token_fee: params.nativeFee.toString(),
-		external_id: crypto.randomUUID(),
+		native_token_fee: nativeFee.toString(),
+		external_id: externalId,
 	};
-	// For withdrawals to Bitcoin and other UTXO chains we need to specify maxGasFee to the relayer
-	// that is picking up our TX and sends it to a connector (btc connector for example).
-	// Technically we can avoid specifying it in the message and relayer just takes the same value
-	// however this introduces a risk that a malicious actor can pick up this tx and submit it to the connector
-	// with a higher max gas fee value that can result in recipient getting less BTC.
-	if (isUtxoChain(params.omniChainKind)) {
-		assert(
-			params.utxoMaxGasFee !== null && params.utxoMaxGasFee > 0n,
-			`Invalid utxo max gas fee: expected > 0, got ${params.utxoMaxGasFee}`,
-		);
-		msg = JSON.stringify({
-			MaxGasFee: params.utxoMaxGasFee.toString(),
-		});
+	if (msg !== "") {
 		ftWithdrawPayload.msg = msg;
 	}
 
 	const intents: (IntentStorageDeposit | IntentFtWithdraw)[] = [];
-	if (params.nativeFee > 0n) {
+	if (storageDepositAccountId !== null) {
 		intents.push({
-			deposit_for_account_id: calculateStorageAccountId(
-				{
-					token: `near:${tokenAccountId}`,
-					amount: params.amount,
-					recipient,
-					fee: {
-						fee: 0n,
-						native_fee: params.nativeFee,
-					},
-					sender: `near:${params.intentsContract}`,
-					msg,
-				},
-				ftWithdrawPayload.external_id,
-			),
-			amount: params.nativeFee.toString(),
+			deposit_for_account_id: storageDepositAccountId,
+			amount: nativeFee.toString(),
 			contract_id: OMNI_BRIDGE_CONTRACT,
 			intent: "storage_deposit",
 		});
@@ -92,11 +65,9 @@ export function createWithdrawIntentsPrimitive(params: {
 		intent: "ft_withdraw",
 		token: tokenAccountId,
 		receiver_id: OMNI_BRIDGE_CONTRACT,
-		amount: params.amount.toString(),
+		amount: amount.toString(),
 		storage_deposit:
-			params.storageDepositAmount > 0n
-				? params.storageDepositAmount.toString()
-				: undefined,
+			storageDepositAmount > 0n ? storageDepositAmount.toString() : undefined,
 		msg: JSON.stringify(ftWithdrawPayload),
 		min_gas: MIN_GAS_AMOUNT,
 	});
@@ -108,7 +79,7 @@ export function createWithdrawIntentsPrimitive(params: {
  * Mapping between CAIP-2 chain identifiers and Omni Bridge ChainKind.
  * This serves as a single source of truth for bidirectional chain conversions.
  */
-const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
+export const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Ethereum, ChainKind.Eth],
 	[Chains.Base, ChainKind.Base],
 	[Chains.Arbitrum, ChainKind.Arb],
@@ -123,18 +94,8 @@ const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.HyperEvm, ChainKind.HlEvm],
 ];
 
-export function caip2ToChainKind(network: Chain): ChainKind | null {
-	return CHAIN_MAPPINGS.find(([chain]) => chain === network)?.[1] ?? null;
-}
-
 export function chainKindToCaip2(network: ChainKind): Chain | null {
 	return CHAIN_MAPPINGS.find(([_, kind]) => kind === network)?.[0] ?? null;
-}
-
-const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc];
-
-export function isUtxoChain(network: ChainKind): boolean {
-	return UTXO_CHAINS.includes(network);
 }
 
 export function poaContractIdToChainKind(contractId: string): ChainKind | null {
