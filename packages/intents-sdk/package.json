@@ -26,6 +26,16 @@
 				"types": "./dist/index.d.cts",
 				"default": "./dist/index.cjs"
 			}
+		},
+		"./omni-bridge": {
+			"import": {
+				"types": "./dist/src/bridges/omni-bridge/omni-withdraw-params.d.ts",
+				"default": "./dist/src/bridges/omni-bridge/omni-withdraw-params.js"
+			},
+			"require": {
+				"types": "./dist/src/bridges/omni-bridge/omni-withdraw-params.d.cts",
+				"default": "./dist/src/bridges/omni-bridge/omni-withdraw-params.cjs"
+			}
 		}
 	},
 	"files": [
