@@ -44,8 +44,9 @@ export type OmniWithdrawIntentParams = {
  * @param params.actualAmount Net of `feeEstimation.amount`. `IntentsSDK` subtracts it for a
  * fee-inclusive withdrawal, so a caller that builds the payload itself has to do the same
  * @param params.feeEstimation Read for every fee of the route, one of which raises the amount
- * @param params.externalId Supply one to repeat an earlier call. Omit it and the function
- * draws a random one
+ * @param params.externalId Supply one to repeat an earlier call.
+ * `calculateStorageAccountId` throws above 64 UTF-8 bytes. Omit it and the function draws a
+ * random one
  * @returns The values the `ft_withdraw` carries
  */
 export function deriveOmniWithdrawIntentParams(params: {
