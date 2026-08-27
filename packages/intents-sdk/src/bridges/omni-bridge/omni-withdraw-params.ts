@@ -19,6 +19,11 @@ export type OmniWithdrawIntentParams = {
 	recipient: OmniAddress;
 	/** Empty, except for a UTXO chain. Then it contains `MaxGasFee`. */
 	msg: string;
+	/**
+	 * This value makes the storage account unique. The hash covers the rest of the transfer,
+	 * so two withdrawals that match on every field would otherwise land on one account.
+	 * `calculateStorageAccountId` throws above 64 UTF-8 bytes.
+	 */
 	externalId: string;
 	/** The account that gets the native fee. Null if there is no native fee. */
 	storageDepositAccountId: string | null;
@@ -39,7 +44,8 @@ export type OmniWithdrawIntentParams = {
  * @param params.actualAmount Net of `feeEstimation.amount`. `IntentsSDK` subtracts it for a
  * fee-inclusive withdrawal, so a caller that builds the payload itself has to do the same
  * @param params.feeEstimation Read for every fee of the route, one of which raises the amount
- * @param params.externalId Supply one to reproduce an earlier call; omitted, it is random
+ * @param params.externalId Supply one to repeat an earlier call. Omit it and the function
+ * draws a random one
  * @returns The values the `ft_withdraw` carries
  */
 export function deriveOmniWithdrawIntentParams(params: {
