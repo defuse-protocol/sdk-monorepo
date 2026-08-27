@@ -261,7 +261,7 @@ describe("createWithdrawIntentsPrimitive()", () => {
 			deriveOmniWithdrawIntentParams({
 				assetId: "nep141:eth.bridge.near",
 				destinationAddress: "0x1234567890123456789012345678901234567890",
-				amount: 1000n,
+				actualAmount: 1000n,
 				omniChainKind: ChainKind.Eth,
 				intentsContract: "intents.near",
 				feeEstimation: fees(),
@@ -282,7 +282,7 @@ describe("createWithdrawIntentsPrimitive()", () => {
 			deriveOmniWithdrawIntentParams({
 				assetId: "nep141:eth.bridge.near",
 				destinationAddress: "0x1234567890123456789012345678901234567890",
-				amount: 1000n,
+				actualAmount: 1000n,
 				omniChainKind: ChainKind.Eth,
 				intentsContract: "intents.near",
 				feeEstimation: fees({ relayerFee: 500n }),
@@ -305,7 +305,7 @@ describe("createWithdrawIntentsPrimitive()", () => {
 			deriveOmniWithdrawIntentParams({
 				assetId: "nep141:btc.bridge.near",
 				destinationAddress: "bc1qtest",
-				amount: 1000n,
+				actualAmount: 1000n,
 				omniChainKind: ChainKind.Btc,
 				intentsContract: "intents.near",
 				feeEstimation: fees({ utxoMaxGasFee: 100n, utxoProtocolFee: 50n }),
@@ -332,7 +332,7 @@ describe("createWithdrawIntentsPrimitive()", () => {
 				deriveOmniWithdrawIntentParams({
 					assetId: "nep141:btc.bridge.near",
 					destinationAddress: "bc1qtest",
-					amount: 1000n,
+					actualAmount: 1000n,
 					omniChainKind: ChainKind.Btc,
 					intentsContract: "intents.near",
 					feeEstimation: fees(),
@@ -347,7 +347,7 @@ describe("createWithdrawIntentsPrimitive()", () => {
 				deriveOmniWithdrawIntentParams({
 					assetId: "nep245:token.near:1",
 					destinationAddress: "0x1234567890123456789012345678901234567890",
-					amount: 1000n,
+					actualAmount: 1000n,
 					omniChainKind: ChainKind.Eth,
 					intentsContract: "intents.near",
 					feeEstimation: fees(),
@@ -361,7 +361,7 @@ describe("deriveOmniWithdrawIntentParams()", () => {
 	const withdrawal = {
 		assetId: "nep141:btc.bridge.near",
 		destinationAddress: "bc1qtest",
-		amount: 1000n,
+		actualAmount: 1000n,
 		omniChainKind: ChainKind.Btc,
 		intentsContract: "intents.near",
 		feeEstimation: fees({

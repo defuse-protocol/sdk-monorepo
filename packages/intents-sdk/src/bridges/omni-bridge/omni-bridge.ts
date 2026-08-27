@@ -318,7 +318,7 @@ export class OmniBridge implements Bridge {
 				deriveOmniWithdrawIntentParams({
 					assetId: args.withdrawalParams.assetId,
 					destinationAddress: args.withdrawalParams.destinationAddress,
-					amount: args.withdrawalParams.amount,
+					actualAmount: args.withdrawalParams.amount,
 					omniChainKind,
 					intentsContract: this.envConfig.contractID,
 					feeEstimation: args.feeEstimation,

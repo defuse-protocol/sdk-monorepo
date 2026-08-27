@@ -36,6 +36,8 @@ export type OmniWithdrawIntentParams = {
 /**
  * Computes the values of an Omni withdrawal without building the intents. `OmniBridge` calls
  * it too, so a caller that signs the payload elsewhere gets the same numbers.
+ * @param params.actualAmount Net of `feeEstimation.amount`. `IntentsSDK` subtracts it for a
+ * fee-inclusive withdrawal, so a caller that builds the payload itself has to do the same
  * @param params.feeEstimation Read for every fee of the route, one of which raises the amount
  * @param params.externalId Supply one to reproduce an earlier call; omitted, it is random
  * @returns The values the `ft_withdraw` carries
@@ -43,7 +45,7 @@ export type OmniWithdrawIntentParams = {
 export function deriveOmniWithdrawIntentParams(params: {
 	assetId: string;
 	destinationAddress: string;
-	amount: bigint;
+	actualAmount: bigint;
 	omniChainKind: ChainKind;
 	intentsContract: string;
 	feeEstimation: FeeEstimation;
@@ -69,7 +71,7 @@ export function deriveOmniWithdrawIntentParams(params: {
 		"storageDepositFee",
 	);
 
-	let amount = params.amount;
+	let amount = params.actualAmount;
 	let msg = "";
 	// For withdrawals to Bitcoin and other UTXO chains we need to specify maxGasFee to the relayer
 	// that is picking up our TX and sends it to a connector (btc connector for example).
