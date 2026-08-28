@@ -1,5 +1,13 @@
 # @defuse-protocol/intents-sdk
 
+## 0.82.0
+
+### Minor Changes
+
+- 2a310c8: Add the entry point `@defuse-protocol/intents-sdk/omni-bridge` with
+  `deriveOmniWithdrawIntentParams`, which computes the values of an Omni withdrawal without
+  building the intents, plus `caip2ToChainKind` and `isUtxoChain` to build its chain argument.
+
 ## 0.81.0
 
 ### Minor Changes

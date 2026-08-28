@@ -25,7 +25,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import { Chains, type Chain } from "../../lib/caip2";
+import type { Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	BridgeConfigs,
@@ -58,16 +58,19 @@ import {
 	SOL_OMNI_CONTRACT_ID,
 } from "./omni-bridge-constants";
 import {
-	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentsPrimitive,
 	getBridgedToken,
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
-	isUtxoChain,
 	poaContractIdToChainKind,
 } from "./omni-bridge-utils";
+import {
+	caip2ToChainKind,
+	deriveOmniWithdrawIntentParams,
+	isUtxoChain,
+} from "./omni-withdraw-params";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import {
@@ -310,79 +313,17 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-		const relayerFee = getUnderlyingFee(
-			args.feeEstimation,
-			RouteEnum.OmniBridge,
-			"relayerFee",
-		);
-		assert(
-			relayerFee >= 0n,
-			`Invalid Omni bridge relayer fee: expected >= 0, got ${relayerFee}`,
-		);
-
-		let amount = args.withdrawalParams.amount;
-		let utxoMaxGasFee = null;
-		/**
-		 * UTXO withdrawals add protocol + max gas fees to the intent amount since they're paid
-		 * from the withdrawn asset, not wrap.near.
-		 *
-		 * Example with nep141:nbtc.bridge.near (made-up values):
-		 * utxoFees = 50 + 50 = 100, relayerFee = 2 (excluded; paid in wrap.near)
-		 *
-		 * feeInclusive=false:
-		 *   - amount = 4000 → intent = 4000 + 100 = 4100 → user receives 4000
-		 *
-		 * feeInclusive=true:
-		 *   - amount = 3898 (4000 − 102) → intent = 3898 + 100 = 3998 → user receives 3898
-		 **/
-		if (isUtxoChain(omniChainKind)) {
-			utxoMaxGasFee = getUnderlyingFee(
-				args.feeEstimation,
-				RouteEnum.OmniBridge,
-				"utxoMaxGasFee",
-			);
-			const utxoProtocolFee = getUnderlyingFee(
-				args.feeEstimation,
-				RouteEnum.OmniBridge,
-				"utxoProtocolFee",
-			);
-			assert(
-				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
-				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
-			);
-			assert(
-				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
-				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
-			);
-
-			amount += utxoMaxGasFee + utxoProtocolFee;
-		}
-
-		let destinationAddress = args.withdrawalParams.destinationAddress;
-		// Omni contract only accepts lowercase bech32 addresses; uppercase/mixed-case
-		// bech32 is spec-valid but rejected on-chain. Base58 (legacy/P2SH) is left as-is.
-		if (
-			assetInfo.blockchain === Chains.Bitcoin &&
-			/^bc1/i.test(destinationAddress)
-		) {
-			destinationAddress = destinationAddress.toLowerCase();
-		}
-
 		intents.push(
-			...createWithdrawIntentsPrimitive({
-				assetId: args.withdrawalParams.assetId,
-				destinationAddress,
-				amount,
-				omniChainKind,
-				intentsContract: this.envConfig.contractID,
-				nativeFee: relayerFee,
-				storageDepositAmount: getUnderlyingFee(
-					args.feeEstimation,
-					RouteEnum.OmniBridge,
-					"storageDepositFee",
-				),
-				utxoMaxGasFee,
-			}),
+			...createWithdrawIntentsPrimitive(
+				deriveOmniWithdrawIntentParams({
+					assetId: args.withdrawalParams.assetId,
+					destinationAddress: args.withdrawalParams.destinationAddress,
+					actualAmount: args.withdrawalParams.amount,
+					omniChainKind,
+					intentsContract: this.envConfig.contractID,
+					feeEstimation: args.feeEstimation,
+				}),
+			),
 		);
 
 		return Promise.resolve(intents);

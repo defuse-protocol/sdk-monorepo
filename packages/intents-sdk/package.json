@@ -1,6 +1,6 @@
 {
 	"name": "@defuse-protocol/intents-sdk",
-	"version": "0.81.0",
+	"version": "0.82.0",
 	"private": false,
 	"type": "module",
 	"repository": {
@@ -25,6 +25,16 @@
 			"require": {
 				"types": "./dist/index.d.cts",
 				"default": "./dist/index.cjs"
+			}
+		},
+		"./omni-bridge": {
+			"import": {
+				"types": "./dist/src/bridges/omni-bridge/omni-withdraw-params.d.ts",
+				"default": "./dist/src/bridges/omni-bridge/omni-withdraw-params.js"
+			},
+			"require": {
+				"types": "./dist/src/bridges/omni-bridge/omni-withdraw-params.d.cts",
+				"default": "./dist/src/bridges/omni-bridge/omni-withdraw-params.cjs"
 			}
 		}
 	},
