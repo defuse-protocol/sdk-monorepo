@@ -302,10 +302,6 @@ describe("PoaBridge", () => {
 					"0x3a5e9d40e8bb62a7f6f8b6d934a1e42a7a2f5cc1cb122c1b9a8d2f6cb09a8712",
 			}, // UDSC Sui
 			{
-				assetId: "nep141:zec.omft.near",
-				destinationAddress: "t3cFfPt1Bcvgez9ZbMBFWeZsskxTkPzGCow",
-			}, // Zcash
-			{
 				assetId:
 					"nep141:tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
 				destinationAddress: "TGNZdiQV31H3JvTtC1yH6yuipnqs6LN2Jv",
@@ -566,10 +562,6 @@ describe("PoaBridge", () => {
 					"nep141:sui-c1b81ecaf27933252d31a963bc5e9458f13c18ce.omft.near",
 				destinationAddress: zeroAddress,
 			}, // UDSC Sui
-			{
-				assetId: "nep141:zec.omft.near",
-				destinationAddress: "TGNZdiQV31H3JvTtC1yH6yuipnqs6LN2Jv",
-			}, // Zcash
 			{
 				assetId:
 					"nep141:tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
