@@ -1,4 +1,3 @@
-import type { Result } from "@thames/monads";
 import type { AuthMethod } from "../types/authHandle";
 import type { WalletSignatureResult } from "../types/walletMessage";
 import { assert } from "../utils/assert";
@@ -18,7 +17,7 @@ export function publishIntent(
 	userInfo: { userAddress: string; userChainType: AuthMethod },
 	quoteHashes: string[],
 	config: solverRelay.httpClient.RequestConfig = {},
-): Promise<Result<PublishIntentReturnType, PublishIntentErrorType>> {
+) {
 	return publishIntents(
 		{
 			signed_datas: [prepareSwapSignedData(signatureData, userInfo)],
