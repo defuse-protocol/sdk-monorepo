@@ -1140,7 +1140,7 @@ describe("PoaBridge", () => {
 			});
 
 			const result = await bridge.describeWithdrawal({
-				landingChain: Chains.Zcash,
+				landingChain: Chains.Tron,
 				index: 0,
 				withdrawalParams: {
 					assetId: "nep141:tron.omft.near",
