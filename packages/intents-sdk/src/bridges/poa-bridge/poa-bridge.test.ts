@@ -103,18 +103,6 @@ describe("PoaBridge", () => {
 						"0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC",
 				},
 				{
-					defuse_asset_identifier: "zec:mainnet:native",
-					decimals: 8,
-					asset_name: "ZEC",
-					near_token_id: "zec.omft.near",
-					min_deposit_amount: "10000",
-					min_withdrawal_amount: "5000",
-					withdrawal_fee: "47000",
-					standard: "nep141",
-					intents_token_id: "nep141:zec.omft.near",
-					origin_chain_address: "native",
-				},
-				{
 					defuse_asset_identifier:
 						"tron:mainnet:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
 					decimals: 6,
@@ -1119,6 +1107,53 @@ describe("PoaBridge", () => {
 			expect(result).toEqual({
 				status: "completed",
 				txHash: "btc-tx-hash",
+			});
+		});
+
+		it("matches withdrawal by near_token_id when defuse_asset_identifier differs from assetId format", async () => {
+			// Regression test: POA API returns defuse_asset_identifier in chain-native format
+			// (e.g., "tron:mainnet:native") which differs from assetId format ("nep141:tron.omft.near").
+			// Matching must use near_token_id, not defuse_asset_identifier.
+			vi.mocked(poaBridge.httpClient.getWithdrawalStatus).mockResolvedValue({
+				withdrawals: [
+					{
+						status: "COMPLETED",
+						data: {
+							tx_hash: "near-tx-hash",
+							transfer_tx_hash: "tron-tx-hash",
+							chain: "tron:mainnet",
+							defuse_asset_identifier: "tron:mainnet:native",
+							near_token_id: "tron.omft.near",
+							decimals: 6,
+							amount: 474270,
+							account_id: "test.near",
+							address: "native",
+							created: "2024-01-01T00:00:00Z",
+						},
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			const result = await bridge.describeWithdrawal({
+				landingChain: Chains.Zcash,
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:tron.omft.near",
+					amount: 474270n,
+					destinationAddress: "t1abc123",
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			});
+
+			expect(result).toEqual({
+				status: "completed",
+				txHash: "tron-tx-hash",
 			});
 		});
 
