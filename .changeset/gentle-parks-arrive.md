@@ -2,4 +2,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Adds ZCASH withdrawal support for Omni Bridge.
+Adds Zcash withdrawal support for Omni Bridge and removes from PoA bridge.
