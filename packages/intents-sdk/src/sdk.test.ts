@@ -2195,6 +2195,10 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Bitcoin },
 		],
 		[
+			"nep141:zec.omft.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Zcash },
+		],
+		[
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
 			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Ethereum },
 		],
