@@ -1145,7 +1145,7 @@ describe("PoaBridge", () => {
 				withdrawalParams: {
 					assetId: "nep141:tron.omft.near",
 					amount: 474270n,
-					destinationAddress: "t1abc123",
+					destinationAddress: "TGNZdiQV31H3JvTtC1yH6yuipnqs6LN2Jv",
 					feeInclusive: false,
 				},
 				tx: { hash: "near-tx-hash", accountId: "test.near" },
