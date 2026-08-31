@@ -200,6 +200,10 @@ describe("caip2ToChainKind()", () => {
 		expect(caip2ToChainKind(Chains.Bitcoin)).toBe(ChainKind.Btc);
 	});
 
+	it("maps Zcash correctly", () => {
+		expect(caip2ToChainKind(Chains.Zcash)).toBe(ChainKind.Zcash);
+	});
+
 	it("returns null for unsupported chain", () => {
 		expect(caip2ToChainKind(Chains.TON)).toBeNull();
 	});
@@ -222,6 +226,10 @@ describe("chainKindToCaip2()", () => {
 describe("isUtxoChain()", () => {
 	it("returns true for Bitcoin", () => {
 		expect(isUtxoChain(ChainKind.Btc)).toBe(true);
+	});
+
+	it("returns true for Zcash", () => {
+		expect(isUtxoChain(ChainKind.Zcash)).toBe(true);
 	});
 
 	it("returns false for Ethereum", () => {

@@ -158,7 +158,7 @@ export function caip2ToChainKind(network: Chain): ChainKind | null {
 	return CHAIN_MAPPINGS.find(([chain]) => chain === network)?.[1] ?? null;
 }
 
-const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc];
+const UTXO_CHAINS: ChainKind[] = [ChainKind.Btc, ChainKind.Zcash];
 
 export function isUtxoChain(network: ChainKind): boolean {
 	return UTXO_CHAINS.includes(network);
