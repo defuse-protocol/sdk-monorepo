@@ -34,9 +34,22 @@ const RECEIVER_TYPECODE = {
 	ORCHARD: 0x03,
 } as const;
 
-// Canonical receiver payload lengths for known typecodes. Unknown typecodes are
-// tolerated with arbitrary lengths for forward compatibility, matching
-// `Typecode::Unknown` handling in librustzcash/components/zcash_address.
+// ZIP 316: "The values of the typecode and length fields MUST be less than
+// or equal to 0x2000000."
+const MAX_TYPECODE_OR_LENGTH = 0x2000000;
+
+// ZIP 316 Typecode Registry: typecodes 0xE0 to 0xFC inclusive are
+// "MUST-understand" Metadata. A Consumer that does not recognise a Typecode
+// in this range MUST regard the entire UA as unsupported. We don't
+// implement any Metadata Item (e.g. Address Expiry Height/Time), so any
+// item in this range makes the address invalid for our purposes.
+const MUST_UNDERSTAND_METADATA_MIN = 0xe0;
+const MUST_UNDERSTAND_METADATA_MAX = 0xfc;
+
+// Canonical receiver payload lengths for known typecodes. Unknown typecodes
+// outside the MUST-understand range are tolerated with arbitrary lengths for
+// forward compatibility, matching `Typecode::Unknown` handling in
+// librustzcash/components/zcash_address.
 const KNOWN_RECEIVER_LENGTH: Record<number, number> = {
 	[RECEIVER_TYPECODE.P2PKH]: 20,
 	[RECEIVER_TYPECODE.P2SH]: 20,
@@ -79,6 +92,8 @@ export function validateZcashUnifiedAddress(address: string): boolean {
 		let offset = 0;
 		let lastTypecode = -1;
 		let hasOrchardOrTransparent = false;
+		let hasP2pkh = false;
+		let hasP2sh = false;
 
 		while (offset < paddingStart) {
 			const typeRead = readCompactSize(unjumbled, offset, paddingStart);
@@ -86,7 +101,9 @@ export function validateZcashUnifiedAddress(address: string): boolean {
 			const typecode = typeRead.value;
 			offset = typeRead.next;
 
-			// ZIP 316: typecodes must be strictly ascending.
+			if (typecode > MAX_TYPECODE_OR_LENGTH) return false;
+
+			// ZIP 316: typecodes must be strictly ascending (this also rejects duplicates).
 			if (typecode <= lastTypecode) return false;
 			lastTypecode = typecode;
 
@@ -95,12 +112,22 @@ export function validateZcashUnifiedAddress(address: string): boolean {
 			const len = lenRead.value;
 			offset = lenRead.next;
 
-			if (len === 0) return false;
+			if (len === 0 || len > MAX_TYPECODE_OR_LENGTH) return false;
 			if (offset + len > paddingStart) return false;
 
 			const expectedLen = KNOWN_RECEIVER_LENGTH[typecode];
 			if (expectedLen !== undefined && len !== expectedLen) return false;
 
+			if (
+				expectedLen === undefined &&
+				typecode >= MUST_UNDERSTAND_METADATA_MIN &&
+				typecode <= MUST_UNDERSTAND_METADATA_MAX
+			) {
+				return false;
+			}
+
+			if (typecode === RECEIVER_TYPECODE.P2PKH) hasP2pkh = true;
+			if (typecode === RECEIVER_TYPECODE.P2SH) hasP2sh = true;
 			if (
 				typecode === RECEIVER_TYPECODE.P2PKH ||
 				typecode === RECEIVER_TYPECODE.P2SH ||
@@ -113,6 +140,9 @@ export function validateZcashUnifiedAddress(address: string): boolean {
 		}
 
 		if (offset !== paddingStart) return false;
+
+		// ZIP 316: a UA MUST NOT include both P2SH and P2PKH receivers.
+		if (hasP2pkh && hasP2sh) return false;
 
 		return hasOrchardOrTransparent;
 	} catch {
