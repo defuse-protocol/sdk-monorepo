@@ -161,23 +161,33 @@ function readCompactSize(
 	end: number,
 ): { value: number; next: number } | null {
 	if (offset >= end) return null;
-	const first = buf[offset] as number;
+	const first = buf[offset];
+	if (first === undefined) return null;
 	if (first < 0xfd) return { value: first, next: offset + 1 };
 	if (first === 0xfd) {
 		if (offset + 3 > end) return null;
-		const value =
-			(buf[offset + 1] as number) | ((buf[offset + 2] as number) << 8);
+		const b1 = buf[offset + 1];
+		const b2 = buf[offset + 2];
+		if (b1 === undefined || b2 === undefined) return null;
+		const value = b1 | (b2 << 8);
 		if (value < 0xfd) return null;
 		return { value, next: offset + 3 };
 	}
 	if (first === 0xfe) {
 		if (offset + 5 > end) return null;
-		const value =
-			((buf[offset + 1] as number) |
-				((buf[offset + 2] as number) << 8) |
-				((buf[offset + 3] as number) << 16) |
-				((buf[offset + 4] as number) << 24)) >>>
-			0;
+		const b1 = buf[offset + 1];
+		const b2 = buf[offset + 2];
+		const b3 = buf[offset + 3];
+		const b4 = buf[offset + 4];
+		if (
+			b1 === undefined ||
+			b2 === undefined ||
+			b3 === undefined ||
+			b4 === undefined
+		) {
+			return null;
+		}
+		const value = (b1 | (b2 << 8) | (b3 << 16) | (b4 << 24)) >>> 0;
 		if (value <= 0xffff) return null;
 		return { value, next: offset + 5 };
 	}
