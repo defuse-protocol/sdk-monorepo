@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.83.0
+
+### Minor Changes
+
+- f7702ac: Adds Zcash withdrawal support for Omni Bridge and removes from PoA bridge.
+
 ## 0.82.0
 
 ### Minor Changes
