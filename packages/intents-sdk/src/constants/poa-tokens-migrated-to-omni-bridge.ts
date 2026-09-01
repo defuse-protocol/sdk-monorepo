@@ -1,7 +1,8 @@
 import { ChainKind } from "@omni-bridge/core";
 
 /**
- * These tokens originaly have been PoA Bridge tokens but have been migrated to Omni bridge.
+ * These tokens originally were PoA Bridge tokens but have since been migrated to Omni Bridge.
+ * Every migrated token must be listed here, otherwise the PoA bridge class (supports, parseAssetId methods) will keep treating it as a PoA token.
  */
 export const POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE: Record<string, ChainKind> = {
 	"sol-57d087fd8c460f612f8701f5499ad8b2eec5ab68.omft.near": ChainKind.Sol, // BOOK OF MEME,
@@ -20,4 +21,5 @@ export const POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE: Record<string, ChainKind> = {
 	"aptos-34ee497f210c5a511e8d5b53bc56d75b63612bb5.omft.near": ChainKind.Aptos, // APTOS USDC
 	"aptos-88cb7619440a914fe6400149a12b443c3ac21d59.omft.near": ChainKind.Aptos, // APTOS USDT
 	"starknet.omft.near": ChainKind.Strk, // STARKNET
+	"zec.omft.near": ChainKind.Zcash, // ZCASH
 } as const;

@@ -92,6 +92,7 @@ export const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Polygon, ChainKind.Pol],
 	[Chains.Aptos, ChainKind.Aptos],
 	[Chains.HyperEvm, ChainKind.HlEvm],
+	[Chains.Zcash, ChainKind.Zcash],
 ];
 
 export function chainKindToCaip2(network: ChainKind): Chain | null {
@@ -143,7 +144,8 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("fogo:") ||
 			input.startsWith("pol:") ||
 			input.startsWith("aptos:") ||
-			input.startsWith("hlevm:")),
+			input.startsWith("hlevm:") ||
+			input.startsWith("zcash:")),
 	"Must comply with omni address schema",
 );
 /**
