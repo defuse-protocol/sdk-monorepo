@@ -35,6 +35,7 @@ export const PoaBridgeNetworkReference = {
 	DASH: "dash:mainnet",
 	PLASMA: "eth:9745",
 	ADI: "eth:36900",
+	ROBINHOOD: "eth:4663",
 } as const;
 
 export const VirtualNetworkReference = {
