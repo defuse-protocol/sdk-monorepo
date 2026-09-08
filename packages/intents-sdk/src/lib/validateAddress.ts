@@ -91,6 +91,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Abstract:
 		case Chains.HyperCore:
 		case Chains.HyperEvm:
+		case Chains.Robinhood:
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);

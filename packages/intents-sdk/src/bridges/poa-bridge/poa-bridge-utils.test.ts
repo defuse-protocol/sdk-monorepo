@@ -81,6 +81,7 @@ describe("toPoaNetwork", () => {
 		[Chains.Movement, "movement:mainnet"],
 		[Chains.Plasma, "eth:9745"],
 		[Chains.Adi, "eth:36900"],
+		[Chains.Robinhood, "eth:4663"],
 	])("maps %s to %s", (caip2, expected) => {
 		expect(toPoaNetwork(caip2)).toBe(expected);
 	});
@@ -101,6 +102,7 @@ describe("contractIdToCaip2", () => {
 		],
 		["base.omft.near", Chains.Base],
 		["arb.omft.near", Chains.Arbitrum],
+		["hood.omft.near", Chains.Robinhood],
 		["btc.omft.near", Chains.Bitcoin],
 		["bch.omft.near", Chains.BitcoinCash],
 		["doge.omft.near", Chains.Dogecoin],

@@ -23,6 +23,7 @@ describe("CAIP2 utilities", () => {
 			expect(getEIP155ChainId(Chains.Base)).toBe(8453);
 			expect(getEIP155ChainId(Chains.Arbitrum)).toBe(42161);
 			expect(getEIP155ChainId(Chains.Polygon)).toBe(137);
+			expect(getEIP155ChainId(Chains.Robinhood)).toBe(4663);
 		});
 
 		it("should throw for non-EIP155 chain constants", () => {

@@ -40,6 +40,7 @@ export const Chains = {
 	Abstract: "eip155:2741",
 	HyperCore: "hlcore:mainnet", // No official CAIP-2 identifier exists for HyperCore; this value is unofficial and may change.
 	HyperEvm: "eip155:999",
+	Robinhood: "eip155:4663",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
