@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.38.0
+
+### Minor Changes
+
+- 15a22e9: Add support for Robinhood chain via PoA bridge
+
 ## 0.37.0
 
 ### Minor Changes

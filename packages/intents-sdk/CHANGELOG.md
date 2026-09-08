@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.84.0
+
+### Minor Changes
+
+- 15a22e9: Add support for Robinhood chain via PoA bridge
+
+### Patch Changes
+
+- Updated dependencies [15a22e9]
+  - @defuse-protocol/internal-utils@0.38.0
+
 ## 0.83.0
 
 ### Minor Changes

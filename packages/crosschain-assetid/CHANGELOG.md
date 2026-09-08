@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.10.0
+
+### Minor Changes
+
+- 15a22e9: Add support for Robinhood chain via PoA bridge
+
 ## 1.9.0
 
 ### Minor Changes
