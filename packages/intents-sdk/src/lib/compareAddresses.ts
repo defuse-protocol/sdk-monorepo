@@ -33,7 +33,7 @@ export function compareAddresses(
 			case Chains.Abstract:
 			case Chains.HyperCore:
 			case Chains.HyperEvm:
-			case Chains.Robinhood:
+			case Chains.Hood:
 				return getAddress(a) === getAddress(b);
 			case Chains.Aptos:
 			case Chains.Movement:

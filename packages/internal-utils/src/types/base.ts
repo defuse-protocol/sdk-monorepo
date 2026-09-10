@@ -24,7 +24,7 @@ export type SupportedChainName =
 	| "bsc"
 	| "hyperliquid"
 	| "cardano"
-	| "robinhood";
+	| "hood";
 
 export type SupportedBridge = "direct" | "poa" | "aurora_engine" | "hot_omni";
 
