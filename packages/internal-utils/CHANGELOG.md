@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.39.0
+
+### Minor Changes
+
+- 341898a: Rename robinhood to hood to match deployed token prefix
+
 ## 0.38.0
 
 ### Minor Changes

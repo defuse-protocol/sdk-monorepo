@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.11.0
+
+### Minor Changes
+
+- 341898a: Rename robinhood to hood to match deployed token prefix
+
 ## 1.10.0
 
 ### Minor Changes

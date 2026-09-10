@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.85.0
+
+### Minor Changes
+
+- 341898a: Rename robinhood to hood to match deployed token prefix
+
+### Patch Changes
+
+- Updated dependencies [341898a]
+  - @defuse-protocol/internal-utils@0.39.0
+
 ## 0.84.0
 
 ### Minor Changes
