@@ -345,8 +345,7 @@ function validateXrpAddress(address: string) {
 function validateZcashAddress(address: string) {
 	// Transparent address validation
 	if (address.startsWith("t1") || address.startsWith("t3")) {
-		// t1 for P2PKH addresses, t3 for P2SH addresses
-		return /^t[13][a-km-zA-HJ-NP-Z1-9]{33}$/.test(address);
+		return validateZcashTransparentAddress(address);
 	}
 
 	// TEX address validation
@@ -369,6 +368,42 @@ function validateZcashAddress(address: string) {
 	}
 
 	return false;
+}
+
+/**
+ * Validates Zcash transparent addresses (mainnet only).
+ *
+ * Mirrors zcash_address::ZcashAddress::from_str's Base58Check branch
+ * (components/zcash_address/src/encoding.rs in zcash/librustzcash):
+ * decode Base58Check, then match the 2-byte version prefix against the
+ * mainnet P2PKH/P2SH prefixes from zcash_protocol::constants::mainnet.
+ *
+ *   B58_PUBKEY_ADDRESS_PREFIX = [0x1c, 0xb8]  (t1...)
+ *   B58_SCRIPT_ADDRESS_PREFIX = [0x1c, 0xbd]  (t3...)
+ */
+function validateZcashTransparentAddress(address: string): boolean {
+	try {
+		const decoded = base58.decode(address);
+
+		// version (2) + hash160 (20) + checksum (4) = 26 bytes
+		if (decoded.length !== 26) return false;
+
+		const version = decoded.subarray(0, 2);
+		const isP2pkh = version[0] === 0x1c && version[1] === 0xb8;
+		const isP2sh = version[0] === 0x1c && version[1] === 0xbd;
+		if (!isP2pkh && !isP2sh) return false;
+
+		const payload = decoded.subarray(0, 22);
+		const checksum = decoded.subarray(22, 26);
+		const expectedChecksum = sha256(sha256(payload)).subarray(0, 4);
+
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 /**

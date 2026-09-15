@@ -675,6 +675,57 @@ describe("validateZcashAddress", () => {
 		expect(validateAddress(validTransparentAddress, Chains.Zcash)).toBe(true);
 	});
 
+	it("accepts a valid P2SH transparent address", () => {
+		// zcash/librustzcash components/zcash_address/src/encoding.rs `transparent` test vector
+		expect(
+			validateAddress("t3JZcvsuaXE6ygokL4XUiZSTrQBUoPYFnXJ", Chains.Zcash),
+		).toBe(true);
+	});
+
+	it("accepts a valid mainnet P2PKH transparent address", () => {
+		// zcash/librustzcash components/zcash_address/src/encoding.rs `transparent` test vector
+		expect(
+			validateAddress("t1Hsc1LR8yKnbbe3twRp88p6vFfC5t7DLbs", Chains.Zcash),
+		).toBe(true);
+	});
+
+	it("rejects testnet transparent addresses", () => {
+		// zcash/librustzcash components/zcash_address/src/encoding.rs `transparent` test vector
+		// (testnet P2PKH / P2SH prefixes are not accepted; we only support mainnet)
+		expect(
+			validateAddress("tm9iMLAuYMzJ6jtFLcA7rzUmfreGuKvr7Ma", Chains.Zcash),
+		).toBe(false);
+		expect(
+			validateAddress("t26YoyZ1iPgiMEWL4zGUm74eVWfhyDMXzY2", Chains.Zcash),
+		).toBe(false);
+	});
+
+	it("rejects a transparent address with a broken checksum", () => {
+		expect(
+			validateAddress("t1qtQeatPXvvHZ492A5qjxnfgEoRJNNMPmF", Chains.Zcash),
+		).toBe(false);
+	});
+
+	it("accepts a valid TEX address", () => {
+		// zcash/librustzcash components/zcash_address/src/encoding.rs `tex` test vector
+		expect(
+			validateAddress(
+				"tex1s2rt77ggv6q989lr49rkgzmh5slsksa9khdgte",
+				Chains.Zcash,
+			),
+		).toBe(true);
+	});
+
+	it("rejects a testnet TEX address", () => {
+		// zcash/librustzcash components/zcash_address/src/encoding.rs `tex_testnet` test vector
+		expect(
+			validateAddress(
+				"textest1qyqszqgpqyqszqgpqyqszqgpqyqszqgpfcjgfy",
+				Chains.Zcash,
+			),
+		).toBe(false);
+	});
+
 	it("accepts a UA containing an orchard receiver", () => {
 		expect(validateAddress(uaOrchardOnly, Chains.Zcash)).toBe(true);
 		expect(validateAddress(uaSaplingOrchard, Chains.Zcash)).toBe(true);
