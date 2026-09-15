@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.85.1
+
+### Patch Changes
+
+- 073495f: Improve zcash transparent address validation
+
 ## 0.85.0
 
 ### Minor Changes
