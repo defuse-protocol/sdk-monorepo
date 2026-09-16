@@ -36,6 +36,7 @@ export const PoaBridgeNetworkReference = {
 	PLASMA: "eth:9745",
 	ADI: "eth:36900",
 	HOOD: "eth:4663",
+	TEMPO: "eth:4217",
 } as const;
 
 export const VirtualNetworkReference = {
