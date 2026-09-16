@@ -1,3 +1,4 @@
+import { blake2b } from "@noble/hashes/blake2";
 import { sha256 } from "@noble/hashes/sha2";
 import { base58, bech32m, hex, bech32 } from "@scure/base";
 import {
@@ -97,6 +98,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateAleoAddress(address);
 		case Chains.Dash:
 			return validateDashAddress(address);
+		case Chains.Qts:
+			return validateQuantusAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -861,6 +864,60 @@ export function validateDashAddress(address: string): boolean {
 		}
 
 		return true;
+	} catch {
+		return false;
+	}
+}
+
+/** Substrate SS58 checksum domain separator: the ASCII bytes of "SS58PRE". */
+const SS58_CHECKSUM_PREFIX = new Uint8Array([
+	0x53, 0x53, 0x35, 0x38, 0x50, 0x52, 0x45,
+]);
+
+/**
+ * Network prefix 189 in its 2-byte SS58 encoding:
+ *   b0 = ((prefix & 0x00fc) >> 2) | 0x40
+ *   b1 = (prefix >> 8) | ((prefix & 0x0003) << 6)
+ */
+const QUANTUS_SS58_PREFIX_BYTES = [0x6f, 0x40] as const;
+
+/**
+ * Validates Quantus addresses (SS58, mainnet only).
+ *
+ * Quantus is a Polkadot SDK chain, so addresses are standard SS58-encoded
+ * 32-byte account ids (Poseidon2 hash of an ML-DSA public key) with network
+ * prefix 189 — the `qz...` form.
+ *
+ * Mirrors `Ss58Codec::from_ss58check_with_version` in
+ * substrate/primitives/core/src/crypto.rs (paritytech/polkadot-sdk):
+ * base58-decode, read the 1- or 2-byte network prefix, then verify the
+ * 2-byte blake2b-512("SS58PRE" || prefix || account id) checksum.
+ *
+ * Prefix 189 is >= 64, so it uses the 2-byte encoding: [0x6f, 0x40].
+ */
+export function validateQuantusAddress(address: string): boolean {
+	try {
+		const decoded = base58.decode(address);
+
+		// prefix (2) + account id (32) + checksum (2) = 36 bytes
+		if (decoded.length !== 36) return false;
+
+		if (decoded[0] !== QUANTUS_SS58_PREFIX_BYTES[0]) return false;
+		if (decoded[1] !== QUANTUS_SS58_PREFIX_BYTES[1]) return false;
+
+		const payload = decoded.subarray(0, 34);
+		const checksum = decoded.subarray(34, 36);
+
+		const preimage = new Uint8Array(
+			SS58_CHECKSUM_PREFIX.length + payload.length,
+		);
+		preimage.set(SS58_CHECKSUM_PREFIX);
+		preimage.set(payload, SS58_CHECKSUM_PREFIX.length);
+		const expectedChecksum = blake2b(preimage, { dkLen: 64 });
+
+		return (
+			checksum[0] === expectedChecksum[0] && checksum[1] === expectedChecksum[1]
+		);
 	} catch {
 		return false;
 	}

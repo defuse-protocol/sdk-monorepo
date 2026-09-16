@@ -58,6 +58,7 @@ export function compareAddresses(
 			case Chains.Cardano:
 			case Chains.Aleo:
 			case Chains.Dash:
+			case Chains.Qts:
 				return a === b;
 			default:
 				blockchain satisfies never;

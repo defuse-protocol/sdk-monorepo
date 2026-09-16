@@ -5,6 +5,7 @@ import {
 	validateBchAddress,
 	validateCardanoAddress,
 	validateDashAddress,
+	validateQuantusAddress,
 } from "./validateAddress";
 import { Chains } from "./caip2";
 describe("validateNearAddress", () => {
@@ -915,5 +916,51 @@ describe("validateDashAddress()", () => {
 		expect(validateDashAddress("yNPbcFfabtNmmxKhmGhv49pJEFByBEiYGN")).toBe(
 			false,
 		);
+	});
+});
+
+describe("validateQuantusAddress", () => {
+	it("accepts mainnet SS58 addresses (prefix 189)", () => {
+		expect(
+			validateQuantusAddress(
+				"qzk1Nxai3dZD9Cn5kwGcgL6mKxsfxwqdis7kDQJ52aJS2vSn7",
+			),
+		).toBe(true);
+		expect(
+			validateQuantusAddress(
+				"qzjcT4MHLaDERXkDgKzuTw9pucQ39N5xV7jPAocpYbV98Uuug",
+			),
+		).toBe(true);
+	});
+
+	it("rejects addresses with bad checksum", () => {
+		// Last character changed
+		expect(
+			validateQuantusAddress(
+				"qzk1Nxai3dZD9Cn5kwGcgL6mKxsfxwqdis7kDQJ52aJS2vSn8",
+			),
+		).toBe(false);
+	});
+
+	it("rejects SS58 addresses of other networks", () => {
+		// Polkadot (prefix 0), same account id
+		expect(
+			validateQuantusAddress("1ADRXEpxCcHPze36zV1imej5DNcGZ8puqopyUhbppXyGuhP"),
+		).toBe(false);
+	});
+
+	it("rejects invalid strings", () => {
+		expect(validateQuantusAddress("")).toBe(false);
+		expect(validateQuantusAddress("not-a-quantus-address")).toBe(false);
+		expect(validateQuantusAddress("qz")).toBe(false);
+	});
+
+	it("routes Qts chain to Quantus validation", () => {
+		expect(
+			validateAddress(
+				"qzk1Nxai3dZD9Cn5kwGcgL6mKxsfxwqdis7kDQJ52aJS2vSn7",
+				Chains.Qts,
+			),
+		).toBe(true);
 	});
 });
