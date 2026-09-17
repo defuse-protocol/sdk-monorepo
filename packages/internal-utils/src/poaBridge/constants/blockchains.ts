@@ -36,7 +36,7 @@ export const PoaBridgeNetworkReference = {
 	PLASMA: "eth:9745",
 	ADI: "eth:36900",
 	HOOD: "eth:4663",
-	QTS: "polkadot:fb5487c0be6ae4ade2d41d16e504651",
+	QTC: "quantus:mainnet",
 } as const;
 
 export const VirtualNetworkReference = {

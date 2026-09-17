@@ -943,7 +943,6 @@ describe("validateQuantusAddress", () => {
 	});
 
 	it("rejects SS58 addresses of other networks", () => {
-		// Polkadot (prefix 0), same account id
 		expect(
 			validateQuantusAddress("1ADRXEpxCcHPze36zV1imej5DNcGZ8puqopyUhbppXyGuhP"),
 		).toBe(false);
@@ -955,11 +954,11 @@ describe("validateQuantusAddress", () => {
 		expect(validateQuantusAddress("qz")).toBe(false);
 	});
 
-	it("routes Qts chain to Quantus validation", () => {
+	it("routes Qtc chain to Quantus validation", () => {
 		expect(
 			validateAddress(
 				"qzk1Nxai3dZD9Cn5kwGcgL6mKxsfxwqdis7kDQJ52aJS2vSn7",
-				Chains.Qts,
+				Chains.Qtc,
 			),
 		).toBe(true);
 	});

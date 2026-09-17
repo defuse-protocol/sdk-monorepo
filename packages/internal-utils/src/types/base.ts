@@ -25,7 +25,7 @@ export type SupportedChainName =
 	| "hyperliquid"
 	| "cardano"
 	| "hood"
-	| "qts";
+	| "qtc";
 
 export type SupportedBridge = "direct" | "poa" | "aurora_engine" | "hot_omni";
 

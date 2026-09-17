@@ -33,5 +33,5 @@
 	"hlcore:mainnet": "hypercore",
 	"solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251": "fogo",
 	"eip155:4663": "hood",
-	"polkadot:fb5487c0be6ae4ade2d41d16e504651": "qtc"
+	"quantus:mainnet": "qtc"
 }

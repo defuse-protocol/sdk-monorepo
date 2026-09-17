@@ -98,7 +98,7 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateAleoAddress(address);
 		case Chains.Dash:
 			return validateDashAddress(address);
-		case Chains.Qts:
+		case Chains.Qtc:
 			return validateQuantusAddress(address);
 		default:
 			blockchain satisfies never;
