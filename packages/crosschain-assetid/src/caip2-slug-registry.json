@@ -33,5 +33,6 @@
 	"hlcore:mainnet": "hypercore",
 	"solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251": "fogo",
 	"eip155:4663": "hood",
+	"quantus:mainnet": "qtc",
 	"eip155:5042": "arc"
 }

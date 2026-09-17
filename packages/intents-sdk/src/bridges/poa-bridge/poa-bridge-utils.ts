@@ -68,6 +68,7 @@ const caip2Mapping = {
 	[Chains.Plasma]: "eth:9745",
 	[Chains.Adi]: "eth:36900",
 	[Chains.Hood]: "eth:4663",
+	[Chains.Qtc]: "quantus:mainnet",
 	[Chains.Arc]: "eth:5042",
 } satisfies Record<
 	string,
@@ -104,6 +105,7 @@ const tokenPrefixMapping = {
 	plasma: Chains.Plasma,
 	adi: Chains.Adi,
 	hood: Chains.Hood,
+	qtc: Chains.Qtc,
 	arc: Chains.Arc,
 };
 
