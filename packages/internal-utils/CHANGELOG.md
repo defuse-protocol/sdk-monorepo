@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.40.0
+
+### Minor Changes
+
+- 35f3663: Quantus PoA Support
+
 ## 0.39.0
 
 ### Minor Changes

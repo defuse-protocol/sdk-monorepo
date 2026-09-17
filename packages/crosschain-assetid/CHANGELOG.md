@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.12.0
+
+### Minor Changes
+
+- 35f3663: Quantus PoA Support
+
 ## 1.11.0
 
 ### Minor Changes
