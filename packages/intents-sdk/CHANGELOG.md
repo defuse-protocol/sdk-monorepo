@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.86.0
+
+### Minor Changes
+
+- 35f3663: Quantus PoA Support
+
+### Patch Changes
+
+- Updated dependencies [35f3663]
+  - @defuse-protocol/internal-utils@0.40.0
+
 ## 0.85.1
 
 ### Patch Changes
