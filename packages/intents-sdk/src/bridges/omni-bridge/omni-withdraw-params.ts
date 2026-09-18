@@ -7,6 +7,8 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import type { FeeEstimation } from "../../shared-types";
 import { CHAIN_MAPPINGS } from "./omni-bridge-utils";
 
+const HYPERLIQUID_MESSAGE = '{"DestHexMsg":"636F7265"}';
+
 /**
  * The values an Omni withdrawal computes before it builds the intents.
  *
@@ -57,6 +59,7 @@ export function deriveOmniWithdrawIntentParams(params: {
 	intentsContract: string;
 	feeEstimation: FeeEstimation;
 	externalId?: string;
+	caip2Identifier: Chain;
 }): OmniWithdrawIntentParams {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -113,6 +116,8 @@ export function deriveOmniWithdrawIntentParams(params: {
 		// from the withdrawn asset, not wrap.near.
 		amount += utxoMaxGasFee + utxoProtocolFee;
 		msg = JSON.stringify({ MaxGasFee: utxoMaxGasFee.toString() });
+	} else if (params.caip2Identifier) {
+		msg = HYPERLIQUID_MESSAGE;
 	}
 
 	// Omni contract only accepts lowercase bech32 addresses; uppercase/mixed-case

@@ -25,7 +25,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	BridgeConfigs,
@@ -322,6 +322,7 @@ export class OmniBridge implements Bridge {
 					omniChainKind,
 					intentsContract: this.envConfig.contractID,
 					feeEstimation: args.feeEstimation,
+					caip2Identifier: assetInfo.blockchain,
 				}),
 			),
 		);
@@ -703,8 +704,18 @@ export class OmniBridge implements Bridge {
 
 		const destinationChain = getChain(transfer.recipient as OmniAddress);
 		let txHash = null;
-		if (
-			isEvmChain(destinationChain) ||
+		if (isEvmChain(destinationChain)) {
+			if (args.landingChain === Chains.HyperCore) {
+				//@ts-expect-error
+				txHash = transfer?.related_txs.find((item) => {
+					return item.kind === "hyper_core_fin" && item.transaction_hash
+						? item.transaction_hash
+						: null;
+				});
+			} else {
+				txHash = transfer.finalised?.transaction_hash;
+			}
+		} else if (
 			destinationChain === ChainKind.Sol ||
 			destinationChain === ChainKind.Fogo ||
 			destinationChain === ChainKind.Strk ||
