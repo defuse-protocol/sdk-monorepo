@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.87.0
+
+### Minor Changes
+
+- 68cc672: Add support for Arc chain (arc-prefixed tokens, chain id 5042)
+
+### Patch Changes
+
+- Updated dependencies [68cc672]
+  - @defuse-protocol/internal-utils@0.41.0
+
 ## 0.86.0
 
 ### Minor Changes
