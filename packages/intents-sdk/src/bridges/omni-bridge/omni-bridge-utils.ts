@@ -93,6 +93,7 @@ export const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.Aptos, ChainKind.Aptos],
 	[Chains.HyperEvm, ChainKind.HlEvm],
 	[Chains.Zcash, ChainKind.Zcash],
+	[Chains.HyperCore, ChainKind.HlEvm], // HyperCore is a special case of HlEvm withdrawal
 ];
 
 export function chainKindToCaip2(network: ChainKind): Chain | null {
