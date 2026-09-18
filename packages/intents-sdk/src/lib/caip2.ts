@@ -42,6 +42,7 @@ export const Chains = {
 	HyperEvm: "eip155:999",
 	Hood: "eip155:4663",
 	Qtc: "quantus:mainnet",
+	Arc: "eip155:5042",
 } as const;
 
 export type Chain = (typeof Chains)[keyof typeof Chains];
