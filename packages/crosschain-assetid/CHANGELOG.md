@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.13.0
+
+### Minor Changes
+
+- 68cc672: Add support for Arc chain (arc-prefixed tokens, chain id 5042)
+
 ## 1.12.0
 
 ### Minor Changes
