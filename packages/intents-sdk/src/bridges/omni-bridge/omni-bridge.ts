@@ -724,7 +724,7 @@ export class OmniBridge implements Bridge {
 		let txHash = null;
 		if (isEvmChain(destinationChain)) {
 			if (args.landingChain === Chains.HyperCore) {
-				txHash = transfer.related_txs.find(
+				txHash = transfer?.related_txs?.find(
 					(tx) => tx.kind === "hyper_core_fin",
 				)?.transaction_hash;
 			} else {
