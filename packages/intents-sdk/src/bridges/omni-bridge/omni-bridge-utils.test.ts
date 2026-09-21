@@ -17,7 +17,7 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress } from "@omni-bridge/core";
+import { ChainKind, HYPERLIQUID_MESSAGE, omniAddress } from "@omni-bridge/core";
 import { Chains } from "../../lib/caip2";
 import { RouteEnum } from "../../constants/route-enum";
 import type { FeeEstimation } from "../../shared-types";
@@ -453,5 +453,62 @@ describe("deriveOmniWithdrawIntentParams()", () => {
 			omniAddress(ChainKind.Btc, withdrawal.destinationAddress),
 		);
 		expect(params.msg).toBe('{"MaxGasFee":"100"}');
+	});
+
+	describe("HyperCore", () => {
+		const evmWithdrawal = {
+			assetId: "nep141:wrap.near",
+			destinationAddress: "0x1234567890123456789012345678901234567890",
+			actualAmount: 1000n,
+			omniChainKind: ChainKind.HlEvm,
+			intentsContract: "intents.near",
+			feeEstimation: fees(),
+		};
+
+		it("tags the transfer so Omni credits the HyperCore spot balance", () => {
+			const params = deriveOmniWithdrawIntentParams({
+				...evmWithdrawal,
+				caip2Identifier: Chains.HyperCore,
+			});
+
+			expect(params.msg).toBe(HYPERLIQUID_MESSAGE);
+
+			// A non-empty msg is what flips `finTransfer` to the 3-arg mint, so it has to
+			// survive into the ft_withdraw payload.
+			const intents = createWithdrawIntentsPrimitive(params);
+			const ftWithdraw = intents.find((i) => i.intent === "ft_withdraw");
+			assert(ftWithdraw != null && ftWithdraw.intent === "ft_withdraw");
+			assert(typeof ftWithdraw.msg === "string");
+			expect(JSON.parse(ftWithdraw.msg).msg).toBe(HYPERLIQUID_MESSAGE);
+		});
+
+		it("leaves the message empty for HyperEvm so the tokens stay on HyperEvm", () => {
+			const params = deriveOmniWithdrawIntentParams({
+				...evmWithdrawal,
+				caip2Identifier: Chains.HyperEvm,
+			});
+
+			expect(params.msg).toBe("");
+		});
+
+		it.each([
+			["Ethereum", Chains.Ethereum, ChainKind.Eth],
+			["Solana", Chains.Solana, ChainKind.Sol],
+		])(
+			"does not tag unrelated destination %s",
+			(_name, caip2Identifier, omniChainKind) => {
+				const params = deriveOmniWithdrawIntentParams({
+					...evmWithdrawal,
+					omniChainKind,
+					caip2Identifier,
+				});
+
+				expect(params.msg).toBe("");
+			},
+		);
+
+		it("leaves the message empty when no caip2Identifier is given", () => {
+			expect(deriveOmniWithdrawIntentParams(evmWithdrawal).msg).toBe("");
+		});
 	});
 });

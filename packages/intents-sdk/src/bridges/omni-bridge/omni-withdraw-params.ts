@@ -1,13 +1,16 @@
 import { assert, utils } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress, type OmniAddress } from "@omni-bridge/core";
+import {
+	ChainKind,
+	HYPERLIQUID_MESSAGE,
+	omniAddress,
+	type OmniAddress,
+} from "@omni-bridge/core";
 import { calculateStorageAccountId } from "@omni-bridge/near";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import { RouteEnum } from "../../constants/route-enum";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import type { FeeEstimation } from "../../shared-types";
 import { CHAIN_MAPPINGS } from "./omni-bridge-utils";
-
-const HYPERLIQUID_MESSAGE = '{"DestHexMsg":"636F7265"}';
 
 /**
  * The values an Omni withdrawal computes before it builds the intents.
@@ -59,7 +62,7 @@ export function deriveOmniWithdrawIntentParams(params: {
 	intentsContract: string;
 	feeEstimation: FeeEstimation;
 	externalId?: string;
-	caip2Identifier: Chain;
+	caip2Identifier?: Chain;
 }): OmniWithdrawIntentParams {
 	const { contractId: tokenAccountId, standard } = utils.parseDefuseAssetId(
 		params.assetId,
@@ -116,7 +119,7 @@ export function deriveOmniWithdrawIntentParams(params: {
 		// from the withdrawn asset, not wrap.near.
 		amount += utxoMaxGasFee + utxoProtocolFee;
 		msg = JSON.stringify({ MaxGasFee: utxoMaxGasFee.toString() });
-	} else if (params.caip2Identifier) {
+	} else if (params.caip2Identifier === Chains.HyperCore) {
 		msg = HYPERLIQUID_MESSAGE;
 	}
 

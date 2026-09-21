@@ -43,6 +43,7 @@ import type {
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	TokenNotFoundInDestinationChainError,
+	TokenNotLinkedToHyperCoreError,
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
@@ -56,6 +57,7 @@ import {
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 	SOL_OMNI_CONTRACT_ID,
+	HYPERCORE_WITHDRAWAL_DECIMALS,
 } from "./omni-bridge-constants";
 import {
 	chainKindToCaip2,
@@ -396,7 +398,23 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		const decimals = await this.getCachedTokenDecimals(destTokenOmniAddress);
+		let decimals = null;
+
+		if (assetInfo.blockchain === Chains.HyperCore) {
+			const hyperCoreDecimals = HYPERCORE_WITHDRAWAL_DECIMALS[args.assetId];
+
+			if (!hyperCoreDecimals) {
+				throw new TokenNotLinkedToHyperCoreError(
+					args.assetId,
+					destTokenAddress,
+				);
+			}
+
+			decimals = hyperCoreDecimals;
+		} else {
+			decimals = await this.getCachedTokenDecimals(destTokenOmniAddress)
+		}
+
 		assert(
 			decimals !== null,
 			`Failed to retrieve token decimals for address ${destTokenOmniAddress} via OmniBridge contract. 
@@ -703,15 +721,12 @@ export class OmniBridge implements Bridge {
 		}
 
 		const destinationChain = getChain(transfer.recipient as OmniAddress);
-		let txHash = null;
+		let txHash: string | undefined;
 		if (isEvmChain(destinationChain)) {
 			if (args.landingChain === Chains.HyperCore) {
-				//@ts-expect-error
-				txHash = transfer?.related_txs.find((item) => {
-					return item.kind === "hyper_core_fin" && item.transaction_hash
-						? item.transaction_hash
-						: null;
-				});
+				txHash = transfer.related_txs.find(
+					(tx) => tx.kind === "hyper_core_fin",
+				)?.transaction_hash;
 			} else {
 				txHash = transfer.finalised?.transaction_hash;
 			}
@@ -727,9 +742,9 @@ export class OmniBridge implements Bridge {
 			// change if the BTC transfer fails to be submitted. We return fast hash for FE and
 			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
-				typeof window !== "undefined"
+				(typeof window !== "undefined"
 					? transfer.utxo_meta?.pending_sign_id
-					: transfer.finalised?.transaction_hash;
+					: transfer.finalised?.transaction_hash) ?? undefined;
 		} else {
 			return { status: "completed", txHash: null };
 		}

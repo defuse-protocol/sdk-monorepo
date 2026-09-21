@@ -78,3 +78,22 @@ export class InsufficientUtxoForOmniBridgeWithdrawalError extends BaseError {
 		});
 	}
 }
+
+export type TokenNotLinkedToHyperCoreErrorType =
+	TokenNotLinkedToHyperCoreError & {
+		name: "TokenNotLinkedToHyperCoreError";
+	};
+export class TokenNotLinkedToHyperCoreError extends BaseError {
+	constructor(
+		public token: string,
+		public evmTokenAddress: string,
+	) {
+		super(`The token ${token} is not linked to a HyperCore spot token`, {
+			metaMessages: [
+				`Token: ${token}`,
+				`HyperEVM token address: ${evmTokenAddress}`,
+			],
+			name: "TokenNotLinkedToHyperCoreError",
+		});
+	}
+}

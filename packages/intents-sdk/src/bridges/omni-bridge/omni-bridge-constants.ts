@@ -9,5 +9,16 @@ export const MIN_AMOUNT_SOL_OMNI_WITHDRAWAL = 890880n;
 export const MIN_GAS_AMOUNT = "37400000000000"; // 37.4 tgas
 export const INTENTS_STORAGE_BALANCE_CACHE_KEY = "INTENTS_STORAGE_BALANCE";
 
+/**
+ * Decimals for a withdrawal that lands on HyperCore, by asset id.
+ */
+export const HYPERCORE_WITHDRAWAL_DECIMALS: Record<
+	string,
+	{ decimals: number; origin_decimals: number }
+> = {
+	// ONEAR: 8 on Core, 24 on NEAR.
+	"nep141:wrap.near": { decimals: 8, origin_decimals: 24 },
+};
+
 // API returns non-zero fee for them; however, these tokens have own relayers that bridge them for free.
 export const FEE_SUBSIDIZED_TOKENS = ["nep141:lsd-usdt.rhealab.near"];
