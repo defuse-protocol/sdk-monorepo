@@ -412,7 +412,7 @@ export class OmniBridge implements Bridge {
 
 			decimals = hyperCoreDecimals;
 		} else {
-			decimals = await this.getCachedTokenDecimals(destTokenOmniAddress)
+			decimals = await this.getCachedTokenDecimals(destTokenOmniAddress);
 		}
 
 		assert(
@@ -721,7 +721,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const destinationChain = getChain(transfer.recipient as OmniAddress);
-		let txHash: string | undefined;
+		let txHash = null;
 		if (isEvmChain(destinationChain)) {
 			if (args.landingChain === Chains.HyperCore) {
 				txHash = transfer.related_txs.find(
@@ -742,9 +742,9 @@ export class OmniBridge implements Bridge {
 			// change if the BTC transfer fails to be submitted. We return fast hash for FE and
 			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
-				(typeof window !== "undefined"
+				typeof window !== "undefined"
 					? transfer.utxo_meta?.pending_sign_id
-					: transfer.finalised?.transaction_hash) ?? undefined;
+					: transfer.finalised?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
 		}
