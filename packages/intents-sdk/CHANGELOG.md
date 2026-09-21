@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.88.0
+
+### Minor Changes
+
+- f354fb5: HyperCore withdrawals support via Omni Bridge
+
 ## 0.87.0
 
 ### Minor Changes
