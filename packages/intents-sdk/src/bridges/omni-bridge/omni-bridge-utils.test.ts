@@ -207,6 +207,13 @@ describe("caip2ToChainKind()", () => {
 	it("returns null for unsupported chain", () => {
 		expect(caip2ToChainKind(Chains.TON)).toBeNull();
 	});
+
+	it("maps both HyperEvm and HyperCore to HlEvm", () => {
+		// A HyperCore withdrawal is an HlEvm transfer that the destination contract
+		// redirects to the Core spot balance, so both land on the same ChainKind.
+		expect(caip2ToChainKind(Chains.HyperEvm)).toBe(ChainKind.HlEvm);
+		expect(caip2ToChainKind(Chains.HyperCore)).toBe(ChainKind.HlEvm);
+	});
 });
 
 describe("chainKindToCaip2()", () => {
@@ -216,6 +223,14 @@ describe("chainKindToCaip2()", () => {
 
 	it("maps Sol to Solana", () => {
 		expect(chainKindToCaip2(ChainKind.Sol)).toBe(Chains.Solana);
+	});
+
+	it("maps HlEvm back to HyperEvm, not HyperCore", () => {
+		// CHAIN_MAPPINGS holds two entries for HlEvm and this direction takes the
+		// first one. HyperCore is only ever a destination the caller asks for
+		// explicitly; a token bridged from HlEvm belongs to HyperEvm. Reordering the
+		// table would silently flip every HlEvm asset to HyperCore.
+		expect(chainKindToCaip2(ChainKind.HlEvm)).toBe(Chains.HyperEvm);
 	});
 
 	it("returns null for unsupported ChainKind", () => {
