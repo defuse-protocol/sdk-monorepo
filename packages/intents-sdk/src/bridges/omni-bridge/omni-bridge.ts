@@ -25,7 +25,7 @@ import {
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
-import type { Chain } from "../../lib/caip2";
+import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	BridgeConfigs,
@@ -43,6 +43,7 @@ import type {
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	TokenNotFoundInDestinationChainError,
+	TokenNotLinkedToHyperCoreError,
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
@@ -56,6 +57,7 @@ import {
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
 	SOL_OMNI_CONTRACT_ID,
+	HYPERCORE_WITHDRAWAL_DECIMALS,
 } from "./omni-bridge-constants";
 import {
 	chainKindToCaip2,
@@ -322,6 +324,7 @@ export class OmniBridge implements Bridge {
 					omniChainKind,
 					intentsContract: this.envConfig.contractID,
 					feeEstimation: args.feeEstimation,
+					caip2Identifier: assetInfo.blockchain,
 				}),
 			),
 		);
@@ -395,7 +398,23 @@ export class OmniBridge implements Bridge {
 			);
 		}
 
-		const decimals = await this.getCachedTokenDecimals(destTokenOmniAddress);
+		let decimals = null;
+
+		if (assetInfo.blockchain === Chains.HyperCore) {
+			const hyperCoreDecimals = HYPERCORE_WITHDRAWAL_DECIMALS[args.assetId];
+
+			if (!hyperCoreDecimals) {
+				throw new TokenNotLinkedToHyperCoreError(
+					args.assetId,
+					destTokenAddress,
+				);
+			}
+
+			decimals = hyperCoreDecimals;
+		} else {
+			decimals = await this.getCachedTokenDecimals(destTokenOmniAddress);
+		}
+
 		assert(
 			decimals !== null,
 			`Failed to retrieve token decimals for address ${destTokenOmniAddress} via OmniBridge contract. 
@@ -703,8 +722,15 @@ export class OmniBridge implements Bridge {
 
 		const destinationChain = getChain(transfer.recipient as OmniAddress);
 		let txHash = null;
-		if (
-			isEvmChain(destinationChain) ||
+		if (isEvmChain(destinationChain)) {
+			if (args.landingChain === Chains.HyperCore) {
+				txHash = transfer?.related_txs?.find(
+					(tx) => tx.kind === "hyper_core_fin",
+				)?.transaction_hash;
+			} else {
+				txHash = transfer.finalised?.transaction_hash;
+			}
+		} else if (
 			destinationChain === ChainKind.Sol ||
 			destinationChain === ChainKind.Fogo ||
 			destinationChain === ChainKind.Strk ||

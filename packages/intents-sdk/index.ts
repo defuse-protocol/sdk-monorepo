@@ -135,6 +135,8 @@ export {
 	type OmniWithdrawalApiFeeRequestTimeoutErrorType,
 	InsufficientUtxoForOmniBridgeWithdrawalError,
 	type InsufficientUtxoForOmniBridgeWithdrawalErrorType,
+	TokenNotLinkedToHyperCoreError,
+	type TokenNotLinkedToHyperCoreErrorType,
 } from "./src/bridges/omni-bridge/error";
 
 // Poa Bridge Errors

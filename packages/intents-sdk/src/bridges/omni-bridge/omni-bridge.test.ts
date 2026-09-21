@@ -5,7 +5,7 @@ import {
 } from "@defuse-protocol/internal-utils";
 import { BridgeAPI, ChainKind, omniAddress } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
 import * as estimateFee from "../../lib/estimate-fee";
 import {
@@ -16,7 +16,7 @@ import {
 } from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
-import { Chains } from "../../lib/caip2";
+import { type Chain, Chains } from "../../lib/caip2";
 import {
 	createOmniBridgeRoute,
 	createPoaBridgeRoute,
@@ -24,8 +24,10 @@ import {
 import {
 	IntentsNearOmniAvailableBalanceTooLowError,
 	TokenNotFoundInDestinationChainError,
+	TokenNotLinkedToHyperCoreError,
 } from "./error";
 import {
+	HYPERCORE_WITHDRAWAL_DECIMALS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 } from "./omni-bridge-constants";
@@ -279,6 +281,121 @@ describe("OmniBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+
+		describe("HyperCore", () => {
+			const NEAR_ON_HYPEREVM = "0xc80d9eb120d6e40e31d5ae9040d5fc0753c52da7";
+			const ASSET_ID = "nep141:wrap.near";
+			const FEE = {
+				amount: 25_000_000_000n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: {
+						relayerFee: 25_000_000_000n,
+						storageDepositFee: 0n,
+					},
+				},
+			};
+
+			const registered = HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID];
+			afterEach(() => {
+				if (registered === undefined) {
+					delete HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID];
+				} else {
+					HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID] = registered;
+				}
+			});
+
+			/**
+			 * The Omni contract reports 18 decimals for the HyperEVM token, which is what
+			 * a plain HyperEVM landing uses; a HyperCore landing takes 8 from the table
+			 * instead. `listed: false` models a token missing from that table.
+			 */
+			function mockHyperCore({ listed = true } = {}) {
+				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+					omniAddress(ChainKind.HlEvm, NEAR_ON_HYPEREVM),
+				);
+				vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
+					decimals: 18,
+					origin_decimals: 24,
+				});
+
+				if (listed) {
+					HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID] = {
+						decimals: 8,
+						origin_decimals: 24,
+					};
+				} else {
+					delete HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID];
+				}
+			}
+
+			function newBridge() {
+				return new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+				});
+			}
+
+			function validate(
+				amount: bigint,
+				chain: Chain = Chains.HyperCore,
+				bridge = newBridge(),
+			) {
+				return bridge.validateWithdrawal({
+					amount,
+					assetId: ASSET_ID,
+					destinationAddress: EVM_TEST_ADDRESS,
+					feeEstimation: FEE,
+					routeConfig: createOmniBridgeRoute(chain),
+				});
+			}
+
+			it("refuses a token that is not linked to a HyperCore spot token", async () => {
+				mockHyperCore({ listed: false });
+
+				await expect(validate(10n ** 24n)).rejects.toThrow(
+					TokenNotLinkedToHyperCoreError,
+				);
+			});
+
+			it("refuses an amount that HyperCore would truncate to nothing", async () => {
+				// 18 EVM decimals - 10 extra = 8 on Core, so the smallest creditable amount
+				// is 10 ** (24 - 8) in origin decimals. One below that credits zero.
+				mockHyperCore();
+
+				await expect(validate(10n ** 16n - 1n)).rejects.toThrow(
+					MinWithdrawalAmountError,
+				);
+				await expect(validate(10n ** 16n)).resolves.toBeUndefined();
+			});
+
+			it("does not apply the Core precision limit to a plain HyperEVM landing", async () => {
+				mockHyperCore();
+
+				// Same amount that HyperCore rejects is fine on HyperEVM, where all 18
+				// decimals survive.
+				await expect(
+					validate(10n ** 16n - 1n, Chains.HyperEvm),
+				).resolves.toBeUndefined();
+			});
+
+			it("keeps the two landings apart on one bridge instance", async () => {
+				mockHyperCore();
+
+				// Both landings resolve the same destination token and differ only by
+				// route: HyperEVM keeps the contract's 18 decimals, HyperCore takes 8 from
+				// the table. Reusing one bridge is the point — the shared decimals cache
+				// must not leak the HyperEVM answer into the HyperCore call.
+				const bridge = newBridge();
+
+				await expect(
+					validate(10n ** 16n - 1n, Chains.HyperEvm, bridge),
+				).resolves.toBeUndefined();
+				await expect(
+					validate(10n ** 16n - 1n, Chains.HyperCore, bridge),
+				).rejects.toThrow(MinWithdrawalAmountError);
+			});
+		});
 	});
 
 	describe("createWithdrawalIdentifier()", () => {
@@ -363,6 +480,7 @@ describe("OmniBridge", () => {
 				utxo_signs: [],
 				utxo_winning_tx_hash: null,
 				utxo_meta: null,
+				related_txs: [],
 				tx_ids: [],
 				...overrides,
 			};
@@ -411,6 +529,124 @@ describe("OmniBridge", () => {
 				status: "completed",
 				txHash: "0xevm-tx-hash",
 			});
+		});
+
+		it("reports the HyperCore credit, not the HyperEVM mint", async () => {
+			// `finalised` is the HyperEVM mint; the spot balance is only credited by the
+			// `hyper_core_fin` step, so a HyperCore landing has to report that one.
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					recipient: "hlevm:0x1234567890123456789012345678901234567890",
+					finalised: {
+						transaction_hash: "0xhyperevm-mint",
+						chain: "HlEvm",
+						timestamp_seconds: 1700000000,
+						details: {
+							type: "evm",
+							block_number: 1,
+							transaction_index: null,
+							log_index: null,
+						},
+					},
+					related_txs: [
+						{
+							kind: "hyper_evm_init",
+							transaction_hash: "0xhyperevm-init",
+							chain: "HlEvm",
+							timestamp_seconds: 1700000001,
+							details: {
+								type: "evm",
+								block_number: 2,
+								transaction_index: null,
+								log_index: null,
+							},
+						},
+						{
+							kind: "hyper_core_fin",
+							transaction_hash: "0xhypercore-credit",
+							chain: "HlEvm",
+							timestamp_seconds: 1700000002,
+							details: { type: "hyper_core" },
+						},
+					],
+				}),
+			]);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+			});
+
+			const withdrawal = {
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			};
+
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.HyperCore,
+					...withdrawal,
+				}),
+			).resolves.toEqual({
+				status: "completed",
+				txHash: "0xhypercore-credit",
+			});
+
+			// The same transfer landing on HyperEVM stops at the mint.
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.HyperEvm,
+					...withdrawal,
+				}),
+			).resolves.toEqual({
+				status: "completed",
+				txHash: "0xhyperevm-mint",
+			});
+		});
+
+		it("stays pending until the HyperCore credit appears", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					recipient: "hlevm:0x1234567890123456789012345678901234567890",
+					finalised: {
+						transaction_hash: "0xhyperevm-mint",
+						chain: "HlEvm",
+						timestamp_seconds: 1700000000,
+						details: {
+							type: "evm",
+							block_number: 1,
+							transaction_index: null,
+							log_index: null,
+						},
+					},
+					related_txs: [],
+				}),
+			]);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+			});
+
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.HyperCore,
+					index: 0,
+					withdrawalParams: {
+						assetId: "nep141:wrap.near",
+						amount: 100000n,
+						destinationAddress: zeroAddress,
+						feeInclusive: false,
+					},
+					tx: { hash: "near-tx-hash", accountId: "test.near" },
+				}),
+			).resolves.toEqual({ status: "pending" });
 		});
 
 		it("returns completed status with Solana signature", async () => {

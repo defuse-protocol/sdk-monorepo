@@ -17,7 +17,7 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress } from "@omni-bridge/core";
+import { ChainKind, HYPERLIQUID_MESSAGE, omniAddress } from "@omni-bridge/core";
 import { Chains } from "../../lib/caip2";
 import { RouteEnum } from "../../constants/route-enum";
 import type { FeeEstimation } from "../../shared-types";
@@ -207,6 +207,13 @@ describe("caip2ToChainKind()", () => {
 	it("returns null for unsupported chain", () => {
 		expect(caip2ToChainKind(Chains.TON)).toBeNull();
 	});
+
+	it("maps both HyperEvm and HyperCore to HlEvm", () => {
+		// A HyperCore withdrawal is an HlEvm transfer that the destination contract
+		// redirects to the Core spot balance, so both land on the same ChainKind.
+		expect(caip2ToChainKind(Chains.HyperEvm)).toBe(ChainKind.HlEvm);
+		expect(caip2ToChainKind(Chains.HyperCore)).toBe(ChainKind.HlEvm);
+	});
 });
 
 describe("chainKindToCaip2()", () => {
@@ -216,6 +223,14 @@ describe("chainKindToCaip2()", () => {
 
 	it("maps Sol to Solana", () => {
 		expect(chainKindToCaip2(ChainKind.Sol)).toBe(Chains.Solana);
+	});
+
+	it("maps HlEvm back to HyperEvm, not HyperCore", () => {
+		// CHAIN_MAPPINGS holds two entries for HlEvm and this direction takes the
+		// first one. HyperCore is only ever a destination the caller asks for
+		// explicitly; a token bridged from HlEvm belongs to HyperEvm. Reordering the
+		// table would silently flip every HlEvm asset to HyperCore.
+		expect(chainKindToCaip2(ChainKind.HlEvm)).toBe(Chains.HyperEvm);
 	});
 
 	it("returns null for unsupported ChainKind", () => {
@@ -453,5 +468,62 @@ describe("deriveOmniWithdrawIntentParams()", () => {
 			omniAddress(ChainKind.Btc, withdrawal.destinationAddress),
 		);
 		expect(params.msg).toBe('{"MaxGasFee":"100"}');
+	});
+
+	describe("HyperCore", () => {
+		const evmWithdrawal = {
+			assetId: "nep141:wrap.near",
+			destinationAddress: "0x1234567890123456789012345678901234567890",
+			actualAmount: 1000n,
+			omniChainKind: ChainKind.HlEvm,
+			intentsContract: "intents.near",
+			feeEstimation: fees(),
+		};
+
+		it("tags the transfer so Omni credits the HyperCore spot balance", () => {
+			const params = deriveOmniWithdrawIntentParams({
+				...evmWithdrawal,
+				caip2Identifier: Chains.HyperCore,
+			});
+
+			expect(params.msg).toBe(HYPERLIQUID_MESSAGE);
+
+			// A non-empty msg is what flips `finTransfer` to the 3-arg mint, so it has to
+			// survive into the ft_withdraw payload.
+			const intents = createWithdrawIntentsPrimitive(params);
+			const ftWithdraw = intents.find((i) => i.intent === "ft_withdraw");
+			assert(ftWithdraw != null && ftWithdraw.intent === "ft_withdraw");
+			assert(typeof ftWithdraw.msg === "string");
+			expect(JSON.parse(ftWithdraw.msg).msg).toBe(HYPERLIQUID_MESSAGE);
+		});
+
+		it("leaves the message empty for HyperEvm so the tokens stay on HyperEvm", () => {
+			const params = deriveOmniWithdrawIntentParams({
+				...evmWithdrawal,
+				caip2Identifier: Chains.HyperEvm,
+			});
+
+			expect(params.msg).toBe("");
+		});
+
+		it.each([
+			["Ethereum", Chains.Ethereum, ChainKind.Eth],
+			["Solana", Chains.Solana, ChainKind.Sol],
+		])(
+			"does not tag unrelated destination %s",
+			(_name, caip2Identifier, omniChainKind) => {
+				const params = deriveOmniWithdrawIntentParams({
+					...evmWithdrawal,
+					omniChainKind,
+					caip2Identifier,
+				});
+
+				expect(params.msg).toBe("");
+			},
+		);
+
+		it("leaves the message empty when no caip2Identifier is given", () => {
+			expect(deriveOmniWithdrawIntentParams(evmWithdrawal).msg).toBe("");
+		});
 	});
 });
