@@ -274,7 +274,7 @@ export class DirectBridge implements Bridge {
 		contractId: string,
 		accountId: string,
 	): Promise<[MinStorageBalance, StorageDepositBalance]> {
-		const key = `${contractId}${accountId}`;
+		const key = `${contractId}:${accountId}`;
 		const cached = this.storageDepositCache.get(key);
 		if (cached !== undefined) {
 			return cached;
