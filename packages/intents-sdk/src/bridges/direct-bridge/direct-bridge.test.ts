@@ -11,6 +11,7 @@ import {
 	createNearWithdrawalRoute,
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
+import { RouteEnum } from "../../constants/route-enum";
 import { DirectBridge } from "./direct-bridge";
 import {
 	MIN_GAS_AMOUNT,
@@ -24,9 +25,22 @@ import { zeroAddress } from "viem";
 import { DestinationExplicitNearAccountDoesntExistError } from "./error";
 import {
 	assert,
+	getNearNep141MinStorageBalance,
+	getNearNep141StorageBalance,
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
+
+vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+
+	return {
+		...actual,
+		getNearNep141MinStorageBalance: vi.fn(),
+		getNearNep141StorageBalance: vi.fn(),
+	};
+});
 
 describe("DirectBridge", () => {
 	describe("supports()", () => {
@@ -208,6 +222,41 @@ describe("DirectBridge", () => {
 			expect(
 				result.underlyingFees[RouteEnum.NearWithdrawal]?.storageDepositFee,
 			).toBe(minStorageBalance - userStorageBalance);
+		});
+	});
+});
+
+describe("DirectBridge.estimateWithdrawalFee()", () => {
+	it("does not reuse cached storage of a different pair with the same concatenation", async () => {
+		// "wrap.nearalice.near" + "by.near" === "wrap.near" + "alice.nearby.near"
+		vi.mocked(getNearNep141MinStorageBalance).mockImplementation(
+			async ({ contractId }) => (contractId === "wrap.near" ? 100n : 0n),
+		);
+		vi.mocked(getNearNep141StorageBalance).mockImplementation(
+			async ({ contractId }) => (contractId === "wrap.near" ? 0n : 1n),
+		);
+		const bridge = new DirectBridge({
+			envConfig: configsByEnvironment.production,
+			nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+		});
+
+		await bridge.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:wrap.nearalice.near",
+				destinationAddress: "by.near",
+				routeConfig: undefined,
+			},
+		});
+		const fee = await bridge.estimateWithdrawalFee({
+			withdrawalParams: {
+				assetId: "nep141:wrap.near",
+				destinationAddress: "alice.nearby.near",
+				routeConfig: createNearWithdrawalRoute("msg"),
+			},
+		});
+
+		expect(fee.underlyingFees).toEqual({
+			[RouteEnum.NearWithdrawal]: { storageDepositFee: 100n },
 		});
 	});
 });
