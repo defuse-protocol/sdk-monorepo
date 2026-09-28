@@ -55,6 +55,18 @@ export interface PollOptions {
 	maxInterval?: number;
 }
 
+/** Timing context handed to the poll function on every attempt. */
+export interface PollContext {
+	/** Time elapsed since polling started (ms). */
+	elapsedMs: number;
+	/**
+	 * Budget left before the p99 hard timeout (ms). Always `> 0` while `fn`
+	 * runs. Use it to size per-attempt work (e.g. a fetch timeout) so a single
+	 * stalled call can't drag total wall-clock past p99.
+	 */
+	remainingMs: number;
+}
+
 /**
  * Polls a function using latency-optimized intervals.
  *
@@ -66,14 +78,16 @@ export interface PollOptions {
  * - p50 → p90: COOLING (3s) - moderate polling (~40%)
  * - p90 → p99: COLD (10s) - back off for outliers (~9%)
  *
- * @param fn - Function to poll. Return POLL_PENDING to continue, any other value to complete.
+ * @param fn - Function to poll. Receives the current {@link PollContext} so it
+ *   can size per-attempt work to the remaining budget. Return POLL_PENDING to
+ *   continue, any other value to complete.
  * @param options - Polling configuration with completion stats
  * @returns The resolved value from fn
  * @throws PollTimeoutError when p99 is exceeded
  * @throws AbortError when signal is aborted
  */
 export async function poll<T>(
-	fn: () => Promise<T | typeof POLL_PENDING>,
+	fn: (ctx: PollContext) => Promise<T | typeof POLL_PENDING>,
 	options: PollOptions,
 ): Promise<T> {
 	const { stats, signal, minInterval = 300, maxInterval = 30_000 } = options;
@@ -90,7 +104,11 @@ export async function poll<T>(
 			throw new PollTimeoutError(elapsed, p99);
 		}
 
-		const result = await fn();
+		const remainingMs = p99 - elapsed;
+		const result = await fn({
+			elapsedMs: elapsed,
+			remainingMs: remainingMs < 0 ? 0 : remainingMs,
+		});
 		if (result !== POLL_PENDING) {
 			return result;
 		}
