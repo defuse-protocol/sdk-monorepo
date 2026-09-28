@@ -3,19 +3,20 @@ import {
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { BridgeAPI } from "@omni-bridge/core";
+import { BridgeAPI, ChainKind, omniAddress } from "@omni-bridge/core";
 import { zeroAddress } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as omniBridgeUtils from "./omni-bridge-utils";
 import * as estimateFee from "../../lib/estimate-fee";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
-import { Chains } from "../../lib/caip2";
+import { type Chain, Chains } from "../../lib/caip2";
 import {
 	createOmniBridgeRoute,
 	createPoaBridgeRoute,
@@ -23,12 +24,16 @@ import {
 import {
 	IntentsNearOmniAvailableBalanceTooLowError,
 	TokenNotFoundInDestinationChainError,
+	TokenNotLinkedToHyperCoreError,
 } from "./error";
 import {
+	HYPERCORE_WITHDRAWAL_DECIMALS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 } from "./omni-bridge-constants";
 import { OmniBridge } from "./omni-bridge";
+
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
 
 describe("OmniBridge", () => {
 	beforeEach(() => {
@@ -192,7 +197,7 @@ describe("OmniBridge", () => {
 			{
 				assetId:
 					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				routeConfig: undefined,
 			}, // Aurora token
 			{
@@ -276,6 +281,121 @@ describe("OmniBridge", () => {
 				).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
 			},
 		);
+
+		describe("HyperCore", () => {
+			const NEAR_ON_HYPEREVM = "0xc80d9eb120d6e40e31d5ae9040d5fc0753c52da7";
+			const ASSET_ID = "nep141:wrap.near";
+			const FEE = {
+				amount: 25_000_000_000n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: {
+						relayerFee: 25_000_000_000n,
+						storageDepositFee: 0n,
+					},
+				},
+			};
+
+			const registered = HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID];
+			afterEach(() => {
+				if (registered === undefined) {
+					delete HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID];
+				} else {
+					HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID] = registered;
+				}
+			});
+
+			/**
+			 * The Omni contract reports 18 decimals for the HyperEVM token, which is what
+			 * a plain HyperEVM landing uses; a HyperCore landing takes 8 from the table
+			 * instead. `listed: false` models a token missing from that table.
+			 */
+			function mockHyperCore({ listed = true } = {}) {
+				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+					omniAddress(ChainKind.HlEvm, NEAR_ON_HYPEREVM),
+				);
+				vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
+					decimals: 18,
+					origin_decimals: 24,
+				});
+
+				if (listed) {
+					HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID] = {
+						decimals: 8,
+						origin_decimals: 24,
+					};
+				} else {
+					delete HYPERCORE_WITHDRAWAL_DECIMALS[ASSET_ID];
+				}
+			}
+
+			function newBridge() {
+				return new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+				});
+			}
+
+			function validate(
+				amount: bigint,
+				chain: Chain = Chains.HyperCore,
+				bridge = newBridge(),
+			) {
+				return bridge.validateWithdrawal({
+					amount,
+					assetId: ASSET_ID,
+					destinationAddress: EVM_TEST_ADDRESS,
+					feeEstimation: FEE,
+					routeConfig: createOmniBridgeRoute(chain),
+				});
+			}
+
+			it("refuses a token that is not linked to a HyperCore spot token", async () => {
+				mockHyperCore({ listed: false });
+
+				await expect(validate(10n ** 24n)).rejects.toThrow(
+					TokenNotLinkedToHyperCoreError,
+				);
+			});
+
+			it("refuses an amount that HyperCore would truncate to nothing", async () => {
+				// 18 EVM decimals - 10 extra = 8 on Core, so the smallest creditable amount
+				// is 10 ** (24 - 8) in origin decimals. One below that credits zero.
+				mockHyperCore();
+
+				await expect(validate(10n ** 16n - 1n)).rejects.toThrow(
+					MinWithdrawalAmountError,
+				);
+				await expect(validate(10n ** 16n)).resolves.toBeUndefined();
+			});
+
+			it("does not apply the Core precision limit to a plain HyperEVM landing", async () => {
+				mockHyperCore();
+
+				// Same amount that HyperCore rejects is fine on HyperEVM, where all 18
+				// decimals survive.
+				await expect(
+					validate(10n ** 16n - 1n, Chains.HyperEvm),
+				).resolves.toBeUndefined();
+			});
+
+			it("keeps the two landings apart on one bridge instance", async () => {
+				mockHyperCore();
+
+				// Both landings resolve the same destination token and differ only by
+				// route: HyperEVM keeps the contract's 18 decimals, HyperCore takes 8 from
+				// the table. Reusing one bridge is the point — the shared decimals cache
+				// must not leak the HyperEVM answer into the HyperCore call.
+				const bridge = newBridge();
+
+				await expect(
+					validate(10n ** 16n - 1n, Chains.HyperEvm, bridge),
+				).resolves.toBeUndefined();
+				await expect(
+					validate(10n ** 16n - 1n, Chains.HyperCore, bridge),
+				).rejects.toThrow(MinWithdrawalAmountError);
+			});
+		});
 	});
 
 	describe("createWithdrawalIdentifier()", () => {
@@ -336,17 +456,32 @@ describe("OmniBridge", () => {
 			overrides: Partial<Awaited<ReturnType<BridgeAPI["getTransfer"]>>[0]>,
 		): Awaited<ReturnType<BridgeAPI["getTransfer"]>>[0] {
 			return {
-				id: null,
-				initialized: null,
-				signed: null,
+				transfer_id: null,
+				origin_chain: null,
+				destination_chain: null,
+				sender: null,
+				recipient: null,
+				token_id: null,
+				amount: null,
+				fee: null,
+				native_fee: null,
+				msg: null,
+				destination_nonce: null,
+				status: "Initialised",
+				initialised: null,
+				signed: [],
 				fast_finalised_on_near: null,
 				finalised_on_near: null,
 				fast_finalised: null,
 				finalised: null,
 				claimed: null,
-				transfer_message: null,
-				updated_fee: [],
-				utxo_transfer: null,
+				verified: null,
+				fee_updates: [],
+				utxo_signs: [],
+				utxo_winning_tx_hash: null,
+				utxo_meta: null,
+				related_txs: [],
+				tx_ids: [],
 				...overrides,
 			};
 		}
@@ -354,19 +489,16 @@ describe("OmniBridge", () => {
 		it("returns completed status with EVM tx hash", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:eth.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "eth:0x1234567890123456789012345678901234567890",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
+					recipient: "eth:0x1234567890123456789012345678901234567890",
 					finalised: {
-						EVMLog: {
-							block_height: 1,
-							block_timestamp_seconds: 1700000000,
-							transaction_hash: "0xevm-tx-hash",
+						transaction_hash: "0xevm-tx-hash",
+						chain: "Eth",
+						timestamp_seconds: 1700000000,
+						details: {
+							type: "evm",
+							block_number: 1,
+							transaction_index: null,
+							log_index: null,
 						},
 					},
 				}),
@@ -399,23 +531,133 @@ describe("OmniBridge", () => {
 			});
 		});
 
+		it("reports the HyperCore credit, not the HyperEVM mint", async () => {
+			// `finalised` is the HyperEVM mint; the spot balance is only credited by the
+			// `hyper_core_fin` step, so a HyperCore landing has to report that one.
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					recipient: "hlevm:0x1234567890123456789012345678901234567890",
+					finalised: {
+						transaction_hash: "0xhyperevm-mint",
+						chain: "HlEvm",
+						timestamp_seconds: 1700000000,
+						details: {
+							type: "evm",
+							block_number: 1,
+							transaction_index: null,
+							log_index: null,
+						},
+					},
+					related_txs: [
+						{
+							kind: "hyper_evm_init",
+							transaction_hash: "0xhyperevm-init",
+							chain: "HlEvm",
+							timestamp_seconds: 1700000001,
+							details: {
+								type: "evm",
+								block_number: 2,
+								transaction_index: null,
+								log_index: null,
+							},
+						},
+						{
+							kind: "hyper_core_fin",
+							transaction_hash: "0xhypercore-credit",
+							chain: "HlEvm",
+							timestamp_seconds: 1700000002,
+							details: { type: "hyper_core" },
+						},
+					],
+				}),
+			]);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+			});
+
+			const withdrawal = {
+				index: 0,
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					amount: 100000n,
+					destinationAddress: zeroAddress,
+					feeInclusive: false,
+				},
+				tx: { hash: "near-tx-hash", accountId: "test.near" },
+			};
+
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.HyperCore,
+					...withdrawal,
+				}),
+			).resolves.toEqual({
+				status: "completed",
+				txHash: "0xhypercore-credit",
+			});
+
+			// The same transfer landing on HyperEVM stops at the mint.
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.HyperEvm,
+					...withdrawal,
+				}),
+			).resolves.toEqual({
+				status: "completed",
+				txHash: "0xhyperevm-mint",
+			});
+		});
+
+		it("stays pending until the HyperCore credit appears", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
+				createTransferMock({
+					recipient: "hlevm:0x1234567890123456789012345678901234567890",
+					finalised: {
+						transaction_hash: "0xhyperevm-mint",
+						chain: "HlEvm",
+						timestamp_seconds: 1700000000,
+						details: {
+							type: "evm",
+							block_number: 1,
+							transaction_index: null,
+							log_index: null,
+						},
+					},
+					related_txs: [],
+				}),
+			]);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+			});
+
+			await expect(
+				bridge.describeWithdrawal({
+					landingChain: Chains.HyperCore,
+					index: 0,
+					withdrawalParams: {
+						assetId: "nep141:wrap.near",
+						amount: 100000n,
+						destinationAddress: zeroAddress,
+						feeInclusive: false,
+					},
+					tx: { hash: "near-tx-hash", accountId: "test.near" },
+				}),
+			).resolves.toEqual({ status: "pending" });
+		});
+
 		it("returns completed status with Solana signature", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:sol.omft.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "sol:9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
+					recipient: "sol:9FfbHZxQZX3J3oVRjuZZ1gygpViwz7rU1cqAC2kkDe3R",
 					finalised: {
-						Solana: {
-							slot: 1,
-							block_timestamp_seconds: 1700000000,
-							signature: "solana-signature",
-						},
+						transaction_hash: "solana-signature",
+						chain: "Sol",
+						timestamp_seconds: 1700000000,
+						details: { type: "solana", slot: 1, instruction_index: 0 },
 					},
 				}),
 			]);
@@ -477,14 +719,7 @@ describe("OmniBridge", () => {
 		it("returns pending status when tx hash not yet available", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:eth.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "eth:0x1234567890123456789012345678901234567890",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
+					recipient: "eth:0x1234567890123456789012345678901234567890",
 					finalised: null,
 				}),
 			]);
@@ -516,36 +751,30 @@ describe("OmniBridge", () => {
 		it("returns correct transfer by index", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:eth.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "eth:0x1111111111111111111111111111111111111111",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
+					recipient: "eth:0x1111111111111111111111111111111111111111",
 					finalised: {
-						EVMLog: {
-							block_height: 1,
-							block_timestamp_seconds: 1700000000,
-							transaction_hash: "0xfirst-tx",
+						transaction_hash: "0xfirst-tx",
+						chain: "Eth",
+						timestamp_seconds: 1700000000,
+						details: {
+							type: "evm",
+							block_number: 1,
+							transaction_index: null,
+							log_index: null,
 						},
 					},
 				}),
 				createTransferMock({
-					transfer_message: {
-						token: "near:eth.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "eth:0x2222222222222222222222222222222222222222",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
+					recipient: "eth:0x2222222222222222222222222222222222222222",
 					finalised: {
-						EVMLog: {
-							block_height: 2,
-							block_timestamp_seconds: 1700000001,
-							transaction_hash: "0xsecond-tx",
+						transaction_hash: "0xsecond-tx",
+						chain: "Eth",
+						timestamp_seconds: 1700000001,
+						details: {
+							type: "evm",
+							block_number: 2,
+							transaction_index: null,
+							log_index: null,
 						},
 					},
 				}),
@@ -581,30 +810,19 @@ describe("OmniBridge", () => {
 		it("returns completed status with BTC pending tx hash in browser environment", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:nbtc.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "btc:bc1qtest",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
-					utxo_transfer: {
-						chain: "",
-						amount: "",
-						recipient: "",
-						relayer_fee: "",
-						protocol_fee: "",
-						relayer_account_id: "",
-						sender: "",
-						btc_pending_id: "btc-pending-tx-hash",
+					recipient: "btc:bc1qtest",
+					utxo_meta: {
+						chain: "Btc",
+						pending_sign_id: "btc-pending-tx-hash",
+						relayer_fee: null,
+						protocol_fee: null,
+						relayer_account_id: null,
 					},
 					finalised: {
-						UtxoLog: {
-							transaction_hash: "btc-final-tx-hash",
-							block_height: 0,
-							block_time: 0,
-						},
+						transaction_hash: "btc-final-tx-hash",
+						chain: "Btc",
+						timestamp_seconds: 1700000000,
+						details: { type: "utxo", block_height: 0, block_hash: "hash" },
 					},
 				}),
 			]);
@@ -644,30 +862,19 @@ describe("OmniBridge", () => {
 		it("returns completed status with BTC final tx hash in server environment", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:nbtc.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "btc:bc1qtest",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
-					utxo_transfer: {
-						chain: "",
-						amount: "",
-						recipient: "",
-						relayer_fee: "",
-						protocol_fee: "",
-						relayer_account_id: "",
-						sender: "",
-						btc_pending_id: "btc-pending-tx-hash",
+					recipient: "btc:bc1qtest",
+					utxo_meta: {
+						chain: "Btc",
+						pending_sign_id: "btc-pending-tx-hash",
+						relayer_fee: null,
+						protocol_fee: null,
+						relayer_account_id: null,
 					},
 					finalised: {
-						UtxoLog: {
-							transaction_hash: "btc-final-tx-hash",
-							block_height: 0,
-							block_time: 0,
-						},
+						transaction_hash: "btc-final-tx-hash",
+						chain: "Btc",
+						timestamp_seconds: 1700000000,
+						details: { type: "utxo", block_height: 0, block_hash: "hash" },
 					},
 				}),
 			]);
@@ -704,18 +911,11 @@ describe("OmniBridge", () => {
 			vi.unstubAllGlobals();
 		});
 
-		it("returns pending when BTC utxo_transfer has no pending id", async () => {
+		it("returns pending when BTC pending_sign_id has no pending id", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: {
-						token: "near:nbtc.bridge.near",
-						amount: "100000",
-						sender: "near:test.near",
-						recipient: "btc:bc1qtest",
-						fee: { fee: "0", native_fee: "0" },
-						msg: null,
-					},
-					utxo_transfer: null,
+					recipient: "btc:bc1qtest",
+					utxo_meta: null,
 					finalised: null,
 				}),
 			]);
@@ -748,10 +948,10 @@ describe("OmniBridge", () => {
 			vi.unstubAllGlobals();
 		});
 
-		it("returns pending when transfer_message is null", async () => {
+		it("returns pending when recipient is null", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getTransfer").mockResolvedValue([
 				createTransferMock({
-					transfer_message: null,
+					recipient: null,
 				}),
 			]);
 
@@ -900,7 +1100,7 @@ describe("OmniBridge", () => {
 
 			const result = await bridge.supports({
 				assetId:
-					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+					"nep141:eth-0xdac17f958d2ee523a2206206994597c13d831ec7.omft.near",
 			});
 			expect(result).toBe(false);
 		});
@@ -918,49 +1118,13 @@ describe("OmniBridge", () => {
 			await expect(
 				bridge.supports({
 					assetId:
-						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+						"nep141:eth-0xdac17f958d2ee523a2206206994597c13d831ec7.omft.near",
 					routeConfig: createOmniBridgeRoute(),
 				}),
 			).rejects.toThrow(UnsupportedAssetIdError);
 		});
 
-		it("does not support PoA token routable through Omni with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
-
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider,
-			});
-
-			const result = await bridge.supports({
-				assetId:
-					"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			});
-
-			expect(result).toBe(false);
-		});
-		it("Throws when given a PoA token that can be routed through Omni with route config without a target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
-
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider,
-			});
-
-			await expect(
-				bridge.supports({
-					assetId:
-						"nep141:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-					routeConfig: createOmniBridgeRoute(),
-				}),
-			).rejects.toThrow(UnsupportedAssetIdError);
-		});
-
-		it("supports PoA token with routeConfig and valid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+		it("supports Omni migrated PoA token with routeConfig and valid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -978,7 +1142,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("throws for PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = false", async () => {
+		it("throws for Omni migrated PoA token with routeConfig and invalid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -997,7 +1161,7 @@ describe("OmniBridge", () => {
 			).rejects.toThrow(TokenNotFoundInDestinationChainError);
 		});
 
-		it("allows routable PoA token with no routeConfig when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("allows Omni migrated PoA token with no routeConfig", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1005,7 +1169,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			const result = await bridge.supports({
@@ -1015,7 +1178,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("allows routable PoA token with routeConfig but no target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("allows Omni migrated PoA token with routeConfig but no target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1023,7 +1186,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			const result = await bridge.supports({
@@ -1034,7 +1196,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("allows routable PoA token with routeConfig and target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("allows Omni migrated PoA token with routeConfig and target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1042,7 +1204,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			const result = await bridge.supports({
@@ -1053,7 +1214,7 @@ describe("OmniBridge", () => {
 			expect(result).toBe(true);
 		});
 
-		it("throws for routable PoA token with routeConfig and invalid target chain when routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+		it("throws for Omni migrated PoA token with routeConfig and invalid target chain", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1061,7 +1222,6 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				routeMigratedPoaTokensThroughOmniBridge: true,
 			});
 
 			await expect(
@@ -1308,7 +1468,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: "nep141:eth.bridge.near",
 					amount: 1000000000000000000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
 					feeEstimation: {
 						amount: 25_000_000_000n,
 						quote: null,
@@ -1358,7 +1518,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: "nep141:lsd-usdt.rhealab.near",
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: "0x0000000000000000000000000000000000000001",
 					feeEstimation: {
 						amount: 0n,
 						quote: null,
@@ -1444,6 +1604,108 @@ describe("OmniBridge", () => {
 			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
 		});
 
+		it("Throws MinWithdrawalAmountError when amount fails to pass min withdrawal amount for sol.omft.near", async () => {
+			using solverRelay = await useMockedSolverRelay();
+			const nearProvider = nearFailoverRpcProvider({
+				urls: PUBLIC_NEAR_RPC_URLS,
+			});
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider,
+			});
+			const nativeTokenFee = 30_000n;
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: nativeTokenFee,
+				transferred_token_fee: "0",
+				min_amount: "89890",
+				usd_fee: 0.58,
+				insufficient_utxo: false,
+			});
+			const amount = 3000n;
+			const quote = {
+				amount_in: "100",
+				amount_out: nativeTokenFee.toString(),
+				defuse_asset_identifier_in: "nep141:sol.omft.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				expiration_time: "",
+				quote_hash: "",
+			};
+			solverRelay.getQuote.mockResolvedValue(quote);
+
+			const result = bridge.validateWithdrawal({
+				assetId: "nep141:sol.omft.near",
+				amount,
+				destinationAddress: "GmyfrAhK5dexSp6gQ5F9y1JC4ZYyG6iJfgrX8BWPCJNz",
+				feeEstimation: {
+					amount: BigInt(quote.amount_in),
+					quote,
+					underlyingFees: {
+						[RouteEnum.OmniBridge]: {
+							relayerFee: nativeTokenFee,
+							storageDepositFee: 0n,
+						},
+					},
+				},
+			});
+
+			await expect(result).rejects.toThrow(MinWithdrawalAmountError);
+		});
+
+		it.each([
+			{
+				assetId:
+					"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",
+				destinationAddress: "0xaaaaaa20d9e0e2461697782ef11675f668207961",
+				targetChain: Chains.Ethereum,
+				chainKind: ChainKind.Eth,
+			},
+			{
+				assetId: "nep141:token.publicailab.near",
+				destinationAddress: "0x5cd0ba37d1d2eeaafae7af26a9346e80938d1669",
+				targetChain: Chains.Ethereum,
+				chainKind: ChainKind.Eth,
+			},
+		])(
+			"blocks withdrawals of token to it's address",
+			async ({ assetId, destinationAddress, targetChain, chainKind }) => {
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider,
+				});
+
+				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+					omniAddress(chainKind, destinationAddress),
+				);
+
+				const result = bridge.validateWithdrawal({
+					assetId,
+					amount: 0n,
+					destinationAddress,
+					skipMinAmountValidation: true,
+					routeConfig: createOmniBridgeRoute(targetChain),
+					feeEstimation: {
+						amount: 1n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.OmniBridge]: {
+								storageDepositFee: 0n,
+								relayerFee: 1n,
+							},
+						},
+					},
+				});
+
+				await expect(result).rejects.toThrow(
+					DestinationAddressMatchesTokenAddressError,
+				);
+			},
+		);
+
 		it("Skips all min amount checks when skipMinAmountValidation is true", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
@@ -1510,7 +1772,7 @@ describe("OmniBridge", () => {
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
 					assetId: "nep141:lsd-usdt.rhealab.near",
-					destinationAddress: zeroAddress,
+					destinationAddress: "0x0000000000000000000000000000000000000001",
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
 				},
@@ -1524,8 +1786,14 @@ describe("OmniBridge", () => {
 		});
 	});
 
-	describe("Prefunded token flow", () => {
-		const prefundedAssetId = "nep141:eth.bridge.near";
+	describe("prefundedNativeFeeTokens", () => {
+		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
+		const prefundedAssetId =
+			"nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedTokenId =
+			"bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
+		const prefundedOriginChainOmniAddress =
+			"eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
 
 		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
@@ -1550,7 +1818,7 @@ describe("OmniBridge", () => {
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("eth.bridge.near", [0n, 0n]);
+			bridge["storageDepositCache"].set(prefundedTokenId, [0n, 0n]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
@@ -1598,7 +1866,7 @@ describe("OmniBridge", () => {
 			const storageBalanceToPay = minStoragedDeposit - currentStorageBalance;
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("eth.bridge.near", [
+			bridge["storageDepositCache"].set(prefundedTokenId, [
 				minStoragedDeposit,
 				currentStorageBalance,
 			]);
@@ -1636,7 +1904,7 @@ describe("OmniBridge", () => {
 				"getAccountOmniStorageBalance",
 			).mockResolvedValue({ total: highBalance, available: highBalance });
 			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				"eth:0x0000000000000000000000000000000000000000",
+				prefundedOriginChainOmniAddress,
 			);
 			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
 				decimals: 6,
@@ -1656,7 +1924,7 @@ describe("OmniBridge", () => {
 				bridge.validateWithdrawal({
 					assetId: prefundedAssetId,
 					amount: 1_000_000n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeEstimation: {
 						// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
 						amount: 0n,
@@ -1674,3 +1942,31 @@ describe("OmniBridge", () => {
 		});
 	});
 });
+
+/*
+ * Use it for easy mocking of `solverRelay.getQuote()`
+ */
+async function useMockedSolverRelay() {
+	// Mock at runtime
+	vi.doMock("@defuse-protocol/internal-utils", async (importOriginal) => {
+		const actual =
+			await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+		return {
+			...actual,
+			solverRelay: {
+				...actual.solverRelay,
+				getQuote: vi.fn(),
+			},
+		};
+	});
+
+	// Import the mocked module
+	const { solverRelay } = await import("@defuse-protocol/internal-utils");
+
+	return {
+		getQuote: vi.mocked(solverRelay.getQuote),
+		[Symbol.dispose]() {
+			vi.doUnmock("@defuse-protocol/internal-utils");
+		},
+	};
+}

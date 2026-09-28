@@ -74,14 +74,15 @@ describe("toPoaNetwork", () => {
 		[Chains.Arbitrum, "eth:42161"],
 		[Chains.Bitcoin, "btc:mainnet"],
 		[Chains.BitcoinCash, "bch:mainnet"],
-		[Chains.Solana, "sol:mainnet"],
 		[Chains.Dogecoin, "doge:mainnet"],
 		[Chains.XRPL, "xrp:mainnet"],
-		[Chains.Zcash, "zec:mainnet"],
 		[Chains.Gnosis, "eth:100"],
 		[Chains.Tron, "tron:mainnet"],
 		[Chains.Movement, "movement:mainnet"],
 		[Chains.Plasma, "eth:9745"],
+		[Chains.Adi, "eth:36900"],
+		[Chains.Hood, "eth:4663"],
+		[Chains.Arc, "eth:5042"],
 	])("maps %s to %s", (caip2, expected) => {
 		expect(toPoaNetwork(caip2)).toBe(expected);
 	});
@@ -102,21 +103,20 @@ describe("contractIdToCaip2", () => {
 		],
 		["base.omft.near", Chains.Base],
 		["arb.omft.near", Chains.Arbitrum],
+		["hood.omft.near", Chains.Hood],
+		["arc.omft.near", Chains.Arc],
 		["btc.omft.near", Chains.Bitcoin],
 		["bch.omft.near", Chains.BitcoinCash],
-		["sol.omft.near", Chains.Solana],
 		["doge.omft.near", Chains.Dogecoin],
 		["xrp.omft.near", Chains.XRPL],
-		["zec.omft.near", Chains.Zcash],
 		["gnosis.omft.near", Chains.Gnosis],
 		["plasma.omft.near", Chains.Plasma],
 		["tron.omft.near", Chains.Tron],
 		["sui.omft.near", Chains.Sui],
-		["aptos.omft.near", Chains.Aptos],
 		["movement.omft.near", Chains.Movement],
 		["cardano.omft.near", Chains.Cardano],
 		["ltc.omft.near", Chains.Litecoin],
-		["starknet.omft.near", Chains.Starknet],
+		["adi-0x9cb8142aebbcdc60af7c97af897a67a8f3ca71c2.omft.near", Chains.Adi],
 	])("maps %s to %s", (contractId, expected) => {
 		expect(contractIdToCaip2(contractId)).toBe(expected);
 	});

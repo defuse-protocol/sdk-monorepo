@@ -34,6 +34,10 @@ export const PoaBridgeNetworkReference = {
 	ALEO: "aleo:mainnet",
 	DASH: "dash:mainnet",
 	PLASMA: "eth:9745",
+	ADI: "eth:36900",
+	HOOD: "eth:4663",
+	QTC: "quantus:mainnet",
+	ARC: "eth:5042",
 } as const;
 
 export const VirtualNetworkReference = {
@@ -52,8 +56,6 @@ export const BlockchainEnum = {
 	...VirtualNetworkReference,
 	/* Hyperliquid is only available as a withdrawal destination */
 	HYPERLIQUID: "hyperliquid:999",
-	/* ADI is operated by HOT bridge */
-	ADI: "eth:36900",
 	/* PLASMA is operated by HOT bridge */
 	PLASMA: "eth:9745",
 	/* SCROLL is operated by HOT bridge */

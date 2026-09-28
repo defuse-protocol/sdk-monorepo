@@ -1,5 +1,42 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.13.0
+
+### Minor Changes
+
+- 68cc672: Add support for Arc chain (arc-prefixed tokens, chain id 5042)
+
+## 1.12.0
+
+### Minor Changes
+
+- 35f3663: Quantus PoA Support
+
+## 1.11.0
+
+### Minor Changes
+
+- 341898a: Rename robinhood to hood to match deployed token prefix
+
+## 1.10.0
+
+### Minor Changes
+
+- 15a22e9: Add support for Robinhood chain via PoA bridge
+
+## 1.9.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
+## 1.8.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
 ## 1.7.0
 
 ### Minor Changes

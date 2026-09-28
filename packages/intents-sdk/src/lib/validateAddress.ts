@@ -1,6 +1,6 @@
+import { blake2b } from "@noble/hashes/blake2";
 import { sha256 } from "@noble/hashes/sha2";
 import { base58, bech32m, hex, bech32 } from "@scure/base";
-import { PublicKey } from "@solana/web3.js";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
 	isValidXAddress as xrp_isValidXAddress,
@@ -15,6 +15,7 @@ import {
 	TON_WORKCHAIN_MASTERCHAIN,
 	tryParseTonAddress,
 } from "./ton-address";
+import { validateZcashUnifiedAddress } from "./zcash-unified-address";
 
 /**
  * Validates that an address matches the expected format for a given blockchain.
@@ -90,11 +91,16 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 		case Chains.Scroll:
 		case Chains.Abstract:
 		case Chains.HyperCore:
+		case Chains.HyperEvm:
+		case Chains.Hood:
+		case Chains.Arc:
 			return validateEthAddress(address);
 		case Chains.Aleo:
 			return validateAleoAddress(address);
 		case Chains.Dash:
 			return validateDashAddress(address);
+		case Chains.Qtc:
+			return validateQuantusAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -102,6 +108,12 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 }
 
 function validateEthAddress(address: string) {
+	if (
+		address === "0x0000000000000000000000000000000000000000" ||
+		address.toLowerCase() === "0x000000000000000000000000000000000000dead"
+	) {
+		return false;
+	}
 	return isAddress(address, { strict: true });
 }
 
@@ -304,7 +316,16 @@ function verifyBchChecksum(address: string): boolean {
 
 function validateSolAddress(address: string) {
 	try {
-		return PublicKey.isOnCurve(address);
+		if (address === "11111111111111111111111111111111") {
+			return false;
+		}
+		const decoded = base58.decode(address);
+		// Solana addresses are raw 32-byte ed25519 public keys, no checksum bytes included
+		if (decoded.length !== 32) {
+			return false;
+		}
+
+		return true;
 	} catch {
 		return false;
 	}
@@ -323,12 +344,12 @@ function validateXrpAddress(address: string) {
  * Supports:
  * - Transparent addresses (t1, t3)
  * - TEX addresses (tex1)
+ * - Unified Orchard / Unified Addresses (UA)
  */
 function validateZcashAddress(address: string) {
 	// Transparent address validation
 	if (address.startsWith("t1") || address.startsWith("t3")) {
-		// t1 for P2PKH addresses, t3 for P2SH addresses
-		return /^t[13][a-km-zA-HJ-NP-Z1-9]{33}$/.test(address);
+		return validateZcashTransparentAddress(address);
 	}
 
 	// TEX address validation
@@ -346,17 +367,47 @@ function validateZcashAddress(address: string) {
 	}
 
 	// Unified address validation
-	const uaHrp = "u";
-	if (address.startsWith(`${uaHrp}1`)) {
-		try {
-			const decoded = bech32m.decodeToBytes(address);
-			return decoded.prefix === uaHrp;
-		} catch {
-			return false;
-		}
+	if (address.startsWith("u1")) {
+		return validateZcashUnifiedAddress(address);
 	}
 
 	return false;
+}
+
+/**
+ * Validates Zcash transparent addresses (mainnet only).
+ *
+ * Mirrors zcash_address::ZcashAddress::from_str's Base58Check branch
+ * (components/zcash_address/src/encoding.rs in zcash/librustzcash):
+ * decode Base58Check, then match the 2-byte version prefix against the
+ * mainnet P2PKH/P2SH prefixes from zcash_protocol::constants::mainnet.
+ *
+ *   B58_PUBKEY_ADDRESS_PREFIX = [0x1c, 0xb8]  (t1...)
+ *   B58_SCRIPT_ADDRESS_PREFIX = [0x1c, 0xbd]  (t3...)
+ */
+function validateZcashTransparentAddress(address: string): boolean {
+	try {
+		const decoded = base58.decode(address);
+
+		// version (2) + hash160 (20) + checksum (4) = 26 bytes
+		if (decoded.length !== 26) return false;
+
+		const version = decoded.subarray(0, 2);
+		const isP2pkh = version[0] === 0x1c && version[1] === 0xb8;
+		const isP2sh = version[0] === 0x1c && version[1] === 0xbd;
+		if (!isP2pkh && !isP2sh) return false;
+
+		const payload = decoded.subarray(0, 22);
+		const checksum = decoded.subarray(22, 26);
+		const expectedChecksum = sha256(sha256(payload)).subarray(0, 4);
+
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -814,6 +865,60 @@ export function validateDashAddress(address: string): boolean {
 		}
 
 		return true;
+	} catch {
+		return false;
+	}
+}
+
+/** Substrate SS58 checksum domain separator: the ASCII bytes of "SS58PRE". */
+const SS58_CHECKSUM_PREFIX = new Uint8Array([
+	0x53, 0x53, 0x35, 0x38, 0x50, 0x52, 0x45,
+]);
+
+/**
+ * Network prefix 189 in its 2-byte SS58 encoding:
+ *   b0 = ((prefix & 0x00fc) >> 2) | 0x40
+ *   b1 = (prefix >> 8) | ((prefix & 0x0003) << 6)
+ */
+const QUANTUS_SS58_PREFIX_BYTES = [0x6f, 0x40] as const;
+
+/**
+ * Validates Quantus addresses (SS58, mainnet only).
+ *
+ * Quantus is a Polkadot SDK chain, so addresses are standard SS58-encoded
+ * 32-byte account ids (Poseidon2 hash of an ML-DSA public key) with network
+ * prefix 189 — the `qz...` form.
+ *
+ * Mirrors `Ss58Codec::from_ss58check_with_version` in
+ * substrate/primitives/core/src/crypto.rs (paritytech/polkadot-sdk):
+ * base58-decode, read the 1- or 2-byte network prefix, then verify the
+ * 2-byte blake2b-512("SS58PRE" || prefix || account id) checksum.
+ *
+ * Prefix 189 is >= 64, so it uses the 2-byte encoding: [0x6f, 0x40].
+ */
+export function validateQuantusAddress(address: string): boolean {
+	try {
+		const decoded = base58.decode(address);
+
+		// prefix (2) + account id (32) + checksum (2) = 36 bytes
+		if (decoded.length !== 36) return false;
+
+		if (decoded[0] !== QUANTUS_SS58_PREFIX_BYTES[0]) return false;
+		if (decoded[1] !== QUANTUS_SS58_PREFIX_BYTES[1]) return false;
+
+		const payload = decoded.subarray(0, 34);
+		const checksum = decoded.subarray(34, 36);
+
+		const preimage = new Uint8Array(
+			SS58_CHECKSUM_PREFIX.length + payload.length,
+		);
+		preimage.set(SS58_CHECKSUM_PREFIX);
+		preimage.set(payload, SS58_CHECKSUM_PREFIX.length);
+		const expectedChecksum = blake2b(preimage, { dkLen: 64 });
+
+		return (
+			checksum[0] === expectedChecksum[0] && checksum[1] === expectedChecksum[1]
+		);
 	} catch {
 		return false;
 	}

@@ -1,21 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentsPrimitive,
 	getBridgedToken,
 	getAccountOmniStorageBalance,
 	getTokenDecimals,
-	isUtxoChain,
 	validateOmniToken,
 } from "./omni-bridge-utils";
+import {
+	caip2ToChainKind,
+	deriveOmniWithdrawIntentParams,
+	isUtxoChain,
+} from "./omni-withdraw-params";
 import {
 	assert,
 	nearFailoverRpcProvider,
 	PUBLIC_NEAR_RPC_URLS,
 } from "@defuse-protocol/internal-utils";
-import { ChainKind, omniAddress } from "@omni-bridge/core";
+import { ChainKind, HYPERLIQUID_MESSAGE, omniAddress } from "@omni-bridge/core";
 import { Chains } from "../../lib/caip2";
+import { RouteEnum } from "../../constants/route-enum";
+import type { FeeEstimation } from "../../shared-types";
 import { OMNI_BRIDGE_CONTRACT } from "./omni-bridge-constants";
 
 describe("validateOmniToken()", () => {
@@ -195,8 +200,19 @@ describe("caip2ToChainKind()", () => {
 		expect(caip2ToChainKind(Chains.Bitcoin)).toBe(ChainKind.Btc);
 	});
 
+	it("maps Zcash correctly", () => {
+		expect(caip2ToChainKind(Chains.Zcash)).toBe(ChainKind.Zcash);
+	});
+
 	it("returns null for unsupported chain", () => {
 		expect(caip2ToChainKind(Chains.TON)).toBeNull();
+	});
+
+	it("maps both HyperEvm and HyperCore to HlEvm", () => {
+		// A HyperCore withdrawal is an HlEvm transfer that the destination contract
+		// redirects to the Core spot balance, so both land on the same ChainKind.
+		expect(caip2ToChainKind(Chains.HyperEvm)).toBe(ChainKind.HlEvm);
+		expect(caip2ToChainKind(Chains.HyperCore)).toBe(ChainKind.HlEvm);
 	});
 });
 
@@ -209,6 +225,14 @@ describe("chainKindToCaip2()", () => {
 		expect(chainKindToCaip2(ChainKind.Sol)).toBe(Chains.Solana);
 	});
 
+	it("maps HlEvm back to HyperEvm, not HyperCore", () => {
+		// CHAIN_MAPPINGS holds two entries for HlEvm and this direction takes the
+		// first one. HyperCore is only ever a destination the caller asks for
+		// explicitly; a token bridged from HlEvm belongs to HyperEvm. Reordering the
+		// table would silently flip every HlEvm asset to HyperCore.
+		expect(chainKindToCaip2(ChainKind.HlEvm)).toBe(Chains.HyperEvm);
+	});
+
 	it("returns null for unsupported ChainKind", () => {
 		expect(chainKindToCaip2(ChainKind.Near)).toBeNull();
 	});
@@ -217,6 +241,10 @@ describe("chainKindToCaip2()", () => {
 describe("isUtxoChain()", () => {
 	it("returns true for Bitcoin", () => {
 		expect(isUtxoChain(ChainKind.Btc)).toBe(true);
+	});
+
+	it("returns true for Zcash", () => {
+		expect(isUtxoChain(ChainKind.Zcash)).toBe(true);
 	});
 
 	it("returns false for Ethereum", () => {
@@ -228,18 +256,40 @@ describe("isUtxoChain()", () => {
 	});
 });
 
+/** The fees of an Omni withdrawal, as `estimateWithdrawalFee` returns them. */
+function fees(
+	overrides: Partial<{
+		storageDepositFee: bigint;
+		relayerFee: bigint;
+		utxoProtocolFee: bigint;
+		utxoMaxGasFee: bigint;
+	}> = {},
+): FeeEstimation {
+	return {
+		amount: 0n,
+		quote: null,
+		underlyingFees: {
+			[RouteEnum.OmniBridge]: {
+				storageDepositFee: 0n,
+				relayerFee: 0n,
+				...overrides,
+			},
+		},
+	};
+}
+
 describe("createWithdrawIntentsPrimitive()", () => {
 	it("creates intent for EVM chain without native fee", () => {
-		const result = createWithdrawIntentsPrimitive({
-			assetId: "nep141:eth.bridge.near",
-			destinationAddress: "0x1234567890123456789012345678901234567890",
-			amount: 1000n,
-			nativeFee: 0n,
-			storageDepositAmount: 0n,
-			omniChainKind: ChainKind.Eth,
-			intentsContract: "intents.near",
-			utxoMaxGasFee: null,
-		});
+		const result = createWithdrawIntentsPrimitive(
+			deriveOmniWithdrawIntentParams({
+				assetId: "nep141:eth.bridge.near",
+				destinationAddress: "0x1234567890123456789012345678901234567890",
+				actualAmount: 1000n,
+				omniChainKind: ChainKind.Eth,
+				intentsContract: "intents.near",
+				feeEstimation: fees(),
+			}),
+		);
 
 		expect(result).toHaveLength(1);
 		expect(result[0]).toMatchObject({
@@ -251,16 +301,16 @@ describe("createWithdrawIntentsPrimitive()", () => {
 	});
 
 	it("includes storage_deposit intent when nativeFee > 0", () => {
-		const result = createWithdrawIntentsPrimitive({
-			assetId: "nep141:eth.bridge.near",
-			destinationAddress: "0x1234567890123456789012345678901234567890",
-			amount: 1000n,
-			nativeFee: 500n,
-			storageDepositAmount: 0n,
-			omniChainKind: ChainKind.Eth,
-			intentsContract: "intents.near",
-			utxoMaxGasFee: null,
-		});
+		const result = createWithdrawIntentsPrimitive(
+			deriveOmniWithdrawIntentParams({
+				assetId: "nep141:eth.bridge.near",
+				destinationAddress: "0x1234567890123456789012345678901234567890",
+				actualAmount: 1000n,
+				omniChainKind: ChainKind.Eth,
+				intentsContract: "intents.near",
+				feeEstimation: fees({ relayerFee: 500n }),
+			}),
+		);
 
 		expect(result).toHaveLength(2);
 		expect(result[0]).toMatchObject({
@@ -274,16 +324,16 @@ describe("createWithdrawIntentsPrimitive()", () => {
 	});
 
 	it("includes maxGasFee for Bitcoin withdrawals", () => {
-		const result = createWithdrawIntentsPrimitive({
-			assetId: "nep141:btc.bridge.near",
-			destinationAddress: "bc1qtest",
-			amount: 1000n,
-			nativeFee: 0n,
-			storageDepositAmount: 0n,
-			omniChainKind: ChainKind.Btc,
-			intentsContract: "intents.near",
-			utxoMaxGasFee: 100n,
-		});
+		const result = createWithdrawIntentsPrimitive(
+			deriveOmniWithdrawIntentParams({
+				assetId: "nep141:btc.bridge.near",
+				destinationAddress: "bc1qtest",
+				actualAmount: 1000n,
+				omniChainKind: ChainKind.Btc,
+				intentsContract: "intents.near",
+				feeEstimation: fees({ utxoMaxGasFee: 100n, utxoProtocolFee: 50n }),
+			}),
+		);
 
 		expect(result).toHaveLength(1);
 
@@ -301,31 +351,179 @@ describe("createWithdrawIntentsPrimitive()", () => {
 
 	it("throws for Bitcoin without utxoMaxGasFee", () => {
 		expect(() =>
-			createWithdrawIntentsPrimitive({
-				assetId: "nep141:btc.bridge.near",
-				destinationAddress: "bc1qtest",
-				amount: 1000n,
-				nativeFee: 0n,
-				storageDepositAmount: 0n,
-				omniChainKind: ChainKind.Btc,
-				intentsContract: "intents.near",
-				utxoMaxGasFee: null,
-			}),
-		).toThrow("Invalid utxo max gas fee");
+			createWithdrawIntentsPrimitive(
+				deriveOmniWithdrawIntentParams({
+					assetId: "nep141:btc.bridge.near",
+					destinationAddress: "bc1qtest",
+					actualAmount: 1000n,
+					omniChainKind: ChainKind.Btc,
+					intentsContract: "intents.near",
+					feeEstimation: fees(),
+				}),
+			),
+		).toThrow("Invalid Omni Bridge utxo max gas fee");
 	});
 
 	it("throws for non NEP-141 assets", () => {
 		expect(() =>
-			createWithdrawIntentsPrimitive({
-				assetId: "nep245:token.near:1",
-				destinationAddress: "0x1234567890123456789012345678901234567890",
-				amount: 1000n,
-				nativeFee: 0n,
-				storageDepositAmount: 0n,
-				omniChainKind: ChainKind.Eth,
-				intentsContract: "intents.near",
-				utxoMaxGasFee: null,
-			}),
+			createWithdrawIntentsPrimitive(
+				deriveOmniWithdrawIntentParams({
+					assetId: "nep245:token.near:1",
+					destinationAddress: "0x1234567890123456789012345678901234567890",
+					actualAmount: 1000n,
+					omniChainKind: ChainKind.Eth,
+					intentsContract: "intents.near",
+					feeEstimation: fees(),
+				}),
+			),
 		).toThrow("Only NEP-141 is supported");
+	});
+});
+
+describe("deriveOmniWithdrawIntentParams()", () => {
+	const withdrawal = {
+		assetId: "nep141:btc.bridge.near",
+		destinationAddress: "bc1qtest",
+		actualAmount: 1000n,
+		omniChainKind: ChainKind.Btc,
+		intentsContract: "intents.near",
+		feeEstimation: fees({
+			relayerFee: 500n,
+			utxoMaxGasFee: 100n,
+			utxoProtocolFee: 50n,
+		}),
+	};
+
+	it("gives the values that the SDK writes into its own intents", () => {
+		const params = deriveOmniWithdrawIntentParams({
+			...withdrawal,
+			externalId: "fixed-external-id",
+		});
+
+		const intents = createWithdrawIntentsPrimitive(
+			deriveOmniWithdrawIntentParams({
+				...withdrawal,
+				externalId: "fixed-external-id",
+			}),
+		);
+
+		const [storageDeposit, ftWithdraw] = intents;
+		assert(
+			storageDeposit != null && storageDeposit.intent === "storage_deposit",
+		);
+		assert(ftWithdraw != null && ftWithdraw.intent === "ft_withdraw");
+		assert(typeof ftWithdraw.msg === "string");
+
+		expect(storageDeposit.deposit_for_account_id).toBe(
+			params.storageDepositAccountId,
+		);
+		expect(JSON.parse(ftWithdraw.msg)).toMatchObject({
+			external_id: params.externalId,
+			recipient: params.recipient,
+			msg: params.msg,
+		});
+		expect(ftWithdraw.token).toBe(params.tokenAccountId);
+	});
+
+	it("uses the external id that you give, so you can calculate two times", () => {
+		const first = deriveOmniWithdrawIntentParams({
+			...withdrawal,
+			externalId: "fixed-external-id",
+		});
+		const second = deriveOmniWithdrawIntentParams({
+			...withdrawal,
+			externalId: "fixed-external-id",
+		});
+
+		expect(first).toEqual(second);
+		expect(first.externalId).toBe("fixed-external-id");
+	});
+
+	it("makes a new external id for each withdrawal if you give none", () => {
+		const randomUUID = vi
+			.spyOn(crypto, "randomUUID")
+			.mockReturnValueOnce("00000000-0000-4000-8000-000000000001")
+			.mockReturnValueOnce("00000000-0000-4000-8000-000000000002");
+
+		try {
+			expect(deriveOmniWithdrawIntentParams(withdrawal).externalId).toBe(
+				"00000000-0000-4000-8000-000000000001",
+			);
+			expect(deriveOmniWithdrawIntentParams(withdrawal).externalId).toBe(
+				"00000000-0000-4000-8000-000000000002",
+			);
+		} finally {
+			randomUUID.mockRestore();
+		}
+	});
+
+	it("gives no storage account if there is no native fee", () => {
+		const params = deriveOmniWithdrawIntentParams({
+			...withdrawal,
+			feeEstimation: fees({ utxoMaxGasFee: 100n, utxoProtocolFee: 50n }),
+		});
+
+		expect(params.storageDepositAccountId).toBeNull();
+		expect(params.recipient).toBe(
+			omniAddress(ChainKind.Btc, withdrawal.destinationAddress),
+		);
+		expect(params.msg).toBe('{"MaxGasFee":"100"}');
+	});
+
+	describe("HyperCore", () => {
+		const evmWithdrawal = {
+			assetId: "nep141:wrap.near",
+			destinationAddress: "0x1234567890123456789012345678901234567890",
+			actualAmount: 1000n,
+			omniChainKind: ChainKind.HlEvm,
+			intentsContract: "intents.near",
+			feeEstimation: fees(),
+		};
+
+		it("tags the transfer so Omni credits the HyperCore spot balance", () => {
+			const params = deriveOmniWithdrawIntentParams({
+				...evmWithdrawal,
+				caip2Identifier: Chains.HyperCore,
+			});
+
+			expect(params.msg).toBe(HYPERLIQUID_MESSAGE);
+
+			// A non-empty msg is what flips `finTransfer` to the 3-arg mint, so it has to
+			// survive into the ft_withdraw payload.
+			const intents = createWithdrawIntentsPrimitive(params);
+			const ftWithdraw = intents.find((i) => i.intent === "ft_withdraw");
+			assert(ftWithdraw != null && ftWithdraw.intent === "ft_withdraw");
+			assert(typeof ftWithdraw.msg === "string");
+			expect(JSON.parse(ftWithdraw.msg).msg).toBe(HYPERLIQUID_MESSAGE);
+		});
+
+		it("leaves the message empty for HyperEvm so the tokens stay on HyperEvm", () => {
+			const params = deriveOmniWithdrawIntentParams({
+				...evmWithdrawal,
+				caip2Identifier: Chains.HyperEvm,
+			});
+
+			expect(params.msg).toBe("");
+		});
+
+		it.each([
+			["Ethereum", Chains.Ethereum, ChainKind.Eth],
+			["Solana", Chains.Solana, ChainKind.Sol],
+		])(
+			"does not tag unrelated destination %s",
+			(_name, caip2Identifier, omniChainKind) => {
+				const params = deriveOmniWithdrawIntentParams({
+					...evmWithdrawal,
+					omniChainKind,
+					caip2Identifier,
+				});
+
+				expect(params.msg).toBe("");
+			},
+		);
+
+		it("leaves the message empty when no caip2Identifier is given", () => {
+			expect(deriveOmniWithdrawIntentParams(evmWithdrawal).msg).toBe("");
+		});
 	});
 });

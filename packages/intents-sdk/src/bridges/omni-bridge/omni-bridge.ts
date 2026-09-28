@@ -20,6 +20,7 @@ import {
 	omniAddress,
 	parseOriginChain,
 	verifyTransferAmount,
+	getAddress,
 } from "@omni-bridge/core";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
@@ -41,6 +42,7 @@ import type {
 import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	TokenNotFoundInDestinationChainError,
+	TokenNotLinkedToHyperCoreError,
 	InvalidFeeValueError,
 	IntentsNearOmniAvailableBalanceTooLowError,
 	OmniWithdrawalApiFeeRequestTimeoutError,
@@ -49,30 +51,38 @@ import {
 import {
 	FEE_SUBSIDIZED_TOKENS,
 	INTENTS_STORAGE_BALANCE_CACHE_KEY,
+	MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
 	MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR,
 	NEAR_NATIVE_ASSET_ID,
 	OMNI_BRIDGE_CONTRACT,
+	SOL_OMNI_CONTRACT_ID,
+	HYPERCORE_WITHDRAWAL_DECIMALS,
 } from "./omni-bridge-constants";
 import {
-	caip2ToChainKind,
 	chainKindToCaip2,
 	createWithdrawIntentsPrimitive,
 	getBridgedToken,
 	getAccountOmniStorageBalance,
 	validateOmniToken,
 	getTokenDecimals,
-	isUtxoChain,
 	poaContractIdToChainKind,
 } from "./omni-bridge-utils";
+import {
+	caip2ToChainKind,
+	deriveOmniWithdrawIntentParams,
+	isUtxoChain,
+} from "./omni-withdraw-params";
 import { LRUCache } from "lru-cache";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import { validateAddress } from "../../lib/validateAddress";
-import { POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE } from "../../constants/poa-tokens-routable-through-omni-bridge";
+import { POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE } from "../../constants/poa-tokens-migrated-to-omni-bridge";
+import { compareAddresses } from "../../lib/compareAddresses";
 
 type MinStorageBalance = bigint;
 type StorageDepositBalance = bigint;
@@ -89,7 +99,6 @@ export class OmniBridge implements Bridge {
 		max: 1,
 		ttl: 3000,
 	});
-	protected routeMigratedPoaTokensThroughOmniBridge: boolean;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -106,19 +115,15 @@ export class OmniBridge implements Bridge {
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
-		routeMigratedPoaTokensThroughOmniBridge,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
-		routeMigratedPoaTokensThroughOmniBridge?: boolean;
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new BridgeAPI("mainnet");
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.routeMigratedPoaTokensThroughOmniBridge =
-			routeMigratedPoaTokensThroughOmniBridge ?? false;
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -151,8 +156,9 @@ export class OmniBridge implements Bridge {
 			);
 		}
 		if (nonValidStandard) return false;
-		const poaTokenRoutedThroughOmniBridge =
-			this.isPoaTokenRoutedThroughOmniBridge(parsed.contractId);
+		const poaTokenRoutedThroughOmniBridge = this.isPoaTokenMigratedToOmniBridge(
+			parsed.contractId,
+		);
 		const nonValidToken =
 			!poaTokenRoutedThroughOmniBridge &&
 			validateOmniToken(parsed.contractId) === false;
@@ -230,9 +236,7 @@ export class OmniBridge implements Bridge {
 	parseAssetId(assetId: string): ParsedAssetInfo | null {
 		const parsed = parseDefuseAssetId(assetId);
 		if (parsed.standard !== "nep141") return null;
-		const omniChainKind = this.isPoaTokenRoutedThroughOmniBridge(
-			parsed.contractId,
-		)
+		const omniChainKind = this.isPoaTokenMigratedToOmniBridge(parsed.contractId)
 			? poaContractIdToChainKind(parsed.contractId)
 			: parseOriginChain(parsed.contractId);
 		if (omniChainKind === null) return null;
@@ -254,7 +258,7 @@ export class OmniBridge implements Bridge {
 			omniChainKind = caip2ToChainKind(routeConfig.chain);
 			blockchain = routeConfig.chain;
 		} else {
-			omniChainKind = this.isPoaTokenRoutedThroughOmniBridge(parsed.contractId)
+			omniChainKind = this.isPoaTokenMigratedToOmniBridge(parsed.contractId)
 				? poaContractIdToChainKind(parsed.contractId)
 				: parseOriginChain(parsed.contractId);
 			if (omniChainKind === null) return null;
@@ -302,79 +306,18 @@ export class OmniBridge implements Bridge {
 				referral: args.referral,
 			});
 		}
-		const relayerFee = getUnderlyingFee(
-			args.feeEstimation,
-			RouteEnum.OmniBridge,
-			"relayerFee",
-		);
-		assert(
-			relayerFee >= 0n,
-			`Invalid Omni bridge relayer fee: expected >= 0, got ${relayerFee}`,
-		);
-
-		let amount = args.withdrawalParams.amount;
-		let utxoMaxGasFee = null;
-		/**
-		 * UTXO withdrawals add protocol + max gas fees to the intent amount since they're paid
-		 * from the withdrawn asset, not wrap.near.
-		 *
-		 * Example with nep141:nbtc.bridge.near (made-up values):
-		 * utxoFees = 50 + 50 = 100, relayerFee = 2 (excluded; paid in wrap.near)
-		 *
-		 * feeInclusive=false:
-		 *   - amount = 4000 → intent = 4000 + 100 = 4100 → user receives 4000
-		 *
-		 * feeInclusive=true:
-		 *   - amount = 3898 (4000 − 102) → intent = 3898 + 100 = 3998 → user receives 3898
-		 **/
-		if (isUtxoChain(omniChainKind)) {
-			utxoMaxGasFee = getUnderlyingFee(
-				args.feeEstimation,
-				RouteEnum.OmniBridge,
-				"utxoMaxGasFee",
-			);
-			const utxoProtocolFee = getUnderlyingFee(
-				args.feeEstimation,
-				RouteEnum.OmniBridge,
-				"utxoProtocolFee",
-			);
-			assert(
-				utxoMaxGasFee !== undefined && utxoMaxGasFee > 0n,
-				`Invalid Omni Bridge utxo max gas fee: expected > 0, got ${utxoMaxGasFee}`,
-			);
-			assert(
-				utxoProtocolFee !== undefined && utxoProtocolFee > 0n,
-				`Invalid Omni Bridge utxo protocol fee: expected > 0, got ${utxoProtocolFee}`,
-			);
-
-			amount += utxoMaxGasFee + utxoProtocolFee;
-		}
-
-		let destinationAddress = args.withdrawalParams.destinationAddress;
-		// Omni contract only accepts lowercase bech32 addresses; uppercase/mixed-case
-		// bech32 is spec-valid but rejected on-chain. Base58 (legacy/P2SH) is left as-is.
-		if (
-			assetInfo.blockchain === Chains.Bitcoin &&
-			/^bc1/i.test(destinationAddress)
-		) {
-			destinationAddress = destinationAddress.toLowerCase();
-		}
-
 		intents.push(
-			...createWithdrawIntentsPrimitive({
-				assetId: args.withdrawalParams.assetId,
-				destinationAddress,
-				amount,
-				omniChainKind,
-				intentsContract: this.envConfig.contractID,
-				nativeFee: relayerFee,
-				storageDepositAmount: getUnderlyingFee(
-					args.feeEstimation,
-					RouteEnum.OmniBridge,
-					"storageDepositFee",
-				),
-				utxoMaxGasFee,
-			}),
+			...createWithdrawIntentsPrimitive(
+				deriveOmniWithdrawIntentParams({
+					assetId: args.withdrawalParams.assetId,
+					destinationAddress: args.withdrawalParams.destinationAddress,
+					actualAmount: args.withdrawalParams.amount,
+					omniChainKind,
+					intentsContract: this.envConfig.contractID,
+					feeEstimation: args.feeEstimation,
+					caip2Identifier: assetInfo.blockchain,
+				}),
+			),
 		);
 
 		return Promise.resolve(intents);
@@ -411,21 +354,51 @@ export class OmniBridge implements Bridge {
 			`Chain ${assetInfo.blockchain} is not supported by Omni Bridge`,
 		);
 
-		const destTokenAddress = await this.getCachedDestinationTokenAddress(
+		const destTokenOmniAddress = await this.getCachedDestinationTokenAddress(
 			assetInfo.contractId,
 			omniChainKind,
 		);
-		if (destTokenAddress === null) {
+		if (destTokenOmniAddress === null) {
 			throw new TokenNotFoundInDestinationChainError(
 				args.assetId,
 				assetInfo.blockchain,
 			);
 		}
 
-		const decimals = await this.getCachedTokenDecimals(destTokenAddress);
+		const destTokenAddress = getAddress(destTokenOmniAddress);
+		if (
+			compareAddresses(
+				destTokenAddress,
+				args.destinationAddress,
+				assetInfo.blockchain,
+			)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				destTokenAddress,
+				args.assetId,
+			);
+		}
+
+		let decimals = null;
+
+		if (assetInfo.blockchain === Chains.HyperCore) {
+			const hyperCoreDecimals = HYPERCORE_WITHDRAWAL_DECIMALS[args.assetId];
+
+			if (!hyperCoreDecimals) {
+				throw new TokenNotLinkedToHyperCoreError(
+					args.assetId,
+					destTokenAddress,
+				);
+			}
+
+			decimals = hyperCoreDecimals;
+		} else {
+			decimals = await this.getCachedTokenDecimals(destTokenOmniAddress);
+		}
+
 		assert(
 			decimals !== null,
-			`Failed to retrieve token decimals for address ${destTokenAddress} via OmniBridge contract. 
+			`Failed to retrieve token decimals for address ${destTokenOmniAddress} via OmniBridge contract. 
   Ensure the token is supported and the address is correct.`,
 		);
 
@@ -544,6 +517,17 @@ export class OmniBridge implements Bridge {
 					);
 				}
 			}
+		} else if (
+			!args.skipMinAmountValidation &&
+			omniChainKind === ChainKind.Sol &&
+			assetInfo.contractId === SOL_OMNI_CONTRACT_ID &&
+			args.amount < MIN_AMOUNT_SOL_OMNI_WITHDRAWAL
+		) {
+			throw new MinWithdrawalAmountError(
+				MIN_AMOUNT_SOL_OMNI_WITHDRAWAL,
+				args.amount,
+				args.assetId,
+			);
 		}
 
 		return;
@@ -708,31 +692,35 @@ export class OmniBridge implements Bridge {
 			})
 		)[args.index];
 
-		if (transfer == null || transfer.transfer_message == null) {
+		if (transfer == null || transfer.recipient == null) {
 			return { status: "pending" };
 		}
 
-		const destinationChain = getChain(
-			transfer.transfer_message.recipient as OmniAddress,
-		);
+		const destinationChain = getChain(transfer.recipient as OmniAddress);
 		let txHash = null;
 		if (isEvmChain(destinationChain)) {
-			txHash = transfer.finalised?.EVMLog?.transaction_hash;
+			if (args.landingChain === Chains.HyperCore) {
+				txHash = transfer?.related_txs?.find(
+					(tx) => tx.kind === "hyper_core_fin",
+				)?.transaction_hash;
+			} else {
+				txHash = transfer.finalised?.transaction_hash;
+			}
 		} else if (
 			destinationChain === ChainKind.Sol ||
-			destinationChain === ChainKind.Fogo
+			destinationChain === ChainKind.Fogo ||
+			destinationChain === ChainKind.Strk ||
+			destinationChain === ChainKind.Aptos
 		) {
-			txHash = transfer.finalised?.Solana?.signature;
-		} else if (destinationChain === ChainKind.Btc) {
-			// btc_pending_id is not the finalised tx hash. In rare cases, the hash may change
-			// if the BTC transfer fails to be submitted. We return fast hash for FE and wait
-			// for final one (transfer.finalised?.UtxoLog?.transaction_hash) for BE.
+			txHash = transfer.finalised?.transaction_hash;
+		} else if (isUtxoChain(destinationChain)) {
+			// pending_sign_id is not the finalised tx hash. In rare cases, the hash may
+			// change if the BTC transfer fails to be submitted. We return fast hash for FE and
+			// wait for final one (transfer.finalised?.transaction_hash) for BE.
 			txHash =
 				typeof window !== "undefined"
-					? transfer.utxo_transfer?.btc_pending_id
-					: transfer.finalised?.UtxoLog?.transaction_hash;
-		} else if (destinationChain === ChainKind.Strk) {
-			txHash = transfer.finalised?.Starknet?.transaction_hash;
+					? transfer.utxo_meta?.pending_sign_id
+					: transfer.finalised?.transaction_hash;
 		} else {
 			return { status: "completed", txHash: null };
 		}
@@ -852,12 +840,9 @@ export class OmniBridge implements Bridge {
 	}
 
 	/**
-	 * Checks if passed token contract id is an allowlisted PoA token that should be routed via OmniBridge.
-	 * Always return false when feature flag routeMigratedPoaTokensThroughOmniBridge = false.
+	 * Checks if passed token contract id is a Omni migrated PoA token.
 	 */
-	private isPoaTokenRoutedThroughOmniBridge(nearAddress: string): boolean {
-		return this.routeMigratedPoaTokensThroughOmniBridge
-			? POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE[nearAddress] !== undefined
-			: false;
+	private isPoaTokenMigratedToOmniBridge(nearAddress: string): boolean {
+		return POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE[nearAddress] !== undefined;
 	}
 }

@@ -50,7 +50,7 @@ It is designed to:
 |---------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------|
 | `1cs_v1`      | ✅         | Format prefix and version. 1cs stands for [1ClickSwap](https://docs.near-intents.org/near-intents/integration/distribution-channels/1click-api). |
 | `<chain>`     | ✅         | Lowercase slug (e.g. `eth`, `eth-sepolia`, `solana`, `near`, `polygon`), can encode testnet in slug.                                             |
-| `<namespace>` | ✅         | Asset standard/kind: `erc20`, `erc721`, `spl`, `near-nft`, `aptos-coin`, `fiat`, etc.                                                            |
+| `<namespace>` | ✅         | Asset standard/kind: `erc20`, `erc721`, `spl`, `near-nft`, `aptos-coin`, `aptos-fa`, `fiat`, etc.                                                 |
 | `<reference>` | ✅         | Contract/mint/account/denom/issuer — **URI-encoded** to safely hold `:`, `/`, spaces, unicode, etc.                                              |
 | `<selector>`  | optional  | Sub-asset selector: token ID, module struct, Stellar code, etc. — also **URI-encoded**.                                                          |
 
@@ -85,7 +85,13 @@ It is designed to:
 ```
 1cs_v1:solana:spl:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 1cs_v1:aptos:aptos-coin:0x1%3A%3Aaptos_coin%3A%3AAptosCoin
+1cs_v1:aptos:aptos-fa:0x0b0b819dcf8d9517ed14195a95adfae6a49bfdb49de33a532ca0aa7ee588e8e0
 ```
+
+Aptos has two fungible-token standards, so `reference` takes a different shape for each:
+
+- `aptos-coin` — legacy `Coin<T>` standard. `reference` is the fully-qualified Move struct type (`address::module::Struct`).
+- `aptos-fa` — Fungible Asset standard ([AIP-21](https://github.com/aptos-foundation/AIPs/blob/main/aips/aip-021-fungible-assets.md)). `reference` is the plain object address holding the `0x1::fungible_asset::Metadata` resource.
 
 ---
 

@@ -9,6 +9,7 @@ import { utils } from "@hot-labs/omni-sdk";
 import { LRUCache } from "lru-cache";
 import * as v from "valibot";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
@@ -45,6 +46,7 @@ import {
 import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { getFeeQuote } from "../../lib/estimate-fee";
 import { validateAddress } from "../../lib/validateAddress";
+import { compareAddresses } from "../../lib/compareAddresses";
 import isHex from "../../lib/hex";
 import { bridgeIndexer } from "@defuse-protocol/internal-utils";
 
@@ -272,10 +274,16 @@ export class HotBridge implements Bridge {
 				assetInfo.blockchain,
 			);
 		}
+		const nativeAsset = "native" in assetInfo;
+		const token = nativeAsset ? "native" : assetInfo.address;
+		if (
+			!nativeAsset &&
+			compareAddresses(token, args.destinationAddress, assetInfo.blockchain)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(token, args.assetId);
+		}
 
 		if (assetInfo.blockchain === Chains.Stellar) {
-			const token = "native" in assetInfo ? "native" : assetInfo.address;
-
 			const hasTrustline = await this.hotSdk.stellar.isTrustlineExists(
 				args.destinationAddress,
 				token,

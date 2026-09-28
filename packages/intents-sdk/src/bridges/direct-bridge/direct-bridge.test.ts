@@ -1,6 +1,7 @@
 import { configsByEnvironment } from "@defuse-protocol/internal-utils";
 import { describe, expect, it, vi } from "vitest";
 import {
+	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
@@ -143,6 +144,26 @@ describe("DirectBridge", () => {
 						destinationAddress,
 					}),
 				).rejects.toThrow(DestinationExplicitNearAccountDoesntExistError);
+			},
+		);
+
+		it.each(["wrap.near", "amogus.near"])(
+			"blocks withdrawals of token to it's address",
+			async (token) => {
+				const bridge = new DirectBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider: nearFailoverRpcProvider({
+						urls: PUBLIC_NEAR_RPC_URLS,
+					}),
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						assetId: `nep141:${token}`,
+						amount: 1n,
+						destinationAddress: token,
+					}),
+				).rejects.toThrow(DestinationAddressMatchesTokenAddressError);
 			},
 		);
 	});

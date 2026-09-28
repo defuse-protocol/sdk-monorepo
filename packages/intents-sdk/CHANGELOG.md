@@ -1,5 +1,147 @@
 # @defuse-protocol/intents-sdk
 
+## 0.88.0
+
+### Minor Changes
+
+- f354fb5: HyperCore withdrawals support via Omni Bridge
+
+## 0.87.0
+
+### Minor Changes
+
+- 68cc672: Add support for Arc chain (arc-prefixed tokens, chain id 5042)
+
+### Patch Changes
+
+- Updated dependencies [68cc672]
+  - @defuse-protocol/internal-utils@0.41.0
+
+## 0.86.0
+
+### Minor Changes
+
+- 35f3663: Quantus PoA Support
+
+### Patch Changes
+
+- Updated dependencies [35f3663]
+  - @defuse-protocol/internal-utils@0.40.0
+
+## 0.85.1
+
+### Patch Changes
+
+- 073495f: Improve zcash transparent address validation
+
+## 0.85.0
+
+### Minor Changes
+
+- 341898a: Rename robinhood to hood to match deployed token prefix
+
+### Patch Changes
+
+- Updated dependencies [341898a]
+  - @defuse-protocol/internal-utils@0.39.0
+
+## 0.84.0
+
+### Minor Changes
+
+- 15a22e9: Add support for Robinhood chain via PoA bridge
+
+### Patch Changes
+
+- Updated dependencies [15a22e9]
+  - @defuse-protocol/internal-utils@0.38.0
+
+## 0.83.0
+
+### Minor Changes
+
+- f7702ac: Adds Zcash withdrawal support for Omni Bridge and removes from PoA bridge.
+
+## 0.82.0
+
+### Minor Changes
+
+- 2a310c8: Add the entry point `@defuse-protocol/intents-sdk/omni-bridge` with
+  `deriveOmniWithdrawIntentParams`, which computes the values of an Omni withdrawal without
+  building the intents, plus `caip2ToChainKind` and `isUtxoChain` to build its chain argument.
+
+## 0.81.0
+
+### Minor Changes
+
+- 2073fd5: Add ADI support to PoA Bridge while retaining native ADI support through HOT Bridge.
+
+### Patch Changes
+
+- Updated dependencies [2073fd5]
+  - @defuse-protocol/internal-utils@0.37.0
+
+## 0.80.0
+
+### Minor Changes
+
+- de15302: Remove Solana from PoA bridge
+  Remove Aptos from PoA bridge
+  Remove Starknet from PoA bridge
+  Remove feature `routeMigratedPoaTokensThroughOmniBridge` and force-route all Omni migrated PoA tokens
+  to Omni
+  Rename `POA_TOKENS_ROUTABLE_THROUGH_OMNI_BRIDGE` to `POA_TOKENS_MIGRATED_TO_OMNI_BRIDGE`
+
+## 0.79.0
+
+### Minor Changes
+
+- 92fef08: Block sending funds to EVM burner addresses and SVM system program address
+- eb4dde0: Min amount validation for SOL withdrawals to Solana
+- 8975fe8: Block withdrawals to token addresses
+
+### Patch Changes
+
+- Updated dependencies [8975fe8]
+  - @defuse-protocol/internal-utils@0.36.0
+
+## 0.78.1
+
+### Patch Changes
+
+- dbc0e19: Fix hyper evm related utilities function via update of omni bridge packages
+
+## 0.78.0
+
+### Minor Changes
+
+- a206ff2: Support withdrawals to HyperEvm via Omni Bridge
+
+## 0.77.0
+
+### Minor Changes
+
+- db3c90e: Allow all types of solana addresses and remove `@solana/web3.js`
+
+## 0.76.0
+
+### Minor Changes
+
+- ac747c9: Support Omni withdrawals to Aptos
+  Document `aptos-fa` namespace for Aptos Fungible Asset (AIP-21) tokens, alongside the existing `aptos-coin` legacy Coin<T> namespace
+
+## 0.75.0
+
+### Minor Changes
+
+- f70c142: Add external_id (crypto.randomUUID()) field to avoid identical Omni bridge withdrawals being stuck
+
+## 0.74.1
+
+### Patch Changes
+
+- da83616: Update omni sdk dependecy so new api version is used in describe withdrawal method in omni bridge
+
 ## 0.74.0
 
 ### Minor Changes

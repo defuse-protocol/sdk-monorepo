@@ -44,6 +44,12 @@
 		},
 		{
 			"version": "v1",
+			"chain": "aptos",
+			"namespace": "aptos-fa",
+			"reference": "0x0b0b819dcf8d9517ed14195a95adfae6a49bfdb49de33a532ca0aa7ee588e8e0"
+		},
+		{
+			"version": "v1",
 			"chain": "fiat",
 			"namespace": "iso4217",
 			"reference": "EUR"

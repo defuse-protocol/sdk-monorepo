@@ -23,10 +23,13 @@ import { ChainKind, omniAddress, BridgeAPI } from "@omni-bridge/core";
 import { calculateStorageAccountId } from "@omni-bridge/near";
 import type { FeeEstimation } from "./shared-types";
 import { RouteEnum } from "./constants/route-enum";
+import * as omniBridgeUtils from "./bridges/omni-bridge/omni-bridge-utils";
 
 const intentSigner = createIntentSignerViem({
 	signer: privateKeyToAccount(generatePrivateKey()),
 });
+
+const EVM_TEST_ADDRESS = "0x0000000000000000000000000000000000000001";
 
 describe.concurrent("poa_bridge", () => {
 	it("estimateWithdrawalFee(): returns fee", async () => {
@@ -211,7 +214,7 @@ describe.concurrent("hot_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 					amount: 1n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeInclusive: false,
 				},
 			});
@@ -293,7 +296,7 @@ describe.concurrent("hot_bridge", () => {
 				withdrawalParams: {
 					assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 					amount: 0n,
-					destinationAddress: zeroAddress,
+					destinationAddress: EVM_TEST_ADDRESS,
 					feeInclusive: false,
 				},
 			});
@@ -338,7 +341,7 @@ describe.concurrent("hot_bridge", () => {
 			withdrawalParams: {
 				assetId: "nep245:v2_1.omni.hot.tg:137_qiStmoQJDQPTebaPjgx5VBxZv6L",
 				amount: 1n,
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				feeInclusive: false,
 			},
 			feeEstimation,
@@ -359,7 +362,7 @@ describe.concurrent("hot_bridge", () => {
 				intent: "mt_withdraw",
 				min_gas: "91300000000000",
 				msg: expect.stringMatching(
-					/{"receiver_id":"11111111111111111111","amount_native":"6600000024640000","block_number":\d+}/,
+					/{"receiver_id":"11111111111111111112","amount_native":"6600000024640000","block_number":\d+}/,
 				),
 				receiver_id: "bridge-refuel.hot.tg",
 				token: "v2_1.omni.hot.tg",
@@ -987,7 +990,7 @@ describe("virtual_chain", () => {
 				assetId:
 					"nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
 				amount: 0n,
-				destinationAddress: zeroAddress,
+				destinationAddress: EVM_TEST_ADDRESS,
 				feeInclusive: false,
 				routeConfig: createVirtualChainRoute("aurora", null),
 			},
@@ -1005,10 +1008,13 @@ describe("virtual_chain", () => {
 	});
 });
 
+const OMNI_WITHDRAWAL_EXTERNAL_ID = "12345678-1234-4123-8123-123456789012";
+
 describe("omni_bridge", () => {
 	beforeEach(() => {
 		vi.resetModules();
 		vi.restoreAllMocks();
+		vi.spyOn(crypto, "randomUUID").mockReturnValue(OMNI_WITHDRAWAL_EXTERNAL_ID);
 	});
 
 	it("estimateWithdrawalFee(): should return fee", async () => {
@@ -1116,6 +1122,52 @@ describe("omni_bridge", () => {
 	);
 
 	it(
+		"estimateWithdrawalFee(): should return correct fee data for zcash with zero relayer fee and without quote",
+		{ timeout: 20_000 },
+		async () => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			const utxoMaxGasFee = 22_000n;
+			const utxoProtocolFee = 10_000n;
+			const minAmount = "100000";
+
+			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue("zcash:");
+
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 0n,
+				transferred_token_fee: "0",
+				gas_fee: utxoMaxGasFee,
+				protocol_fee: utxoProtocolFee,
+				min_amount: minAmount,
+				usd_fee: 0.23,
+				insufficient_utxo: false,
+			});
+
+			const fee = sdk.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:zec.omft.near",
+					amount: 101_000n,
+					destinationAddress: "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn",
+					feeInclusive: false,
+				},
+			});
+
+			await expect(fee).resolves.toEqual({
+				amount: utxoMaxGasFee + utxoProtocolFee,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.OmniBridge]: {
+						relayerFee: 0n,
+						storageDepositFee: 0n,
+						utxoMaxGasFee,
+						utxoProtocolFee,
+					},
+				},
+			});
+		},
+	);
+
+	it(
 		"estimateWithdrawalFee(): allows 0n amount for fee estimation when feeInclusive is false",
 		{ timeout: 20_000 },
 		async () => {
@@ -1152,7 +1204,7 @@ describe("omni_bridge", () => {
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
-			destinationAddress: zeroAddress,
+			destinationAddress: "0x0000000000000000000000000000000000000001",
 			feeInclusive: false,
 		};
 
@@ -1174,19 +1226,25 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		const recipient = omniAddress(ChainKind.Eth, zeroAddress);
+		const recipient = omniAddress(
+			ChainKind.Eth,
+			"0x0000000000000000000000000000000000000001",
+		);
 		const actualAmount = withdrawalParams.amount;
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:eth.bridge.near",
-			amount: actualAmount,
-			recipient,
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:eth.bridge.near",
+				amount: actualAmount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: "",
 			},
-			sender: "near:intents.near",
-			msg: "",
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,
@@ -1221,6 +1279,7 @@ describe("omni_bridge", () => {
 					recipient,
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 				}),
 			},
 		]);
@@ -1232,7 +1291,7 @@ describe("omni_bridge", () => {
 		const withdrawalParams = {
 			assetId: "nep141:eth.bridge.near",
 			amount: 1000000000000000000n,
-			destinationAddress: zeroAddress,
+			destinationAddress: "0x0000000000000000000000000000000000000001",
 			feeInclusive: true,
 		};
 
@@ -1254,19 +1313,25 @@ describe("omni_bridge", () => {
 			},
 		};
 
-		const recipient = omniAddress(ChainKind.Eth, zeroAddress);
+		const recipient = omniAddress(
+			ChainKind.Eth,
+			"0x0000000000000000000000000000000000000001",
+		);
 		const actualAmount = withdrawalParams.amount - feeEstimation.amount;
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:eth.bridge.near",
-			amount: actualAmount,
-			recipient,
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:eth.bridge.near",
+				amount: actualAmount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: "",
 			},
-			sender: "near:intents.near",
-			msg: "",
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		const intents = sdk.createWithdrawalIntents({
 			withdrawalParams,
@@ -1301,6 +1366,7 @@ describe("omni_bridge", () => {
 					recipient,
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 				}),
 			},
 		]);
@@ -1361,6 +1427,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, destinationAddress),
 					fee: "0",
 					native_token_fee: "0",
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: JSON.stringify({
 						MaxGasFee: utxoMaxGasFee.toString(),
 					}),
@@ -1369,14 +1436,11 @@ describe("omni_bridge", () => {
 		]);
 	});
 
-	it("createWithdrawalIntents(): create withdrawal intents with an allowlisted PoA token with routeMigratedPoaTokensThroughOmniBridge = true", async () => {
+	it("createWithdrawalIntents(): create withdrawal intents with an Omni migrated PoA token", async () => {
 		const referral = "";
 		const sdk = new IntentsSDK({
 			referral,
 			intentSigner,
-			features: {
-				routeMigratedPoaTokensThroughOmniBridge: true,
-			},
 		});
 
 		const relayerFee = 1500n;
@@ -1424,17 +1488,20 @@ describe("omni_bridge", () => {
 
 		const actualAmount = withdrawalParams.amount;
 		const recipient = omniAddress(ChainKind.Sol, destinationAddress);
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
-			amount: actualAmount,
-			recipient,
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:sol-c58e6539c2f2e097c251f8edf11f9c03e581f8d4.omft.near",
+				amount: actualAmount,
+				recipient,
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: "",
 			},
-			sender: "near:intents.near",
-			msg: "",
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		await expect(intents).resolves.toEqual([
 			{
@@ -1464,6 +1531,7 @@ describe("omni_bridge", () => {
 					recipient,
 					fee: "0",
 					native_token_fee: relayerFee.toString(),
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 				}),
 			},
 		]);
@@ -1523,6 +1591,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, destinationAddress),
 					fee: "0",
 					native_token_fee: "0",
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: JSON.stringify({
 						MaxGasFee: utxoMaxGasFee.toString(),
 					}),
@@ -1646,6 +1715,96 @@ describe("omni_bridge", () => {
 		await expect(intents).rejects.toThrow(MinWithdrawalAmountError);
 	});
 
+	it("validateWithdrawal(): prevents zcash utxo transfer to be submitted due to amount lower than allowed by zcash connector", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const utxoMaxGasFee = 22_000n;
+		const utxoProtocolFee = 10_000n;
+		const minAmount = "100000";
+		const feeEstimation = {
+			amount: utxoMaxGasFee + utxoProtocolFee,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: minAmount,
+			usd_fee: 0.23,
+			insufficient_utxo: false,
+		});
+
+		vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue("zcash:");
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:zec.omft.near",
+				amount: 50_000n,
+				destinationAddress: "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn",
+				feeInclusive: false,
+			},
+			feeEstimation,
+		});
+
+		await expect(intents).rejects.toThrow(MinWithdrawalAmountError);
+	});
+
+	it("validateWithdrawal(): prevents zcash withdrawal if there is not enough available UTXOs in zcash connector", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const utxoMaxGasFee = 22_000n;
+		const utxoProtocolFee = 10_000n;
+		const minAmount = "100000";
+		const feeEstimation = {
+			amount: utxoMaxGasFee + utxoProtocolFee,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: minAmount,
+			usd_fee: 0.23,
+			insufficient_utxo: true, // flag that contains the check for available utxo amount
+		});
+
+		vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue("zcash:");
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams: {
+				assetId: "nep141:zec.omft.near",
+				amount: 101_000n,
+				destinationAddress: "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn",
+				feeInclusive: false,
+			},
+			feeEstimation,
+		});
+
+		await expect(intents).rejects.toThrow(
+			InsufficientUtxoForOmniBridgeWithdrawalError,
+		);
+	});
+
 	it("validateWithdrawal(): prevents btc withdrawal if there is not enough available UTXOs in btc connector", async () => {
 		const sdk = new IntentsSDK({ referral: "", intentSigner });
 
@@ -1741,17 +1900,20 @@ describe("omni_bridge", () => {
 		const utxoMsg = JSON.stringify({
 			MaxGasFee: utxoMaxGasFee.toString(),
 		});
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:nbtc.bridge.near",
-			amount: actualAmount,
-			recipient: omniAddress(ChainKind.Btc, recipient),
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:nbtc.bridge.near",
+				amount: actualAmount,
+				recipient: omniAddress(ChainKind.Btc, recipient),
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: utxoMsg,
 			},
-			sender: "near:intents.near",
-			msg: utxoMsg,
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		await expect(intents).resolves.toEqual([
 			{
@@ -1781,6 +1943,7 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, recipient),
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: utxoMsg,
 				}),
 			},
@@ -1841,17 +2004,20 @@ describe("omni_bridge", () => {
 		const utxoMsg = JSON.stringify({
 			MaxGasFee: utxoMaxGasFee.toString(),
 		});
-		const implicitAccount = calculateStorageAccountId({
-			token: "near:nbtc.bridge.near",
-			amount: actualAmount,
-			recipient: omniAddress(ChainKind.Btc, recipient),
-			fee: {
-				fee: 0n,
-				native_fee: BigInt(feeEstimation.quote.amount_out),
+		const implicitAccount = calculateStorageAccountId(
+			{
+				token: "near:nbtc.bridge.near",
+				amount: actualAmount,
+				recipient: omniAddress(ChainKind.Btc, recipient),
+				fee: {
+					fee: 0n,
+					native_fee: BigInt(feeEstimation.quote.amount_out),
+				},
+				sender: "near:intents.near",
+				msg: utxoMsg,
 			},
-			sender: "near:intents.near",
-			msg: utxoMsg,
-		});
+			OMNI_WITHDRAWAL_EXTERNAL_ID,
+		);
 
 		await expect(intents).resolves.toEqual([
 			{
@@ -1881,7 +2047,141 @@ describe("omni_bridge", () => {
 					recipient: omniAddress(ChainKind.Btc, recipient),
 					fee: "0",
 					native_token_fee: feeEstimation.quote.amount_out,
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
 					msg: utxoMsg,
+				}),
+			},
+		]);
+	});
+
+	it("createWithdrawalIntents(): create a zcash utxo withdrawal without token_diff and storage_deposit intents with fee inclusive = false", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const utxoMaxGasFee = 22_000n;
+		const utxoProtocolFee = 10_000n;
+		const minAmount = "100000";
+		const feeEstimation = {
+			amount: utxoMaxGasFee + utxoProtocolFee,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: minAmount,
+			usd_fee: 0.23,
+			insufficient_utxo: false,
+		});
+
+		vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue("zcash:");
+
+		const destinationAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";
+		const withdrawalParams = {
+			assetId: "nep141:zec.omft.near",
+			amount: 101_000n,
+			destinationAddress,
+			feeInclusive: false,
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		const actualAmount =
+			withdrawalParams.amount + utxoMaxGasFee + utxoProtocolFee;
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				min_gas: "37400000000000",
+				token: "zec.omft.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: actualAmount.toString(),
+				storage_deposit: undefined,
+				msg: JSON.stringify({
+					recipient: omniAddress(ChainKind.Zcash, destinationAddress),
+					fee: "0",
+					native_token_fee: "0",
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
+					msg: JSON.stringify({
+						MaxGasFee: utxoMaxGasFee.toString(),
+					}),
+				}),
+			},
+		]);
+	});
+
+	it("createWithdrawalIntents(): create a zcash utxo withdrawal without token_diff and storage_deposit intents with fee inclusive = true", async () => {
+		const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+		const utxoMaxGasFee = 22_000n;
+		const utxoProtocolFee = 10_000n;
+		const minAmount = "100000";
+		const feeEstimation = {
+			amount: utxoMaxGasFee + utxoProtocolFee,
+			quote: null,
+			underlyingFees: {
+				[RouteEnum.OmniBridge]: {
+					relayerFee: 0n,
+					storageDepositFee: 0n,
+					utxoMaxGasFee,
+					utxoProtocolFee,
+				},
+			},
+		};
+
+		vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+			native_token_fee: 0n,
+			transferred_token_fee: "0",
+			gas_fee: utxoMaxGasFee,
+			protocol_fee: utxoProtocolFee,
+			min_amount: minAmount,
+			usd_fee: 0.23,
+			insufficient_utxo: false,
+		});
+
+		vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue("zcash:");
+
+		const destinationAddress = "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn";
+		const withdrawalParams = {
+			assetId: "nep141:zec.omft.near",
+			amount: 101_000n,
+			destinationAddress,
+			feeInclusive: true,
+		};
+
+		const intents = sdk.createWithdrawalIntents({
+			withdrawalParams,
+			feeEstimation,
+		});
+
+		const actualAmount = withdrawalParams.amount;
+		await expect(intents).resolves.toEqual([
+			{
+				intent: "ft_withdraw",
+				min_gas: "37400000000000",
+				token: "zec.omft.near",
+				receiver_id: OMNI_BRIDGE_CONTRACT,
+				amount: actualAmount.toString(),
+				storage_deposit: undefined,
+				msg: JSON.stringify({
+					recipient: omniAddress(ChainKind.Zcash, destinationAddress),
+					fee: "0",
+					native_token_fee: "0",
+					external_id: OMNI_WITHDRAWAL_EXTERNAL_ID,
+					msg: JSON.stringify({
+						MaxGasFee: utxoMaxGasFee.toString(),
+					}),
 				}),
 			},
 		]);
@@ -1893,6 +2193,10 @@ describe("sdk.parseAssetId()", () => {
 		[
 			"nep141:btc.omft.near",
 			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Bitcoin },
+		],
+		[
+			"nep141:zec.omft.near",
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Zcash },
 		],
 		[
 			"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
@@ -1907,8 +2211,16 @@ describe("sdk.parseAssetId()", () => {
 			{ bridgeName: BridgeNameEnum.Hot, blockchain: Chains.TON },
 		],
 		[
-			"nep141:sol.omft.near",
-			{ bridgeName: BridgeNameEnum.Poa, blockchain: Chains.Solana },
+			"nep141:sol.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Solana },
+		],
+		[
+			"nep141:aptos.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Aptos },
+		],
+		[
+			"nep141:starknet.omft.near", // PoA token migrated to Omni
+			{ bridgeName: BridgeNameEnum.Omni, blockchain: Chains.Starknet },
 		],
 		[
 			"nep141:aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",

@@ -1,5 +1,41 @@
 # @defuse-protocol/internal-utils
 
+## 0.41.0
+
+### Minor Changes
+
+- 68cc672: Add support for Arc chain (arc-prefixed tokens, chain id 5042)
+
+## 0.40.0
+
+### Minor Changes
+
+- 35f3663: Quantus PoA Support
+
+## 0.39.0
+
+### Minor Changes
+
+- 341898a: Rename robinhood to hood to match deployed token prefix
+
+## 0.38.0
+
+### Minor Changes
+
+- 15a22e9: Add support for Robinhood chain via PoA bridge
+
+## 0.37.0
+
+### Minor Changes
+
+- 2073fd5: Add ADI support to PoA Bridge while retaining native ADI support through HOT Bridge.
+
+## 0.36.0
+
+### Minor Changes
+
+- 8975fe8: Block withdrawals to token addresses
+
 ## 0.35.2
 
 ### Patch Changes
