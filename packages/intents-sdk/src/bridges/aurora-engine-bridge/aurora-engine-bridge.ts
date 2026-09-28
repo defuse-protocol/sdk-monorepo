@@ -20,6 +20,7 @@ import { validateAddress } from "../../lib/validateAddress";
 import type {
 	Bridge,
 	FeeEstimation,
+	IntentsSDKFeatures,
 	NearTxInfo,
 	QuoteOptions,
 	RouteConfig,
@@ -38,19 +39,23 @@ export class AuroraEngineBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
+	protected features: IntentsSDKFeatures;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
+		features = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		features?: IntentsSDKFeatures;
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.features = features;
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -180,8 +185,11 @@ export class AuroraEngineBridge implements Bridge {
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
 
+		// No quote needed when the withdrawn asset is already the fee asset,
+		// or when `features.feesPrefunded` is enabled (fee is paid in the fee asset directly).
 		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId || args.quoteOptions?.skip
+			args.withdrawalParams.assetId === feeAssetId ||
+			this.features.feesPrefunded
 				? null
 				: await getFeeQuote({
 						feeAmount,

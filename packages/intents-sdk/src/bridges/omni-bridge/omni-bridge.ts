@@ -29,6 +29,7 @@ import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
+	IntentsSDKFeatures,
 	NearTxInfo,
 	OmniBridgeRouteConfig,
 	ParsedAssetInfo,
@@ -92,6 +93,7 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
+	protected features: IntentsSDKFeatures;
 	protected intentsStorageBalanceCache = new TTLCache<
 		typeof INTENTS_STORAGE_BALANCE_CACHE_KEY,
 		bigint
@@ -115,15 +117,18 @@ export class OmniBridge implements Bridge {
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
+		features = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		features?: IntentsSDKFeatures;
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new BridgeAPI("mainnet");
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.features = features;
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -611,9 +616,10 @@ export class OmniBridge implements Bridge {
 
 		let amount = 0n;
 		let quote = null;
-		// Skip quoting when native fee = 0 and no storage deposit is needed
-		// or when the account already holds the asset needed to cover withdrawal fees
-		if (totalAmountToQuote > 0n && !args.quoteOptions?.skip) {
+		// Skip quoting when native fee = 0 and no storage deposit is needed,
+		// or when `features.feesPrefunded` is enabled (the account already holds
+		// NEAR to cover withdrawal fees, so nothing has to be swapped).
+		if (totalAmountToQuote > 0n && !this.features.feesPrefunded) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
 				feeAssetId: NEAR_NATIVE_ASSET_ID,

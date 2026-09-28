@@ -896,7 +896,7 @@ describe("HotBridge", () => {
 			});
 		});
 
-		it("quoteOptions.skip = true: skips the fee quote but keeps the relayer fee", async () => {
+		it("features.feesPrefunded = true: skips the fee quote but keeps the relayer fee", async () => {
 			const getGaslessWithdrawFee = vi
 				.fn()
 				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
@@ -908,13 +908,14 @@ describe("HotBridge", () => {
 			const bridge = new HotBridge({
 				envConfig: configsByEnvironment.production,
 				hotSdk,
+				features: { feesPrefunded: true },
 			});
 
 			const getFeeQuoteSpy = vi
 				.spyOn(estimateFee, "getFeeQuote")
 				.mockRejectedValue(
 					new Error(
-						"getFeeQuote must not be called when quoteOptions.skip is true",
+						"getFeeQuote must not be called when features.feesPrefunded is true",
 					),
 				);
 
@@ -923,7 +924,6 @@ describe("HotBridge", () => {
 					assetId: TON_USDT_ASSET_ID,
 					destinationAddress: TON_DESTINATION_ADDRESS,
 				},
-				quoteOptions: { skip: true },
 			});
 
 			expect(getFeeQuoteSpy).not.toHaveBeenCalled();

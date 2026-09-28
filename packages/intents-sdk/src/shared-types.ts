@@ -225,11 +225,25 @@ export interface QuoteOptions {
 	minWaitMs?: number;
 	maxWaitMs?: number;
 	trustedMetadata?: unknown;
+}
+
+/**
+ * Opt-in SDK features, set once when instantiating `IntentsSDK` via `features`.
+ * Every flag is disabled by default, so omitting `features` keeps the standard behaviour.
+ */
+export interface IntentsSDKFeatures {
 	/**
-	 * Skips quoting/swapping the withdrawal asset into the fee asset entirely.
-	 * Useful when the account already holds the asset needed to cover withdrawal fees.
+	 * Withdrawal fees are prefunded: the account already holds the fee asset
+	 * (e.g. NEAR for storage deposits and relayer fees), so the SDK skips quoting/swapping
+	 * the withdrawal asset into the fee asset during fee estimation.
+	 *
+	 * The fee amount is still estimated, but `FeeEstimation.quote` is always `null`,
+	 * so the fee is paid in the fee asset directly.
+	 * Also useful when quoting through the solver relay is not possible.
+	 *
+	 * @default false
 	 */
-	skip?: boolean;
+	feesPrefunded?: boolean;
 }
 
 export interface NearTxInfo {

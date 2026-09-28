@@ -22,6 +22,7 @@ import { type Chain, Chains } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
+	IntentsSDKFeatures,
 	NearTxInfo,
 	ParsedAssetInfo,
 	QuoteOptions,
@@ -73,6 +74,7 @@ export class HotBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
+	protected features: IntentsSDKFeatures;
 
 	// Nonces are immutable for a given tx, use LRU with fetchMethod for readthrough
 	private noncesCache: LRUCache<`${string}:${string}`, bigint[], NearTxInfo>;
@@ -81,10 +83,17 @@ export class HotBridge implements Bridge {
 		envConfig,
 		hotSdk,
 		solverRelayApiKey,
-	}: { envConfig: EnvConfig; hotSdk: HotSdk; solverRelayApiKey?: string }) {
+		features = {},
+	}: {
+		envConfig: EnvConfig;
+		hotSdk: HotSdk;
+		solverRelayApiKey?: string;
+		features?: IntentsSDKFeatures;
+	}) {
 		this.envConfig = envConfig;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.features = features;
 		this.noncesCache = new LRUCache<
 			`${string}:${string}`,
 			bigint[],
@@ -332,10 +341,12 @@ export class HotBridge implements Bridge {
 			},
 		);
 
+		// No quote needed when the withdrawn asset is already the fee asset, there is no fee,
+		// or when `features.feesPrefunded` is enabled (fee is paid in the fee asset directly).
 		const feeQuote =
 			args.withdrawalParams.assetId === feeAssetId ||
 			feeAmount === 0n ||
-			args.quoteOptions?.skip
+			this.features.feesPrefunded
 				? null
 				: await getFeeQuote({
 						feeAmount,

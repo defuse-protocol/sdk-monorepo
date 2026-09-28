@@ -146,7 +146,7 @@ describe("AuroraEngineBridge", () => {
 	});
 
 	describe("estimateWithdrawalFee()", () => {
-		it("quoteOptions.skip = true: skips the fee quote but keeps the storage deposit fee", async () => {
+		it("features.feesPrefunded = true: skips the fee quote but keeps the storage deposit fee", async () => {
 			const minStorageBalance = 1250000000000000000000n;
 			const userStorageBalance = 0n;
 			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
@@ -160,12 +160,13 @@ describe("AuroraEngineBridge", () => {
 				.spyOn(estimateFee, "getFeeQuote")
 				.mockRejectedValue(
 					new Error(
-						"getFeeQuote must not be called when quoteOptions.skip is true",
+						"getFeeQuote must not be called when features.feesPrefunded is true",
 					),
 				);
 
 			const bridge = new AuroraEngineBridge({
 				envConfig: configsByEnvironment.production,
+				features: { feesPrefunded: true },
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
 				nearProvider: {} as any,
 			});
@@ -175,7 +176,6 @@ describe("AuroraEngineBridge", () => {
 					assetId: "nep141:usdt.tether-token.near",
 					routeConfig: createVirtualChainRoute("aurora", null),
 				},
-				quoteOptions: { skip: true },
 			});
 
 			expect(getFeeQuoteSpy).not.toHaveBeenCalled();

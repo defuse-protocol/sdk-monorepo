@@ -14,6 +14,7 @@ import { Chains } from "../../lib/caip2";
 import type {
 	Bridge,
 	FeeEstimation,
+	IntentsSDKFeatures,
 	NearTxInfo,
 	ParsedAssetInfo,
 	QuoteOptions,
@@ -48,6 +49,7 @@ export class DirectBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
+	protected features: IntentsSDKFeatures;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -60,14 +62,17 @@ export class DirectBridge implements Bridge {
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
+		features = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		features?: IntentsSDKFeatures;
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.features = features;
 	}
 
 	private is(routeConfig: RouteConfig) {
@@ -243,8 +248,11 @@ export class DirectBridge implements Bridge {
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
 
+		// No quote needed when the withdrawn asset is already the fee asset,
+		// or when `features.feesPrefunded` is enabled (fee is paid in the fee asset directly).
 		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId || args.quoteOptions?.skip
+			args.withdrawalParams.assetId === feeAssetId ||
+			this.features.feesPrefunded
 				? null
 				: await getFeeQuote({
 						feeAmount,

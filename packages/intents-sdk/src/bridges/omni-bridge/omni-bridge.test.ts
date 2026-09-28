@@ -1814,6 +1814,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
+				features: { feesPrefunded: true },
 			});
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
@@ -1826,9 +1827,6 @@ describe("OmniBridge", () => {
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
-				},
-				quoteOptions: {
-					skip: true,
 				},
 			});
 
@@ -1859,6 +1857,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
+				features: { feesPrefunded: true },
 			});
 
 			const minStoragedDeposit = 1n;
@@ -1877,9 +1876,6 @@ describe("OmniBridge", () => {
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
-				},
-				quoteOptions: {
-					skip: true,
 				},
 			});
 

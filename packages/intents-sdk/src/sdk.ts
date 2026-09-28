@@ -55,6 +55,7 @@ import type {
 	CreateWithdrawalCompletionPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
+	IntentsSDKFeatures,
 	IntentPublishResult,
 	IntentSettlementStatus,
 	NearTxInfo,
@@ -111,6 +112,20 @@ export interface IntentsSDKConfig {
 	referral: string;
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
+	/**
+	 * Opt-in features applied to all bridges created by this SDK instance.
+	 *
+	 * @example
+	 * ```typescript
+	 * // The account already holds NEAR, so withdrawal fees are paid in NEAR
+	 * // directly instead of being quoted and swapped from the withdrawn asset.
+	 * new IntentsSDK({
+	 *   referral: "...",
+	 *   features: { feesPrefunded: true },
+	 * });
+	 * ```
+	 */
+	features?: IntentsSDKFeatures;
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -122,12 +137,14 @@ export class IntentsSDK implements IIntentsSDK {
 	protected solverRelayApiKey: string | undefined;
 	protected hotBridgeApiKey: string | undefined;
 	protected saltManager: ISaltManager;
+	protected features: IntentsSDKFeatures;
 
 	constructor(args: IntentsSDKConfig) {
 		this.envConfig = resolveEnvConfig(args.env);
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
 		this.hotBridgeApiKey = args.hotBridgeApiKey;
+		this.features = args.features ?? {};
 
 		const nearRpcEndpoints: RpcEndpoint[] =
 			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
@@ -159,6 +176,7 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
+				features: this.features,
 			}),
 			new PoaBridge({
 				envConfig: this.envConfig,
@@ -167,6 +185,7 @@ export class IntentsSDK implements IIntentsSDK {
 			new HotBridge({
 				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
+				features: this.features,
 				hotSdk: new hotLabsOmniSdk_HotBridge({
 					apiKey: this.hotBridgeApiKey,
 					logger: console,
@@ -185,11 +204,13 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
+				features: this.features,
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
+				features: this.features,
 			}),
 		];
 

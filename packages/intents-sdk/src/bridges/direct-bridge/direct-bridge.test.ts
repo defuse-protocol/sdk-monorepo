@@ -5,7 +5,6 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
-import { RouteEnum } from "../../constants/route-enum";
 import * as estimateFee from "../../lib/estimate-fee";
 import {
 	createNearWithdrawalRoute,
@@ -183,9 +182,10 @@ describe("DirectBridge", () => {
 	});
 
 	describe("estimateWithdrawalFee()", () => {
-		it("quoteOptions.skip = true: skips the fee quote but keeps the storage deposit fee", async () => {
+		it("features.feesPrefunded = true: skips the fee quote but keeps the storage deposit fee", async () => {
 			const bridge = new DirectBridge({
 				envConfig: configsByEnvironment.production,
+				features: { feesPrefunded: true },
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, storage deposit cache is seeded below
 				nearProvider: {} as any,
 			});
@@ -194,7 +194,7 @@ describe("DirectBridge", () => {
 				.spyOn(estimateFee, "getFeeQuote")
 				.mockRejectedValue(
 					new Error(
-						"getFeeQuote must not be called when quoteOptions.skip is true",
+						"getFeeQuote must not be called when features.feesPrefunded is true",
 					),
 				);
 
@@ -202,7 +202,7 @@ describe("DirectBridge", () => {
 			const userStorageBalance = 0n;
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("usdt.tether-token.nearalice.near", [
+			bridge["storageDepositCache"].set("usdt.tether-token.near:alice.near", [
 				minStorageBalance,
 				userStorageBalance,
 			]);
@@ -213,7 +213,6 @@ describe("DirectBridge", () => {
 					destinationAddress: "alice.near",
 					routeConfig: createNearWithdrawalRoute(),
 				},
-				quoteOptions: { skip: true },
 			});
 
 			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
