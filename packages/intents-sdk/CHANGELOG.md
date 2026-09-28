@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.88.1
+
+### Patch Changes
+
+- e00418b: Delimit DirectBridge storage-deposit cache key so distinct (contract, account) pairs can't collide.
+
 ## 0.88.0
 
 ### Minor Changes
