@@ -340,18 +340,9 @@ export class HotBridge implements Bridge {
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 			},
 		);
-		if (feeAmount === 0n) {
-			return {
-				amount: feeAmount,
-				quote: null,
-				underlyingFees: {
-					[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
-				},
-			};
-		}
 
-		// No quote needed when the withdrawn asset is already the fee asset
-		if (args.withdrawalParams.assetId === feeAssetId) {
+		// No quote needed when the withdrawn asset is already the fee asset or when it is 0
+		if (feeAmount === 0n || args.withdrawalParams.assetId === feeAssetId) {
 			return {
 				amount: feeAmount,
 				quote: null,

@@ -344,6 +344,7 @@ export class OmniBridge implements Bridge {
 				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
 			);
 		}
+
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
 
 		assert(
