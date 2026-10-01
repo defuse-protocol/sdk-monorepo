@@ -223,10 +223,6 @@ export interface QuoteOptions {
 	trustedMetadata?: unknown;
 }
 
-/**
- * Opt-in SDK features, set once when instantiating `IntentsSDK` via `features`.
- * Every flag is disabled by default, so omitting `features` keeps the standard behaviour.
- */
 export interface IntentsSDKFeatures {
 	/**
 	 * Withdrawal fees are prefunded: the account already holds the fee asset
