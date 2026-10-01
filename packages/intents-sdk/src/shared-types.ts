@@ -226,13 +226,10 @@ export interface QuoteOptions {
 export interface IntentsSDKFeatures {
 	/**
 	 * Withdrawal fees are prefunded: the account already holds the fee asset
-	 * (e.g. NEAR for storage deposits and relayer fees), so the SDK skips quoting/swapping
-	 * the withdrawal asset into the fee asset during fee estimation.
-	 *
-	 * The fee amount is still estimated, but `FeeEstimation.quote` is always `null`,
-	 * so the fee is paid in the fee asset directly.
-	 * Also useful when quoting through the solver relay is not possible.
-	 *
+	 * (e.g. NEAR, or the destination chain's native token for HOT Bridge), so the SDK
+	 * skips quoting the withdrawal asset into the fee asset during fee estimation.
+	 * In that case, `feeEstimation.amount` is `0n` and `feeEstimation.quote` is `null`;
+	 * use `feeEstimation.underlyingFees` to see the fees and what must be prefunded.
 	 * @default false
 	 */
 	feesPrefunded?: boolean;
