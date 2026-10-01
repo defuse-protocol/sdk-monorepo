@@ -186,23 +186,42 @@ export class AuroraEngineBridge implements Bridge {
 		const feeAmount = minStorageBalance - userStorageBalance;
 
 		// No quote needed when the withdrawn asset is already the fee asset,
-		// or when `features.feesPrefunded` is enabled (fee is paid in the fee asset directly).
-		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId ||
-			this.features.feesPrefunded
-				? null
-				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+		if (args.withdrawalParams.assetId === feeAssetId) {
+			return {
+				amount: feeAmount,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: feeAmount,
+					},
+				},
+			};
+		}
+
+		// When `features.feesPrefunded` is enabled quote is no needed, we assume account already holds fee asset.
+		if (this.features.feesPrefunded) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: feeAmount,
+					},
+				},
+			};
+		}
+		const feeQuote = await getFeeQuote({
+			feeAmount,
+			feeAssetId,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			envConfig: this.envConfig,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
 			underlyingFees: {
 				[RouteEnum.VirtualChain]: {

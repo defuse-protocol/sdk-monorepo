@@ -179,7 +179,7 @@ describe("AuroraEngineBridge", () => {
 			});
 
 			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
-			expect(result.amount).toBe(minStorageBalance - userStorageBalance);
+			expect(result.amount).toBe(0n);
 			expect(result.quote).toBeNull();
 			expect(
 				result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
