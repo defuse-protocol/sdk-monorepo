@@ -1937,6 +1937,7 @@ describe("OmniBridge", () => {
 				}),
 			).resolves.toBeUndefined();
 		});
+
 		it("validateWithdrawal rejects a zero fee amount for a token that is not prefunded", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
