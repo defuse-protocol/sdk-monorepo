@@ -337,6 +337,13 @@ export class OmniBridge implements Bridge {
 		logger?: ILogger;
 		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
+		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
+		if (!isFeeSubsidized && !this.features.feesPrefunded) {
+			assert(
+				args.feeEstimation.amount > 0n,
+				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
+			);
+		}
 		const assetInfo = this.makeAssetInfo(args.assetId, args.routeConfig);
 
 		assert(
@@ -442,7 +449,7 @@ export class OmniBridge implements Bridge {
 		}
 
 		const utxoChainWithdrawal = isUtxoChain(omniChainKind);
-		if (!utxoChainWithdrawal && !FEE_SUBSIDIZED_TOKENS.includes(args.assetId)) {
+		if (!utxoChainWithdrawal && !isFeeSubsidized) {
 			const relayerFee = getUnderlyingFee(
 				args.feeEstimation,
 				RouteEnum.OmniBridge,
@@ -616,9 +623,6 @@ export class OmniBridge implements Bridge {
 
 		let amount = 0n;
 		let quote = null;
-		// Skip quoting when native fee = 0 and no storage deposit is needed,
-		// or when `features.feesPrefunded` is enabled (the account already holds
-		// NEAR to cover withdrawal fees, so nothing has to be swapped).
 		if (totalAmountToQuote > 0n && !this.features.feesPrefunded) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
