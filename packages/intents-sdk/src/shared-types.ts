@@ -216,10 +216,6 @@ export interface IIntentsSDK {
 	): Promise<BatchWithdrawalResult>;
 }
 
-/**
- * Options controlling the solver relay quote request when the withdrawal asset
- * needs to be swapped into the asset that covers withdrawal fees.
- */
 export interface QuoteOptions {
 	waitMs?: number;
 	minWaitMs?: number;
