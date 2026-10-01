@@ -1786,16 +1786,16 @@ describe("OmniBridge", () => {
 		});
 	});
 
-	describe("prefundedNativeFeeTokens", () => {
-		// Non-subsidized Omni token; fee bypass must come from the prefunded config, not FEE_SUBSIDIZED_TOKENS.
-		const prefundedAssetId =
+	describe("feesPrefunded", () => {
+		// Non-subsidized Omni token; fee bypass must come from `features.feesPrefunded`, not FEE_SUBSIDIZED_TOKENS.
+		const nonSubsidizedAssetId =
 			"nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
-		const prefundedTokenId =
+		const nonSubsidizedTokenId =
 			"bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
-		const prefundedOriginChainOmniAddress =
+		const nonSubsidizedOriginChainOmniAddress =
 			"eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
 
-		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee", async () => {
+		it("estimateWithdrawalFee skips the fee quote when fees are prefunded while keeping the relayer fee", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 				native_token_fee: 50_000_000_000n,
 				usd_fee: 0.5,
@@ -1804,7 +1804,7 @@ describe("OmniBridge", () => {
 			const getFeeQuoteSpy = vi
 				.spyOn(estimateFee, "getFeeQuote")
 				.mockRejectedValue(
-					new Error("getFeeQuote must not be called for prefunded tokens"),
+					new Error("getFeeQuote must not be called when fees are prefunded"),
 				);
 
 			const nearProvider = nearFailoverRpcProvider({
@@ -1814,16 +1814,16 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
+				features: { feesPrefunded: true },
 			});
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set(prefundedTokenId, [0n, 0n]);
+			bridge["storageDepositCache"].set(nonSubsidizedTokenId, [0n, 0n]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
-					assetId: prefundedAssetId,
+					assetId: nonSubsidizedAssetId,
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
@@ -1838,7 +1838,7 @@ describe("OmniBridge", () => {
 			);
 		});
 
-		it("estimateWithdrawalFee skips the fee quote for a prefunded token while keeping the relayer fee and storage deposit fee", async () => {
+		it("estimateWithdrawalFee skips the fee quote when fees are prefunded while keeping the relayer fee and storage deposit fee", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 				native_token_fee: 50_000_000_000n,
 				usd_fee: 0.5,
@@ -1847,7 +1847,7 @@ describe("OmniBridge", () => {
 			const getFeeQuoteSpy = vi
 				.spyOn(estimateFee, "getFeeQuote")
 				.mockRejectedValue(
-					new Error("getFeeQuote must not be called for prefunded tokens"),
+					new Error("getFeeQuote must not be called when fees are prefunded"),
 				);
 
 			const nearProvider = nearFailoverRpcProvider({
@@ -1857,7 +1857,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
+				features: { feesPrefunded: true },
 			});
 
 			const minStoragedDeposit = 1n;
@@ -1865,14 +1865,14 @@ describe("OmniBridge", () => {
 			const storageBalanceToPay = minStoragedDeposit - currentStorageBalance;
 			// Pre-seed storage deposit cache so estimation does not hit the network.
 			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set(prefundedTokenId, [
+			bridge["storageDepositCache"].set(nonSubsidizedTokenId, [
 				minStoragedDeposit,
 				currentStorageBalance,
 			]);
 
 			const result = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
-					assetId: prefundedAssetId,
+					assetId: nonSubsidizedAssetId,
 					destinationAddress: zeroAddress,
 					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
 					amount: 1_000_000n,
@@ -1890,7 +1890,54 @@ describe("OmniBridge", () => {
 			).toBe(storageBalanceToPay);
 		});
 
-		it("validateWithdrawal accepts a zero fee amount for a prefunded token", async () => {
+		it("estimateWithdrawalFee skips the fee quote when fees are prefunded but still charges UTXO fees from the amount", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 0n,
+				transferred_token_fee: "0",
+				gas_fee: 700n,
+				protocol_fee: 400n,
+				min_amount: "6400",
+				usd_fee: 0.58,
+				insufficient_utxo: false,
+			});
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error("getFeeQuote must not be called when fees are prefunded"),
+				);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+				features: { feesPrefunded: true },
+			});
+
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("nbtc.bridge.near", [0n, 0n]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:nbtc.bridge.near",
+					destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+					routeConfig: createOmniBridgeRoute(),
+					amount: 10_000n,
+				},
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(result.amount).toBe(1100n);
+			expect(result.quote).toBeNull();
+			expect(result.underlyingFees[RouteEnum.OmniBridge]).toEqual(
+				expect.objectContaining({
+					relayerFee: 0n,
+					utxoMaxGasFee: 700n,
+					utxoProtocolFee: 400n,
+				}),
+			);
+		});
+
+		it("validateWithdrawal accepts a zero fee amount when fees are prefunded", async () => {
 			const highBalance = (
 				MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n
 			).toString();
@@ -1900,7 +1947,7 @@ describe("OmniBridge", () => {
 				"getAccountOmniStorageBalance",
 			).mockResolvedValue({ total: highBalance, available: highBalance });
 			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				prefundedOriginChainOmniAddress,
+				nonSubsidizedOriginChainOmniAddress,
 			);
 			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
 				decimals: 6,
@@ -1914,12 +1961,12 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
+				features: { feesPrefunded: true },
 			});
 
 			await expect(
 				bridge.validateWithdrawal({
-					assetId: prefundedAssetId,
+					assetId: nonSubsidizedAssetId,
 					amount: 1_000_000n,
 					destinationAddress: EVM_TEST_ADDRESS,
 					feeEstimation: {
@@ -1938,7 +1985,7 @@ describe("OmniBridge", () => {
 			).resolves.toBeUndefined();
 		});
 
-		it("validateWithdrawal rejects a zero fee amount for a token that is not prefunded", async () => {
+		it("validateWithdrawal rejects a zero fee amount when fees are not prefunded", async () => {
 			const nearProvider = nearFailoverRpcProvider({
 				urls: PUBLIC_NEAR_RPC_URLS,
 			});
@@ -1950,7 +1997,7 @@ describe("OmniBridge", () => {
 
 			await expect(
 				bridge.validateWithdrawal({
-					assetId: prefundedAssetId,
+					assetId: nonSubsidizedAssetId,
 					amount: 1_000_000n,
 					destinationAddress: zeroAddress,
 					feeEstimation: {

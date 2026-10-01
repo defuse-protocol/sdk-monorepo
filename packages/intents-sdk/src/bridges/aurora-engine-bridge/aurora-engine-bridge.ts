@@ -20,6 +20,7 @@ import { validateAddress } from "../../lib/validateAddress";
 import type {
 	Bridge,
 	FeeEstimation,
+	IntentsSDKFeatures,
 	NearTxInfo,
 	QuoteOptions,
 	RouteConfig,
@@ -38,19 +39,23 @@ export class AuroraEngineBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
+	protected features: IntentsSDKFeatures;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
+		features = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		features?: IntentsSDKFeatures;
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.features = features;
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -180,21 +185,43 @@ export class AuroraEngineBridge implements Bridge {
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
 
-		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId
-				? null
-				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+		// No quote needed when the withdrawn asset is already the fee asset,
+		if (args.withdrawalParams.assetId === feeAssetId) {
+			return {
+				amount: feeAmount,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: feeAmount,
+					},
+				},
+			};
+		}
+
+		// When `features.feesPrefunded` is enabled, quote is not needed, we assume account already holds fee asset.
+		if (this.features.feesPrefunded) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: feeAmount,
+					},
+				},
+			};
+		}
+		const feeQuote = await getFeeQuote({
+			feeAmount,
+			feeAssetId,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			envConfig: this.envConfig,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
 			underlyingFees: {
 				[RouteEnum.VirtualChain]: {

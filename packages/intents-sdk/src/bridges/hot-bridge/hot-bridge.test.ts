@@ -30,6 +30,7 @@ import { HotBridgeEVMChains } from "./hot-bridge-chains";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { RouteEnum } from "../../constants/route-enum";
 import type { FeeEstimation } from "../../shared-types";
+import * as estimateFee from "../../lib/estimate-fee";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 	const actual =
@@ -883,6 +884,83 @@ describe("HotBridge", () => {
 			expect(getGaslessWithdrawFee).toHaveBeenCalledWith(
 				expect.objectContaining({ chain: 143, token: "native" }),
 			);
+			expect(feeEstimation).toEqual({
+				amount: 10n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: 10n,
+						blockNumber: 12345n,
+					},
+				},
+			});
+		});
+
+		it("features.feesPrefunded = true: skips the fee quote but keeps the relayer fee", async () => {
+			const getGaslessWithdrawFee = vi
+				.fn()
+				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
+
+			const hotSdk = {
+				getGaslessWithdrawFee,
+			} as unknown as HotOmniSdk;
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk,
+				features: { feesPrefunded: true },
+			});
+
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error(
+						"getFeeQuote must not be called when features.feesPrefunded is true",
+					),
+				);
+
+			const feeEstimation = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: TON_USDT_ASSET_ID,
+					destinationAddress: TON_DESTINATION_ADDRESS,
+				},
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(feeEstimation).toEqual({
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: {
+						relayerFee: 10n,
+						blockNumber: 12345n,
+					},
+				},
+			});
+		});
+
+		it("features.feesPrefunded = true: still charges the relayer fee from the amount when withdrawing the native token", async () => {
+			const getGaslessWithdrawFee = vi
+				.fn()
+				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
+
+			const hotSdk = {
+				getGaslessWithdrawFee,
+			} as unknown as HotOmniSdk;
+
+			const bridge = new HotBridge({
+				envConfig: configsByEnvironment.production,
+				hotSdk,
+				features: { feesPrefunded: true },
+			});
+
+			const feeEstimation = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",
+					destinationAddress: zeroAddress,
+				},
+			});
+
 			expect(feeEstimation).toEqual({
 				amount: 10n,
 				quote: null,

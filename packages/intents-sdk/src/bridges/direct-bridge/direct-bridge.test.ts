@@ -5,6 +5,7 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
+import * as estimateFee from "../../lib/estimate-fee";
 import {
 	createNearWithdrawalRoute,
 	createPoaBridgeRoute,
@@ -178,6 +179,81 @@ describe("DirectBridge", () => {
 				).rejects.toThrow(DestinationAddressMatchesTokenAddressError);
 			},
 		);
+	});
+
+	describe("estimateWithdrawalFee()", () => {
+		it("features.feesPrefunded = true: skips the fee quote but keeps the storage deposit fee", async () => {
+			const bridge = new DirectBridge({
+				envConfig: configsByEnvironment.production,
+				features: { feesPrefunded: true },
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, storage deposit cache is seeded below
+				nearProvider: {} as any,
+			});
+
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error(
+						"getFeeQuote must not be called when features.feesPrefunded is true",
+					),
+				);
+
+			const minStorageBalance = 1250000000000000000000n;
+			const userStorageBalance = 0n;
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("usdt.tether-token.near:alice.near", [
+				minStorageBalance,
+				userStorageBalance,
+			]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:usdt.tether-token.near",
+					destinationAddress: "alice.near",
+					routeConfig: createNearWithdrawalRoute(),
+				},
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(result.amount).toBe(0n);
+			expect(result.quote).toBeNull();
+			expect(
+				result.underlyingFees[RouteEnum.NearWithdrawal]?.storageDepositFee,
+			).toBe(minStorageBalance - userStorageBalance);
+		});
+
+		it("features.feesPrefunded = true: still charges the storage deposit from the amount when withdrawing wrap.near", async () => {
+			const bridge = new DirectBridge({
+				envConfig: configsByEnvironment.production,
+				features: { feesPrefunded: true },
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, storage deposit cache is seeded below
+				nearProvider: {} as any,
+			});
+
+			const minStorageBalance = 1250000000000000000000n;
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("wrap.near:alice.near", [
+				minStorageBalance,
+				0n,
+			]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					destinationAddress: "alice.near",
+					// `msg` forces ft_withdraw of wrap.near, which requires storage deposit
+					routeConfig: createNearWithdrawalRoute("hello"),
+				},
+			});
+
+			expect(result.amount).toBe(minStorageBalance);
+			expect(result.quote).toBeNull();
+			expect(
+				result.underlyingFees[RouteEnum.NearWithdrawal]?.storageDepositFee,
+			).toBe(minStorageBalance);
+		});
 	});
 });
 
