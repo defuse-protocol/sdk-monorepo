@@ -340,26 +340,50 @@ export class HotBridge implements Bridge {
 				timeout: typeof window !== "undefined" ? 10_000 : 3000,
 			},
 		);
+		if (feeAmount === 0n) {
+			return {
+				amount: feeAmount,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
+				},
+			};
+		}
 
-		// No quote needed when the withdrawn asset is already the fee asset, there is no fee,
-		// or when `features.feesPrefunded` is enabled (fee is paid in the fee asset directly).
-		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId ||
-			feeAmount === 0n ||
-			this.features.feesPrefunded
-				? null
-				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+		// No quote needed when the withdrawn asset is already the fee asset
+		if (args.withdrawalParams.assetId === feeAssetId) {
+			return {
+				amount: feeAmount,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
+				},
+			};
+		}
+
+		// When `features.feesPrefunded` is enabled, quote is not needed, we assume account already holds fee asset.
+		if (this.features.feesPrefunded) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
+				},
+			};
+		}
+
+		const feeQuote = await getFeeQuote({
+			feeAmount,
+			feeAssetId,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			envConfig: this.envConfig,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
 			underlyingFees: {
 				[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },

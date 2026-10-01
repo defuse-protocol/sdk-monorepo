@@ -928,7 +928,7 @@ describe("HotBridge", () => {
 
 			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
 			expect(feeEstimation).toEqual({
-				amount: 10n,
+				amount: 0n,
 				quote: null,
 				underlyingFees: {
 					[RouteEnum.HotBridge]: {

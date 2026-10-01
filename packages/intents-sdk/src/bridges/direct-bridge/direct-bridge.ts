@@ -261,7 +261,7 @@ export class DirectBridge implements Bridge {
 			};
 		}
 
-		// When `features.feesPrefunded` is enabled quote is no needed, we assume account already holds fee asset.
+		// When `features.feesPrefunded` is enabled, quote is not needed, we assume account already holds fee asset.
 		if (this.features.feesPrefunded) {
 			return {
 				amount: 0n,
