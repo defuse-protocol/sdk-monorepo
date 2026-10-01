@@ -228,8 +228,7 @@ export interface IntentsSDKFeatures {
 	 * Withdrawal fees are prefunded: the account already holds the fee asset
 	 * (e.g. NEAR, or the destination chain's native token for HOT Bridge), so the SDK
 	 * skips quoting the withdrawal asset into the fee asset during fee estimation.
-	 * In that case, `feeEstimation.amount` is `0n` and `feeEstimation.quote` is `null`;
-	 * use `feeEstimation.underlyingFees` to see the fees and what must be prefunded.
+	 *
 	 * @default false
 	 */
 	feesPrefunded?: boolean;
