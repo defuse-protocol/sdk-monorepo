@@ -185,6 +185,34 @@ describe("AuroraEngineBridge", () => {
 				result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
 			).toBe(minStorageBalance - userStorageBalance);
 		});
+
+		it("features.feesPrefunded = true: still charges the storage deposit from the amount when withdrawing wrap.near", async () => {
+			const minStorageBalance = 1250000000000000000000n;
+			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
+				minStorageBalance,
+			);
+			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(0n);
+
+			const bridge = new AuroraEngineBridge({
+				envConfig: configsByEnvironment.production,
+				features: { feesPrefunded: true },
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+				nearProvider: {} as any,
+			});
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					routeConfig: createVirtualChainRoute("aurora", null),
+				},
+			});
+
+			expect(result.amount).toBe(minStorageBalance);
+			expect(result.quote).toBeNull();
+			expect(
+				result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
+			).toBe(minStorageBalance);
+		});
 	});
 });
 

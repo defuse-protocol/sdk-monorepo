@@ -1890,6 +1890,53 @@ describe("OmniBridge", () => {
 			).toBe(storageBalanceToPay);
 		});
 
+		it("estimateWithdrawalFee skips the fee quote when fees are prefunded but still charges UTXO fees from the amount", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 0n,
+				transferred_token_fee: "0",
+				gas_fee: 700n,
+				protocol_fee: 400n,
+				min_amount: "6400",
+				usd_fee: 0.58,
+				insufficient_utxo: false,
+			});
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error("getFeeQuote must not be called when fees are prefunded"),
+				);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+				features: { feesPrefunded: true },
+			});
+
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("nbtc.bridge.near", [0n, 0n]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:nbtc.bridge.near",
+					destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+					routeConfig: createOmniBridgeRoute(),
+					amount: 10_000n,
+				},
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(result.amount).toBe(1100n);
+			expect(result.quote).toBeNull();
+			expect(result.underlyingFees[RouteEnum.OmniBridge]).toEqual(
+				expect.objectContaining({
+					relayerFee: 0n,
+					utxoMaxGasFee: 700n,
+					utxoProtocolFee: 400n,
+				}),
+			);
+		});
+
 		it("validateWithdrawal accepts a zero fee amount when fees are prefunded", async () => {
 			const highBalance = (
 				MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n

@@ -222,6 +222,38 @@ describe("DirectBridge", () => {
 				result.underlyingFees[RouteEnum.NearWithdrawal]?.storageDepositFee,
 			).toBe(minStorageBalance - userStorageBalance);
 		});
+
+		it("features.feesPrefunded = true: still charges the storage deposit from the amount when withdrawing wrap.near", async () => {
+			const bridge = new DirectBridge({
+				envConfig: configsByEnvironment.production,
+				features: { feesPrefunded: true },
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, storage deposit cache is seeded below
+				nearProvider: {} as any,
+			});
+
+			const minStorageBalance = 1250000000000000000000n;
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("wrap.near:alice.near", [
+				minStorageBalance,
+				0n,
+			]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					destinationAddress: "alice.near",
+					// `msg` forces ft_withdraw of wrap.near, which requires storage deposit
+					routeConfig: createNearWithdrawalRoute("hello"),
+				},
+			});
+
+			expect(result.amount).toBe(minStorageBalance);
+			expect(result.quote).toBeNull();
+			expect(
+				result.underlyingFees[RouteEnum.NearWithdrawal]?.storageDepositFee,
+			).toBe(minStorageBalance);
+		});
 	});
 });
 
