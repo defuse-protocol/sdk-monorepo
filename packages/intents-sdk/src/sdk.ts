@@ -112,19 +112,6 @@ export interface IntentsSDKConfig {
 	referral: string;
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
-	/**
-	 * Opt-in features applied to all bridges created by this SDK instance.
-	 *
-	 * @example
-	 * ```typescript
-	 * // The account already holds NEAR, so withdrawal fees are paid in NEAR
-	 * // directly instead of being quoted and swapped from the withdrawn asset.
-	 * new IntentsSDK({
-	 *   referral: "...",
-	 *   features: { feesPrefunded: true },
-	 * });
-	 * ```
-	 */
 	features?: IntentsSDKFeatures;
 }
 
