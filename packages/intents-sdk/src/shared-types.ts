@@ -345,6 +345,10 @@ export interface BridgeConfigs {
 		/** Asset IDs of subsidized tokens whose withdrawal relayer fee is prefunded. */
 		prefundedNativeFeeTokens?: string[];
 	};
+	[RouteEnum.NearWithdrawal]?: {
+		/** Asset IDs of tokens whose withdrawal storage deposit fee is prefunded. */
+		prefundedNativeFeeTokens?: string[];
+	};
 }
 
 /**

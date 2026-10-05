@@ -193,6 +193,7 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.NearWithdrawal],
 			}),
 		];
 
