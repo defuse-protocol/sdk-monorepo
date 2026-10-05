@@ -1937,6 +1937,57 @@ describe("OmniBridge", () => {
 			);
 		});
 
+		it("estimateWithdrawalFee still charges the relayer and storage deposit fees from the amount when withdrawing wrap.near with fees prefunded", async () => {
+			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+				native_token_fee: 50_000_000_000n,
+				usd_fee: 0.5,
+				insufficient_utxo: false,
+			});
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error(
+						"getFeeQuote must not be called when withdrawing wrap.near",
+					),
+				);
+
+			const bridge = new OmniBridge({
+				envConfig: configsByEnvironment.production,
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+				features: { feesPrefunded: true },
+			});
+
+			const minStorageDeposit = 3n;
+			const currentStorageBalance = 1n;
+			// Pre-seed storage deposit cache so estimation does not hit the network.
+			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+			bridge["storageDepositCache"].set("wrap.near", [
+				minStorageDeposit,
+				currentStorageBalance,
+			]);
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					destinationAddress: zeroAddress,
+					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+					amount: 1_000_000n,
+				},
+			});
+
+			// The withdrawn asset is the fee asset itself: the fee is taken from the withdrawn amount,
+			// so consumers relying on `feesPrefunded` must not prefund it on top.
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(result.amount).toBe(50_000_000_000n + 2n);
+			expect(result.quote).toBeNull();
+			expect(result.underlyingFees[RouteEnum.OmniBridge]).toEqual(
+				expect.objectContaining({
+					relayerFee: 50_000_000_000n,
+					storageDepositFee: 2n,
+				}),
+			);
+		});
+
 		it("validateWithdrawal accepts a zero fee amount when fees are prefunded", async () => {
 			const highBalance = (
 				MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n
