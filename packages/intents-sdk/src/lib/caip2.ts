@@ -41,7 +41,7 @@ export const Chains = {
 	HyperCore: "hlcore:mainnet", // No official CAIP-2 identifier exists for HyperCore; this value is unofficial and may change.
 	HyperEvm: "eip155:999",
 	Hood: "eip155:4663",
-	Qtc: "quantus:mainnet",
+	Qtc: "qtc:mainnet",
 	Arc: "eip155:5042",
 } as const;
 
