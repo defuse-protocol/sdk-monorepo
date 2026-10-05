@@ -53,10 +53,10 @@ export class DirectBridge implements Bridge {
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ max: 100, ttl: 3600000 });
+	>({ max: 100, ttl: 600000 });
 	private accountExistenceCache = new LRUCache<string, true>({
 		max: 100,
-		ttl: 3600000,
+		ttl: 600000,
 	});
 	private bridgeConfig: Required<
 		NonNullable<BridgeConfigs[RouteEnum["NearWithdrawal"]]>
