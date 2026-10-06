@@ -174,6 +174,13 @@ export class HotBridge implements Bridge {
 		);
 	}
 
+	encodeReceiver(assetId: string, address: string): string {
+		const assetInfo = this.parseAssetId(assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
+		return utils.encodeReceiver(toHotNetworkId(assetInfo.blockchain), address);
+	}
+
 	async createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;

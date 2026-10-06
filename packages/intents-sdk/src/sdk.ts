@@ -372,6 +372,15 @@ export class IntentsSDK implements IIntentsSDK {
 		);
 	}
 
+	public encodeHotReceiver(assetId: string, address: string): string {
+		const bridge = this.bridges.find(
+			(bridge): bridge is HotBridge => bridge instanceof HotBridge,
+		);
+		assert(bridge != null, "HOT Bridge is unavailable");
+
+		return bridge.encodeReceiver(assetId, address);
+	}
+
 	public estimateWithdrawalFee(args: {
 		withdrawalParams: WithdrawalParams;
 		quoteOptions?: QuoteOptions;
