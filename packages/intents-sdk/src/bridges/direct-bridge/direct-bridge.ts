@@ -13,6 +13,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -20,6 +21,7 @@ import type {
 	RouteConfig,
 	WithdrawalIdentifier,
 	WithdrawalParams,
+	UnderlyingFees,
 	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
@@ -51,23 +53,31 @@ export class DirectBridge implements Bridge {
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ max: 100, ttl: 3600000 });
+	>({ max: 100, ttl: 600000 });
 	private accountExistenceCache = new LRUCache<string, true>({
 		max: 100,
-		ttl: 3600000,
+		ttl: 600000,
 	});
+	private bridgeConfig: Required<
+		NonNullable<BridgeConfigs[RouteEnum["NearWithdrawal"]]>
+	>;
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
+		bridgeConfig,
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		bridgeConfig?: BridgeConfigs[RouteEnum["NearWithdrawal"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.bridgeConfig = {
+			prefundedNativeFeeTokens: bridgeConfig?.prefundedNativeFeeTokens ?? [],
+		};
 	}
 
 	private is(routeConfig: RouteConfig) {
@@ -242,28 +252,39 @@ export class DirectBridge implements Bridge {
 
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
+		const underlyingFees: UnderlyingFees = {
+			[RouteEnum.NearWithdrawal]: {
+				storageDepositFee: feeAmount,
+			},
+		};
 
-		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId
-				? null
-				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+		if (args.withdrawalParams.assetId === feeAssetId) {
+			return { amount: feeAmount, quote: null, underlyingFees };
+		}
+
+		// Skip quoting for prefunded tokens, storage deposit is not charged from the amount.
+		if (
+			this.bridgeConfig.prefundedNativeFeeTokens.includes(
+				args.withdrawalParams.assetId,
+			)
+		) {
+			return { amount: 0n, quote: null, underlyingFees };
+		}
+
+		const feeQuote = await getFeeQuote({
+			feeAmount,
+			feeAssetId,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			envConfig: this.envConfig,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
-			underlyingFees: {
-				[RouteEnum.NearWithdrawal]: {
-					storageDepositFee: feeAmount,
-				},
-			},
+			underlyingFees,
 		};
 	}
 
