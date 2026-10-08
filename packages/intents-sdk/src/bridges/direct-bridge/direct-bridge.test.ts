@@ -11,6 +11,7 @@ import {
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
 import { RouteEnum } from "../../constants/route-enum";
+import * as estimateFee from "../../lib/estimate-fee";
 import { DirectBridge } from "./direct-bridge";
 import {
 	MIN_GAS_AMOUNT,
@@ -288,6 +289,66 @@ describe("DirectBridge.estimateWithdrawalFee()", () => {
 
 		expect(fee.underlyingFees).toEqual({
 			[RouteEnum.NearWithdrawal]: { storageDepositFee: 100n },
+		});
+	});
+
+	describe("prefundedNativeFeeTokens", () => {
+		const prefundedAssetId = "nep141:usdt.tether-token.near";
+
+		it("skips the fee quote for a prefunded token while keeping the storage deposit fee", async () => {
+			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(100n);
+			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(0n);
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockRejectedValue(
+					new Error("getFeeQuote must not be called for prefunded tokens"),
+				);
+			const bridge = new DirectBridge({
+				envConfig: configsByEnvironment.production,
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+				nearProvider: {} as any,
+				bridgeConfig: { prefundedNativeFeeTokens: [prefundedAssetId] },
+			});
+
+			const fee = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: prefundedAssetId,
+					destinationAddress: "alice.near",
+					routeConfig: undefined,
+				},
+			});
+
+			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+			expect(fee).toEqual({
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.NearWithdrawal]: { storageDepositFee: 100n },
+				},
+			});
+		});
+
+		it("still charges the storage deposit from the amount when withdrawing prefunded wrap.near", async () => {
+			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(100n);
+			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(0n);
+			const bridge = new DirectBridge({
+				envConfig: configsByEnvironment.production,
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+				nearProvider: {} as any,
+				bridgeConfig: { prefundedNativeFeeTokens: [NEAR_NATIVE_ASSET_ID] },
+			});
+
+			const fee = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: NEAR_NATIVE_ASSET_ID,
+					destinationAddress: "alice.near",
+					// `msg` forces ft_withdraw of wrap.near, which requires storage deposit
+					routeConfig: createNearWithdrawalRoute("hello"),
+				},
+			});
+
+			expect(fee.amount).toBe(100n);
+			expect(fee.quote).toBeNull();
 		});
 	});
 });

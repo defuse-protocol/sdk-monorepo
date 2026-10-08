@@ -1,5 +1,18 @@
 # @defuse-protocol/intents-sdk
 
+## 0.89.0
+
+### Minor Changes
+
+- 28f7e5b: Support prefunded tokens for Near Withdrawal via Bridge Config, also change Quantus PoA network reference.
+  - Added `bridgeConfigs[RouteEnum.NearWithdrawal].prefundedNativeFeeTokens` — asset IDs whose withdrawal storage deposit fee is prefunded.
+  - Changed Quantus PoA network reference from `quantus:mainnet` to `qtc:mainnet`. CAIP-2 identifier (`Chains.Qtc`) remains `quantus:mainnet`.
+
+### Patch Changes
+
+- Updated dependencies [28f7e5b]
+  - @defuse-protocol/internal-utils@0.42.0
+
 ## 0.88.1
 
 ### Patch Changes

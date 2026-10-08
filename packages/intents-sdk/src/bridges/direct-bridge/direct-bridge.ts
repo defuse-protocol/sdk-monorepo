@@ -13,6 +13,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
 	IntentsSDKFeatures,
 	NearTxInfo,
@@ -21,6 +22,7 @@ import type {
 	RouteConfig,
 	WithdrawalIdentifier,
 	WithdrawalParams,
+	UnderlyingFees,
 	WithdrawalStatus,
 } from "../../shared-types";
 import { getUnderlyingFee } from "../../lib/estimate-fee";
@@ -53,11 +55,14 @@ export class DirectBridge implements Bridge {
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
-	>({ max: 100, ttl: 3600000 });
+	>({ max: 100, ttl: 600000 });
 	private accountExistenceCache = new LRUCache<string, true>({
 		max: 100,
-		ttl: 3600000,
+		ttl: 600000,
 	});
+	private bridgeConfig: Required<
+		NonNullable<BridgeConfigs[RouteEnum["NearWithdrawal"]]>
+	>;
 	constructor({
 		envConfig,
 		nearProvider,
@@ -247,6 +252,11 @@ export class DirectBridge implements Bridge {
 
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
+		const underlyingFees: UnderlyingFees = {
+			[RouteEnum.NearWithdrawal]: {
+				storageDepositFee: feeAmount,
+			},
+		};
 
 		// No quote needed when the withdrawn asset is already the fee asset,
 		if (args.withdrawalParams.assetId === feeAssetId) {
@@ -287,11 +297,7 @@ export class DirectBridge implements Bridge {
 		return {
 			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
-			underlyingFees: {
-				[RouteEnum.NearWithdrawal]: {
-					storageDepositFee: feeAmount,
-				},
-			},
+			underlyingFees,
 		};
 	}
 

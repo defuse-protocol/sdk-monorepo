@@ -68,7 +68,7 @@ const caip2Mapping = {
 	[Chains.Plasma]: "eth:9745",
 	[Chains.Adi]: "eth:36900",
 	[Chains.Hood]: "eth:4663",
-	[Chains.Qtc]: "quantus:mainnet",
+	[Chains.Qtc]: "qtc:mainnet",
 	[Chains.Arc]: "eth:5042",
 } satisfies Record<
 	string,
