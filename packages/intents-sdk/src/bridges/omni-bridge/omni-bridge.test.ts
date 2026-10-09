@@ -1942,52 +1942,86 @@ describe("OmniBridge", () => {
 			).toBe(storageBalanceToPay);
 		});
 
-		it("estimateWithdrawalFee skips the fee quote when fees are prefunded but still charges UTXO fees from the amount", async () => {
-			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
-				native_token_fee: 0n,
-				transferred_token_fee: "0",
-				gas_fee: 700n,
-				protocol_fee: 400n,
-				min_amount: "6400",
-				usd_fee: 0.58,
-				insufficient_utxo: false,
-			});
-			const getFeeQuoteSpy = vi
-				.spyOn(estimateFee, "getFeeQuote")
-				.mockRejectedValue(
-					new Error("getFeeQuote must not be called when fees are prefunded"),
-				);
+		const utxoWithdrawals = [
+			{
+				tokenId: "nbtc.bridge.near",
+				assetId: "nep141:nbtc.bridge.near",
+				destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
+			},
+			{
+				tokenId: "zec.omft.near",
+				assetId: "nep141:zec.omft.near",
+				destinationAddress: "t1Q879cLgqaCd7zKRi79wQYuGBenmNX6cKn",
+			},
+		];
 
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
-				bridgeConfig: { feesPrefunded: true },
-			});
-
-			// Pre-seed storage deposit cache so estimation does not hit the network.
-			// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
-			bridge["storageDepositCache"].set("nbtc.bridge.near", [0n, 0n]);
-
-			const result = await bridge.estimateWithdrawalFee({
-				withdrawalParams: {
-					assetId: "nep141:nbtc.bridge.near",
-					destinationAddress: "bc1q5deh93tj8lcwuh4c34nxtcydtdnfpvmdfzwdml",
-					routeConfig: createOmniBridgeRoute(),
-					amount: 10_000n,
+		it.each(
+			utxoWithdrawals.flatMap((withdrawal) => [
+				{ ...withdrawal, bridgeConfig: { feesPrefunded: true } },
+				{
+					...withdrawal,
+					bridgeConfig: { prefundedFeesTokens: [withdrawal.assetId] },
 				},
-			});
+				{
+					...withdrawal,
+					bridgeConfig: {
+						feesPrefunded: true,
+						prefundedFeesTokens: ["nep141:other.near"],
+					},
+				},
+			]),
+		)(
+			"estimateWithdrawalFee skips the NEAR fee quote but still charges UTXO fees from the amount when withdrawing $assetId with fees prefunded via $bridgeConfig",
+			async ({ tokenId, assetId, destinationAddress, bridgeConfig }) => {
+				vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+					native_token_fee: 50_000_000_000n,
+					transferred_token_fee: "0",
+					gas_fee: 700n,
+					protocol_fee: 400n,
+					min_amount: "6400",
+					usd_fee: 0.58,
+					insufficient_utxo: false,
+				});
+				const getFeeQuoteSpy = vi
+					.spyOn(estimateFee, "getFeeQuote")
+					.mockRejectedValue(
+						new Error("getFeeQuote must not be called when fees are prefunded"),
+					);
 
-			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
-			expect(result.amount).toBe(1100n);
-			expect(result.quote).toBeNull();
-			expect(result.underlyingFees[RouteEnum.OmniBridge]).toEqual(
-				expect.objectContaining({
-					relayerFee: 0n,
-					utxoMaxGasFee: 700n,
-					utxoProtocolFee: 400n,
-				}),
-			);
-		});
+				const bridge = new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+					bridgeConfig,
+				});
+
+				// Pre-seed storage deposit cache so estimation does not hit the network.
+				// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+				bridge["storageDepositCache"].set(tokenId, [1n, 0n]);
+
+				const result = await bridge.estimateWithdrawalFee({
+					withdrawalParams: {
+						assetId,
+						destinationAddress,
+						routeConfig: createOmniBridgeRoute(),
+						amount: 10_000n,
+					},
+				});
+
+				// NEAR-denominated fees are prefunded, but UTXO gas and protocol fees are
+				// paid in the withdrawn token itself, so they are still taken from the amount.
+				expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+				expect(result.amount).toBe(700n + 400n);
+				expect(result.quote).toBeNull();
+				expect(result.underlyingFees[RouteEnum.OmniBridge]).toEqual(
+					expect.objectContaining({
+						relayerFee: 50_000_000_000n,
+						storageDepositFee: 1n,
+						utxoMaxGasFee: 700n,
+						utxoProtocolFee: 400n,
+					}),
+				);
+			},
+		);
 
 		it("estimateWithdrawalFee still charges the relayer and storage deposit fees from the amount when withdrawing wrap.near with fees prefunded", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
