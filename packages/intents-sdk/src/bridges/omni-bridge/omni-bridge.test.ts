@@ -1974,7 +1974,7 @@ describe("OmniBridge", () => {
 			"estimateWithdrawalFee skips the NEAR fee quote but still charges UTXO fees from the amount when withdrawing $assetId with fees prefunded via $bridgeConfig",
 			async ({ tokenId, assetId, destinationAddress, bridgeConfig }) => {
 				vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
-					native_token_fee: 50_000_000_000n,
+					native_token_fee: 0n,
 					transferred_token_fee: "0",
 					gas_fee: 700n,
 					protocol_fee: 400n,
@@ -2014,7 +2014,7 @@ describe("OmniBridge", () => {
 				expect(result.quote).toBeNull();
 				expect(result.underlyingFees[RouteEnum.OmniBridge]).toEqual(
 					expect.objectContaining({
-						relayerFee: 50_000_000_000n,
+						relayerFee: 0n,
 						storageDepositFee: 1n,
 						utxoMaxGasFee: 700n,
 						utxoProtocolFee: 400n,
