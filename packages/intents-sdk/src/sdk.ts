@@ -52,10 +52,10 @@ import {
 import type {
 	BatchWithdrawalResult,
 	Bridge,
+	BridgeConfigs,
 	CreateWithdrawalCompletionPromisesParams,
 	FeeEstimation,
 	IIntentsSDK,
-	IntentsSDKFeatures,
 	IntentPublishResult,
 	IntentSettlementStatus,
 	NearTxInfo,
@@ -112,7 +112,7 @@ export interface IntentsSDKConfig {
 	referral: string;
 	solverRelayApiKey?: string;
 	hotBridgeApiKey?: string;
-	features?: IntentsSDKFeatures;
+	bridgeConfigs?: BridgeConfigs;
 }
 
 export class IntentsSDK implements IIntentsSDK {
@@ -124,14 +124,12 @@ export class IntentsSDK implements IIntentsSDK {
 	protected solverRelayApiKey: string | undefined;
 	protected hotBridgeApiKey: string | undefined;
 	protected saltManager: ISaltManager;
-	protected features: IntentsSDKFeatures;
 
 	constructor(args: IntentsSDKConfig) {
 		this.envConfig = resolveEnvConfig(args.env);
 		this.referral = args.referral;
 		this.solverRelayApiKey = args.solverRelayApiKey;
 		this.hotBridgeApiKey = args.hotBridgeApiKey;
-		this.features = args.features ?? {};
 
 		const nearRpcEndpoints: RpcEndpoint[] =
 			args.rpc?.[Chains.Near] ?? PUBLIC_NEAR_RPC_URLS;
@@ -163,7 +161,7 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				features: this.features,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.VirtualChain],
 			}),
 			new PoaBridge({
 				envConfig: this.envConfig,
@@ -172,7 +170,7 @@ export class IntentsSDK implements IIntentsSDK {
 			new HotBridge({
 				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
-				features: this.features,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.HotBridge],
 				hotSdk: new hotLabsOmniSdk_HotBridge({
 					apiKey: this.hotBridgeApiKey,
 					logger: console,
@@ -191,13 +189,13 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				features: this.features,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.OmniBridge],
 			}),
 			new DirectBridge({
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
-				features: this.features,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.NearWithdrawal],
 			}),
 		];
 

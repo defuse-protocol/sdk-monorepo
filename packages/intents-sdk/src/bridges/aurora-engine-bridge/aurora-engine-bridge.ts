@@ -19,8 +19,8 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
-	IntentsSDKFeatures,
 	NearTxInfo,
 	QuoteOptions,
 	RouteConfig,
@@ -39,23 +39,34 @@ export class AuroraEngineBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
-	protected features: IntentsSDKFeatures;
+	protected bridgeConfig: NonNullable<BridgeConfigs[RouteEnum["VirtualChain"]]>;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
-		features = {},
+		bridgeConfig = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
-		features?: IntentsSDKFeatures;
+		bridgeConfig?: BridgeConfigs[RouteEnum["VirtualChain"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.features = features;
+		this.bridgeConfig = bridgeConfig;
+	}
+
+	/**
+	 * Whether withdrawal fees of `assetId` are prefunded, so fee quoting can be skipped.
+	 * `feesPrefunded: true` applies to all tokens and overrides `prefundedFeesTokens`.
+	 */
+	private feesPrefunded(assetId: string): boolean {
+		return (
+			this.bridgeConfig.feesPrefunded === true ||
+			(this.bridgeConfig.prefundedFeesTokens?.includes(assetId) ?? false)
+		);
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -185,7 +196,7 @@ export class AuroraEngineBridge implements Bridge {
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
 
-		// No quote needed when the withdrawn asset is already the fee asset,
+		// No quote needed when the withdrawn asset is already the fee asset.
 		if (args.withdrawalParams.assetId === feeAssetId) {
 			return {
 				amount: feeAmount,
@@ -198,8 +209,8 @@ export class AuroraEngineBridge implements Bridge {
 			};
 		}
 
-		// When `features.feesPrefunded` is enabled, quote is not needed, we assume account already holds fee asset.
-		if (this.features.feesPrefunded) {
+		// Quote is not needed for prefunded fees, we assume account already holds fee asset.
+		if (this.feesPrefunded(args.withdrawalParams.assetId)) {
 			return {
 				amount: 0n,
 				quote: null,

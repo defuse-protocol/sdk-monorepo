@@ -146,27 +146,69 @@ describe("AuroraEngineBridge", () => {
 	});
 
 	describe("estimateWithdrawalFee()", () => {
-		it("features.feesPrefunded = true: skips the fee quote but keeps the storage deposit fee", async () => {
-			const minStorageBalance = 1250000000000000000000n;
-			const userStorageBalance = 0n;
-			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
-				minStorageBalance,
-			);
-			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(
-				userStorageBalance,
-			);
+		it.each([
+			{ feesPrefunded: true },
+			{ prefundedFeesTokens: ["nep141:usdt.tether-token.near"] },
+			{ feesPrefunded: true, prefundedFeesTokens: ["nep141:other.near"] },
+		])(
+			"skips the fee quote but keeps the storage deposit fee when fees are prefunded via %o",
+			async (bridgeConfig) => {
+				const minStorageBalance = 1250000000000000000000n;
+				const userStorageBalance = 0n;
+				vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
+					minStorageBalance,
+				);
+				vi.mocked(getNearNep141StorageBalance).mockResolvedValue(
+					userStorageBalance,
+				);
 
+				const getFeeQuoteSpy = vi
+					.spyOn(estimateFee, "getFeeQuote")
+					.mockRejectedValue(
+						new Error("getFeeQuote must not be called when fees are prefunded"),
+					);
+
+				const bridge = new AuroraEngineBridge({
+					envConfig: configsByEnvironment.production,
+					bridgeConfig,
+					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+					nearProvider: {} as any,
+				});
+
+				const result = await bridge.estimateWithdrawalFee({
+					withdrawalParams: {
+						assetId: "nep141:usdt.tether-token.near",
+						routeConfig: createVirtualChainRoute("aurora", null),
+					},
+				});
+
+				expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+				expect(result.amount).toBe(0n);
+				expect(result.quote).toBeNull();
+				expect(
+					result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
+				).toBe(minStorageBalance - userStorageBalance);
+			},
+		);
+
+		it("quotes the fee for a token missing from prefundedFeesTokens", async () => {
+			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(100n);
+			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(0n);
+			const quote = {
+				quote_hash: "hash",
+				defuse_asset_identifier_in: "nep141:usdt.tether-token.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "5",
+				amount_out: "100",
+				expiration_time: "",
+			};
 			const getFeeQuoteSpy = vi
 				.spyOn(estimateFee, "getFeeQuote")
-				.mockRejectedValue(
-					new Error(
-						"getFeeQuote must not be called when features.feesPrefunded is true",
-					),
-				);
+				.mockResolvedValue(quote);
 
 			const bridge = new AuroraEngineBridge({
 				envConfig: configsByEnvironment.production,
-				features: { feesPrefunded: true },
+				bridgeConfig: { prefundedFeesTokens: ["nep141:other.near"] },
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
 				nearProvider: {} as any,
 			});
@@ -178,15 +220,13 @@ describe("AuroraEngineBridge", () => {
 				},
 			});
 
-			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
-			expect(result.amount).toBe(0n);
-			expect(result.quote).toBeNull();
-			expect(
-				result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
-			).toBe(minStorageBalance - userStorageBalance);
+			expect(getFeeQuoteSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ feeAmount: 100n }),
+			);
+			expect(result).toEqual(expect.objectContaining({ amount: 5n, quote }));
 		});
 
-		it("features.feesPrefunded = true: still charges the storage deposit from the amount when withdrawing wrap.near", async () => {
+		it("still charges the storage deposit from the amount when withdrawing wrap.near", async () => {
 			const minStorageBalance = 1250000000000000000000n;
 			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
 				minStorageBalance,
@@ -195,7 +235,7 @@ describe("AuroraEngineBridge", () => {
 
 			const bridge = new AuroraEngineBridge({
 				envConfig: configsByEnvironment.production,
-				features: { feesPrefunded: true },
+				bridgeConfig: { feesPrefunded: true },
 				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
 				nearProvider: {} as any,
 			});

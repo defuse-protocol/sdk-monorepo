@@ -21,8 +21,8 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
-	IntentsSDKFeatures,
 	NearTxInfo,
 	ParsedAssetInfo,
 	QuoteOptions,
@@ -74,7 +74,7 @@ export class HotBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
-	protected features: IntentsSDKFeatures;
+	protected bridgeConfig: NonNullable<BridgeConfigs[RouteEnum["HotBridge"]]>;
 
 	// Nonces are immutable for a given tx, use LRU with fetchMethod for readthrough
 	private noncesCache: LRUCache<`${string}:${string}`, bigint[], NearTxInfo>;
@@ -83,17 +83,17 @@ export class HotBridge implements Bridge {
 		envConfig,
 		hotSdk,
 		solverRelayApiKey,
-		features = {},
+		bridgeConfig = {},
 	}: {
 		envConfig: EnvConfig;
 		hotSdk: HotSdk;
 		solverRelayApiKey?: string;
-		features?: IntentsSDKFeatures;
+		bridgeConfig?: BridgeConfigs[RouteEnum["HotBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.features = features;
+		this.bridgeConfig = bridgeConfig;
 		this.noncesCache = new LRUCache<
 			`${string}:${string}`,
 			bigint[],
@@ -108,6 +108,17 @@ export class HotBridge implements Bridge {
 				);
 			},
 		});
+	}
+
+	/**
+	 * Whether withdrawal fees of `assetId` are prefunded, so fee quoting can be skipped.
+	 * `feesPrefunded: true` applies to all tokens and overrides `prefundedFeesTokens`.
+	 */
+	private feesPrefunded(assetId: string): boolean {
+		return (
+			this.bridgeConfig.feesPrefunded === true ||
+			(this.bridgeConfig.prefundedFeesTokens?.includes(assetId) ?? false)
+		);
 	}
 
 	private getNoncesCacheKey(tx: NearTxInfo): `${string}:${string}` {
@@ -352,8 +363,8 @@ export class HotBridge implements Bridge {
 			};
 		}
 
-		// When `features.feesPrefunded` is enabled, quote is not needed, we assume account already holds fee asset.
-		if (this.features.feesPrefunded) {
+		// Quote is not needed for prefunded fees, we assume account already holds fee asset.
+		if (this.feesPrefunded(args.withdrawalParams.assetId)) {
 			return {
 				amount: 0n,
 				quote: null,

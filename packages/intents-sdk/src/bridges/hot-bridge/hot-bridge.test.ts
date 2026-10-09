@@ -896,28 +896,77 @@ describe("HotBridge", () => {
 			});
 		});
 
-		it("features.feesPrefunded = true: skips the fee quote but keeps the relayer fee", async () => {
-			const getGaslessWithdrawFee = vi
-				.fn()
-				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
+		it.each([
+			{ feesPrefunded: true },
+			{ prefundedFeesTokens: [TON_USDT_ASSET_ID] },
+			{ feesPrefunded: true, prefundedFeesTokens: ["nep141:other.near"] },
+		])(
+			"skips the fee quote but keeps the relayer fee when fees are prefunded via %o",
+			async (bridgeConfig) => {
+				const getGaslessWithdrawFee = vi
+					.fn()
+					.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
 
+				const hotSdk = {
+					getGaslessWithdrawFee,
+				} as unknown as HotOmniSdk;
+
+				const bridge = new HotBridge({
+					envConfig: configsByEnvironment.production,
+					hotSdk,
+					bridgeConfig,
+				});
+
+				const getFeeQuoteSpy = vi
+					.spyOn(estimateFee, "getFeeQuote")
+					.mockRejectedValue(
+						new Error("getFeeQuote must not be called when fees are prefunded"),
+					);
+
+				const feeEstimation = await bridge.estimateWithdrawalFee({
+					withdrawalParams: {
+						assetId: TON_USDT_ASSET_ID,
+						destinationAddress: TON_DESTINATION_ADDRESS,
+					},
+				});
+
+				expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+				expect(feeEstimation).toEqual({
+					amount: 0n,
+					quote: null,
+					underlyingFees: {
+						[RouteEnum.HotBridge]: {
+							relayerFee: 10n,
+							blockNumber: 12345n,
+						},
+					},
+				});
+			},
+		);
+
+		it("quotes the fee for a token missing from prefundedFeesTokens", async () => {
 			const hotSdk = {
-				getGaslessWithdrawFee,
+				getGaslessWithdrawFee: vi
+					.fn()
+					.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n }),
 			} as unknown as HotOmniSdk;
 
 			const bridge = new HotBridge({
 				envConfig: configsByEnvironment.production,
 				hotSdk,
-				features: { feesPrefunded: true },
+				bridgeConfig: { prefundedFeesTokens: ["nep141:other.near"] },
 			});
-
+			const quote = {
+				quote_hash: "hash",
+				defuse_asset_identifier_in: TON_USDT_ASSET_ID,
+				defuse_asset_identifier_out: "nep245:v2_1.omni.hot.tg:1117_",
+				amount_in: "5",
+				amount_out: "100",
+				expiration_time: "",
+			};
 			const getFeeQuoteSpy = vi
 				.spyOn(estimateFee, "getFeeQuote")
-				.mockRejectedValue(
-					new Error(
-						"getFeeQuote must not be called when features.feesPrefunded is true",
-					),
-				);
+				.mockResolvedValue(quote);
 
 			const feeEstimation = await bridge.estimateWithdrawalFee({
 				withdrawalParams: {
@@ -926,20 +975,15 @@ describe("HotBridge", () => {
 				},
 			});
 
-			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
-			expect(feeEstimation).toEqual({
-				amount: 0n,
-				quote: null,
-				underlyingFees: {
-					[RouteEnum.HotBridge]: {
-						relayerFee: 10n,
-						blockNumber: 12345n,
-					},
-				},
-			});
+			expect(getFeeQuoteSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ feeAmount: 10n }),
+			);
+			expect(feeEstimation).toEqual(
+				expect.objectContaining({ amount: 5n, quote }),
+			);
 		});
 
-		it("features.feesPrefunded = true: still charges the relayer fee from the amount when withdrawing the native token", async () => {
+		it("still charges the relayer fee from the amount when withdrawing the native token with fees prefunded", async () => {
 			const getGaslessWithdrawFee = vi
 				.fn()
 				.mockResolvedValue({ gasPrice: 10n, blockNumber: 12345n });
@@ -951,7 +995,7 @@ describe("HotBridge", () => {
 			const bridge = new HotBridge({
 				envConfig: configsByEnvironment.production,
 				hotSdk,
-				features: { feesPrefunded: true },
+				bridgeConfig: { feesPrefunded: true },
 			});
 
 			const feeEstimation = await bridge.estimateWithdrawalFee({

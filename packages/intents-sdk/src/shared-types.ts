@@ -223,17 +223,6 @@ export interface QuoteOptions {
 	trustedMetadata?: unknown;
 }
 
-export interface IntentsSDKFeatures {
-	/**
-	 * Withdrawal fees are prefunded: the account already holds the fee asset
-	 * (e.g. NEAR, or the destination chain's native token for HOT Bridge), so the SDK
-	 * skips quoting the withdrawal asset into the fee asset during fee estimation.
-	 *
-	 * @default false
-	 */
-	feesPrefunded?: boolean;
-}
-
 export interface NearTxInfo {
 	hash: string;
 	accountId: string;
@@ -345,6 +334,33 @@ export interface RouteFeeStructures {
 
 	/** Internal transfers have no fees */
 	[RouteEnum.InternalTransfer]: null;
+}
+
+/**
+ * Prefunded withdrawal fees: the account already holds the fee asset
+ * (e.g. NEAR, or the destination chain's native token for HOT Bridge), so the SDK
+ * skips quoting the withdrawal asset into the fee asset during fee estimation.
+ */
+export interface PrefundedFeesConfig {
+	/** Asset IDs whose withdrawal fees are prefunded. Ignored when `feesPrefunded` is `true`. */
+	prefundedFeesTokens?: string[];
+	/**
+	 * Withdrawal fees are prefunded for all tokens, overriding `prefundedFeesTokens`.
+	 *
+	 * @default false
+	 */
+	feesPrefunded?: boolean;
+}
+
+/**
+ * Per-bridge configuration, keyed by route. Each entry is optional and tunes
+ * the behaviour of a single bridge; omitting one falls back to that bridge's defaults.
+ */
+export interface BridgeConfigs {
+	[RouteEnum.HotBridge]?: PrefundedFeesConfig;
+	[RouteEnum.OmniBridge]?: PrefundedFeesConfig;
+	[RouteEnum.NearWithdrawal]?: PrefundedFeesConfig;
+	[RouteEnum.VirtualChain]?: PrefundedFeesConfig;
 }
 
 /**

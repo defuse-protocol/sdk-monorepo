@@ -1786,8 +1786,8 @@ describe("OmniBridge", () => {
 		});
 	});
 
-	describe("feesPrefunded", () => {
-		// Non-subsidized Omni token; fee bypass must come from `features.feesPrefunded`, not FEE_SUBSIDIZED_TOKENS.
+	describe("prefunded fees", () => {
+		// Non-subsidized Omni token; fee bypass must come from the bridge config, not FEE_SUBSIDIZED_TOKENS.
 		const nonSubsidizedAssetId =
 			"nep141:bnb-0x2494b603319d4d9f9715c9f4496d9e0364b59d93.omdep.near";
 		const nonSubsidizedTokenId =
@@ -1795,26 +1795,80 @@ describe("OmniBridge", () => {
 		const nonSubsidizedOriginChainOmniAddress =
 			"eth:0x2494b603319d4D9F9715c9f4496d9E0364B59d93";
 
-		it("estimateWithdrawalFee skips the fee quote when fees are prefunded while keeping the relayer fee", async () => {
+		const prefundedConfigs = [
+			{ feesPrefunded: true },
+			{ prefundedFeesTokens: [nonSubsidizedAssetId] },
+			{ feesPrefunded: true, prefundedFeesTokens: ["nep141:other.near"] },
+		];
+
+		it.each(prefundedConfigs)(
+			"estimateWithdrawalFee skips the fee quote while keeping the relayer fee when fees are prefunded via %o",
+			async (bridgeConfig) => {
+				vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
+					native_token_fee: 50_000_000_000n,
+					usd_fee: 0.5,
+					insufficient_utxo: false,
+				});
+				const getFeeQuoteSpy = vi
+					.spyOn(estimateFee, "getFeeQuote")
+					.mockRejectedValue(
+						new Error("getFeeQuote must not be called when fees are prefunded"),
+					);
+
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
+
+				const bridge = new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider,
+					bridgeConfig,
+				});
+
+				// Pre-seed storage deposit cache so estimation does not hit the network.
+				// biome-ignore lint/complexity/useLiteralKeys: accessing private property for testing
+				bridge["storageDepositCache"].set(nonSubsidizedTokenId, [0n, 0n]);
+
+				const result = await bridge.estimateWithdrawalFee({
+					withdrawalParams: {
+						assetId: nonSubsidizedAssetId,
+						destinationAddress: zeroAddress,
+						routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+						amount: 1_000_000n,
+					},
+				});
+
+				expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+				expect(result.amount).toBe(0n);
+				expect(result.quote).toBeNull();
+				expect(result.underlyingFees[RouteEnum.OmniBridge]?.relayerFee).toBe(
+					50_000_000_000n,
+				);
+			},
+		);
+
+		it("estimateWithdrawalFee quotes the fee for a token missing from prefundedFeesTokens", async () => {
 			vi.spyOn(BridgeAPI.prototype, "getFee").mockResolvedValue({
 				native_token_fee: 50_000_000_000n,
 				usd_fee: 0.5,
 				insufficient_utxo: false,
 			});
+			const quote = {
+				quote_hash: "hash",
+				defuse_asset_identifier_in: nonSubsidizedAssetId,
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "5",
+				amount_out: "100",
+				expiration_time: "",
+			};
 			const getFeeQuoteSpy = vi
 				.spyOn(estimateFee, "getFeeQuote")
-				.mockRejectedValue(
-					new Error("getFeeQuote must not be called when fees are prefunded"),
-				);
-
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
+				.mockResolvedValue(quote);
 
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
-				nearProvider,
-				features: { feesPrefunded: true },
+				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
+				bridgeConfig: { prefundedFeesTokens: ["nep141:other.near"] },
 			});
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
@@ -1830,12 +1884,10 @@ describe("OmniBridge", () => {
 				},
 			});
 
-			expect(getFeeQuoteSpy).not.toHaveBeenCalled();
-			expect(result.amount).toBe(0n);
-			expect(result.quote).toBeNull();
-			expect(result.underlyingFees[RouteEnum.OmniBridge]?.relayerFee).toBe(
-				50_000_000_000n,
+			expect(getFeeQuoteSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ feeAmount: 50_000_000_000n }),
 			);
+			expect(result).toEqual(expect.objectContaining({ amount: 5n, quote }));
 		});
 
 		it("estimateWithdrawalFee skips the fee quote when fees are prefunded while keeping the relayer fee and storage deposit fee", async () => {
@@ -1857,7 +1909,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider,
-				features: { feesPrefunded: true },
+				bridgeConfig: { feesPrefunded: true },
 			});
 
 			const minStoragedDeposit = 1n;
@@ -1909,7 +1961,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
-				features: { feesPrefunded: true },
+				bridgeConfig: { feesPrefunded: true },
 			});
 
 			// Pre-seed storage deposit cache so estimation does not hit the network.
@@ -1954,7 +2006,7 @@ describe("OmniBridge", () => {
 			const bridge = new OmniBridge({
 				envConfig: configsByEnvironment.production,
 				nearProvider: nearFailoverRpcProvider({ urls: PUBLIC_NEAR_RPC_URLS }),
-				features: { feesPrefunded: true },
+				bridgeConfig: { feesPrefunded: true },
 			});
 
 			const minStorageDeposit = 3n;
@@ -1988,53 +2040,56 @@ describe("OmniBridge", () => {
 			);
 		});
 
-		it("validateWithdrawal accepts a zero fee amount when fees are prefunded", async () => {
-			const highBalance = (
-				MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n
-			).toString();
+		it.each(prefundedConfigs)(
+			"validateWithdrawal accepts a zero fee amount when fees are prefunded via %o",
+			async (bridgeConfig) => {
+				const highBalance = (
+					MIN_STORAGE_BALANCE_FOR_INTENTS_NEAR + 1n
+				).toString();
 
-			vi.spyOn(
-				omniBridgeUtils,
-				"getAccountOmniStorageBalance",
-			).mockResolvedValue({ total: highBalance, available: highBalance });
-			vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
-				nonSubsidizedOriginChainOmniAddress,
-			);
-			vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
-				decimals: 6,
-				origin_decimals: 6,
-			});
+				vi.spyOn(
+					omniBridgeUtils,
+					"getAccountOmniStorageBalance",
+				).mockResolvedValue({ total: highBalance, available: highBalance });
+				vi.spyOn(omniBridgeUtils, "getBridgedToken").mockResolvedValue(
+					nonSubsidizedOriginChainOmniAddress,
+				);
+				vi.spyOn(omniBridgeUtils, "getTokenDecimals").mockResolvedValue({
+					decimals: 6,
+					origin_decimals: 6,
+				});
 
-			const nearProvider = nearFailoverRpcProvider({
-				urls: PUBLIC_NEAR_RPC_URLS,
-			});
+				const nearProvider = nearFailoverRpcProvider({
+					urls: PUBLIC_NEAR_RPC_URLS,
+				});
 
-			const bridge = new OmniBridge({
-				envConfig: configsByEnvironment.production,
-				nearProvider,
-				features: { feesPrefunded: true },
-			});
+				const bridge = new OmniBridge({
+					envConfig: configsByEnvironment.production,
+					nearProvider,
+					bridgeConfig,
+				});
 
-			await expect(
-				bridge.validateWithdrawal({
-					assetId: nonSubsidizedAssetId,
-					amount: 1_000_000n,
-					destinationAddress: EVM_TEST_ADDRESS,
-					feeEstimation: {
-						// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
-						amount: 0n,
-						quote: null,
-						underlyingFees: {
-							[RouteEnum.OmniBridge]: {
-								relayerFee: 50_000_000_000n,
-								storageDepositFee: 0n,
+				await expect(
+					bridge.validateWithdrawal({
+						assetId: nonSubsidizedAssetId,
+						amount: 1_000_000n,
+						destinationAddress: EVM_TEST_ADDRESS,
+						feeEstimation: {
+							// Prefunded: estimation returns a zero amount but a non-zero relayer fee.
+							amount: 0n,
+							quote: null,
+							underlyingFees: {
+								[RouteEnum.OmniBridge]: {
+									relayerFee: 50_000_000_000n,
+									storageDepositFee: 0n,
+								},
 							},
 						},
-					},
-					routeConfig: createOmniBridgeRoute(Chains.Ethereum),
-				}),
-			).resolves.toBeUndefined();
-		});
+						routeConfig: createOmniBridgeRoute(Chains.Ethereum),
+					}),
+				).resolves.toBeUndefined();
+			},
+		);
 
 		it("validateWithdrawal rejects a zero fee amount when fees are not prefunded", async () => {
 			const nearProvider = nearFailoverRpcProvider({

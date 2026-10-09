@@ -28,8 +28,8 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { Chains, type Chain } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
-	IntentsSDKFeatures,
 	NearTxInfo,
 	OmniBridgeRouteConfig,
 	ParsedAssetInfo,
@@ -93,7 +93,7 @@ export class OmniBridge implements Bridge {
 	protected nearProvider: providers.Provider;
 	protected omniBridgeAPI: BridgeAPI;
 	protected solverRelayApiKey: string | undefined;
-	protected features: IntentsSDKFeatures;
+	protected bridgeConfig: NonNullable<BridgeConfigs[RouteEnum["OmniBridge"]]>;
 	protected intentsStorageBalanceCache = new TTLCache<
 		typeof INTENTS_STORAGE_BALANCE_CACHE_KEY,
 		bigint
@@ -117,18 +117,29 @@ export class OmniBridge implements Bridge {
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
-		features = {},
+		bridgeConfig = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
-		features?: IntentsSDKFeatures;
+		bridgeConfig?: BridgeConfigs[RouteEnum["OmniBridge"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.omniBridgeAPI = new BridgeAPI("mainnet");
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.features = features;
+		this.bridgeConfig = bridgeConfig;
+	}
+
+	/**
+	 * Whether withdrawal fees of `assetId` are prefunded, so fee quoting can be skipped.
+	 * `feesPrefunded: true` applies to all tokens and overrides `prefundedFeesTokens`.
+	 */
+	private feesPrefunded(assetId: string): boolean {
+		return (
+			this.bridgeConfig.feesPrefunded === true ||
+			(this.bridgeConfig.prefundedFeesTokens?.includes(assetId) ?? false)
+		);
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -338,7 +349,8 @@ export class OmniBridge implements Bridge {
 		skipMinAmountValidation?: boolean;
 	}): Promise<void> {
 		const isFeeSubsidized = FEE_SUBSIDIZED_TOKENS.includes(args.assetId);
-		if (!isFeeSubsidized && !this.features.feesPrefunded) {
+		const isFeePrefunded = this.feesPrefunded(args.assetId);
+		if (!isFeeSubsidized && !isFeePrefunded) {
 			assert(
 				args.feeEstimation.amount > 0n,
 				`Invalid Omni Bridge fee: expected > 0, got ${args.feeEstimation.amount}`,
@@ -624,7 +636,10 @@ export class OmniBridge implements Bridge {
 
 		let amount = 0n;
 		let quote = null;
-		if (totalAmountToQuote > 0n && !this.features.feesPrefunded) {
+		if (
+			totalAmountToQuote > 0n &&
+			!this.feesPrefunded(args.withdrawalParams.assetId)
+		) {
 			quote = await getFeeQuote({
 				feeAmount: totalAmountToQuote,
 				feeAssetId: NEAR_NATIVE_ASSET_ID,

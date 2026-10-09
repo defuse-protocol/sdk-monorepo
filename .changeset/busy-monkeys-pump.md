@@ -2,6 +2,8 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Added the `features.feesPrefunded` SDK option, which skips quoting withdrawal fees. Use it when the account already holds the asset needed to cover them (e.g. NEAR, or the destination chain's native token for HOT Bridge).
+Reworked prefunded withdrawal fees configuration. When fees are prefunded, the account already holds the fee asset (e.g. NEAR, or the destination chain's native token for HOT Bridge), so the SDK skips quoting withdrawal fees.
+  - `bridgeConfigs` now supports `RouteEnum.HotBridge`, `RouteEnum.OmniBridge`, `RouteEnum.NearWithdrawal` and `RouteEnum.VirtualChain`.
+  - Added `bridgeConfigs[route].feesPrefunded` — prefunds fees for all tokens on the route, overriding `prefundedFeesTokens`.
 
-**BREAKING CHANGES:** Removed the `bridgeConfigs` SDK option (and the `BridgeConfigs` type), including Omni Bridge's `prefundedNativeFeeTokens`. Use `features: { feesPrefunded: true }` instead.
+**BREAKING CHANGES:** Renamed `bridgeConfigs[route].prefundedNativeFeeTokens` to `bridgeConfigs[route].prefundedFeesTokens`.

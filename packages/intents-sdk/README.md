@@ -16,6 +16,7 @@ interacting with various bridge implementations across multiple blockchains.
     - [Routes and Bridges](#routes-and-bridges)
     - [Route Types](#route-types)
     - [Fee Estimation](#fee-estimation)
+    - [Prefunded Withdrawal Fees](#prefunded-withdrawal-fees)
 - [Advanced Usage](#advanced-usage)
   - [Custom RPC URLs](#custom-rpc-urls)
   - [Feature Flags](#feature-flags)
@@ -346,6 +347,35 @@ console.log('Batch fees:', batchFees); // Array of FeeEstimation objects
 > **Note:** `estimateWithdrawalFee` also runs `validateWithdrawal` internally. If the withdrawal parameters are invalid (e.g. invalid destination address, amount below minimum, insufficient UTXOs), the bridge's `validateWithdrawal` will throw and the error will propagate from `estimateWithdrawalFee`.
 
 > **Note:** When `amount` is `0n` and `feeInclusive` is `false`, minimum amount validation is skipped. This is useful when the exact withdrawal amount is not yet known and you only need a fee estimate.
+
+#### Prefunded Withdrawal Fees
+
+Bridge fees (relayer fee, NEAR storage deposit) are paid in a fee asset: NEAR, or the destination chain's native token for HOT Bridge. By default, when you withdraw any other token, the SDK requests a quote to swap part of the withdrawn token into the fee asset and includes it in `feeEstimation.amount`.
+
+If your account already holds the fee asset, mark the fees as prefunded with `bridgeConfigs`. The SDK then skips the quote, `feeEstimation.amount` is `0n`, and the fees listed in `feeEstimation.underlyingFees` are paid from your fee asset balance. Supported routes: `RouteEnum.HotBridge`, `RouteEnum.OmniBridge`, `RouteEnum.NearWithdrawal` and `RouteEnum.VirtualChain`.
+
+| Option                | Description                                                                          |
+|-----------------------|--------------------------------------------------------------------------------------|
+| `prefundedFeesTokens` | Asset IDs whose withdrawal fees are prefunded                                        |
+| `feesPrefunded`       | When `true`, fees are prefunded for all tokens on the route; `prefundedFeesTokens` is ignored |
+
+```typescript
+import {IntentsSDK, RouteEnum} from '@defuse-protocol/intents-sdk';
+
+const sdk = new IntentsSDK({
+    referral: 'your-referral-code',
+    bridgeConfigs: {
+        // Fees prefunded for every token withdrawn via HOT Bridge
+        [RouteEnum.HotBridge]: {feesPrefunded: true},
+        // Fees prefunded only for the listed tokens; other tokens are still quoted
+        [RouteEnum.OmniBridge]: {
+            prefundedFeesTokens: ['nep141:usdt.tether-token.near'],
+        },
+    },
+});
+```
+
+> **Note:** When the withdrawn asset is the fee asset itself (e.g. `nep141:wrap.near`, or the destination chain's native token for HOT Bridge), the fee is still deducted from the withdrawal and included in `feeEstimation.amount`. The same applies to Omni Bridge UTXO fees (e.g. for BTC withdrawals), which are charged in the withdrawn token.
 
 ## Advanced Usage
 
