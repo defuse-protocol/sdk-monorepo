@@ -1,10 +1,16 @@
-import { configsByEnvironment } from "@defuse-protocol/internal-utils";
-import { describe, expect, it } from "vitest";
+import {
+	configsByEnvironment,
+	getNearNep141MinStorageBalance,
+	getNearNep141StorageBalance,
+} from "@defuse-protocol/internal-utils";
+import { describe, expect, it, vi } from "vitest";
 import {
 	InvalidDestinationAddressForWithdrawalError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 
+import { RouteEnum } from "../../constants/route-enum";
+import * as estimateFee from "../../lib/estimate-fee";
 import {
 	createPoaBridgeRoute,
 	createVirtualChainRoute,
@@ -19,6 +25,16 @@ import {
 	withdrawalParamsInvariant,
 } from "./aurora-engine-bridge-utils";
 import { zeroAddress } from "viem";
+
+vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("@defuse-protocol/internal-utils")>();
+	return {
+		...actual,
+		getNearNep141MinStorageBalance: vi.fn(),
+		getNearNep141StorageBalance: vi.fn(),
+	};
+});
 
 describe("AuroraEngineBridge", () => {
 	describe("supports()", () => {
@@ -126,6 +142,116 @@ describe("AuroraEngineBridge", () => {
 					destinationAddress,
 				}),
 			).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
+		});
+	});
+
+	describe("estimateWithdrawalFee()", () => {
+		it.each([
+			{ feesPrefunded: true },
+			{ prefundedFeesTokens: ["nep141:usdt.tether-token.near"] },
+			{ feesPrefunded: true, prefundedFeesTokens: ["nep141:other.near"] },
+		])(
+			"skips the fee quote but keeps the storage deposit fee when fees are prefunded via %o",
+			async (bridgeConfig) => {
+				const minStorageBalance = 1250000000000000000000n;
+				const userStorageBalance = 0n;
+				vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
+					minStorageBalance,
+				);
+				vi.mocked(getNearNep141StorageBalance).mockResolvedValue(
+					userStorageBalance,
+				);
+
+				const getFeeQuoteSpy = vi
+					.spyOn(estimateFee, "getFeeQuote")
+					.mockRejectedValue(
+						new Error("getFeeQuote must not be called when fees are prefunded"),
+					);
+
+				const bridge = new AuroraEngineBridge({
+					envConfig: configsByEnvironment.production,
+					bridgeConfig,
+					// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+					nearProvider: {} as any,
+				});
+
+				const result = await bridge.estimateWithdrawalFee({
+					withdrawalParams: {
+						assetId: "nep141:usdt.tether-token.near",
+						routeConfig: createVirtualChainRoute("aurora", null),
+					},
+				});
+
+				expect(getFeeQuoteSpy).not.toHaveBeenCalled();
+				expect(result.amount).toBe(0n);
+				expect(result.quote).toBeNull();
+				expect(
+					result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
+				).toBe(minStorageBalance - userStorageBalance);
+			},
+		);
+
+		it("quotes the fee for a token missing from prefundedFeesTokens", async () => {
+			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(100n);
+			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(0n);
+			const quote = {
+				quote_hash: "hash",
+				defuse_asset_identifier_in: "nep141:usdt.tether-token.near",
+				defuse_asset_identifier_out: "nep141:wrap.near",
+				amount_in: "5",
+				amount_out: "100",
+				expiration_time: "",
+			};
+			const getFeeQuoteSpy = vi
+				.spyOn(estimateFee, "getFeeQuote")
+				.mockResolvedValue(quote);
+
+			const bridge = new AuroraEngineBridge({
+				envConfig: configsByEnvironment.production,
+				bridgeConfig: { prefundedFeesTokens: ["nep141:other.near"] },
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+				nearProvider: {} as any,
+			});
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:usdt.tether-token.near",
+					routeConfig: createVirtualChainRoute("aurora", null),
+				},
+			});
+
+			expect(getFeeQuoteSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ feeAmount: 100n }),
+			);
+			expect(result).toEqual(expect.objectContaining({ amount: 5n, quote }));
+		});
+
+		it("still charges the storage deposit from the amount when withdrawing wrap.near", async () => {
+			const minStorageBalance = 1250000000000000000000n;
+			vi.mocked(getNearNep141MinStorageBalance).mockResolvedValue(
+				minStorageBalance,
+			);
+			vi.mocked(getNearNep141StorageBalance).mockResolvedValue(0n);
+
+			const bridge = new AuroraEngineBridge({
+				envConfig: configsByEnvironment.production,
+				bridgeConfig: { feesPrefunded: true },
+				// biome-ignore lint/suspicious/noExplicitAny: nearProvider not used, NEAR storage calls are mocked above
+				nearProvider: {} as any,
+			});
+
+			const result = await bridge.estimateWithdrawalFee({
+				withdrawalParams: {
+					assetId: "nep141:wrap.near",
+					routeConfig: createVirtualChainRoute("aurora", null),
+				},
+			});
+
+			expect(result.amount).toBe(minStorageBalance);
+			expect(result.quote).toBeNull();
+			expect(
+				result.underlyingFees[RouteEnum.VirtualChain]?.storageDepositFee,
+			).toBe(minStorageBalance);
 		});
 	});
 });

@@ -21,6 +21,7 @@ import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	ParsedAssetInfo,
@@ -73,6 +74,7 @@ export class HotBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected hotSdk: HotSdk;
 	protected solverRelayApiKey: string | undefined;
+	protected bridgeConfig: NonNullable<BridgeConfigs[RouteEnum["HotBridge"]]>;
 
 	// Nonces are immutable for a given tx, use LRU with fetchMethod for readthrough
 	private noncesCache: LRUCache<`${string}:${string}`, bigint[], NearTxInfo>;
@@ -81,10 +83,17 @@ export class HotBridge implements Bridge {
 		envConfig,
 		hotSdk,
 		solverRelayApiKey,
-	}: { envConfig: EnvConfig; hotSdk: HotSdk; solverRelayApiKey?: string }) {
+		bridgeConfig = {},
+	}: {
+		envConfig: EnvConfig;
+		hotSdk: HotSdk;
+		solverRelayApiKey?: string;
+		bridgeConfig?: BridgeConfigs[RouteEnum["HotBridge"]];
+	}) {
 		this.envConfig = envConfig;
 		this.hotSdk = hotSdk;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.bridgeConfig = bridgeConfig;
 		this.noncesCache = new LRUCache<
 			`${string}:${string}`,
 			bigint[],
@@ -99,6 +108,17 @@ export class HotBridge implements Bridge {
 				);
 			},
 		});
+	}
+
+	/**
+	 * Whether withdrawal fees of `assetId` are prefunded, so fee quoting can be skipped.
+	 * `feesPrefunded: true` applies to all tokens and overrides `prefundedFeesTokens`.
+	 */
+	private feesPrefunded(assetId: string): boolean {
+		return (
+			this.bridgeConfig.feesPrefunded === true ||
+			(this.bridgeConfig.prefundedFeesTokens?.includes(assetId) ?? false)
+		);
 	}
 
 	private getNoncesCacheKey(tx: NearTxInfo): `${string}:${string}` {
@@ -332,21 +352,40 @@ export class HotBridge implements Bridge {
 			},
 		);
 
-		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId || feeAmount === 0n
-				? null
-				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+		// No quote needed when the withdrawn asset is already the fee asset or when it is 0
+		if (feeAmount === 0n || args.withdrawalParams.assetId === feeAssetId) {
+			return {
+				amount: feeAmount,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
+				},
+			};
+		}
+
+		// Quote is not needed for prefunded fees, we assume account already holds fee asset.
+		if (this.feesPrefunded(args.withdrawalParams.assetId)) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },
+				},
+			};
+		}
+
+		const feeQuote = await getFeeQuote({
+			feeAmount,
+			feeAssetId,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			envConfig: this.envConfig,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
 			underlyingFees: {
 				[RouteEnum.HotBridge]: { relayerFee: feeAmount, blockNumber },

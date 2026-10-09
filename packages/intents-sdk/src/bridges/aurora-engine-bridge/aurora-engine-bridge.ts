@@ -19,6 +19,7 @@ import { parseDefuseAssetId } from "../../lib/parse-defuse-asset-id";
 import { validateAddress } from "../../lib/validateAddress";
 import type {
 	Bridge,
+	BridgeConfigs,
 	FeeEstimation,
 	NearTxInfo,
 	QuoteOptions,
@@ -38,19 +39,34 @@ export class AuroraEngineBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
+	protected bridgeConfig: NonNullable<BridgeConfigs[RouteEnum["VirtualChain"]]>;
 
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
+		bridgeConfig = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
 		solverRelayApiKey?: string;
+		bridgeConfig?: BridgeConfigs[RouteEnum["VirtualChain"]];
 	}) {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
+		this.bridgeConfig = bridgeConfig;
+	}
+
+	/**
+	 * Whether withdrawal fees of `assetId` are prefunded, so fee quoting can be skipped.
+	 * `feesPrefunded: true` applies to all tokens and overrides `prefundedFeesTokens`.
+	 */
+	private feesPrefunded(assetId: string): boolean {
+		return (
+			this.bridgeConfig.feesPrefunded === true ||
+			(this.bridgeConfig.prefundedFeesTokens?.includes(assetId) ?? false)
+		);
 	}
 
 	private is(routeConfig: RouteConfig): boolean {
@@ -180,21 +196,43 @@ export class AuroraEngineBridge implements Bridge {
 		const feeAssetId = NEAR_NATIVE_ASSET_ID;
 		const feeAmount = minStorageBalance - userStorageBalance;
 
-		const feeQuote =
-			args.withdrawalParams.assetId === feeAssetId
-				? null
-				: await getFeeQuote({
-						feeAmount,
-						feeAssetId,
-						tokenAssetId: args.withdrawalParams.assetId,
-						logger: args.logger,
-						envConfig: this.envConfig,
-						quoteOptions: args.quoteOptions,
-						solverRelayApiKey: this.solverRelayApiKey,
-					});
+		// No quote needed when the withdrawn asset is already the fee asset.
+		if (args.withdrawalParams.assetId === feeAssetId) {
+			return {
+				amount: feeAmount,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: feeAmount,
+					},
+				},
+			};
+		}
+
+		// Quote is not needed for prefunded fees, we assume account already holds fee asset.
+		if (this.feesPrefunded(args.withdrawalParams.assetId)) {
+			return {
+				amount: 0n,
+				quote: null,
+				underlyingFees: {
+					[RouteEnum.VirtualChain]: {
+						storageDepositFee: feeAmount,
+					},
+				},
+			};
+		}
+		const feeQuote = await getFeeQuote({
+			feeAmount,
+			feeAssetId,
+			tokenAssetId: args.withdrawalParams.assetId,
+			logger: args.logger,
+			envConfig: this.envConfig,
+			quoteOptions: args.quoteOptions,
+			solverRelayApiKey: this.solverRelayApiKey,
+		});
 
 		return {
-			amount: feeQuote ? BigInt(feeQuote.amount_in) : feeAmount,
+			amount: BigInt(feeQuote.amount_in),
 			quote: feeQuote,
 			underlyingFees: {
 				[RouteEnum.VirtualChain]: {

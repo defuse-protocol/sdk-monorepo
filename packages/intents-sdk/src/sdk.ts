@@ -161,6 +161,7 @@ export class IntentsSDK implements IIntentsSDK {
 				envConfig: this.envConfig,
 				nearProvider,
 				solverRelayApiKey: this.solverRelayApiKey,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.VirtualChain],
 			}),
 			new PoaBridge({
 				envConfig: this.envConfig,
@@ -169,6 +170,7 @@ export class IntentsSDK implements IIntentsSDK {
 			new HotBridge({
 				envConfig: this.envConfig,
 				solverRelayApiKey: this.solverRelayApiKey,
+				bridgeConfig: args.bridgeConfigs?.[RouteEnum.HotBridge],
 				hotSdk: new hotLabsOmniSdk_HotBridge({
 					apiKey: this.hotBridgeApiKey,
 					logger: console,

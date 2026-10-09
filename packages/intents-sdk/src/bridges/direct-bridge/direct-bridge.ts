@@ -50,6 +50,9 @@ export class DirectBridge implements Bridge {
 	protected envConfig: EnvConfig;
 	protected nearProvider: providers.Provider;
 	protected solverRelayApiKey: string | undefined;
+	protected bridgeConfig: NonNullable<
+		BridgeConfigs[RouteEnum["NearWithdrawal"]]
+	>;
 	private storageDepositCache = new LRUCache<
 		string,
 		[MinStorageBalance, StorageDepositBalance]
@@ -58,14 +61,11 @@ export class DirectBridge implements Bridge {
 		max: 100,
 		ttl: 600000,
 	});
-	private bridgeConfig: Required<
-		NonNullable<BridgeConfigs[RouteEnum["NearWithdrawal"]]>
-	>;
 	constructor({
 		envConfig,
 		nearProvider,
 		solverRelayApiKey,
-		bridgeConfig,
+		bridgeConfig = {},
 	}: {
 		envConfig: EnvConfig;
 		nearProvider: providers.Provider;
@@ -75,9 +75,18 @@ export class DirectBridge implements Bridge {
 		this.envConfig = envConfig;
 		this.nearProvider = nearProvider;
 		this.solverRelayApiKey = solverRelayApiKey;
-		this.bridgeConfig = {
-			prefundedNativeFeeTokens: bridgeConfig?.prefundedNativeFeeTokens ?? [],
-		};
+		this.bridgeConfig = bridgeConfig;
+	}
+
+	/**
+	 * Whether withdrawal fees of `assetId` are prefunded, so fee quoting can be skipped.
+	 * `feesPrefunded: true` applies to all tokens and overrides `prefundedFeesTokens`.
+	 */
+	private feesPrefunded(assetId: string): boolean {
+		return (
+			this.bridgeConfig.feesPrefunded === true ||
+			(this.bridgeConfig.prefundedFeesTokens?.includes(assetId) ?? false)
+		);
 	}
 
 	private is(routeConfig: RouteConfig) {
@@ -258,16 +267,13 @@ export class DirectBridge implements Bridge {
 			},
 		};
 
+		// No quote needed when the withdrawn asset is already the fee asset.
 		if (args.withdrawalParams.assetId === feeAssetId) {
 			return { amount: feeAmount, quote: null, underlyingFees };
 		}
 
-		// Skip quoting for prefunded tokens, storage deposit is not charged from the amount.
-		if (
-			this.bridgeConfig.prefundedNativeFeeTokens.includes(
-				args.withdrawalParams.assetId,
-			)
-		) {
+		// Quote is not needed for prefunded fees, we assume account already holds fee asset.
+		if (this.feesPrefunded(args.withdrawalParams.assetId)) {
 			return { amount: 0n, quote: null, underlyingFees };
 		}
 
