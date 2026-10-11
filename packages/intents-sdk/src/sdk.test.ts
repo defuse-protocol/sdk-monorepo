@@ -181,6 +181,29 @@ describe.concurrent("poa_bridge", () => {
 });
 
 describe.concurrent("hot_bridge", () => {
+	it.each([
+		{
+			name: "EVM",
+			assetId: "nep245:v2_1.omni.hot.tg:56_11111111111111111111",
+			address: EVM_TEST_ADDRESS,
+			expected: "11111111111111111112",
+		},
+		{
+			name: "Stellar",
+			assetId:
+				"nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz",
+			address: "GAUA7XL5K54CC2DDGP77FJ2YBHRJLT36CPZDXWPM6MP7MANOGG77PNJU",
+			expected: "1114wxgAxsZMgcigrJfNL8z1q1fqaZMQaiz1hhPQb4GcFRELffsLeNcoy4i",
+		},
+	])(
+		"encodeHotReceiver(): encodes $name receivers",
+		({ assetId, address, expected }) => {
+			const sdk = new IntentsSDK({ referral: "", intentSigner });
+
+			expect(sdk.encodeHotReceiver(assetId, address)).toBe(expected);
+		},
+	);
+
 	describe.sequential("estimateWithdrawalFee", () => {
 		beforeEach(() => {
 			vi.resetModules();
