@@ -6,6 +6,7 @@ import {
 	validateCardanoAddress,
 	validateDashAddress,
 	validateQuantusAddress,
+	validatePearlAddress,
 } from "./validateAddress";
 import { Chains } from "./caip2";
 describe("validateNearAddress", () => {
@@ -961,5 +962,58 @@ describe("validateQuantusAddress", () => {
 				Chains.Qtc,
 			),
 		).toBe(true);
+	});
+});
+
+describe("validatePearlAddress", () => {
+	// Mainnet P2TR vector from pearl-research-labs/pearl node/btcutil/address_test.go
+	const p2tr =
+		"prl1paardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnqksluzv";
+	// Same 32-byte program encoded as witness v2 (P2MR, BIP360)
+	const p2mr =
+		"prl1zaardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnq7dxnv8";
+
+	it.each([
+		["P2TR", p2tr],
+		["P2MR", p2mr],
+		["uppercase P2TR", p2tr.toUpperCase()],
+	])("accepts %s addresses", (_, address) => {
+		expect(validatePearlAddress(address)).toBe(true);
+	});
+
+	it.each([
+		// Rejected by pearld itself (address_test.go)
+		["segwit v0 P2WPKH", "prl1qw508d6qejxtdg4y5r3zarvary0c5xw7k34d768"],
+		[
+			"segwit v0 P2WSH",
+			"prl1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qew38es",
+		],
+		[
+			"unsupported witness version",
+			"prl1sqqqsyqcyq5rqwzqfpg9scrgwpugpzysnfw2xws",
+		],
+		["too short taproot program", "prl1pqypqxrhwktn"],
+		["20-byte P2MR program", "prl1zaardr2nczq0rx5rqpfwnvpzm497zvux6aj24gy"],
+		[
+			"P2MR with bech32 instead of bech32m checksum",
+			"prl1zaardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnqt3klf9",
+		],
+		[
+			"testnet P2MR",
+			"tprl1zaardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnq4zzdnj",
+		],
+		[
+			"bitcoin P2TR with the same program",
+			"bc1paardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnqwr2d5c",
+		],
+		["mixed case", `${p2tr.slice(0, 10).toUpperCase()}${p2tr.slice(10)}`],
+		["garbage", "not-a-pearl-address"],
+	])("rejects %s", (_, address) => {
+		expect(validatePearlAddress(address)).toBe(false);
+	});
+
+	it("routes Pearl chain to Pearl validation", () => {
+		expect(validateAddress(p2mr, Chains.Prl)).toBe(true);
+		expect(validateAddress(p2tr, Chains.Bitcoin)).toBe(false);
 	});
 });

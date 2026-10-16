@@ -83,6 +83,7 @@ describe("toPoaNetwork", () => {
 		[Chains.Adi, "eth:36900"],
 		[Chains.Hood, "eth:4663"],
 		[Chains.Arc, "eth:5042"],
+		[Chains.Prl, "prl:mainnet"],
 	])("maps %s to %s", (caip2, expected) => {
 		expect(toPoaNetwork(caip2)).toBe(expected);
 	});
@@ -116,6 +117,7 @@ describe("contractIdToCaip2", () => {
 		["movement.omft.near", Chains.Movement],
 		["cardano.omft.near", Chains.Cardano],
 		["ltc.omft.near", Chains.Litecoin],
+		["prl.omft.near", Chains.Prl],
 		["adi-0x9cb8142aebbcdc60af7c97af897a67a8f3ca71c2.omft.near", Chains.Adi],
 	])("maps %s to %s", (contractId, expected) => {
 		expect(contractIdToCaip2(contractId)).toBe(expected);

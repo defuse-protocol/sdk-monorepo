@@ -34,5 +34,6 @@
 	"solana:CDLtwKnaCoK157uaHQDj4fHu72AyD251": "fogo",
 	"eip155:4663": "hood",
 	"quantus:mainnet": "qtc",
-	"eip155:5042": "arc"
+	"eip155:5042": "arc",
+	"bip122:a18d3093b7ff618f0cdd073fa3d10374": "prl"
 }

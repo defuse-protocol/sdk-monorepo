@@ -47,6 +47,9 @@ export function compareAddresses(
 				return compareTronAddress(a, b);
 			case Chains.Stellar:
 				return a.toUpperCase() === b.toUpperCase();
+			// Pearl addresses are bech32m only, which is case-insensitive
+			case Chains.Prl:
+				return a.toLowerCase() === b.toLowerCase();
 			case Chains.Near:
 			case Chains.Bitcoin:
 			case Chains.BitcoinCash:

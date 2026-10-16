@@ -26,7 +26,8 @@ export type SupportedChainName =
 	| "cardano"
 	| "hood"
 	| "qtc"
-	| "arc";
+	| "arc"
+	| "prl";
 
 export type SupportedBridge = "direct" | "poa" | "aurora_engine" | "hot_omni";
 

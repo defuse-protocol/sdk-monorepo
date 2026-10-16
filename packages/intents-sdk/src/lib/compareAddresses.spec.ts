@@ -79,6 +79,12 @@ describe("compareAddresses", () => {
 		expect(compareAddresses(upper, lower, Chains.Stellar)).toBe(true);
 	});
 
+	it("compares Pearl bech32m addresses ignoring case", () => {
+		const lower =
+			"prl1paardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnqksluzv";
+		expect(compareAddresses(lower.toUpperCase(), lower, Chains.Prl)).toBe(true);
+	});
+
 	it("treats Solana addresses as case-sensitive", () => {
 		const a = "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1";
 		const b = a.toLowerCase();

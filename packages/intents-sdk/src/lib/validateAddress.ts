@@ -101,6 +101,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateDashAddress(address);
 		case Chains.Qtc:
 			return validateQuantusAddress(address);
+		case Chains.Prl:
+			return validatePearlAddress(address);
 		default:
 			blockchain satisfies never;
 			return false;
@@ -922,4 +924,40 @@ export function validateQuantusAddress(address: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+const PEARL_MAINNET_HRP = "prl";
+const PEARL_WITNESS_PROGRAM_LENGTH = 32;
+const PearlWitnessVersion = {
+	/** P2TR, Taproot (BIP341): `prl1p...` */
+	Taproot: 1,
+	/** P2MR, Pay-to-Merkle-Root (BIP360): `prl1z...` */
+	MerkleRoot: 2,
+} as const;
+
+/**
+ * Validates Pearl (PRL) mainnet addresses.
+ *
+ * Pearl consensus only allows Taproot (P2TR, witness v1) and P2MR (BIP360,
+ * witness v2) outputs, both bech32m-encoded with HRP `prl` and an exactly
+ * 32-byte witness program. Legacy base58, segwit v0 (bech32) and testnet /
+ * regtest (`tprl` / `rprl`) addresses are rejected.
+ *
+ * Mirrors `DecodeAddress` / `newAddress` in node/btcutil/address.go
+ * (pearl-research-labs/pearl).
+ */
+export function validatePearlAddress(address: string): boolean {
+	const decoded = bech32m.decodeUnsafe(address);
+	if (!decoded || decoded.prefix !== PEARL_MAINNET_HRP) return false;
+
+	const [witnessVersion, ...programWords] = decoded.words;
+	if (
+		witnessVersion !== PearlWitnessVersion.Taproot &&
+		witnessVersion !== PearlWitnessVersion.MerkleRoot
+	) {
+		return false;
+	}
+
+	const program = bech32m.fromWordsUnsafe(programWords);
+	return program?.length === PEARL_WITNESS_PROGRAM_LENGTH;
 }
