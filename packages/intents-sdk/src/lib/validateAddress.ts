@@ -1,6 +1,6 @@
 import { blake2b } from "@noble/hashes/blake2";
 import { sha256 } from "@noble/hashes/sha2";
-import { base58, bech32m, hex, bech32 } from "@scure/base";
+import { base32, base58, bech32m, hex, bech32 } from "@scure/base";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
 	isValidXAddress as xrp_isValidXAddress,
@@ -9,6 +9,7 @@ import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
 import {
+	crc16ccitt,
 	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
 	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
 	TON_WORKCHAIN_BASECHAIN,
@@ -331,8 +332,39 @@ function validateSolAddress(address: string) {
 	}
 }
 
-function validateDogeAddress(address: string) {
-	return /^[DA][1-9A-HJ-NP-Za-km-z]{25,33}$/.test(address);
+/**
+ * Validates Dogecoin mainnet addresses (Base58Check):
+ *   - P2PKH  starts with D       version 0x1e
+ *   - P2SH   starts with 9 or A  version 0x16
+ *
+ * Version bytes from dogecoin/dogecoin src/chainparams.cpp (CMainParams).
+ */
+function validateDogeAddress(address: string): boolean {
+	try {
+		const decoded = base58.decode(address);
+
+		// version (1) + hash160 (20) + checksum (4) = 25 bytes
+		if (decoded.length !== 25) return false;
+
+		const version = decoded[0];
+		if (
+			version !== 0x1e && // P2PKH
+			version !== 0x16 // P2SH
+		) {
+			return false;
+		}
+
+		const payload = decoded.subarray(0, 21);
+		const checksum = decoded.subarray(21, 25);
+		const expectedChecksum = sha256(sha256(payload)).subarray(0, 4);
+
+		for (let i = 0; i < 4; i++) {
+			if (checksum[i] !== expectedChecksum[i]) return false;
+		}
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 function validateXrpAddress(address: string) {
@@ -477,8 +509,29 @@ function validateSuiAddress(address: string) {
 	return /^(?:0x)?[a-fA-F0-9]{64}$/.test(address);
 }
 
-function validateStellarAddress(address: string) {
-	return /^G[A-Z0-9]{55}$/.test(address);
+/** SEP-23 version byte of an ed25519 account ID (STRKEY_PUBKEY, "G..."). */
+const STELLAR_STRKEY_PUBKEY = 6 << 3;
+
+/**
+ * Validates Stellar account IDs (G...). Per SEP-23, an account ID is the
+ * RFC 4648 base32 encoding, without padding, of 35 bytes:
+ *   version byte (1) + ed25519 public key (32) + CRC16-XModem (2)
+ *
+ * @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0023.md
+ */
+function validateStellarAddress(address: string): boolean {
+	try {
+		const decoded = base32.decode(address);
+		if (decoded.length !== 35) return false;
+		if (decoded[0] !== STELLAR_STRKEY_PUBKEY) return false;
+
+		// crc16ccitt (poly 0x1021, init 0) is CRC16-XModem. It returns
+		// [high, low]; StrKey stores the low byte first.
+		const [high, low] = crc16ccitt(decoded.subarray(0, 33));
+		return decoded[33] === low && decoded[34] === high;
+	} catch {
+		return false;
+	}
 }
 
 function validateAptosAddress(address: string) {
