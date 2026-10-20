@@ -350,6 +350,11 @@ describe("validateDogeAddress", () => {
 			expect(validateAddress(address, Chains.Dogecoin)).toBe(false);
 		}
 	});
+
+	it("rejects inputs of the wrong length without decoding them", () => {
+		expect(validateAddress("D".repeat(33), Chains.Dogecoin)).toBe(false);
+		expect(validateAddress("D".repeat(10_000), Chains.Dogecoin)).toBe(false);
+	});
 });
 
 describe("validateXrpAddress", () => {
@@ -624,6 +629,10 @@ describe("validateStellarAddress", () => {
 		for (const address of invalid) {
 			expect(validateAddress(address, Chains.Stellar)).toBe(false);
 		}
+	});
+	it("rejects inputs of the wrong length without decoding them", () => {
+		expect(validateAddress("G".repeat(55), Chains.Stellar)).toBe(false);
+		expect(validateAddress("G".repeat(10_000), Chains.Stellar)).toBe(false);
 	});
 });
 

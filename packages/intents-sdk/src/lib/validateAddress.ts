@@ -340,6 +340,10 @@ function validateSolAddress(address: string) {
  * Version bytes from dogecoin/dogecoin src/chainparams.cpp (CMainParams).
  */
 function validateDogeAddress(address: string): boolean {
+	// 25 bytes starting 0x16 or 0x1e always encode to 34 Base58 characters,
+	// so anything else is rejected before decoding.
+	if (address.length !== 34) return false;
+
 	try {
 		const decoded = base58.decode(address);
 
@@ -520,6 +524,10 @@ const STELLAR_STRKEY_PUBKEY = 6 << 3;
  * @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0023.md
  */
 function validateStellarAddress(address: string): boolean {
+	// 35 bytes encode to exactly 56 base32 characters (no padding), so
+	// anything else is rejected before decoding.
+	if (address.length !== 56) return false;
+
 	try {
 		const decoded = base32.decode(address);
 		if (decoded.length !== 35) return false;
