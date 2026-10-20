@@ -219,7 +219,9 @@ export class PoaBridge implements Bridge {
 		}
 
 		if (!args.skipMinAmountValidation) {
-			const minWithdrawalAmount = BigInt(tokenInfo.min_withdrawal_amount);
+			// A token configured with min_withdrawal_amount = 0 must still reject a zero amount.
+			const configuredMin = BigInt(tokenInfo.min_withdrawal_amount);
+			const minWithdrawalAmount = configuredMin > 0n ? configuredMin : 1n;
 			if (args.amount < minWithdrawalAmount) {
 				throw new MinWithdrawalAmountError(
 					minWithdrawalAmount,
