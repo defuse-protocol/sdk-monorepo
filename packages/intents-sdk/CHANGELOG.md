@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.91.0
+
+### Minor Changes
+
+- 15956e3: Support Miden in PoA
+
+### Patch Changes
+
+- Updated dependencies [15956e3]
+  - @defuse-protocol/internal-utils@0.43.0
+
 ## 0.90.0
 
 ### Minor Changes
