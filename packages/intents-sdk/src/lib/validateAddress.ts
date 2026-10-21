@@ -932,6 +932,7 @@ const MIDEN_ROUTING_PARAMETERS_HRP = "mrp";
 const MIDEN_ADDRESS_TYPE_ACCOUNT_ID = 232;
 // Account ID is serialized as 15 bytes: 8-byte prefix + 7 leading bytes of suffix
 const MIDEN_ACCOUNT_ID_LENGTH = 15;
+const MIDEN_ACCOUNT_ID_HEX_LENGTH = MIDEN_ACCOUNT_ID_LENGTH * 2;
 const MIDEN_ACCOUNT_ID_VERSION_1 = 1;
 // Goldilocks field modulus: the 8-byte prefix must be a valid field element
 const MIDEN_FELT_MODULUS = 0xffffffff00000001n;
@@ -939,12 +940,11 @@ const MIDEN_FELT_MODULUS = 0xffffffff00000001n;
 const MIDEN_BECH32_LIMIT = 1023;
 
 /**
- * Decodes a Miden account reference into its 15-byte account id, or null if
- * it is malformed. Two forms are accepted:
- * - hex account id: `0x` + 30 hex digits (`AccountId::from_hex`)
- * - mainnet bech32m address (see below)
+ * Decodes a Miden mainnet bech32m address into its 15-byte account id, or
+ * null if it is malformed. Hex account ids are NOT accepted here: they carry
+ * no network, see {@link decodeMidenHexAccountId}.
  *
- * Bech32m address mirrors `Address::decode` in 0xMiden/protocol (address/mod.rs): bech32m
+ * Mirrors `Address::decode` in 0xMiden/protocol (address/mod.rs): bech32m
  * with HRP "mm", payload = address type byte (232 = account id) followed by
  * the account id. If routing parameters are present they follow after "_"
  * as a separate bech32m string (HRP "mrp" omitted, own checksum). They don't
@@ -952,8 +952,6 @@ const MIDEN_BECH32_LIMIT = 1023;
  */
 export function decodeMidenAddress(address: string): Uint8Array | null {
 	try {
-		if (address.startsWith("0x")) return decodeMidenHexAccountId(address);
-
 		if (address.endsWith("_")) return null;
 
 		const [base, routingParams, ...rest] = address.split("_");
@@ -985,12 +983,24 @@ export function decodeMidenAddress(address: string): Uint8Array | null {
 	}
 }
 
-function decodeMidenHexAccountId(address: string): Uint8Array | null {
-	const digits = address.slice(2);
-	if (digits.length !== MIDEN_ACCOUNT_ID_LENGTH * 2) return null;
+/**
+ * Decodes a hex account id (`0x` + 30 hex digits, `AccountId::from_hex`)
+ * into the 15-byte account id, or null if it is malformed. Not accepted as a
+ * withdrawal destination by {@link validateAddress}; used to compare token
+ * accounts stored as hex with bech32 addresses.
+ */
+export function decodeMidenHexAccountId(value: string): Uint8Array | null {
+	try {
+		if (!value.startsWith("0x")) return null;
 
-	const accountId = hex.decode(digits.toLowerCase());
-	return isValidMidenAccountId(accountId) ? accountId : null;
+		const digits = value.slice(2);
+		if (digits.length !== MIDEN_ACCOUNT_ID_HEX_LENGTH) return null;
+
+		const accountId = hex.decode(digits.toLowerCase());
+		return isValidMidenAccountId(accountId) ? accountId : null;
+	} catch {
+		return null;
+	}
 }
 
 /**
