@@ -84,6 +84,11 @@ describe("toPoaNetwork", () => {
 		[Chains.Hood, "eth:4663"],
 		[Chains.Arc, "eth:5042"],
 		[Chains.Miden, "miden:mainnet"],
+		[Chains.Prl, "prl:mainnet"],
+		[Chains.Optimism, "eth:10"],
+		[Chains.Monad, "eth:143"],
+		[Chains.LayerX, "eth:196"],
+		[Chains.Scroll, "eth:534352"],
 	])("maps %s to %s", (caip2, expected) => {
 		expect(toPoaNetwork(caip2)).toBe(expected);
 	});
@@ -107,6 +112,22 @@ describe("contractIdToCaip2", () => {
 		["hood.omft.near", Chains.Hood],
 		["arc.omft.near", Chains.Arc],
 		["miden.omft.near", Chains.Miden],
+		[
+			"op-0x0b2c639c533813f4aa9d7837caf62653d097ff85.omft.near",
+			Chains.Optimism,
+		],
+		[
+			"monad-0x754704bc059f8c67012fed69bc8a327a5aafb603.omft.near",
+			Chains.Monad,
+		],
+		[
+			"xlayer-0x74b7f16337b8972027f6196a17a631ac6de26d22.omft.near",
+			Chains.LayerX,
+		],
+		[
+			"scroll-0x06efdbff2a14a7c8e15944d1f4a48f9f95f663a4.omft.near",
+			Chains.Scroll,
+		],
 		["btc.omft.near", Chains.Bitcoin],
 		["bch.omft.near", Chains.BitcoinCash],
 		["doge.omft.near", Chains.Dogecoin],
@@ -118,6 +139,7 @@ describe("contractIdToCaip2", () => {
 		["movement.omft.near", Chains.Movement],
 		["cardano.omft.near", Chains.Cardano],
 		["ltc.omft.near", Chains.Litecoin],
+		["prl.omft.near", Chains.Prl],
 		["adi-0x9cb8142aebbcdc60af7c97af897a67a8f3ca71c2.omft.near", Chains.Adi],
 	])("maps %s to %s", (contractId, expected) => {
 		expect(contractIdToCaip2(contractId)).toBe(expected);
