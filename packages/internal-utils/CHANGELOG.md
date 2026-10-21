@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.43.0
+
+### Minor Changes
+
+- 15956e3: Support Miden in PoA
+
 ## 0.42.0
 
 ### Minor Changes
