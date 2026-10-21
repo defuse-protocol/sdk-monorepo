@@ -3,7 +3,7 @@ import { base58, hex } from "@scure/base";
 import { getAddress } from "viem";
 import { Chains, type Chain } from "./caip2";
 import { tryParseTonAddress } from "./ton-address";
-import { decodeMidenAddress } from "./validateAddress";
+import { decodeMidenAddress, decodeMidenHexAccountId } from "./validateAddress";
 
 /**
  * Compares two addresses for equality using each chain's canonical form,
@@ -154,14 +154,23 @@ function decodeTronHexAddress(address: string): Uint8Array | null {
 	}
 }
 
-// Miden addresses may carry routing parameters after "_" that don't affect
-// which account they point to, so compare the decoded account ids.
+// Miden accounts can be referenced as hex id or bech32 address; routing
+// parameters after "_" don't affect which account an address points to, so
+// compare the decoded account ids.
 function compareMidenAddress(a: string, b: string): boolean {
-	const idA = decodeMidenAddress(a);
-	const idB = decodeMidenAddress(b);
-	if (idA === null || idB === null) return false;
+	try {
+		const idA = a.startsWith("0x")
+			? decodeMidenHexAccountId(a)
+			: decodeMidenAddress(a);
+		const idB = b.startsWith("0x")
+			? decodeMidenHexAccountId(b)
+			: decodeMidenAddress(b);
+		if (idA === null || idB === null) return false;
 
-	return bytesEqual(idA, idB);
+		return bytesEqual(idA, idB);
+	} catch {
+		return false;
+	}
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

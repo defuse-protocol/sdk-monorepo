@@ -325,10 +325,6 @@ describe("PoaBridge", () => {
 				assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
 				destinationAddress: "mm1aqu036cju6kddyfsvhpk3had7yf7dee4",
 			}, // Miden token, another account (bech32)
-			{
-				assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
-				destinationAddress: "0x38f8eb12e6acd6913065c368dfadf1",
-			}, // Miden token, another account (hex)
 			// BCH tests commented out until POA Bridge API supports BCH
 			// {
 			// 	assetId: "nep141:bch.omft.near",
@@ -371,10 +367,6 @@ describe("PoaBridge", () => {
 			}, // exact match
 			{
 				assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
-				destinationAddress: "0x4cbdcaffe75f0a317482224dae6436",
-			}, // Miden: same hex account id
-			{
-				assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
 				destinationAddress: "mm1apxtmjhlua0s5vt5sg3ymtnyxcgmtrq7",
 			}, // Miden: origin is hex, destination is the same account in bech32
 			{
@@ -398,6 +390,21 @@ describe("PoaBridge", () => {
 				).rejects.toThrow(DestinationAddressMatchesTokenAddressError);
 			},
 		);
+
+		it("rejects hex account id as Miden destination", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					amount: 50000000000n,
+					assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
+					destinationAddress: "0x38f8eb12e6acd6913065c368dfadf1",
+				}),
+			).rejects.toThrow(InvalidDestinationAddressForWithdrawalError);
+		});
 
 		it("allows withdrawing a native token to an address matching its literal `origin_chain_address`", async () => {
 			const bridge = new PoaBridge({
