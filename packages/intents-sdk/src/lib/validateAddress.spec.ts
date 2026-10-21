@@ -1,3 +1,4 @@
+import { bech32, bech32m } from "@scure/base";
 import { describe, expect, it } from "vitest";
 import {
 	validateAddress,
@@ -961,5 +962,120 @@ describe("validateQuantusAddress", () => {
 				Chains.Qtc,
 			),
 		).toBe(true);
+	});
+});
+
+// Routing parameter suffixes are from 0xMiden/protocol docs (address/mod.rs).
+// The account id is a real testnet address re-encoded with the mainnet HRP
+// (the id in the docs example has an invalid version).
+describe("validateMidenAddress", () => {
+	const accountId = bech32m.encodeFromBytes(
+		"mm",
+		bech32m.decodeToBytes("mtst1aqu036cju6kddyfsvhpk3had7y7ck8sy").bytes,
+	);
+	const withBasicWalletParams = `${accountId}_qruqqypuyph`;
+	const withEncryptionKey = `${accountId}_qruqqqgqjmsgjsh3687mt2w0qtqunxt3th442j48qwdnezl0fv6qm3x9c8zqsv7pku`;
+	// account id bytes without the address type byte
+	const idBytes = bech32m.decodeToBytes(accountId).bytes.slice(1);
+
+	it("accepts account id, with and without routing parameters", () => {
+		for (const address of [
+			accountId,
+			withBasicWalletParams,
+			withEncryptionKey,
+		]) {
+			expect(validateAddress(address, Chains.Miden)).toBe(true);
+		}
+	});
+
+	it("accepts uppercase address", () => {
+		expect(validateAddress(accountId.toUpperCase(), Chains.Miden)).toBe(true);
+	});
+
+	it("rejects broken checksums in account id and routing parameters", () => {
+		expect(validateAddress(accountId.slice(1), Chains.Miden)).toBe(false);
+		expect(
+			validateAddress(accountId.slice(0, 7) + accountId.slice(8), Chains.Miden),
+		).toBe(false);
+		expect(validateAddress(`${accountId}_qruqqypuyq`, Chains.Miden)).toBe(
+			false,
+		);
+	});
+
+	it("rejects trailing or repeated separator", () => {
+		expect(validateAddress(`${accountId}_`, Chains.Miden)).toBe(false);
+		expect(
+			validateAddress(`${withBasicWalletParams}_qruqqypuyph`, Chains.Miden),
+		).toBe(false);
+	});
+
+	it("rejects unknown address type", () => {
+		expect(
+			validateAddress(
+				bech32m.encodeFromBytes("mm", Uint8Array.of(250)),
+				Chains.Miden,
+			),
+		).toBe(false);
+	});
+
+	it("rejects plain bech32 checksum", () => {
+		expect(
+			validateAddress(
+				bech32.encodeFromBytes("mm", Uint8Array.of(232, ...idBytes)),
+				Chains.Miden,
+			),
+		).toBe(false);
+	});
+
+	it("rejects wrong data length", () => {
+		expect(
+			validateAddress(
+				bech32m.encodeFromBytes("mm", Uint8Array.of(232, ...idBytes, 5)),
+				Chains.Miden,
+			),
+		).toBe(false);
+	});
+
+	it("rejects invalid account id: unknown version, suffix MSB set, prefix outside field", () => {
+		const encode = (patch: (id: Uint8Array) => void) => {
+			const id = Uint8Array.from(idBytes);
+			patch(id);
+			return bech32m.encodeFromBytes("mm", Uint8Array.of(232, ...id));
+		};
+
+		expect(
+			validateAddress(
+				encode((id) => {
+					id[7] = (id[7] ?? 0) & 0xf0;
+				}),
+				Chains.Miden,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				encode((id) => {
+					id[8] = (id[8] ?? 0) | 0x80;
+				}),
+				Chains.Miden,
+			),
+		).toBe(false);
+		expect(
+			validateAddress(
+				encode((id) => {
+					id.set([0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01]);
+				}),
+				Chains.Miden,
+			),
+		).toBe(false);
+	});
+
+	it("rejects other networks and empty input", () => {
+		expect(
+			validateAddress(
+				bech32m.encodeFromBytes("mtst", Uint8Array.of(232, ...idBytes)),
+				Chains.Miden,
+			),
+		).toBe(false);
+		expect(validateAddress("", Chains.Miden)).toBe(false);
 	});
 });

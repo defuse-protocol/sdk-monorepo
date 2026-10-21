@@ -1,4 +1,4 @@
-import { base64urlnopad } from "@scure/base";
+import { base64urlnopad, bech32m } from "@scure/base";
 import { describe, expect, it } from "vitest";
 import { Chains } from "./caip2";
 import { compareAddresses } from "./compareAddresses";
@@ -84,5 +84,36 @@ describe("compareAddresses", () => {
 		const b = a.toLowerCase();
 		expect(compareAddresses(a, b, Chains.Solana)).toBe(false);
 		expect(compareAddresses(a, a, Chains.Solana)).toBe(true);
+	});
+});
+
+describe("compareAddresses Miden", () => {
+	const accountId = bech32m.encodeFromBytes(
+		"mm",
+		bech32m.decodeToBytes("mtst1aqu036cju6kddyfsvhpk3had7y7ck8sy").bytes,
+	);
+
+	it("treats routing suffix and case as irrelevant", () => {
+		expect(
+			compareAddresses(
+				accountId,
+				`${accountId.toUpperCase()}_qruqqypuyph`,
+				Chains.Miden,
+			),
+		).toBe(true);
+	});
+
+	it("returns false for different accounts or malformed input", () => {
+		const other = bech32m.decodeToBytes(accountId).bytes;
+		other[1] = (other[1] ?? 0) ^ 0xff;
+
+		expect(
+			compareAddresses(
+				accountId,
+				bech32m.encodeFromBytes("mm", other),
+				Chains.Miden,
+			),
+		).toBe(false);
+		expect(compareAddresses(accountId, "garbage", Chains.Miden)).toBe(false);
 	});
 });
