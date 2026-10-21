@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.92.0
+
+### Minor Changes
+
+- 3e7a500: Adjust Miden validate address to accept only bech32
+
 ## 0.91.0
 
 ### Minor Changes
