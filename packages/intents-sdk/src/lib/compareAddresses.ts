@@ -3,6 +3,7 @@ import { base58, hex } from "@scure/base";
 import { getAddress } from "viem";
 import { Chains, type Chain } from "./caip2";
 import { tryParseTonAddress } from "./ton-address";
+import { decodeMidenAddress } from "./validateAddress";
 
 /**
  * Compares two addresses for equality using each chain's canonical form,
@@ -45,6 +46,8 @@ export function compareAddresses(
 				return compareTonAddress(a, b);
 			case Chains.Tron:
 				return compareTronAddress(a, b);
+			case Chains.Miden:
+				return compareMidenAddress(a, b);
 			case Chains.Stellar:
 				return a.toUpperCase() === b.toUpperCase();
 			case Chains.Near:
@@ -149,6 +152,16 @@ function decodeTronHexAddress(address: string): Uint8Array | null {
 	} catch {
 		return null;
 	}
+}
+
+// Miden addresses may carry routing parameters after "_" that don't affect
+// which account they point to, so compare the decoded account ids.
+function compareMidenAddress(a: string, b: string): boolean {
+	const idA = decodeMidenAddress(a);
+	const idB = decodeMidenAddress(b);
+	if (idA === null || idB === null) return false;
+
+	return bytesEqual(idA, idB);
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
