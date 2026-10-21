@@ -992,6 +992,27 @@ describe("validateMidenAddress", () => {
 		expect(validateAddress(accountId.toUpperCase(), Chains.Miden)).toBe(true);
 	});
 
+	it("accepts hex account id equal to the bech32 one", () => {
+		expect(
+			validateAddress("0x4cbdcaffe75f0a317482224dae6436", Chains.Miden),
+		).toBe(true);
+	});
+
+	it("rejects malformed hex account ids", () => {
+		for (const address of [
+			"0x",
+			"0x4cbdcaffe75f0a317482224dae64",
+			"0x4cbdcaffe75f0a317482224dae643600",
+			"0x4cbdcaffe75f0a317482224dae64zz",
+			// version nibble is 0
+			"0x4cbdcaffe75f0a307482224dae6436",
+			// no 0x prefix
+			"4cbdcaffe75f0a317482224dae6436",
+		]) {
+			expect(validateAddress(address, Chains.Miden)).toBe(false);
+		}
+	});
+
 	it("rejects broken checksums in account id and routing parameters", () => {
 		expect(validateAddress(accountId.slice(1), Chains.Miden)).toBe(false);
 		expect(

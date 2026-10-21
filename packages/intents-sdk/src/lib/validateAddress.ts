@@ -939,10 +939,12 @@ const MIDEN_FELT_MODULUS = 0xffffffff00000001n;
 const MIDEN_BECH32_LIMIT = 1023;
 
 /**
- * Decodes a Miden mainnet address into its 15-byte account id, or null if
- * the address is malformed.
+ * Decodes a Miden account reference into its 15-byte account id, or null if
+ * it is malformed. Two forms are accepted:
+ * - hex account id: `0x` + 30 hex digits (`AccountId::from_hex`)
+ * - mainnet bech32m address (see below)
  *
- * Mirrors `Address::decode` in 0xMiden/protocol (address/mod.rs): bech32m
+ * Bech32m address mirrors `Address::decode` in 0xMiden/protocol (address/mod.rs): bech32m
  * with HRP "mm", payload = address type byte (232 = account id) followed by
  * the account id. If routing parameters are present they follow after "_"
  * as a separate bech32m string (HRP "mrp" omitted, own checksum). They don't
@@ -950,6 +952,8 @@ const MIDEN_BECH32_LIMIT = 1023;
  */
 export function decodeMidenAddress(address: string): Uint8Array | null {
 	try {
+		if (address.startsWith("0x")) return decodeMidenHexAccountId(address);
+
 		if (address.endsWith("_")) return null;
 
 		const [base, routingParams, ...rest] = address.split("_");
@@ -979,6 +983,14 @@ export function decodeMidenAddress(address: string): Uint8Array | null {
 	} catch {
 		return null;
 	}
+}
+
+function decodeMidenHexAccountId(address: string): Uint8Array | null {
+	const digits = address.slice(2);
+	if (digits.length !== MIDEN_ACCOUNT_ID_LENGTH * 2) return null;
+
+	const accountId = hex.decode(digits.toLowerCase());
+	return isValidMidenAccountId(accountId) ? accountId : null;
 }
 
 /**
