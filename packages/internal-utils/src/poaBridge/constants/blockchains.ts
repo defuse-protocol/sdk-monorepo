@@ -39,6 +39,7 @@ export const PoaBridgeNetworkReference = {
 	QTC: "qtc:mainnet",
 	ARC: "eth:5042",
 	MIDEN: "miden:mainnet",
+	SCROLL: "eth:534352",
 } as const;
 
 export const VirtualNetworkReference = {
@@ -59,8 +60,6 @@ export const BlockchainEnum = {
 	HYPERLIQUID: "hyperliquid:999",
 	/* PLASMA is operated by HOT bridge */
 	PLASMA: "eth:9745",
-	/* SCROLL is operated by HOT bridge */
-	SCROLL: "eth:534352",
 } as const;
 
 export type BlockchainEnum =
