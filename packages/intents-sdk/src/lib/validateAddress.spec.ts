@@ -1085,8 +1085,9 @@ describe("validateMidenAddress", () => {
 		).toBe(false);
 		expect(validateAddress("", Chains.Miden)).toBe(false);
 	});
+});
 
-	describe("validatePearlAddress", () => {
+describe("validatePearlAddress", () => {
 	// Mainnet P2TR vector from pearl-research-labs/pearl node/btcutil/address_test.go
 	const p2tr =
 		"prl1paardr2nczq0rx5rqpfwnvpzm497zvux64y0f7wjgcs7xuuuh2nnqksluzv";
@@ -1137,5 +1138,4 @@ describe("validateMidenAddress", () => {
 		expect(validateAddress(p2mr, Chains.Prl)).toBe(true);
 		expect(validateAddress(p2tr, Chains.Bitcoin)).toBe(false);
 	});
-});
 });

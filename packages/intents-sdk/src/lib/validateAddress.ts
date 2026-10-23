@@ -1028,7 +1028,6 @@ export function validateMidenAddress(address: string): boolean {
 	return decodeMidenAddress(address) !== null;
 }
 
-
 const PEARL_MAINNET_HRP = "prl";
 const PEARL_WITNESS_PROGRAM_LENGTH = 32;
 const PearlWitnessVersion = {
