@@ -1,5 +1,22 @@
 # @defuse-protocol/intents-sdk
 
+## 0.92.0
+
+### Minor Changes
+
+- 3e7a500: Adjust Miden validate address to accept only bech32
+
+## 0.91.0
+
+### Minor Changes
+
+- 15956e3: Support Miden in PoA
+
+### Patch Changes
+
+- Updated dependencies [15956e3]
+  - @defuse-protocol/internal-utils@0.43.0
+
 ## 0.90.0
 
 ### Minor Changes

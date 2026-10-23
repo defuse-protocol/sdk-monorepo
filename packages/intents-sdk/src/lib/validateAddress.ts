@@ -101,6 +101,8 @@ export function validateAddress(address: string, blockchain: Chain): boolean {
 			return validateDashAddress(address);
 		case Chains.Qtc:
 			return validateQuantusAddress(address);
+		case Chains.Miden:
+			return validateMidenAddress(address);
 		case Chains.Prl:
 			return validatePearlAddress(address);
 		default:
@@ -925,6 +927,107 @@ export function validateQuantusAddress(address: string): boolean {
 		return false;
 	}
 }
+
+const MIDEN_MAINNET_HRP = "mm";
+const MIDEN_ROUTING_PARAMETERS_HRP = "mrp";
+// 232 = 0b1110_1000, makes every account address start with "mm1a"
+const MIDEN_ADDRESS_TYPE_ACCOUNT_ID = 232;
+// Account ID is serialized as 15 bytes: 8-byte prefix + 7 leading bytes of suffix
+const MIDEN_ACCOUNT_ID_LENGTH = 15;
+const MIDEN_ACCOUNT_ID_HEX_LENGTH = MIDEN_ACCOUNT_ID_LENGTH * 2;
+const MIDEN_ACCOUNT_ID_VERSION_1 = 1;
+// Goldilocks field modulus: the 8-byte prefix must be a valid field element
+const MIDEN_FELT_MODULUS = 0xffffffff00000001n;
+// bech32m code length limit used by miden-protocol (default in @scure/base is 90)
+const MIDEN_BECH32_LIMIT = 1023;
+
+/**
+ * Decodes a Miden mainnet bech32m address into its 15-byte account id, or
+ * null if it is malformed. Hex account ids are NOT accepted here: they carry
+ * no network, see {@link decodeMidenHexAccountId}.
+ *
+ * Mirrors `Address::decode` in 0xMiden/protocol (address/mod.rs): bech32m
+ * with HRP "mm", payload = address type byte (232 = account id) followed by
+ * the account id. If routing parameters are present they follow after "_"
+ * as a separate bech32m string (HRP "mrp" omitted, own checksum). They don't
+ * identify the account, so only their checksum is verified.
+ */
+export function decodeMidenAddress(address: string): Uint8Array | null {
+	try {
+		if (address.endsWith("_")) return null;
+
+		const [base, routingParams, ...rest] = address.split("_");
+		if (base === undefined || rest.length > 0) return null;
+
+		if (routingParams !== undefined) {
+			const decoded = bech32m.decode(
+				`${MIDEN_ROUTING_PARAMETERS_HRP}1${routingParams}`,
+				MIDEN_BECH32_LIMIT,
+			);
+			if (decoded.prefix !== MIDEN_ROUTING_PARAMETERS_HRP) return null;
+		}
+
+		if (!base.includes("1")) return null;
+		const { prefix, words } = bech32m.decode(
+			base as `${string}1${string}`,
+			MIDEN_BECH32_LIMIT,
+		);
+		if (prefix !== MIDEN_MAINNET_HRP) return null;
+
+		const bytes = bech32m.fromWords(words);
+		if (bytes.length !== 1 + MIDEN_ACCOUNT_ID_LENGTH) return null;
+		if (bytes[0] !== MIDEN_ADDRESS_TYPE_ACCOUNT_ID) return null;
+
+		const accountId = bytes.slice(1);
+		return isValidMidenAccountId(accountId) ? accountId : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Decodes a hex account id (`0x` + 30 hex digits, `AccountId::from_hex`)
+ * into the 15-byte account id, or null if it is malformed. Not accepted as a
+ * withdrawal destination by {@link validateAddress}; used to compare token
+ * accounts stored as hex with bech32 addresses.
+ */
+export function decodeMidenHexAccountId(value: string): Uint8Array | null {
+	try {
+		if (!value.startsWith("0x")) return null;
+
+		const digits = value.slice(2);
+		if (digits.length !== MIDEN_ACCOUNT_ID_HEX_LENGTH) return null;
+
+		const accountId = hex.decode(digits.toLowerCase());
+		return isValidMidenAccountId(accountId) ? accountId : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Mirrors `AccountIdV1::try_from([u8; 15])` in 0xMiden/protocol
+ * (account/account_id/v1/mod.rs). Layout (big-endian):
+ *   prefix (8 bytes): [hash | callback flag | account type | version (4 bits)]
+ *   suffix (7 bytes, shifted left by 8 bits): [zero bit | hash]
+ * Both private and public account types are valid.
+ */
+function isValidMidenAccountId(accountId: Uint8Array): boolean {
+	const prefixByte = accountId[7];
+	const suffixByte = accountId[8];
+	if (prefixByte === undefined || suffixByte === undefined) return false;
+
+	if ((prefixByte & 0x0f) !== MIDEN_ACCOUNT_ID_VERSION_1) return false;
+	if ((suffixByte & 0x80) !== 0) return false;
+
+	const prefix = BigInt(`0x${hex.encode(accountId.subarray(0, 8))}`);
+	return prefix < MIDEN_FELT_MODULUS;
+}
+
+export function validateMidenAddress(address: string): boolean {
+	return decodeMidenAddress(address) !== null;
+}
+
 
 const PEARL_MAINNET_HRP = "prl";
 const PEARL_WITNESS_PROGRAM_LENGTH = 32;

@@ -27,6 +27,7 @@ export type SupportedChainName =
 	| "hood"
 	| "qtc"
 	| "arc"
+	| "miden"
 	| "prl";
 
 export type SupportedBridge = "direct" | "poa" | "aurora_engine" | "hot_omni";

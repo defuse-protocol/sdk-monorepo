@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.14.0
+
+### Minor Changes
+
+- 15956e3: Support Miden in PoA
+
 ## 1.13.0
 
 ### Minor Changes

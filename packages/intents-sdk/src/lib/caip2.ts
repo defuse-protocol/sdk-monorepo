@@ -43,6 +43,7 @@ export const Chains = {
 	Hood: "eip155:4663",
 	Qtc: "quantus:mainnet",
 	Arc: "eip155:5042",
+	Miden: "miden:mainnet",
 	Prl: "bip122:a18d3093b7ff618f0cdd073fa3d10374",
 } as const;
 

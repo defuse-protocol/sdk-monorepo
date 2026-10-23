@@ -38,6 +38,7 @@ export const PoaBridgeNetworkReference = {
 	HOOD: "eth:4663",
 	QTC: "qtc:mainnet",
 	ARC: "eth:5042",
+	MIDEN: "miden:mainnet",
 	PRL: "prl:mainnet",
 } as const;
 

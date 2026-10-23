@@ -3,6 +3,7 @@ import { base58, hex } from "@scure/base";
 import { getAddress } from "viem";
 import { Chains, type Chain } from "./caip2";
 import { tryParseTonAddress } from "./ton-address";
+import { decodeMidenAddress, decodeMidenHexAccountId } from "./validateAddress";
 
 /**
  * Compares two addresses for equality using each chain's canonical form,
@@ -45,6 +46,8 @@ export function compareAddresses(
 				return compareTonAddress(a, b);
 			case Chains.Tron:
 				return compareTronAddress(a, b);
+			case Chains.Miden:
+				return compareMidenAddress(a, b);
 			case Chains.Stellar:
 				return a.toUpperCase() === b.toUpperCase();
 			// Pearl addresses are bech32m only, which is case-insensitive
@@ -151,6 +154,25 @@ function decodeTronHexAddress(address: string): Uint8Array | null {
 		return decoded[0] === 0x41 ? decoded : null;
 	} catch {
 		return null;
+	}
+}
+
+// Miden accounts can be referenced as hex id or bech32 address; routing
+// parameters after "_" don't affect which account an address points to, so
+// compare the decoded account ids.
+function compareMidenAddress(a: string, b: string): boolean {
+	try {
+		const idA = a.startsWith("0x")
+			? decodeMidenHexAccountId(a)
+			: decodeMidenAddress(a);
+		const idB = b.startsWith("0x")
+			? decodeMidenHexAccountId(b)
+			: decodeMidenAddress(b);
+		if (idA === null || idB === null) return false;
+
+		return bytesEqual(idA, idB);
+	} catch {
+		return false;
 	}
 }
 
