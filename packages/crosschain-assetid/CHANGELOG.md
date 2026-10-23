@@ -1,5 +1,11 @@
 # @defuse-protocol/crosschain-assetid
 
+## 1.15.0
+
+### Minor Changes
+
+- 28de6a0: Pearl (PRL) PoA Support
+
 ## 1.14.0
 
 ### Minor Changes
