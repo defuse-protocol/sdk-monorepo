@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.93.0
+
+### Minor Changes
+
+- 28de6a0: Pearl (PRL) PoA Support
+
+### Patch Changes
+
+- Updated dependencies [28de6a0]
+  - @defuse-protocol/internal-utils@0.44.0
+
 ## 0.92.0
 
 ### Minor Changes
