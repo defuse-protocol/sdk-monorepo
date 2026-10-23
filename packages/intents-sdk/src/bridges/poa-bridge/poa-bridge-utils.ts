@@ -71,6 +71,7 @@ const caip2Mapping = {
 	[Chains.Qtc]: "qtc:mainnet",
 	[Chains.Arc]: "eth:5042",
 	[Chains.Miden]: "miden:mainnet",
+	[Chains.Prl]: "prl:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -109,6 +110,7 @@ const tokenPrefixMapping = {
 	qtc: Chains.Qtc,
 	arc: Chains.Arc,
 	miden: Chains.Miden,
+	prl: Chains.Prl,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {
