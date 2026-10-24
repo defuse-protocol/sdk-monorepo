@@ -515,6 +515,74 @@ describe("PoaBridge", () => {
 			).rejects.toThrow(MinWithdrawalAmountError);
 		});
 
+		it("throws MinWithdrawalAmountError for a zero amount when the token's minimum is 0", async () => {
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:btc.omft.near",
+						min_withdrawal_amount: "0",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+						origin_chain_address: "",
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:btc.omft.near",
+					amount: 0n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+				}),
+			).rejects.toMatchObject({
+				name: "MinWithdrawalAmountError",
+				minAmount: 1n,
+				requestedAmount: 0n,
+			});
+		});
+
+		it("passes a non-zero amount when the token's minimum is 0", async () => {
+			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
+				tokens: [
+					{
+						intents_token_id: "nep141:btc.omft.near",
+						min_withdrawal_amount: "0",
+						standard: "",
+						near_token_id: "",
+						asset_name: "",
+						decimals: 0,
+						min_deposit_amount: "",
+						withdrawal_fee: "",
+						defuse_asset_identifier: "",
+						origin_chain_address: "",
+					},
+				],
+			});
+
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			await expect(
+				bridge.validateWithdrawal({
+					assetId: "nep141:btc.omft.near",
+					amount: 1n,
+					destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+				}),
+			).resolves.toBeUndefined();
+		});
+
 		it("Not throw MinWithdrawalAmountError when skipMinAmountValidation is true", async () => {
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
 				tokens: [
