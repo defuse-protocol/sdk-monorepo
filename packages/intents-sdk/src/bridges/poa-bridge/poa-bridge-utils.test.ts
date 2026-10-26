@@ -88,6 +88,8 @@ describe("toPoaNetwork", () => {
 		[Chains.Monad, "eth:143"],
 		[Chains.LayerX, "eth:196"],
 		[Chains.Scroll, "eth:534352"],
+		[Chains.TON, "ton:mainnet"],
+		[Chains.Stellar, "stellar:mainnet"],
 	])("maps %s to %s", (caip2, expected) => {
 		expect(toPoaNetwork(caip2)).toBe(expected);
 	});
@@ -111,6 +113,8 @@ describe("contractIdToCaip2", () => {
 		["hood.omft.near", Chains.Hood],
 		["arc.omft.near", Chains.Arc],
 		["miden.omft.near", Chains.Miden],
+		["ton.omft.near", Chains.TON],
+		["stellar.omft.near", Chains.Stellar],
 		[
 			"op-0x0b2c639c533813f4aa9d7837caf62653d097ff85.omft.near",
 			Chains.Optimism,

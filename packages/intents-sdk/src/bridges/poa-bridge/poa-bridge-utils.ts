@@ -75,6 +75,8 @@ const caip2Mapping = {
 	[Chains.Monad]: "eth:143",
 	[Chains.LayerX]: "eth:196",
 	[Chains.Scroll]: "eth:534352",
+	[Chains.TON]: "ton:mainnet",
+	[Chains.Stellar]: "stellar:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -117,6 +119,8 @@ const tokenPrefixMapping = {
 	monad: Chains.Monad,
 	xlayer: Chains.LayerX,
 	scroll: Chains.Scroll,
+	ton: Chains.TON,
+	stellar: Chains.Stellar,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {

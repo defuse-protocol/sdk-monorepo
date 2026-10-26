@@ -3,4 +3,4 @@
 "@defuse-protocol/intents-sdk": minor
 ---
 
-Add Optimism, Monad, XLayer, ADI, and Scroll support via PoA.
+Add Optimism, Monad, XLayer, ADI, Scroll, TON, and Stellar support via PoA.
