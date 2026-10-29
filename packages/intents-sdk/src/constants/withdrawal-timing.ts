@@ -22,16 +22,32 @@ const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
 	"tvm:-239": 53, // ton
 	"near:mainnet": 356, // near
 	"bip122:12a765e31ffd4059bada1e25190f6e98": 2385, // litecoin
-	"eip155:143": 651, // monad
+	"eip155:143": 22, // monad
 	"eip155:43114": 657, // avalanche
 	"stellar:pubnet": 50, // stellar
-	"eip155:10": 651, // optimism
+	"eip155:10": 23, // optimism
 	"bip122:1a91e3dace36e2be3bf030a65679fe82": 1970, // dogecoin
 	"sui:mainnet": 752, // sui
 	"eip155:80085": 579, // berachain
 	"eip155:100": 3308, // gnosis
 	"aptos:mainnet": 394, // aptos
 	"cip34:1-764824073": 807, // cardano
+};
+
+/**
+ * Route-specific p99 values (in seconds), take precedence over WITHDRAWAL_P99_BY_CHAIN.
+ */
+const WITHDRAWAL_P99_BY_ROUTE: Partial<
+	Record<RouteEnumValues, Partial<Record<Chain, number>>>
+> = {
+	[RouteEnum.PoaBridge]: {
+		// Migrated from HOT, uses Base p99 until PoA data is collected
+		"eip155:143": 651, // monad
+		"eip155:10": 651, // optimism
+	},
+	[RouteEnum.OmniBridge]: {
+		"eip155:56": 451, // bsc (extend for PoA)
+	},
 };
 
 /**
@@ -57,7 +73,11 @@ export interface GetWithdrawalStatsOptions {
 export function getWithdrawalStatsForChain(
 	options: GetWithdrawalStatsOptions,
 ): CompletionStats {
-	const p99Seconds = WITHDRAWAL_P99_BY_CHAIN[options.chain];
+	const routeSpecificP99Seconds =
+		options.bridgeRoute &&
+		WITHDRAWAL_P99_BY_ROUTE[options.bridgeRoute]?.[options.chain];
+	const p99Seconds =
+		routeSpecificP99Seconds ?? WITHDRAWAL_P99_BY_CHAIN[options.chain];
 
 	if (p99Seconds == null) {
 		const extraTimeout =
