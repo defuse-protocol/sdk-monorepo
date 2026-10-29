@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.94.0
+
+### Minor Changes
+
+- ff32de2: Support omni withdrawals via Avalanche
+
 ## 0.93.0
 
 ### Minor Changes
