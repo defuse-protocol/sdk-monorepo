@@ -265,7 +265,6 @@ export class PoaBridge implements Bridge {
 			}
 		}
 
-		// For non-native Stellar assets `origin_chain_address` is the asset issuer
 		if (
 			assetInfo.blockchain === Chains.Stellar &&
 			tokenInfo.origin_chain_address !== "native"
