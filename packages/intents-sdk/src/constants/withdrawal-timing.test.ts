@@ -54,7 +54,9 @@ describe("getWithdrawalStatsForChain", () => {
 	it.each([
 		{ route: RouteEnum.PoaBridge, chain: "eip155:143", p99Seconds: 651 }, // monad
 		{ route: RouteEnum.PoaBridge, chain: "eip155:10", p99Seconds: 651 }, // optimism
-		{ route: RouteEnum.OmniBridge, chain: "eip155:56", p99Seconds: 451 }, // bsc
+		{ route: RouteEnum.OmniBridge, chain: "eip155:56", p99Seconds: 180 }, // bsc
+		{ route: RouteEnum.OmniBridge, chain: "eip155:137", p99Seconds: 180 }, // polygon
+		{ route: RouteEnum.OmniBridge, chain: "eip155:43114", p99Seconds: 180 }, // avalanche
 	] as const)(
 		"uses route-specific p99 for $route withdrawals to $chain",
 		({ route, chain, p99Seconds }) => {
