@@ -46,9 +46,9 @@ const WITHDRAWAL_P99_BY_ROUTE: Partial<
 		"eip155:10": 651, // optimism
 	},
 	[RouteEnum.OmniBridge]: {
-		"eip155:56": 160, // bsc 
-		"eip155:137": 160, // polygon
-		"eip155:43114": 160, // avalanche
+		"eip155:56": 180, // bsc
+		"eip155:137": 180, // polygon
+		"eip155:43114": 180, // avalanche
 	},
 };
 
