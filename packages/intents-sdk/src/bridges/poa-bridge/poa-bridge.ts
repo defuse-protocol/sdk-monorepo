@@ -4,6 +4,7 @@ import {
 	type EnvConfig,
 	poaBridge,
 	xrpl,
+	stellar,
 	RpcRequestError,
 	utils,
 } from "@defuse-protocol/internal-utils";
@@ -12,6 +13,7 @@ import {
 	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
+	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
 } from "../../classes/errors";
 import {
@@ -47,6 +49,7 @@ export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected envConfig: EnvConfig;
 	protected xrplRpcUrls: string[];
+	protected stellarHorizonRpcUrls: string[];
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -57,12 +60,15 @@ export class PoaBridge implements Bridge {
 	constructor({
 		envConfig,
 		xrplRpcUrls,
+		stellarHorizonRpcUrls,
 	}: {
 		envConfig: EnvConfig;
 		xrplRpcUrls: string[];
+		stellarHorizonRpcUrls: string[];
 	}) {
 		this.envConfig = envConfig;
 		this.xrplRpcUrls = xrplRpcUrls;
+		this.stellarHorizonRpcUrls = stellarHorizonRpcUrls;
 	}
 
 	private getPoaBridgeBaseURL(): string {
@@ -254,6 +260,31 @@ export class PoaBridge implements Bridge {
 					!(isXrp && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
 				)
 					throw error;
+			}
+		}
+
+		// For non-native Stellar assets `origin_chain_address` is the asset issuer
+		if (
+			assetInfo.blockchain === Chains.Stellar &&
+			tokenInfo.origin_chain_address !== "native"
+		) {
+			const horizonRpcUrl = this.stellarHorizonRpcUrls[0];
+			assert(horizonRpcUrl, "No Stellar Horizon RPC URL configured");
+			const account = await stellar.httpClient.getAccount(
+				args.destinationAddress,
+				{ baseURL: horizonRpcUrl, logger: args.logger },
+			);
+			const hasTrustline = account.balances.some(
+				(balance) => balance.asset_issuer === tokenInfo.origin_chain_address,
+			);
+
+			if (!hasTrustline) {
+				throw new TrustlineNotFoundError(
+					args.destinationAddress,
+					args.assetId,
+					assetInfo.blockchain,
+					tokenInfo.origin_chain_address,
+				);
 			}
 		}
 	}

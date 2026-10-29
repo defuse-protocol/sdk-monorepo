@@ -117,6 +117,10 @@ describe("contractIdToCaip2", () => {
 		["ton.omft.near", Chains.TON],
 		["stellar.omft.near", Chains.Stellar],
 		[
+			"stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+			Chains.Stellar,
+		],
+		[
 			"op-0x0b2c639c533813f4aa9d7837caf62653d097ff85.omft.near",
 			Chains.Optimism,
 		],
