@@ -166,6 +166,7 @@ export class IntentsSDK implements IIntentsSDK {
 			new PoaBridge({
 				envConfig: this.envConfig,
 				xrplRpcUrls,
+				stellarHorizonRpcUrls: stellarRpcUrls.horizon,
 			}),
 			new HotBridge({
 				envConfig: this.envConfig,

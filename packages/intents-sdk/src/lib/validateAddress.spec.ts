@@ -557,6 +557,24 @@ describe("validateStellarAddress", () => {
 			),
 		).toBe(false);
 	});
+
+	it("rejects addresses with invalid checksum", () => {
+		expect(
+			validateAddress(
+				"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTW",
+				Chains.Stellar,
+			),
+		).toBe(false);
+	});
+
+	it("rejects asset in `<code>:<issuer>` format", () => {
+		expect(
+			validateAddress(
+				"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+				Chains.Stellar,
+			),
+		).toBe(false);
+	});
 });
 
 describe("validateAptosAddress", () => {
