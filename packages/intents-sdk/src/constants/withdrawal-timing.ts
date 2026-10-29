@@ -22,10 +22,10 @@ const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
 	"tvm:-239": 53, // ton
 	"near:mainnet": 356, // near
 	"bip122:12a765e31ffd4059bada1e25190f6e98": 2385, // litecoin
-	"eip155:143": 22, // monad
+	"eip155:143": 651, // monad
 	"eip155:43114": 657, // avalanche
 	"stellar:pubnet": 50, // stellar
-	"eip155:10": 23, // optimism
+	"eip155:10": 651, // optimism
 	"bip122:1a91e3dace36e2be3bf030a65679fe82": 1970, // dogecoin
 	"sui:mainnet": 752, // sui
 	"eip155:80085": 579, // berachain
