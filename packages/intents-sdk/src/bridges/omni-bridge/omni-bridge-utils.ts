@@ -94,6 +94,7 @@ export const CHAIN_MAPPINGS: [Chain, ChainKind][] = [
 	[Chains.HyperEvm, ChainKind.HlEvm],
 	[Chains.Zcash, ChainKind.Zcash],
 	[Chains.HyperCore, ChainKind.HlEvm], // HyperCore is a special case of HlEvm withdrawal
+	[Chains.Avalanche, ChainKind.Avax],
 ];
 
 export function chainKindToCaip2(network: ChainKind): Chain | null {
@@ -146,7 +147,8 @@ const OmniAddressSchema = v.custom<OmniAddress>(
 			input.startsWith("pol:") ||
 			input.startsWith("aptos:") ||
 			input.startsWith("hlevm:") ||
-			input.startsWith("zcash:")),
+			input.startsWith("zcash:") ||
+			input.startsWith("avax:")),
 	"Must comply with omni address schema",
 );
 /**
