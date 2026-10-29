@@ -1,4 +1,4 @@
-import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
+import { assert, type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT } from "./poa-constants";
@@ -136,4 +136,17 @@ export function contractIdToCaip2(contractId: string): Chain {
 	}
 
 	throw new Error(`Unsupported POA Bridge contractId = ${contractId}`);
+}
+
+/**
+ * Parses Stellar asset in SEP-11 `<code>:<issuer>` format,
+ * e.g. `USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`.
+ */
+export function parseStellarAsset(asset: string): {
+	code: string;
+	issuer: string;
+} {
+	const [code, issuer] = asset.split(":");
+	assert(code && issuer, `Invalid Stellar asset format = ${asset}`);
+	return { code, issuer };
 }

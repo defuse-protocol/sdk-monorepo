@@ -194,6 +194,34 @@ describe("PoaBridge", () => {
 						"nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
 					origin_chain_address: "0x4cbdcaffe75f0a317482224dae6436",
 				},
+				{
+					defuse_asset_identifier:
+						"stellar:mainnet:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+					decimals: 7,
+					asset_name: "USDC",
+					near_token_id:
+						"stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "0",
+					standard: "nep141",
+					intents_token_id:
+						"nep141:stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+					origin_chain_address:
+						"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+				},
+				{
+					defuse_asset_identifier: "stellar:mainnet:native",
+					decimals: 7,
+					asset_name: "XLM",
+					near_token_id: "stellar.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "0",
+					standard: "nep141",
+					intents_token_id: "nep141:stellar.omft.near",
+					origin_chain_address: "native",
+				},
 			],
 		});
 	});
@@ -416,6 +444,12 @@ describe("PoaBridge", () => {
 				assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
 				destinationAddress: "MM1APXTMJHLUA0S5VT5SG3YMTNYXCGMTRQ7",
 			}, // Miden: bech32 in uppercase
+			{
+				assetId:
+					"nep141:stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+				destinationAddress:
+					"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+			}, // Stellar: origin is `<code>:<issuer>`, destination is the issuer
 		])(
 			"blocks withdrawals of token to its own address",
 			async ({ assetId, destinationAddress }) => {
@@ -1032,27 +1066,6 @@ describe("PoaBridge", () => {
 			const DESTINATION =
 				"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7";
 
-			function mockStellarToken(assetId: string, originChainAddress: string) {
-				vi.mocked(
-					poaBridge.httpClient.getSupportedTokens,
-				).mockResolvedValueOnce({
-					tokens: [
-						{
-							intents_token_id: assetId,
-							min_withdrawal_amount: "1",
-							standard: "",
-							near_token_id: "",
-							asset_name: "",
-							decimals: 7,
-							min_deposit_amount: "",
-							withdrawal_fee: "",
-							defuse_asset_identifier: "",
-							origin_chain_address: originChainAddress,
-						},
-					],
-				});
-			}
-
 			function createBridge() {
 				return new PoaBridge({
 					envConfig: configsByEnvironment.production,
@@ -1064,11 +1077,18 @@ describe("PoaBridge", () => {
 				});
 			}
 
-			it("throws TrustlineNotFoundError if destination has no trustline to the asset issuer", async () => {
-				mockStellarToken(USDC_ASSET_ID, USDC_ISSUER);
+			it("throws TrustlineNotFoundError if destination has no trustline for the asset code and issuer", async () => {
 				vi.mocked(stellar.httpClient.getAccount).mockResolvedValueOnce({
 					account_id: DESTINATION,
-					balances: [{ asset_type: "native", balance: "10.0000000" }],
+					balances: [
+						{
+							asset_type: "credit_alphanum4",
+							asset_code: "EURC",
+							asset_issuer: USDC_ISSUER,
+							balance: "0.0000000",
+						},
+						{ asset_type: "native", balance: "10.0000000" },
+					],
 				});
 
 				await expect(
@@ -1080,8 +1100,7 @@ describe("PoaBridge", () => {
 				).rejects.toThrow(TrustlineNotFoundError);
 			});
 
-			it("allows withdrawal if destination has trustline to the asset issuer", async () => {
-				mockStellarToken(USDC_ASSET_ID, USDC_ISSUER);
+			it("allows withdrawal if destination has trustline for the asset", async () => {
 				vi.mocked(stellar.httpClient.getAccount).mockResolvedValueOnce({
 					account_id: DESTINATION,
 					balances: [
@@ -1109,8 +1128,6 @@ describe("PoaBridge", () => {
 			});
 
 			it("skips trustline check for native XLM", async () => {
-				mockStellarToken(XLM_ASSET_ID, "native");
-
 				await expect(
 					createBridge().validateWithdrawal({
 						assetId: XLM_ASSET_ID,

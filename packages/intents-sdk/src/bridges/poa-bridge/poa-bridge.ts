@@ -37,6 +37,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
+	parseStellarAsset,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import { Chains, type Chain } from "../../lib/caip2";
@@ -210,14 +211,15 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
-		if (
-			tokenInfo.origin_chain_address !== "native" &&
-			compareAddresses(
-				tokenInfo.origin_chain_address,
-				args.destinationAddress,
-				assetInfo.blockchain,
-			)
-		) {
+		if (tokenInfo.origin_chain_address !== "native") {
+			let address = tokenInfo.origin_chain_address;
+			// You cant send to token address on Stellar
+			// because it has format like USDC:ISSUER
+			// so just check against an issuer
+			if (assetInfo.blockchain === Chains.Stellar) {
+				address = parseStellarAsset(tokenInfo.origin_chain_address).issuer;
+			}
+			compareAddresses(address, args.destinationAddress, assetInfo.blockchain);
 			throw new DestinationAddressMatchesTokenAddressError(
 				tokenInfo.origin_chain_address,
 				args.assetId,
@@ -270,12 +272,15 @@ export class PoaBridge implements Bridge {
 		) {
 			const horizonRpcUrl = this.stellarHorizonRpcUrls[0];
 			assert(horizonRpcUrl, "No Stellar Horizon RPC URL configured");
+			const stellarAsset = parseStellarAsset(tokenInfo.origin_chain_address);
 			const account = await stellar.httpClient.getAccount(
 				args.destinationAddress,
 				{ baseURL: horizonRpcUrl, logger: args.logger },
 			);
 			const hasTrustline = account.balances.some(
-				(balance) => balance.asset_issuer === tokenInfo.origin_chain_address,
+				(balance) =>
+					balance.asset_code === stellarAsset.code &&
+					balance.asset_issuer === stellarAsset.issuer,
 			);
 
 			if (!hasTrustline) {

@@ -3,6 +3,7 @@ import { Chains } from "../../lib/caip2";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
+	parseStellarAsset,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import { MIN_GAS_AMOUNT } from "./poa-constants";
@@ -157,5 +158,26 @@ describe("contractIdToCaip2", () => {
 		expect(() => contractIdToCaip2("unknown.omft.near")).toThrow(
 			"Unsupported POA Bridge contractId",
 		);
+	});
+});
+
+describe("parseStellarAsset", () => {
+	it("parses `<code>:<issuer>` asset", () => {
+		expect(
+			parseStellarAsset(
+				"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+			),
+		).toEqual({
+			code: "USDC",
+			issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+		});
+	});
+
+	it.each([
+		["GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"],
+		["USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"],
+		["native"],
+	])("throws for %s", (asset) => {
+		expect(() => parseStellarAsset(asset)).toThrow("Invalid Stellar asset");
 	});
 });
