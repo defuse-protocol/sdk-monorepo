@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.44.0
+
+### Minor Changes
+
+- 28de6a0: Pearl (PRL) PoA Support
+
 ## 0.43.0
 
 ### Minor Changes
