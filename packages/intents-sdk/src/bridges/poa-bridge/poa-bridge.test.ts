@@ -13,6 +13,7 @@ import {
 	MinWithdrawalAmountError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
+	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import { Chains } from "../../lib/caip2";
 import {
@@ -1138,6 +1139,39 @@ describe("PoaBridge", () => {
 				expect(stellar.httpClient.getAccount).not.toHaveBeenCalled();
 			});
 		});
+
+		it.each([
+			{
+				assetId: "nep141:stellar.omft.near",
+				destinationAddress:
+					"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7",
+			},
+			{
+				assetId: "nep141:ton.omft.near",
+				destinationAddress: "EQCRGnccIFznQqxm_oBm8PHz95iOe89Oe6hRAhSlAaMctuo6",
+			},
+		])(
+			"rejects destinationMemo for $assetId",
+			async ({ assetId, destinationAddress }) => {
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						assetId,
+						amount: 1000n,
+						destinationAddress,
+						destinationMemo: "123",
+					}),
+				).rejects.toThrow(UnsupportedDestinationMemoError);
+			},
+		);
 	});
 
 	describe("createWithdrawalIdentifier()", () => {

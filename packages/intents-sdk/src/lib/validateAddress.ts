@@ -1,6 +1,6 @@
 import { blake2b } from "@noble/hashes/blake2";
 import { sha256 } from "@noble/hashes/sha2";
-import { base58, bech32m, hex, bech32 } from "@scure/base";
+import { base32, base58, bech32m, hex, bech32 } from "@scure/base";
 import {
 	isValidClassicAddress as xrp_isValidClassicAddress,
 	isValidXAddress as xrp_isValidXAddress,
@@ -9,6 +9,7 @@ import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
 import {
+	crc16ccitt,
 	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
 	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
 	TON_WORKCHAIN_BASECHAIN,
@@ -481,8 +482,23 @@ function validateSuiAddress(address: string) {
 	return /^(?:0x)?[a-fA-F0-9]{64}$/.test(address);
 }
 
+const STELLAR_ACCOUNT_ID_VERSION_BYTE = 6 << 3; // "G"
+
 function validateStellarAddress(address: string) {
-	return /^G[A-Z0-9]{55}$/.test(address);
+	// StrKey: version byte + 32-byte public key + CRC16-XModem checksum (little-endian)
+	let decoded: Uint8Array;
+	try {
+		decoded = base32.decode(address);
+	} catch {
+		return false;
+	}
+
+	if (decoded.length !== 35 || decoded[0] !== STELLAR_ACCOUNT_ID_VERSION_BYTE) {
+		return false;
+	}
+
+	const [hi, lo] = crc16ccitt(decoded.subarray(0, 33));
+	return decoded[33] === lo && decoded[34] === hi;
 }
 
 function validateAptosAddress(address: string) {

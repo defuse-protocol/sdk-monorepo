@@ -15,6 +15,7 @@ import {
 	MinWithdrawalAmountError,
 	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
+	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import {
 	XrplDepositAuthEnabledError,
@@ -194,6 +195,19 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
+		// Validate that `destinationMemo` is not accidentally used with Stellar or TON
+		if (
+			(assetInfo.blockchain === Chains.Stellar ||
+				assetInfo.blockchain === Chains.TON) &&
+			args.destinationMemo != null &&
+			args.destinationMemo !== ""
+		) {
+			throw new UnsupportedDestinationMemoError(
+				assetInfo.blockchain,
+				args.assetId,
+			);
+		}
+
 		// Use cached getSupportedTokens to avoid frequent API calls
 		const { tokens } = await this.getCachedSupportedTokens(
 			[toPoaNetwork(assetInfo.blockchain)],
@@ -219,11 +233,14 @@ export class PoaBridge implements Bridge {
 			if (assetInfo.blockchain === Chains.Stellar) {
 				address = parseStellarAsset(tokenInfo.origin_chain_address).issuer;
 			}
-			compareAddresses(address, args.destinationAddress, assetInfo.blockchain);
-			throw new DestinationAddressMatchesTokenAddressError(
-				tokenInfo.origin_chain_address,
-				args.assetId,
-			);
+			if (
+				compareAddresses(address, args.destinationAddress, assetInfo.blockchain)
+			) {
+				throw new DestinationAddressMatchesTokenAddressError(
+					tokenInfo.origin_chain_address,
+					args.assetId,
+				);
+			}
 		}
 
 		if (!args.skipMinAmountValidation) {
