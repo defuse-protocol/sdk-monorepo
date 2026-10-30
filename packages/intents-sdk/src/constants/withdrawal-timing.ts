@@ -46,6 +46,7 @@ const WITHDRAWAL_P99_BY_ROUTE: Partial<
 		"eip155:10": 651, // optimism
 	},
 	[RouteEnum.OmniBridge]: {
+		// Same timing as sol omni withdrawal from 10 - 60 seconds
 		"eip155:56": 180, // bsc
 		"eip155:137": 180, // polygon
 		"eip155:43114": 180, // avalanche
