@@ -305,7 +305,12 @@ describe("validateDogeAddress", () => {
 	it("accepts valid addresses", () => {
 		const valid = [
 			"D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
-			"A86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
+			// dogecoin/dogecoin src/test/data/base58_keys_valid.json (v1.14.9)
+			// P2PKH (D..., version 0x1e)
+			"DD4KSSuBJqcjuTcvUg1CgUKeurPUFeEZkE",
+			// P2SH (A... or 9..., version 0x16)
+			"A7HRQk3GFCW2QasvdZxXuYj8kkQK5QrYLs",
+			"9zYnVRaekPtdKBYuPw5QiBtv3NNrzD2LLW",
 		];
 
 		for (const address of valid) {
@@ -320,6 +325,37 @@ describe("validateDogeAddress", () => {
 		expect(
 			validateAddress("D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPPx", Chains.Dogecoin),
 		).toBe(false);
+	});
+
+	it("rejects addresses with one character changed", () => {
+		const invalid = [
+			// D86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP with the first character changed
+			"A86DwJpYsyV7nTP2ib5qdwGsb2Tj7LgzPP",
+			// Dogecoin Core vectors above with one character changed
+			"DD4KSSuBJqcjuTcvUg1CgUKeurPUFeEZkF",
+			"9zYnVRaekPtdKBYuPw5QiCtv3NNrzD2LLW",
+		];
+
+		for (const address of invalid) {
+			expect(validateAddress(address, Chains.Dogecoin)).toBe(false);
+		}
+	});
+
+	it("rejects testnet addresses", () => {
+		// dogecoin/dogecoin src/test/data/base58_keys_valid.json (v1.14.9)
+		const testnet = [
+			"nhRsrUaxZou6sewjqaS37cJrMRJRgwVXdk",
+			"2MsvyG12kxxipe276Au4zKqvd2xdrBuHWb3",
+		];
+
+		for (const address of testnet) {
+			expect(validateAddress(address, Chains.Dogecoin)).toBe(false);
+		}
+	});
+
+	it("rejects inputs of the wrong length without decoding them", () => {
+		expect(validateAddress("D".repeat(33), Chains.Dogecoin)).toBe(false);
+		expect(validateAddress("D".repeat(10_000), Chains.Dogecoin)).toBe(false);
 	});
 });
 
@@ -541,6 +577,13 @@ describe("validateStellarAddress", () => {
 				Chains.Stellar,
 			),
 		).toBe(true);
+		// SEP-23 valid non-multiplexed account
+		expect(
+			validateAddress(
+				"GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
+				Chains.Stellar,
+			),
+		).toBe(true);
 	});
 
 	it("rejects addresses with extra characters", () => {
@@ -556,6 +599,42 @@ describe("validateStellarAddress", () => {
 				Chains.Stellar,
 			),
 		).toBe(false);
+	});
+
+	it("rejects SEP-23 invalid account strkeys", () => {
+		// stellar/stellar-protocol ecosystem/sep-0023.md, invalid test cases
+		const invalid = [
+			// Invalid length (Ed25519 should be 32 bytes, not 5)
+			"GAAAAAAAACGC6",
+			// Invalid length (congruent to 1 mod 8)
+			"GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZA",
+			// Invalid length (base-32 decoding should yield 35 bytes, not 36)
+			"GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUACUSI",
+			// Invalid algorithm (low 3 bits of version byte are 7)
+			"G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I",
+		];
+
+		for (const address of invalid) {
+			expect(validateAddress(address, Chains.Stellar)).toBe(false);
+		}
+	});
+
+	it("rejects addresses with one character changed", () => {
+		const invalid = [
+			// SEP-23 valid account with "4" changed to "B" (CRC16 mismatch)
+			"GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZABKVWLTJJFC7MGXUA74P7UJVSGZ",
+			// SEP-23 valid account with the letter O typed as the digit 0,
+			// which is not in the base32 alphabet
+			"GA7QYNF7S0WQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
+		];
+
+		for (const address of invalid) {
+			expect(validateAddress(address, Chains.Stellar)).toBe(false);
+		}
+	});
+	it("rejects inputs of the wrong length without decoding them", () => {
+		expect(validateAddress("G".repeat(55), Chains.Stellar)).toBe(false);
+		expect(validateAddress("G".repeat(10_000), Chains.Stellar)).toBe(false);
 	});
 });
 
