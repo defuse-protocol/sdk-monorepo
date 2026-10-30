@@ -42,12 +42,36 @@ describe("getWithdrawalStatsForChain", () => {
 	});
 
 	it("does not add extra time for non-HOT bridges", () => {
-		const statsNoRoute = getWithdrawalStatsForChain({ chain: "eip155:10" });
+		const statsNoRoute = getWithdrawalStatsForChain({ chain: "eip155:8453" });
 		const statsPoaBridge = getWithdrawalStatsForChain({
-			chain: "eip155:10",
+			chain: "eip155:8453",
 			bridgeRoute: RouteEnum.PoaBridge,
 		});
 
 		expect(statsPoaBridge.p99).toBe(statsNoRoute.p99);
+	});
+
+	it.each([
+		{ route: RouteEnum.PoaBridge, chain: "eip155:143", p99Seconds: 651 }, // monad
+		{ route: RouteEnum.PoaBridge, chain: "eip155:10", p99Seconds: 651 }, // optimism
+		{ route: RouteEnum.OmniBridge, chain: "eip155:56", p99Seconds: 180 }, // bsc
+		{ route: RouteEnum.OmniBridge, chain: "eip155:137", p99Seconds: 180 }, // polygon
+		{ route: RouteEnum.OmniBridge, chain: "eip155:43114", p99Seconds: 180 }, // avalanche
+	] as const)(
+		"uses route-specific p99 for $route withdrawals to $chain",
+		({ route, chain, p99Seconds }) => {
+			const stats = getWithdrawalStatsForChain({ chain, bridgeRoute: route });
+
+			expect(stats.p99).toBe(p99Seconds * 1000 * 3);
+		},
+	);
+
+	it("keeps chain-level p99 for routes without an override", () => {
+		const stats = getWithdrawalStatsForChain({
+			chain: "eip155:56",
+			bridgeRoute: RouteEnum.PoaBridge,
+		});
+
+		expect(stats.p99).toBe(36 * 1000 * 3);
 	});
 });
