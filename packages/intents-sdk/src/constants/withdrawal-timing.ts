@@ -47,6 +47,7 @@ const WITHDRAWAL_P99_BY_ROUTE: Partial<
 	},
 	[RouteEnum.OmniBridge]: {
 		// Same timing as sol omni withdrawal from 10 - 60 seconds
+		// Here I set x3 of that as p99
 		"eip155:56": 180, // bsc
 		"eip155:137": 180, // polygon
 		"eip155:43114": 180, // avalanche
