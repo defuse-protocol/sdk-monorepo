@@ -397,7 +397,7 @@ export interface Bridge {
 	 * Validates withdrawal constraints for the bridge.
 	 * Each bridge implementation may have different withdrawal requirements.
 	 * Some bridges (like Aurora Engine, Intents) have no restrictions and will always pass.
-	 * Others (like POA) check minimum amounts, and HOT Bridge checks trustlines for Stellar.
+	 * Others (like POA) check minimum amounts, and HOT and POA bridges check trustlines for Stellar.
 	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
 	 * @throws {TrustlineNotFoundError} If destination address lacks required trustline
 	 */

@@ -2,6 +2,7 @@ import {
 	configsByEnvironment,
 	poaBridge,
 	RpcRequestError,
+	stellar,
 	xrpl,
 } from "@defuse-protocol/internal-utils";
 import { zeroAddress } from "viem";
@@ -10,7 +11,9 @@ import {
 	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
+	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
+	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import { Chains } from "../../lib/caip2";
 import {
@@ -18,8 +21,14 @@ import {
 	createPoaBridgeRoute,
 } from "../../lib/route-config-factory";
 import { PoaBridge } from "./poa-bridge";
-import { PUBLIC_XRPL_RPC_URLS } from "../../constants/public-rpc-urls";
-import { configureXrplRpcUrls } from "../../lib/configure-rpc-config";
+import {
+	PUBLIC_STELLAR_RPC_URLS,
+	PUBLIC_XRPL_RPC_URLS,
+} from "../../constants/public-rpc-urls";
+import {
+	configureStellarRpcUrls,
+	configureXrplRpcUrls,
+} from "../../lib/configure-rpc-config";
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
@@ -45,6 +54,13 @@ vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
 				...original.xrpl.httpClient,
 				getAccountInfo: vi.fn(),
 				getAccountLines: vi.fn(),
+			},
+		},
+		stellar: {
+			...original.stellar,
+			httpClient: {
+				...original.stellar.httpClient,
+				getAccount: vi.fn(),
 			},
 		},
 	};
@@ -179,6 +195,34 @@ describe("PoaBridge", () => {
 						"nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
 					origin_chain_address: "0x4cbdcaffe75f0a317482224dae6436",
 				},
+				{
+					defuse_asset_identifier:
+						"stellar:mainnet:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+					decimals: 7,
+					asset_name: "USDC",
+					near_token_id:
+						"stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "0",
+					standard: "nep141",
+					intents_token_id:
+						"nep141:stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+					origin_chain_address:
+						"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+				},
+				{
+					defuse_asset_identifier: "stellar:mainnet:native",
+					decimals: 7,
+					asset_name: "XLM",
+					near_token_id: "stellar.omft.near",
+					min_deposit_amount: "1",
+					min_withdrawal_amount: "1",
+					withdrawal_fee: "0",
+					standard: "nep141",
+					intents_token_id: "nep141:stellar.omft.near",
+					origin_chain_address: "native",
+				},
 			],
 		});
 	});
@@ -192,6 +236,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(true);
@@ -212,6 +260,10 @@ describe("PoaBridge", () => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
 				});
 
 				await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(
@@ -227,6 +279,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(bridge.supports({ assetId: tokenId })).resolves.toBe(false);
@@ -238,6 +294,10 @@ describe("PoaBridge", () => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
 				});
 
 				await expect(bridge.supports({ assetId })).rejects.toThrow(
@@ -264,6 +324,10 @@ describe("PoaBridge", () => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
 				});
 
 				await expect(
@@ -279,6 +343,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.supports({
@@ -338,6 +406,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(
@@ -373,12 +445,22 @@ describe("PoaBridge", () => {
 				assetId: "nep141:miden-4cbdcaffe75f0a317482224dae6436.omft.near",
 				destinationAddress: "MM1APXTMJHLUA0S5VT5SG3YMTNYXCGMTRQ7",
 			}, // Miden: bech32 in uppercase
+			{
+				assetId:
+					"nep141:stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near",
+				destinationAddress:
+					"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+			}, // Stellar: origin is `<code>:<issuer>`, destination is the issuer
 		])(
 			"blocks withdrawals of token to its own address",
 			async ({ assetId, destinationAddress }) => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
 				});
 
 				await expect(
@@ -395,6 +477,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(
@@ -410,6 +496,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(
@@ -425,6 +515,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
@@ -465,6 +559,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await bridge.validateWithdrawal({
@@ -504,6 +602,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(
@@ -536,6 +638,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(
@@ -569,6 +675,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(
@@ -621,6 +731,10 @@ describe("PoaBridge", () => {
 				const bridge = new PoaBridge({
 					envConfig: configsByEnvironment.production,
 					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
 				});
 
 				await expect(
@@ -637,6 +751,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -655,6 +773,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: [""],
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -686,6 +808,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -725,6 +851,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -765,6 +895,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -804,6 +938,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -841,6 +979,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -877,6 +1019,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -911,6 +1057,121 @@ describe("PoaBridge", () => {
 				}),
 			).rejects.toThrow(xrpl.httpClient.XrplApiError);
 		});
+
+		describe("Stellar trustline", () => {
+			const USDC_ISSUER =
+				"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN";
+			const USDC_ASSET_ID =
+				"nep141:stellar-a27936ea52e99cb99d4f3a2e0b64115bb2baf67c.omft.near";
+			const XLM_ASSET_ID = "nep141:stellar.omft.near";
+			const DESTINATION =
+				"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7";
+
+			function createBridge() {
+				return new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
+				});
+			}
+
+			it("throws TrustlineNotFoundError if destination has no trustline for the asset code and issuer", async () => {
+				vi.mocked(stellar.httpClient.getAccount).mockResolvedValueOnce({
+					account_id: DESTINATION,
+					balances: [
+						{
+							asset_type: "credit_alphanum4",
+							asset_code: "EURC",
+							asset_issuer: USDC_ISSUER,
+							balance: "0.0000000",
+						},
+						{ asset_type: "native", balance: "10.0000000" },
+					],
+				});
+
+				await expect(
+					createBridge().validateWithdrawal({
+						assetId: USDC_ASSET_ID,
+						amount: 5000n,
+						destinationAddress: DESTINATION,
+					}),
+				).rejects.toThrow(TrustlineNotFoundError);
+			});
+
+			it("allows withdrawal if destination has trustline for the asset", async () => {
+				vi.mocked(stellar.httpClient.getAccount).mockResolvedValueOnce({
+					account_id: DESTINATION,
+					balances: [
+						{
+							asset_type: "credit_alphanum4",
+							asset_code: "USDC",
+							asset_issuer: USDC_ISSUER,
+							balance: "0.0000000",
+						},
+						{ asset_type: "native", balance: "10.0000000" },
+					],
+				});
+
+				await expect(
+					createBridge().validateWithdrawal({
+						assetId: USDC_ASSET_ID,
+						amount: 5000n,
+						destinationAddress: DESTINATION,
+					}),
+				).resolves.toBeUndefined();
+				expect(stellar.httpClient.getAccount).toHaveBeenCalledWith(
+					DESTINATION,
+					expect.objectContaining({ baseURL: "https://horizon.stellar.org" }),
+				);
+			});
+
+			it("skips trustline check for native XLM", async () => {
+				await expect(
+					createBridge().validateWithdrawal({
+						assetId: XLM_ASSET_ID,
+						amount: 5000n,
+						destinationAddress: DESTINATION,
+					}),
+				).resolves.toBeUndefined();
+				expect(stellar.httpClient.getAccount).not.toHaveBeenCalled();
+			});
+		});
+
+		it.each([
+			{
+				assetId: "nep141:stellar.omft.near",
+				destinationAddress:
+					"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7",
+			},
+			{
+				assetId: "nep141:ton.omft.near",
+				destinationAddress: "EQCRGnccIFznQqxm_oBm8PHz95iOe89Oe6hRAhSlAaMctuo6",
+			},
+		])(
+			"rejects destinationMemo for $assetId",
+			async ({ assetId, destinationAddress }) => {
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+					stellarHorizonRpcUrls: configureStellarRpcUrls(
+						PUBLIC_STELLAR_RPC_URLS,
+						{},
+					).horizon,
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						assetId,
+						amount: 1000n,
+						destinationAddress,
+						destinationMemo: "123",
+					}),
+				).rejects.toThrow(UnsupportedDestinationMemoError);
+			},
+		);
 	});
 
 	describe("createWithdrawalIdentifier()", () => {
@@ -918,6 +1179,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const wid = bridge.createWithdrawalIdentifier({
@@ -961,6 +1226,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -989,6 +1258,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -1030,6 +1303,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -1072,6 +1349,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -1131,6 +1412,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -1178,6 +1463,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -1231,6 +1520,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const result = await bridge.describeWithdrawal({
@@ -1268,6 +1561,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			const resultPromise = bridge.describeWithdrawal({
@@ -1307,6 +1604,10 @@ describe("PoaBridge", () => {
 			const bridge = new PoaBridge({
 				envConfig: configsByEnvironment.production,
 				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				stellarHorizonRpcUrls: configureStellarRpcUrls(
+					PUBLIC_STELLAR_RPC_URLS,
+					{},
+				).horizon,
 			});
 
 			await expect(

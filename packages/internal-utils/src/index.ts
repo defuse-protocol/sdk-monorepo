@@ -1,6 +1,7 @@
 export * as poaBridge from "./poaBridge";
 export * as solverRelay from "./solverRelay";
 export * as bridgeIndexer from "./bridgeIndexer";
+export * as stellar from "./stellar";
 export * as xrpl from "./xrpl";
 export * as utils from "./utils";
 export * as errors from "./errors";
