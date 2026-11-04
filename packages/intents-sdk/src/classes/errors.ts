@@ -72,7 +72,7 @@ export class TrustlineNotFoundError extends BaseError {
 	) {
 		super("Destination address does not have a trustline for this asset.", {
 			details:
-				"The destination address must establish a trustline before receiving this asset.",
+				"The destination address must establish a trustline before receiving this asset. On Stellar the account must be funded with XLM first.",
 			metaMessages: [
 				`Blockchain: ${blockchain}`,
 				`Asset ID: ${assetId}`,

@@ -8,8 +8,8 @@ import {
 import { Chains, type Chain } from "./caip2";
 import { isAddress } from "viem";
 import { utils } from "@defuse-protocol/internal-utils";
+import { crc16xmodem } from "./stellar-address";
 import {
-	crc16ccitt,
 	TON_ADDRESS_TAG_BOUNCEABLE_MAINNET,
 	TON_ADDRESS_TAG_NON_BOUNCEABLE_MAINNET,
 	TON_WORKCHAIN_BASECHAIN,
@@ -499,8 +499,9 @@ function validateStellarAddress(address: string) {
 		return false;
 	}
 
-	const [hi, lo] = crc16ccitt(decoded.subarray(0, 33));
-	return decoded[33] === lo && decoded[34] === hi;
+	const checksum = crc16xmodem(decoded.subarray(0, 33));
+	// Little-endian: low byte first
+	return decoded[33] === (checksum & 0xff) && decoded[34] === checksum >> 8;
 }
 
 function validateAptosAddress(address: string) {
