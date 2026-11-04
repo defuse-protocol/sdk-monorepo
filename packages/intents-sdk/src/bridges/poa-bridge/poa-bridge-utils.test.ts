@@ -177,6 +177,7 @@ describe("parseStellarAsset", () => {
 		["GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"],
 		["USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"],
 		["native"],
+		["USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN:extra"],
 	])("throws for %s", (asset) => {
 		expect(() => parseStellarAsset(asset)).toThrow("Invalid Stellar asset");
 	});

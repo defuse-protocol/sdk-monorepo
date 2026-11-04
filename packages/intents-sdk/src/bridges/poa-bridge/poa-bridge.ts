@@ -226,13 +226,13 @@ export class PoaBridge implements Bridge {
 		}
 
 		if (tokenInfo.origin_chain_address !== "native") {
-			let address = tokenInfo.origin_chain_address;
 			// You cant send to token address on Stellar
 			// because it has format like USDC:ISSUER
 			// so just check against an issuer
-			if (assetInfo.blockchain === Chains.Stellar) {
-				address = parseStellarAsset(tokenInfo.origin_chain_address).issuer;
-			}
+			let address =
+				assetInfo.blockchain === Chains.Stellar
+					? parseStellarAsset(tokenInfo.origin_chain_address).issuer
+					: tokenInfo.origin_chain_address;
 			if (
 				compareAddresses(address, args.destinationAddress, assetInfo.blockchain)
 			) {

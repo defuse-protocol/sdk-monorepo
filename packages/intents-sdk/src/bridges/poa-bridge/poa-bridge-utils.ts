@@ -146,7 +146,11 @@ export function parseStellarAsset(asset: string): {
 	code: string;
 	issuer: string;
 } {
-	const [code, issuer] = asset.split(":");
-	assert(code && issuer, `Invalid Stellar asset format = ${asset}`);
+	const parts = asset.split(":");
+	const [code, issuer] = parts;
+	assert(
+		parts.length === 2 && code && issuer,
+		`Invalid Stellar asset format = ${asset}`,
+	);
 	return { code, issuer };
 }
