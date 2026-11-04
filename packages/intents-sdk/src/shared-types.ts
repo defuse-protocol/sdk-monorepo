@@ -204,6 +204,8 @@ export interface IIntentsSDK {
 		logger?: ILogger;
 	}): Promise<IntentPrimitive[]>;
 
+	encodeHotReceiver(assetId: string, address: string): string;
+
 	parseAssetId(assetId: string): ParsedAssetInfo;
 
 	// Orchestrated functions for convenience
