@@ -495,6 +495,7 @@ export type RPCEndpointMap = Record<
 > & {
 	[K in typeof Chains.Stellar]: {
 		soroban: RpcEndpoint[];
+		/** URLs with a path must end with "/" */
 		horizon: RpcEndpoint[];
 	};
 };

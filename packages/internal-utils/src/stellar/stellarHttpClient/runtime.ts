@@ -12,6 +12,7 @@ export async function horizonRequest<
 	config: RequestConfig,
 	schema: TSchema,
 ): Promise<v.InferOutput<TSchema>> {
+	// baseURL must end with "/", otherwise its last path segment is dropped
 	const url = new URL(path, config.baseURL);
 
 	const response = await request({

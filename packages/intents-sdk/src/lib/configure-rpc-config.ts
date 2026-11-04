@@ -66,6 +66,12 @@ export function configureStellarRpcUrls(
 		stellarRpcUrls.horizon.length > 0,
 		"Stellar Horizon RPC URL is not provided",
 	);
+	for (const url of stellarRpcUrls.horizon) {
+		assert(
+			new URL(url).pathname.endsWith("/"),
+			`Stellar Horizon RPC URL must end with "/": ${new URL(url).origin}/...`,
+		);
+	}
 
 	return stellarRpcUrls;
 }

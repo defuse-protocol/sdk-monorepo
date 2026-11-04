@@ -229,4 +229,25 @@ describe("configureStellarRpcUrls()", () => {
 
 		expect(fn).toThrow("Stellar Horizon RPC URL is not provided");
 	});
+
+	it("throws when custom Horizon URL with a path has no trailing slash", () => {
+		const fn = () =>
+			configureStellarRpcUrls(mockDefaultRpcUrls, {
+				[Chains.Stellar]: {
+					horizon: ["https://horizon.example.com/token"],
+				},
+			});
+
+		expect(fn).toThrow('Stellar Horizon RPC URL must end with "/"');
+	});
+
+	it("accepts custom Horizon URL with a path and trailing slash", () => {
+		const result = configureStellarRpcUrls(mockDefaultRpcUrls, {
+			[Chains.Stellar]: {
+				horizon: ["https://horizon.example.com/token/"],
+			},
+		});
+
+		expect(result.horizon).toEqual(["https://horizon.example.com/token/"]);
+	});
 });

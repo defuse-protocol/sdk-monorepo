@@ -20,6 +20,7 @@ export const PUBLIC_EVM_RPC_URLS: Record<HotBridgeEVMChain, RpcEndpoint[]> = {
 
 export const PUBLIC_STELLAR_RPC_URLS: RPCEndpointMap[typeof Chains.Stellar] = {
 	soroban: ["https://mainnet.sorobanrpc.com"],
+	// Custom Horizon URLs with a path must end with "/"
 	horizon: ["https://horizon.stellar.org"],
 };
 
