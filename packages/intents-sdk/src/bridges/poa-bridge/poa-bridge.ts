@@ -225,22 +225,23 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
-		if (tokenInfo.origin_chain_address !== "native") {
-			// You cant send to token address on Stellar
-			// because it has format like USDC:ISSUER
-			// so just check against an issuer
-			let address =
+		// You cant send to token address on Stellar
+		// because it has format like USDC:ISSUER
+		// so just check against an issuer
+		if (
+			tokenInfo.origin_chain_address !== "native" &&
+			compareAddresses(
 				assetInfo.blockchain === Chains.Stellar
 					? parseStellarAsset(tokenInfo.origin_chain_address).issuer
-					: tokenInfo.origin_chain_address;
-			if (
-				compareAddresses(address, args.destinationAddress, assetInfo.blockchain)
-			) {
-				throw new DestinationAddressMatchesTokenAddressError(
-					tokenInfo.origin_chain_address,
-					args.assetId,
-				);
-			}
+					: tokenInfo.origin_chain_address,
+				args.destinationAddress,
+				assetInfo.blockchain,
+			)
+		) {
+			throw new DestinationAddressMatchesTokenAddressError(
+				tokenInfo.origin_chain_address,
+				args.assetId,
+			);
 		}
 
 		if (!args.skipMinAmountValidation) {

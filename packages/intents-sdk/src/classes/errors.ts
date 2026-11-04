@@ -52,7 +52,7 @@ export class UnsupportedDestinationMemoError extends BaseError {
 		public assetId: string,
 	) {
 		super("Destination memo is not supported for this blockchain.", {
-			details: "Destination memo is only supported for XRP Ledger withdrawals.",
+			details: `Destination memo is not supported for ${blockchain} withdrawals.`,
 			metaMessages: [`Blockchain: ${blockchain}`, `Asset ID: ${assetId}`],
 			name: "UnsupportedDestinationMemoError",
 		});
