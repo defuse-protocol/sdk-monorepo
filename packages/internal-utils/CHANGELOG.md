@@ -1,5 +1,11 @@
 # @defuse-protocol/internal-utils
 
+## 0.45.0
+
+### Minor Changes
+
+- bab981f: Add Optimism, Monad, XLayer, and Scroll support via PoA.
+
 ## 0.44.0
 
 ### Minor Changes

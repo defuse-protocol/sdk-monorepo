@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.95.0
+
+### Minor Changes
+
+- bab981f: Add Optimism, Monad, XLayer, and Scroll support via PoA.
+
+### Patch Changes
+
+- Updated dependencies [bab981f]
+  - @defuse-protocol/internal-utils@0.45.0
+
 ## 0.94.0
 
 ### Minor Changes
