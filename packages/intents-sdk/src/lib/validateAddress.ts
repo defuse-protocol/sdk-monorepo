@@ -457,6 +457,8 @@ function validateTronHexAddress(address: string): boolean {
 }
 
 function validateTonAddress(address: string): boolean {
+	// Raw addresses not allowed as it breaks PoA withdrawals as PoA uses : as delimiter
+	if (address.includes(":")) return false;
 	const parsed = tryParseTonAddress(address);
 	if (parsed === null) return false;
 
