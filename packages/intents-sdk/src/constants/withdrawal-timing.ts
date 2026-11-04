@@ -35,6 +35,26 @@ const WITHDRAWAL_P99_BY_CHAIN: Partial<Record<Chain, number>> = {
 };
 
 /**
+ * Route-specific p99 values (in seconds), take precedence over WITHDRAWAL_P99_BY_CHAIN.
+ */
+const WITHDRAWAL_P99_BY_ROUTE: Partial<
+	Record<RouteEnumValues, Partial<Record<Chain, number>>>
+> = {
+	[RouteEnum.PoaBridge]: {
+		// Migrated from HOT, uses Base p99 until PoA data is collected
+		"eip155:143": 651, // monad
+		"eip155:10": 651, // optimism
+	},
+	[RouteEnum.OmniBridge]: {
+		// Same timing as sol omni withdrawal from 10 - 60 seconds
+		// Here I set x3 of that as p99
+		"eip155:56": 180, // bsc
+		"eip155:137": 180, // polygon
+		"eip155:43114": 180, // avalanche
+	},
+};
+
+/**
  * Default stats for chains without timing data.
  * Conservative 6-hour timeout (3x 2-hour p99) with gradual phase transitions.
  */
@@ -57,7 +77,11 @@ export interface GetWithdrawalStatsOptions {
 export function getWithdrawalStatsForChain(
 	options: GetWithdrawalStatsOptions,
 ): CompletionStats {
-	const p99Seconds = WITHDRAWAL_P99_BY_CHAIN[options.chain];
+	const routeSpecificP99Seconds =
+		options.bridgeRoute &&
+		WITHDRAWAL_P99_BY_ROUTE[options.bridgeRoute]?.[options.chain];
+	const p99Seconds =
+		routeSpecificP99Seconds ?? WITHDRAWAL_P99_BY_CHAIN[options.chain];
 
 	if (p99Seconds == null) {
 		const extraTimeout =

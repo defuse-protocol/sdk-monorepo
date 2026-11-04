@@ -28,7 +28,11 @@ export type SupportedChainName =
 	| "qtc"
 	| "arc"
 	| "miden"
-	| "prl";
+	| "prl"
+	| "optimism"
+	| "monad"
+	| "xlayer"
+	| "scroll";
 
 export type SupportedBridge = "direct" | "poa" | "aurora_engine" | "hot_omni";
 
