@@ -18,6 +18,22 @@ export class XrplDestinationTagRequiredError extends BaseError {
 	}
 }
 
+export type XrplInvalidDestinationTagErrorType =
+	XrplInvalidDestinationTagError & {
+		name: "XrplInvalidDestinationTagError";
+	};
+
+export class XrplInvalidDestinationTagError extends BaseError {
+	constructor(public destinationTag: string) {
+		super("Destination tag must be a whole number from 0 to 4294967295.", {
+			metaMessages: [`Destination tag: ${JSON.stringify(destinationTag)}`],
+			name: "XrplInvalidDestinationTagError",
+			details:
+				"XRP Ledger destination tags are unsigned 32-bit integers, written as decimal digits only.",
+		});
+	}
+}
+
 export type XrplDepositAuthEnabledErrorType = XrplDepositAuthEnabledError & {
 	name: "XrplDepositAuthEnabledError";
 };

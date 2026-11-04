@@ -11,7 +11,9 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
+	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
+import { RouteEnum } from "../../constants/route-enum";
 import { Chains } from "../../lib/caip2";
 import {
 	createHotBridgeRoute,
@@ -23,6 +25,7 @@ import { configureXrplRpcUrls } from "../../lib/configure-rpc-config";
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
+	XrplInvalidDestinationTagError,
 } from "./errors";
 
 vi.mock("@defuse-protocol/internal-utils", async (importOriginal) => {
@@ -443,6 +446,81 @@ describe("PoaBridge", () => {
 				}),
 			).resolves.toBeUndefined();
 		});
+
+		it.each([
+			{
+				assetId: "nep141:btc.omft.near",
+				destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+			},
+			{
+				assetId:
+					"nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+				destinationAddress: "0x0000000000000000000000000000000000000001",
+			},
+		])(
+			"throws UnsupportedDestinationMemoError for a memo on $assetId",
+			async ({ assetId, destinationAddress }) => {
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						amount: 50000000000n,
+						assetId,
+						destinationAddress,
+						destinationMemo: "12345",
+					}),
+				).rejects.toThrow(UnsupportedDestinationMemoError);
+			},
+		);
+
+		it.each(["", "abc", "-1", "1.5", "1e3", "0x10", " 7", "4294967296"])(
+			"throws XrplInvalidDestinationTagError for destination tag %j",
+			async (destinationMemo) => {
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						amount: 50000000000n,
+						assetId: "nep141:xrp.omft.near",
+						destinationAddress: "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv",
+						destinationMemo,
+					}),
+				).rejects.toThrow(XrplInvalidDestinationTagError);
+			},
+		);
+
+		it.each(["0", "4294967295"])(
+			"allows destination tag %s",
+			async (destinationMemo) => {
+				const bridge = new PoaBridge({
+					envConfig: configsByEnvironment.production,
+					xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+				});
+
+				vi.mocked(xrpl.httpClient.getAccountInfo).mockResolvedValueOnce({
+					account_data: { Account: "Account" },
+					account_flags: {
+						requireDestinationTag: true,
+						depositAuth: false,
+					},
+				});
+
+				await expect(
+					bridge.validateWithdrawal({
+						amount: 50000000000n,
+						assetId: "nep141:xrp.omft.near",
+						destinationAddress: "rDsbeomae4FXwgQTJp9Rs64Qg9vDiTCdBv",
+						destinationMemo,
+					}),
+				).resolves.toBeUndefined();
+			},
+		);
 
 		it("caches getSupportedTokens responses", async () => {
 			vi.mocked(poaBridge.httpClient.getSupportedTokens).mockResolvedValueOnce({
@@ -910,6 +988,34 @@ describe("PoaBridge", () => {
 					destinationAddress: "rMhV3oySgzkDvZfVPVuWb67d2J6ghh9FcV",
 				}),
 			).rejects.toThrow(xrpl.httpClient.XrplApiError);
+		});
+	});
+
+	describe("createWithdrawalIntents()", () => {
+		it("throws UnsupportedDestinationMemoError for a memo on a non-XRPL asset", async () => {
+			const bridge = new PoaBridge({
+				envConfig: configsByEnvironment.production,
+				xrplRpcUrls: configureXrplRpcUrls(PUBLIC_XRPL_RPC_URLS, {}),
+			});
+
+			await expect(
+				bridge.createWithdrawalIntents({
+					withdrawalParams: {
+						assetId: "nep141:btc.omft.near",
+						amount: 50000n,
+						destinationAddress: "18HNgVKMwjNjYWey68FZUV7R4pmyojuv2j",
+						destinationMemo: "12345",
+						feeInclusive: false,
+					},
+					feeEstimation: {
+						amount: 1500n,
+						quote: null,
+						underlyingFees: {
+							[RouteEnum.PoaBridge]: { relayerFee: 1500n },
+						},
+					},
+				}),
+			).rejects.toThrow(UnsupportedDestinationMemoError);
 		});
 	});
 
