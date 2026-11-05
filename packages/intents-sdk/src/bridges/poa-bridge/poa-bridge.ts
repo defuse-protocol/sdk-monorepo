@@ -225,11 +225,12 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
+		const notBaseToken = tokenInfo.origin_chain_address !== "native";
 		// You cant send to token address on Stellar
 		// because it has format like USDC:ISSUER
 		// so just check against an issuer
 		if (
-			tokenInfo.origin_chain_address !== "native" &&
+			notBaseToken &&
 			compareAddresses(
 				assetInfo.blockchain === Chains.Stellar
 					? parseStellarAsset(tokenInfo.origin_chain_address).issuer
@@ -283,10 +284,7 @@ export class PoaBridge implements Bridge {
 			}
 		}
 
-		if (
-			assetInfo.blockchain === Chains.Stellar &&
-			tokenInfo.origin_chain_address !== "native"
-		) {
+		if (assetInfo.blockchain === Chains.Stellar && notBaseToken) {
 			const horizonRpcUrl = this.stellarHorizonRpcUrls[0];
 			assert(horizonRpcUrl, "No Stellar Horizon RPC URL configured");
 			const stellarAsset = parseStellarAsset(tokenInfo.origin_chain_address);
