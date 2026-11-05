@@ -1,6 +1,7 @@
 export * as poaBridge from "./poaBridge";
 export * as solverRelay from "./solverRelay";
 export * as bridgeIndexer from "./bridgeIndexer";
+export * as stellar from "./stellar";
 export * as xrpl from "./xrpl";
 export * as utils from "./utils";
 export * as errors from "./errors";
@@ -80,6 +81,12 @@ export {
 	PoaWithdrawalPendingError,
 	type PoaWithdrawalPendingErrorType,
 } from "./poaBridge/errors/withdrawal";
+
+// Stellar errors
+export {
+	StellarAccountNotFoundError,
+	type StellarAccountNotFoundErrorType,
+} from "./stellar/stellarHttpClient/errors";
 
 // Solver Relay errors
 export {

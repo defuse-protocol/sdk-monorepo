@@ -449,57 +449,15 @@ describe("validateTonAddress", () => {
 		).toBe(false);
 	});
 
-	// Raw form has no network tag, so we can't tell mainnet from testnet here.
-	// HOT bridge passes it through @ton/core's Address.parse, so we accept what
-	// that accepts.
-	it("accepts raw format addresses (basechain and masterchain)", () => {
-		const valid = [
+	// PoA uses ":" as a delimiter in withdrawal memos, so raw addresses
+	// ("<workchain>:<hex>") would break withdrawals. Only friendly form is supported.
+	it("rejects raw format addresses", () => {
+		const raw = [
 			"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
 			"-1:3333333333333333333333333333333333333333333333333333333333333333",
-			// Uppercase hex works too (@ton/core uses Buffer.from(s, 'hex')).
 			"0:2CF55953E92EFBEADAB7BA725C3F93A0B23F842CBBA72D7B8E6F510A70E422E3",
 		];
-		for (const address of valid) {
-			expect(validateAddress(address, Chains.TON)).toBe(true);
-		}
-	});
-
-	it("rejects raw format with non-integer workchain", () => {
-		expect(
-			validateAddress(
-				"abc:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
-				Chains.TON,
-			),
-		).toBe(false);
-	});
-
-	it("rejects raw format with wrong hex length", () => {
-		expect(
-			validateAddress(
-				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422",
-				Chains.TON,
-			),
-		).toBe(false);
-	});
-
-	it("rejects raw format with non-hex characters", () => {
-		expect(
-			validateAddress(
-				"0:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422zz",
-				Chains.TON,
-			),
-		).toBe(false);
-	});
-
-	// Real TON only uses workchains 0 and -1. Anything else is a typo, so
-	// reject it here instead of letting the bridge contract fail later.
-	it("rejects raw addresses on unknown workchains", () => {
-		const unknown = [
-			"2:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
-			"127:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
-			"-2:2cf55953e92efbeadab7ba725c3f93a0b23f842cbba72d7b8e6f510a70e422e3",
-		];
-		for (const address of unknown) {
+		for (const address of raw) {
 			expect(validateAddress(address, Chains.TON)).toBe(false);
 		}
 	});
@@ -553,6 +511,24 @@ describe("validateStellarAddress", () => {
 		expect(
 			validateAddress(
 				"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTVx",
+				Chains.Stellar,
+			),
+		).toBe(false);
+	});
+
+	it("rejects addresses with invalid checksum", () => {
+		expect(
+			validateAddress(
+				"GAXQC6TWRKQ4TK7OVADU2DQMXHFYUDHGO6JIIIHLDD7RTBHYHXPSNUTW",
+				Chains.Stellar,
+			),
+		).toBe(false);
+	});
+
+	it("rejects asset in `<code>:<issuer>` format", () => {
+		expect(
+			validateAddress(
+				"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
 				Chains.Stellar,
 			),
 		).toBe(false);

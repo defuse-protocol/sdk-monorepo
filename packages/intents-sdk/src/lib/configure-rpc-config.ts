@@ -55,7 +55,11 @@ export function configureStellarRpcUrls(
 
 	const stellarRpcUrls = {
 		soroban: extractRpcUrls(soroban),
-		horizon: extractRpcUrls(horizon),
+		// A Horizon URL is used as a base for relative paths, and a base URL whose
+		// path has no trailing slash silently drops its last segment
+		horizon: extractRpcUrls(horizon).map((url) =>
+			url.endsWith("/") ? url : `${url}/`,
+		),
 	};
 
 	assert(

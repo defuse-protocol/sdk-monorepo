@@ -1,4 +1,4 @@
-import { type poaBridge, utils } from "@defuse-protocol/internal-utils";
+import { assert, type poaBridge, utils } from "@defuse-protocol/internal-utils";
 import type { IntentPrimitive } from "../../intents/shared-types";
 import { type Chain, Chains } from "../../lib/caip2";
 import { MIN_GAS_AMOUNT } from "./poa-constants";
@@ -76,6 +76,8 @@ const caip2Mapping = {
 	[Chains.Monad]: "eth:143",
 	[Chains.LayerX]: "eth:196",
 	[Chains.Scroll]: "eth:534352",
+	[Chains.TON]: "ton:mainnet",
+	[Chains.Stellar]: "stellar:mainnet",
 } satisfies Record<
 	string,
 	(typeof poaBridge.PoaBridgeNetworkReference)[Exclude<
@@ -119,6 +121,8 @@ const tokenPrefixMapping = {
 	monad: Chains.Monad,
 	xlayer: Chains.LayerX,
 	scroll: Chains.Scroll,
+	ton: Chains.TON,
+	stellar: Chains.Stellar,
 };
 
 export function contractIdToCaip2(contractId: string): Chain {
@@ -132,4 +136,21 @@ export function contractIdToCaip2(contractId: string): Chain {
 	}
 
 	throw new Error(`Unsupported POA Bridge contractId = ${contractId}`);
+}
+
+/**
+ * Parses Stellar asset in SEP-11 `<code>:<issuer>` format,
+ * e.g. `USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`.
+ */
+export function parseStellarAsset(asset: string): {
+	code: string;
+	issuer: string;
+} {
+	const parts = asset.split(":");
+	const [code, issuer] = parts;
+	assert(
+		parts.length === 2 && code && issuer,
+		`Invalid Stellar asset format = ${asset}`,
+	);
+	return { code, issuer };
 }

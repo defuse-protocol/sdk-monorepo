@@ -4,6 +4,7 @@ import {
 	type EnvConfig,
 	poaBridge,
 	xrpl,
+	stellar,
 	RpcRequestError,
 	utils,
 } from "@defuse-protocol/internal-utils";
@@ -12,7 +13,9 @@ import {
 	DestinationAddressMatchesTokenAddressError,
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
+	TrustlineNotFoundError,
 	UnsupportedAssetIdError,
+	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import {
 	XrplDepositAuthEnabledError,
@@ -35,6 +38,7 @@ import { getUnderlyingFee } from "../../lib/estimate-fee";
 import {
 	contractIdToCaip2,
 	createWithdrawIntentPrimitive,
+	parseStellarAsset,
 	toPoaNetwork,
 } from "./poa-bridge-utils";
 import { Chains, type Chain } from "../../lib/caip2";
@@ -47,6 +51,7 @@ export class PoaBridge implements Bridge {
 	readonly route = RouteEnum.PoaBridge;
 	protected envConfig: EnvConfig;
 	protected xrplRpcUrls: string[];
+	protected stellarHorizonRpcUrls: string[];
 
 	// TTL cache for supported tokens with 30-second TTL
 	private supportedTokensCache = new TTLCache<
@@ -57,12 +62,15 @@ export class PoaBridge implements Bridge {
 	constructor({
 		envConfig,
 		xrplRpcUrls,
+		stellarHorizonRpcUrls,
 	}: {
 		envConfig: EnvConfig;
 		xrplRpcUrls: string[];
+		stellarHorizonRpcUrls: string[];
 	}) {
 		this.envConfig = envConfig;
 		this.xrplRpcUrls = xrplRpcUrls;
+		this.stellarHorizonRpcUrls = stellarHorizonRpcUrls;
 	}
 
 	private getPoaBridgeBaseURL(): string {
@@ -166,6 +174,8 @@ export class PoaBridge implements Bridge {
 	 * Checks the bridge's supported tokens API to ensure the withdrawal amount
 	 * meets the minimum required amount for the specific token and blockchain.
 	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
+	 * @throws {StellarAccountNotFoundError} If the Stellar destination account is not funded yet.
+	 * Only raised for non-native assets: a native XLM withdrawal funds the account itself.
 	 */
 	async validateWithdrawal(args: {
 		assetId: string;
@@ -187,6 +197,19 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
+		// Validate that `destinationMemo` is not accidentally used with Stellar or TON
+		if (
+			(assetInfo.blockchain === Chains.Stellar ||
+				assetInfo.blockchain === Chains.TON) &&
+			args.destinationMemo != null &&
+			args.destinationMemo !== ""
+		) {
+			throw new UnsupportedDestinationMemoError(
+				assetInfo.blockchain,
+				args.assetId,
+			);
+		}
+
 		// Use cached getSupportedTokens to avoid frequent API calls
 		const { tokens } = await this.getCachedSupportedTokens(
 			[toPoaNetwork(assetInfo.blockchain)],
@@ -204,10 +227,16 @@ export class PoaBridge implements Bridge {
 			);
 		}
 
+		const notBaseToken = tokenInfo.origin_chain_address !== "native";
+		// You cant send to token address on Stellar
+		// because it has format like USDC:ISSUER
+		// so just check against an issuer
 		if (
-			tokenInfo.origin_chain_address !== "native" &&
+			notBaseToken &&
 			compareAddresses(
-				tokenInfo.origin_chain_address,
+				assetInfo.blockchain === Chains.Stellar
+					? parseStellarAsset(tokenInfo.origin_chain_address).issuer
+					: tokenInfo.origin_chain_address,
 				args.destinationAddress,
 				assetInfo.blockchain,
 			)
@@ -254,6 +283,30 @@ export class PoaBridge implements Bridge {
 					!(isXrp && error instanceof xrpl.httpClient.XrplAccountNotFundedError)
 				)
 					throw error;
+			}
+		}
+
+		if (assetInfo.blockchain === Chains.Stellar && notBaseToken) {
+			const horizonRpcUrl = this.stellarHorizonRpcUrls[0];
+			assert(horizonRpcUrl, "No Stellar Horizon RPC URL configured");
+			const stellarAsset = parseStellarAsset(tokenInfo.origin_chain_address);
+			const account = await stellar.httpClient.getAccount(
+				args.destinationAddress,
+				{ baseURL: horizonRpcUrl, logger: args.logger },
+			);
+			const hasTrustline = account.balances.some(
+				(balance) =>
+					balance.asset_code === stellarAsset.code &&
+					balance.asset_issuer === stellarAsset.issuer,
+			);
+
+			if (!hasTrustline) {
+				throw new TrustlineNotFoundError(
+					args.destinationAddress,
+					args.assetId,
+					assetInfo.blockchain,
+					tokenInfo.origin_chain_address,
+				);
 			}
 		}
 	}
