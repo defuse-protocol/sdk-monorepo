@@ -1124,7 +1124,7 @@ describe("PoaBridge", () => {
 				).resolves.toBeUndefined();
 				expect(stellar.httpClient.getAccount).toHaveBeenCalledWith(
 					DESTINATION,
-					expect.objectContaining({ baseURL: "https://horizon.stellar.org" }),
+					expect.objectContaining({ baseURL: "https://horizon.stellar.org/" }),
 				);
 			});
 

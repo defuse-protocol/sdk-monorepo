@@ -202,7 +202,10 @@ describe("configureStellarRpcUrls()", () => {
 			[Chains.Polygon]: ["https://polygonrpc.com"],
 		});
 
-		expect(result).toEqual(mockDefaultRpcUrls);
+		expect(result).toEqual({
+			soroban: ["https://sorobanrpc.com"],
+			horizon: ["https://horizonrpc.com/"],
+		});
 	});
 
 	it("overrides default RPC URLs", () => {
@@ -214,7 +217,7 @@ describe("configureStellarRpcUrls()", () => {
 
 		expect(result).toEqual({
 			soroban: ["https://sorobanrpc.com"],
-			horizon: ["https://customhorizonrpc.com"],
+			horizon: ["https://customhorizonrpc.com/"],
 		});
 	});
 
@@ -230,24 +233,21 @@ describe("configureStellarRpcUrls()", () => {
 		expect(fn).toThrow("Stellar Horizon RPC URL is not provided");
 	});
 
-	it("throws when custom Horizon URL with a path has no trailing slash", () => {
-		const fn = () =>
-			configureStellarRpcUrls(mockDefaultRpcUrls, {
-				[Chains.Stellar]: {
-					horizon: ["https://horizon.example.com/token"],
-				},
-			});
-
-		expect(fn).toThrow('Stellar Horizon RPC URL must end with "/"');
-	});
-
-	it("accepts custom Horizon URL with a path and trailing slash", () => {
+	// Horizon URLs are used as a base for relative paths, so a missing trailing
+	// slash would silently drop the last path segment of the configured URL.
+	it("appends a trailing slash to a custom Horizon URL with a path", () => {
 		const result = configureStellarRpcUrls(mockDefaultRpcUrls, {
 			[Chains.Stellar]: {
-				horizon: ["https://horizon.example.com/token/"],
+				horizon: [
+					"https://horizon.example.com/token",
+					"https://horizon.example.com/already/",
+				],
 			},
 		});
 
-		expect(result.horizon).toEqual(["https://horizon.example.com/token/"]);
+		expect(result.horizon).toEqual([
+			"https://horizon.example.com/token/",
+			"https://horizon.example.com/already/",
+		]);
 	});
 });
