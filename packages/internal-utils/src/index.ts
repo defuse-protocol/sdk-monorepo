@@ -82,6 +82,12 @@ export {
 	type PoaWithdrawalPendingErrorType,
 } from "./poaBridge/errors/withdrawal";
 
+// Stellar errors
+export {
+	StellarAccountNotFoundError,
+	type StellarAccountNotFoundErrorType,
+} from "./stellar/stellarHttpClient/errors";
+
 // Solver Relay errors
 export {
 	QuoteError,
