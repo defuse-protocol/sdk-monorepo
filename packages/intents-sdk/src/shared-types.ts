@@ -249,9 +249,9 @@ export interface WithdrawalParams {
 	destinationAddress: string;
 	/**
 	 * Optional memo attached to the withdrawal.
-	 * - XRP Ledger: included in the transaction memo field
+	 * - XRP Ledger: the destination tag, a whole number from 0 to 4294967295
 	 * - Internal transfers (intents): passed as memo in the transfer intent
-	 * - Stellar, TON: NOT SUPPORTED (will throw error)
+	 * - Stellar, TON and other PoA Bridge chains: NOT SUPPORTED (will throw error)
 	 */
 	destinationMemo?: string | undefined;
 	feeInclusive: boolean;

@@ -13,11 +13,14 @@ import {
 	InvalidDestinationAddressForWithdrawalError,
 	MinWithdrawalAmountError,
 	UnsupportedAssetIdError,
+	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import {
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
+	XrplInvalidDestinationTagError,
 } from "./errors";
+import { XRPL_MAX_DESTINATION_TAG } from "./poa-constants";
 import { BridgeNameEnum } from "../../constants/bridge-name-enum";
 import { RouteEnum } from "../../constants/route-enum";
 import type { IntentPrimitive } from "../../intents/shared-types";
@@ -139,10 +142,19 @@ export class PoaBridge implements Bridge {
 		});
 	}
 
-	createWithdrawalIntents(args: {
+	async createWithdrawalIntents(args: {
 		withdrawalParams: WithdrawalParams;
 		feeEstimation: FeeEstimation;
 	}): Promise<IntentPrimitive[]> {
+		const assetInfo = this.parseAssetId(args.withdrawalParams.assetId);
+		assert(assetInfo != null, "Asset is not supported");
+
+		validateDestinationMemo(
+			args.withdrawalParams.destinationMemo,
+			assetInfo.blockchain,
+			args.withdrawalParams.assetId,
+		);
+
 		const relayerFee = getUnderlyingFee(
 			args.feeEstimation,
 			RouteEnum.PoaBridge,
@@ -158,7 +170,7 @@ export class PoaBridge implements Bridge {
 			amount: args.withdrawalParams.amount + relayerFee,
 			destinationMemo: args.withdrawalParams.destinationMemo,
 		});
-		return Promise.resolve([intent]);
+		return [intent];
 	}
 
 	/**
@@ -186,6 +198,12 @@ export class PoaBridge implements Bridge {
 				assetInfo.blockchain,
 			);
 		}
+
+		validateDestinationMemo(
+			args.destinationMemo,
+			assetInfo.blockchain,
+			args.assetId,
+		);
 
 		// Use cached getSupportedTokens to avoid frequent API calls
 		const { tokens } = await this.getCachedSupportedTokens(
@@ -405,6 +423,34 @@ export class PoaBridge implements Bridge {
 type WithdrawalStatusResponse = Awaited<
 	ReturnType<typeof poaBridge.httpClient.getWithdrawalStatus>
 >;
+
+/**
+ * PoA withdrawals append `destinationMemo` to the burn memo as is
+ * (`WITHDRAW_TO:<address>:<memo>`). Only XRP Ledger withdrawals use it,
+ * as the destination tag.
+ * @throws {UnsupportedDestinationMemoError} If a memo is set for another chain
+ * @throws {XrplInvalidDestinationTagError} If the memo is not a whole number from 0 to 4294967295
+ */
+function validateDestinationMemo(
+	destinationMemo: string | undefined,
+	blockchain: Chain,
+	assetId: string,
+): void {
+	if (destinationMemo == null) {
+		return;
+	}
+
+	if (blockchain !== Chains.XRPL) {
+		throw new UnsupportedDestinationMemoError(blockchain, assetId);
+	}
+
+	if (
+		!/^[0-9]+$/.test(destinationMemo) ||
+		Number(destinationMemo) > XRPL_MAX_DESTINATION_TAG
+	) {
+		throw new XrplInvalidDestinationTagError(destinationMemo);
+	}
+}
 
 /**
  * Finds a withdrawal matching the given assetId.
