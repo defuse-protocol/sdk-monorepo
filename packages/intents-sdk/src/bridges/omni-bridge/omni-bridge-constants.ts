@@ -18,6 +18,7 @@ export const HYPERCORE_WITHDRAWAL_DECIMALS: Record<
 > = {
 	// ONEAR: 8 on Core, 24 on NEAR.
 	"nep141:wrap.near": { decimals: 8, origin_decimals: 24 },
+	"nep141:qtc.omft.near": { decimals: 8, origin_decimals: 12 },
 };
 
 // API returns non-zero fee for them; however, these tokens have own relayers that bridge them for free.
