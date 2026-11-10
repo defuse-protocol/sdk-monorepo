@@ -1,5 +1,11 @@
 # @defuse-protocol/intents-sdk
 
+## 0.96.0
+
+### Minor Changes
+
+- 16d490c: Support Quantus on hypercore via omni bridge
+
 ## 0.95.0
 
 ### Minor Changes
