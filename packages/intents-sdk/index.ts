@@ -149,6 +149,8 @@ export {
 	type PoaWithdrawalPendingErrorType,
 } from "@defuse-protocol/internal-utils";
 export {
+	StellarTrustlineNotAuthorizedError,
+	type StellarTrustlineNotAuthorizedErrorType,
 	XrplDestinationTagRequiredError,
 	type XrplDestinationTagRequiredErrorType,
 	XrplDepositAuthEnabledError,

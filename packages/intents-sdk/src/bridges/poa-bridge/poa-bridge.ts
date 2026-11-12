@@ -177,6 +177,8 @@ export class PoaBridge implements Bridge {
 	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
 	 * @throws {StellarAccountNotFoundError} If the Stellar destination account is not funded yet.
 	 * Only raised for non-native assets: a native XLM withdrawal funds the account itself.
+	 * @throws {TrustlineNotFoundError} If the Stellar destination address lacks the required trustline
+	 * @throws {StellarTrustlineNotAuthorizedError} If the Stellar trustline is not authorized by the asset issuer
 	 */
 	async validateWithdrawal(args: {
 		assetId: string;
