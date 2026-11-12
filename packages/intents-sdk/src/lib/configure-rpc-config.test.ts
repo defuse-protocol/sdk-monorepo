@@ -202,10 +202,7 @@ describe("configureStellarRpcUrls()", () => {
 			[Chains.Polygon]: ["https://polygonrpc.com"],
 		});
 
-		expect(result).toEqual({
-			soroban: ["https://sorobanrpc.com"],
-			horizon: ["https://horizonrpc.com"],
-		});
+		expect(result).toEqual(mockDefaultRpcUrls);
 	});
 
 	it("overrides default RPC URLs", () => {
