@@ -4,6 +4,7 @@ import { RETRY_CONFIGS } from "../../utils/retry";
 import type { RequestConfig } from "./types";
 import { HttpRequestError } from "../../errors";
 import { serialize } from "../../utils/serialize";
+import { buildHorizonUrl } from "./url";
 
 export async function horizonRequest<
 	TSchema extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>,
@@ -12,9 +13,7 @@ export async function horizonRequest<
 	config: RequestConfig,
 	schema: TSchema,
 ): Promise<v.InferOutput<TSchema>> {
-	// `baseURL` is expected to end with "/", otherwise its last path segment is
-	// dropped here. `configureStellarRpcUrls()` normalizes it.
-	const url = new URL(path, config.baseURL);
+	const url = buildHorizonUrl(config.baseURL, path);
 
 	const response = await request({
 		url,
