@@ -149,11 +149,17 @@ export {
 	type PoaWithdrawalPendingErrorType,
 } from "@defuse-protocol/internal-utils";
 export {
+	StellarTrustlineNotAuthorizedError,
+	type StellarTrustlineNotAuthorizedErrorType,
 	XrplDestinationTagRequiredError,
 	type XrplDestinationTagRequiredErrorType,
 	XrplDepositAuthEnabledError,
 	type XrplDepositAuthEnabledErrorType,
 } from "./src/bridges/poa-bridge/errors";
+export {
+	StellarAccountNotFoundError,
+	type StellarAccountNotFoundErrorType,
+} from "@defuse-protocol/internal-utils";
 
 // HTTP & Network Errors
 export {
