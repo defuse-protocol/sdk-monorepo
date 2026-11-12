@@ -18,6 +18,7 @@ import {
 	UnsupportedDestinationMemoError,
 } from "../../classes/errors";
 import {
+	StellarTrustlineNotAuthorizedError,
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
 } from "./errors";
@@ -294,18 +295,25 @@ export class PoaBridge implements Bridge {
 				args.destinationAddress,
 				{ baseURL: horizonRpcUrl, logger: args.logger },
 			);
-			const hasTrustline = account.balances.some(
+			const trustline = account.balances.find(
 				(balance) =>
 					balance.asset_code === stellarAsset.code &&
 					balance.asset_issuer === stellarAsset.issuer,
 			);
 
-			if (!hasTrustline) {
+			if (trustline == null) {
 				throw new TrustlineNotFoundError(
 					args.destinationAddress,
 					args.assetId,
 					assetInfo.blockchain,
 					tokenInfo.origin_chain_address,
+				);
+			}
+
+			if (trustline.is_authorized === false) {
+				throw new StellarTrustlineNotAuthorizedError(
+					args.destinationAddress,
+					args.assetId,
 				);
 			}
 		}

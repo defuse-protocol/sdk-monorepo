@@ -30,6 +30,7 @@ import {
 	configureXrplRpcUrls,
 } from "../../lib/configure-rpc-config";
 import {
+	StellarTrustlineNotAuthorizedError,
 	XrplDepositAuthEnabledError,
 	XrplDestinationTagRequiredError,
 } from "./errors";
@@ -1126,6 +1127,29 @@ describe("PoaBridge", () => {
 					DESTINATION,
 					expect.objectContaining({ baseURL: "https://horizon.stellar.org" }),
 				);
+			});
+
+			it("rejects when the trustline is not authorized", async () => {
+				vi.mocked(stellar.httpClient.getAccount).mockResolvedValueOnce({
+					account_id: DESTINATION,
+					balances: [
+						{
+							asset_type: "credit_alphanum4",
+							asset_code: "USDC",
+							asset_issuer: USDC_ISSUER,
+							balance: "0.0000000",
+							is_authorized: false,
+						},
+					],
+				});
+
+				await expect(
+					createBridge().validateWithdrawal({
+						assetId: USDC_ASSET_ID,
+						amount: 10_000_000n,
+						destinationAddress: DESTINATION,
+					}),
+				).rejects.toThrow(StellarTrustlineNotAuthorizedError);
 			});
 
 			it("skips trustline check for native XLM", async () => {

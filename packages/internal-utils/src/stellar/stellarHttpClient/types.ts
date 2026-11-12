@@ -21,6 +21,8 @@ export const AccountBalanceSchema = v.object({
 	/** Present for credit assets only. Existence of the balance means the account has a trustline to this issuer. */
 	asset_issuer: v.optional(v.string()),
 	balance: v.string(),
+	/** Present for credit assets only. `false` means the issuer has not authorized the holder. */
+	is_authorized: v.optional(v.boolean()),
 });
 
 export const AccountResponseSchema = v.object({
