@@ -9,7 +9,7 @@ export class StellarAccountNotFundedError extends BaseError {
 		super("Stellar account is not funded.", {
 			metaMessages: [`Account: ${account}`],
 			name: "StellarAccountNotFundedError",
-			details: `Account ${account} was not found on the Stellar network. The account must be created and funded with the minimum balance before it can receive tokens.`,
+			details: `Account ${account} does not exist on the Stellar network, so it is not funded. The account must be created and funded with the minimum balance before it can receive tokens.`,
 		});
 	}
 }
