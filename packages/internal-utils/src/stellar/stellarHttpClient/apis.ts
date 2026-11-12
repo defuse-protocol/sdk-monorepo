@@ -1,5 +1,5 @@
 import { HttpRequestError } from "../../errors";
-import { StellarAccountNotFoundError } from "./errors";
+import { StellarAccountNotFundedError } from "./errors";
 import { horizonRequest } from "./runtime";
 import {
 	AccountResponseSchema,
@@ -19,7 +19,7 @@ export async function getAccount(
 		);
 	} catch (error) {
 		if (error instanceof HttpRequestError && error.status === 404) {
-			throw new StellarAccountNotFoundError(account);
+			throw new StellarAccountNotFundedError(account);
 		}
 		throw error;
 	}
