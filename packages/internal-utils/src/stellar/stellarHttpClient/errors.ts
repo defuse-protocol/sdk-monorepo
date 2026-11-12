@@ -1,14 +1,14 @@
 import { BaseError } from "../../errors/base";
 
-export type StellarAccountNotFoundErrorType = StellarAccountNotFoundError & {
-	name: "StellarAccountNotFoundError";
+export type StellarAccountNotFundedErrorType = StellarAccountNotFundedError & {
+	name: "StellarAccountNotFundedError";
 };
 
-export class StellarAccountNotFoundError extends BaseError {
+export class StellarAccountNotFundedError extends BaseError {
 	constructor(public account: string) {
-		super("Stellar account is not found.", {
+		super("Stellar account is not funded.", {
 			metaMessages: [`Account: ${account}`],
-			name: "StellarAccountNotFoundError",
+			name: "StellarAccountNotFundedError",
 			details: `Account ${account} was not found on the Stellar network. The account must be created and funded with the minimum balance before it can receive tokens.`,
 		});
 	}

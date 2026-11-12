@@ -84,8 +84,8 @@ export {
 
 // Stellar errors
 export {
-	StellarAccountNotFoundError,
-	type StellarAccountNotFoundErrorType,
+	StellarAccountNotFundedError,
+	type StellarAccountNotFundedErrorType,
 } from "./stellar/stellarHttpClient/errors";
 
 // Solver Relay errors

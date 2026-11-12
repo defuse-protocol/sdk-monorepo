@@ -400,7 +400,7 @@ export interface Bridge {
 	 * Others (like POA) check minimum amounts, and HOT and POA bridges check trustlines for Stellar.
 	 * @throws {MinWithdrawalAmountError} If the amount is below the minimum required
 	 * @throws {TrustlineNotFoundError} If destination address lacks required trustline
-	 * @throws {StellarAccountNotFoundError} If the Stellar destination account is not funded yet.
+	 * @throws {StellarAccountNotFundedError} If the Stellar destination account is not funded yet.
 	 * Only raised for non-native assets: a native XLM withdrawal funds the account itself.
 	 * @throws {StellarTrustlineNotAuthorizedError} If the Stellar trustline is not authorized by the asset issuer
 	 */

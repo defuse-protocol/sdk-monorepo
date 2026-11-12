@@ -157,8 +157,8 @@ export {
 	type XrplDepositAuthEnabledErrorType,
 } from "./src/bridges/poa-bridge/errors";
 export {
-	StellarAccountNotFoundError,
-	type StellarAccountNotFoundErrorType,
+	StellarAccountNotFundedError,
+	type StellarAccountNotFundedErrorType,
 } from "@defuse-protocol/internal-utils";
 
 // HTTP & Network Errors
