@@ -1,5 +1,16 @@
 # @defuse-protocol/intents-sdk
 
+## 0.98.0
+
+### Minor Changes
+
+- 56304c9: - **Stellar:** **BREAKING:** rename `StellarAccountNotFoundError` to `StellarAccountNotFundedError` to match `XrplAccountNotFundedError`. The error `name` and message changed too (`"StellarAccountNotFundedError"`, `"Stellar account is not funded."`). Update `instanceof` checks, imports and any `error.name` comparisons to the new name.
+
+### Patch Changes
+
+- Updated dependencies [56304c9]
+  - @defuse-protocol/internal-utils@0.47.0
+
 ## 0.97.0
 
 ### Minor Changes
