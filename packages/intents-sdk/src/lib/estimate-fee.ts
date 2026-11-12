@@ -100,12 +100,17 @@ export async function getFeeQuote({
 		}
 
 		// Precision-safe computation using fixed-point BigInt
-		// Scale USD prices to 1e6 (micro-dollars) for stable integer math
-		const USD_SCALE = 1_000_000; // 1e6
+		// Scale USD prices to 1e18 for stable integer math. A smaller scale rounds
+		// the price of low-priced tokens (below $0.0000005 at 1e6) down to 0.
+		const USD_SCALE = 1e18;
 		const feePriceScaled = BigInt(Math.round(feeAssetPrice.price * USD_SCALE));
 		const tokenPriceScaled = BigInt(
 			Math.round(tokenAssetPrice.price * USD_SCALE),
 		);
+
+		if (feePriceScaled <= 0n || tokenPriceScaled <= 0n) {
+			throw err;
+		}
 		const feeDecimals = BigInt(feeAssetPrice.decimals);
 		const tokenDecimals = BigInt(tokenAssetPrice.decimals);
 
